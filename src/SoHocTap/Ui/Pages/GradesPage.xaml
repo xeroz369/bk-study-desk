@@ -1,0 +1,64 @@
+<!-- Điểm và học vụ: Bảng điểm (nhóm theo kỳ, có điểm thành phần) · Chương trình đào tạo (nhóm theo khối, lọc trạng thái)
+     · Sổ điểm LMS · Đăng ký và học vụ. Dữ liệu lấy từ bản MyBK/LMS đã sync; muốn xem đầy đủ thì mở MyBK trên web. -->
+<UserControl x:Class="SoHocTap.Ui.Pages.GradesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui">
+    <DockPanel>
+        <ItemsControl x:Name="Stats" DockPanel.Dock="Top" Margin="0,0,0,12" Focusable="False">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource Card}" Margin="0,0,8,0" Padding="12,8" ToolTip="{Binding Tip}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Label}" Style="{StaticResource Muted}" />
+                            <TextBlock Text="{Binding Value}" FontSize="20" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TabControl x:Name="Tabs">
+            <TabItem Header="{ui:T grades.tabGrades}">
+                <DockPanel Margin="0,8,0,0">
+                    <TextBlock DockPanel.Dock="Bottom" Margin="0,6,0,0" Style="{StaticResource Muted}" TextWrapping="Wrap"
+                               Text="{ui:T grades.gradesNote}" />
+                    <DataGrid x:Name="Grades" />
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="{ui:T grades.tabProgram}">
+                <DockPanel Margin="0,8,0,0">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="{ui:T grades.show}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox x:Name="Filter" Width="200" SelectionChanged="OnFilter" />
+                        <TextBlock x:Name="Stale" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" />
+                    </StackPanel>
+                    <DataGrid x:Name="ProgramGrid" />
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="{ui:T grades.tabLms}">
+                <DockPanel Margin="0,8,0,0">
+                    <TextBlock DockPanel.Dock="Bottom" Margin="0,6,0,0" Style="{StaticResource Muted}" Text="{ui:T grades.lmsNote}" />
+                    <DataGrid x:Name="LmsGrades" />
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="{ui:T grades.tabReg}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+                    <StackPanel>
+                        <TextBlock x:Name="RegTitle" Style="{StaticResource SectionTitle}" />
+                        <DataGrid x:Name="Registered" Margin="0,0,0,16" />
+                        <TextBlock Text="{ui:T grades.fees}" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="FeesEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" Text="{ui:T grades.feesEmpty}" />
+                        <DataGrid x:Name="Fees" Margin="0,0,0,16" />
+                        <TextBlock x:Name="SocialTitle" Style="{StaticResource SectionTitle}" />
+                        <DataGrid x:Name="Social" Margin="0,0,0,16" />
+                        <TextBlock Text="{ui:T grades.decisions}" Style="{StaticResource SectionTitle}" />
+                        <DataGrid x:Name="Decisions" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</UserControl>

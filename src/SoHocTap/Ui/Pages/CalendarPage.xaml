@@ -1,0 +1,35 @@
+<!-- Lịch: Sắp tới (14 ngày, nhóm theo ngày) · Thời khóa biểu (theo tuần) · Lịch thi. Mỗi tab một bảng Details. -->
+<UserControl x:Class="SoHocTap.Ui.Pages.CalendarPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui">
+    <TabControl x:Name="Tabs">
+        <TabItem Header="{ui:T calendar.tabUpcoming}">
+            <DockPanel Margin="0,8,0,0">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <CheckBox x:Name="ShowClasses" Content="{ui:T calendar.showClasses}" IsChecked="True" Click="OnFilter" />
+                    <CheckBox x:Name="ShowDone" Content="{ui:T calendar.showDone}" Margin="16,0,0,0" Click="OnFilter" />
+                </StackPanel>
+                <DataGrid x:Name="Upcoming" />
+            </DockPanel>
+        </TabItem>
+        <TabItem Header="{ui:T calendar.tabWeek}">
+            <DockPanel Margin="0,8,0,0">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="&#xE76B;" FontFamily="{StaticResource IconFont}" Click="OnPrevWeek" ToolTip="{ui:T calendar.prevWeek}" />
+                    <TextBlock x:Name="WeekText" VerticalAlignment="Center" Margin="12,0" MinWidth="160" TextAlignment="Center" />
+                    <Button Content="&#xE76C;" FontFamily="{StaticResource IconFont}" Click="OnNextWeek" ToolTip="{ui:T calendar.nextWeek}" />
+                    <Button x:Name="ThisWeek" Content="{ui:T calendar.thisWeek}" Margin="12,0,0,0" Click="OnThisWeek" />
+                    <TextBlock VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" Text="{ui:T calendar.dimNote}" />
+                </StackPanel>
+                <DataGrid x:Name="Week" />
+            </DockPanel>
+        </TabItem>
+        <TabItem Header="{ui:T calendar.tabExams}">
+            <DockPanel Margin="0,8,0,0">
+                <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" Style="{StaticResource Muted}" Text="{ui:T calendar.examSource}" />
+                <DataGrid x:Name="Exams" />
+            </DockPanel>
+        </TabItem>
+    </TabControl>
+</UserControl>

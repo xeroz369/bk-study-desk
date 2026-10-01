@@ -1,0 +1,13 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+
+# Runtime data: sign-in cookies, tokens, synced school data, logs. Never commit.
+data/
+**/data/
+Môn học/
+_Lưu trữ/
+*.log

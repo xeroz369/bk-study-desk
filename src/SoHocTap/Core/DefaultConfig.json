@@ -1,0 +1,294 @@
+{
+  "sources": {
+    "lms": {
+      "site": "https://lms.hcmut.edu.vn",
+      "casLogin": "https://lms.hcmut.edu.vn/login/index.php?authCAS=CAS",
+      "service": "moodle_mobile_app",
+      "scheme": "moodlemobile",
+      "term": "auto",
+      "syncHours": 3,
+      "pastSyncDays": 7,
+      "skipFolders": [
+        "font-vni"
+      ],
+      "skipCourses": [
+        "_Video",
+        "Lớp Chủ nhiệm"
+      ],
+      "maxFileMB": 200,
+      "autoDownload": true,
+      "groupPattern": "(?<![A-Za-z0-9])L[0-9]{2,3}(?![A-Za-z0-9])",
+      "announcementDays": 120,
+      "announcementsPerForum": 10
+    },
+    "mybk": {
+      "site": "https://mybk.hcmut.edu.vn",
+      "casLogin": "https://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Fmybk.hcmut.edu.vn%2Fmy%2FhomeSSO.action",
+      "portal": "https://mybk.hcmut.edu.vn/my/homeSSO.action",
+      "home": "https://mybk.hcmut.edu.vn/app/",
+      "appLogin": "https://mybk.hcmut.edu.vn/app/login?type=cas",
+      "registration": "https://mybk.hcmut.edu.vn/dkmh/dangKyMonHocForm.action",
+      "services": [
+        {
+          "group": "Học tập",
+          "name": "Thời khóa biểu",
+          "url": "https://mybk.hcmut.edu.vn/app/he-thong-quan-ly/sinh-vien/tkb"
+        },
+        {
+          "group": "Học tập",
+          "name": "Lịch thi",
+          "url": "https://mybk.hcmut.edu.vn/app/he-thong-quan-ly/sinh-vien/lich-thi"
+        },
+        {
+          "group": "Học tập",
+          "name": "Bảng điểm môn học",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/ket-qua-hoc-tap/bang-diem-mon-hoc"
+        },
+        {
+          "group": "Học tập",
+          "name": "Chương trình đào tạo",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/ket-qua-hoc-tap/chuong-trinh-dao-tao"
+        },
+        {
+          "group": "Học tập",
+          "name": "BK-LMS",
+          "url": "https://lms.hcmut.edu.vn/my/"
+        },
+        {
+          "group": "Học tập",
+          "name": "Lịch LMS (hạn nộp, quiz)",
+          "url": "https://lms.hcmut.edu.vn/calendar/view.php?view=upcoming"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Trang chủ MyBK",
+          "url": "https://mybk.hcmut.edu.vn/my/homeSSO.action"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "BKPay (học phí)",
+          "url": "http://bkpay.hcmut.edu.vn"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Đăng ký môn học",
+          "url": "https://mybk.hcmut.edu.vn/dkmh"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Hoạt động ngoại khóa",
+          "url": "http://mybk.hcmut.edu.vn/hdsv/page/trang-chu-hd.aspx"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Hỗ trợ trực tuyến",
+          "url": "http://mybk.hcmut.edu.vn/bksi"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Mua sách, giáo trình",
+          "url": "http://mybk.hcmut.edu.vn/bookstore"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Đăng ký in bảng điểm",
+          "url": "http://mybk.hcmut.edu.vn/apps/src/inbd/index.aspx"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "Nộp chứng chỉ ngoại ngữ",
+          "url": "http://mybk.hcmut.edu.vn/apps/src/nopccav/index.aspx"
+        },
+        {
+          "group": "Cổng MyBK",
+          "name": "BHYT, BHTN sinh viên",
+          "url": "http://mybk.hcmut.edu.vn/apps/src/bhsv/index.aspx"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Thông tin sinh viên",
+          "url": "https://mybk.hcmut.edu.vn/app/he-thong-quan-ly/sinh-vien/thong-tin"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký xác nhận sinh viên",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/chung-nhan-sinh-vien/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký phúc tra điểm thi",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/phuc-tra-bai-thi/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký hoãn thi",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/du-hoan-thi/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký rút môn học",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/dang-ky-rut-mon-hoc/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký in thẻ",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/in-the-sinh-vien/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký kiểm tra tiếng Anh",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/kiem-tra-trinh-do-tieng-anh/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Văn bản ký số (bảng điểm)",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/bang-diem-ky-so"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký tốt nghiệp",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/tot-nghiep/dang-ky"
+        },
+        {
+          "group": "Tài khoản",
+          "name": "Đổi mật khẩu HCMUT",
+          "url": "https://account.hcmut.edu.vn/"
+        },
+        {
+          "group": "Tài khoản",
+          "name": "Hướng dẫn MyBK",
+          "url": "http://wiki.hcmut.edu.vn/index.php/My_B%C3%A1ch_Khoa"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Đăng ký chứng chỉ tin học",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/dang-ky-chung-chi-tin-hoc/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Khai báo thông tin văn bằng",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/khai-bao-thong-tin-van-bang/dang-ky"
+        },
+        {
+          "group": "Dịch vụ sinh viên",
+          "name": "Thông tin xuất hóa đơn BKPay",
+          "url": "https://mybk.hcmut.edu.vn/app/sinh-vien/dang-ky-thong-tin-xuat-hoa-don-bkpay"
+        }
+      ],
+      "api": {
+        "info": "v1/student/get-student-info",
+        "semesters": "v1/semester-year/short",
+        "schedule": "v1/student/schedule?studentId={id}&semesterYear={sem}",
+        "exams": "thoi-khoa-bieu/lich-thi-sinh-vien/v1?masv={mssv}&namhoc={year}&hocky={term}",
+        "gradesCourses": {
+          "post": "share/ket-qua-hoc-tap/danh-sach-diem-hoc-ky-mon-hoc/v2?tuychon=BANGDIEM_MONHOC"
+        },
+        "gradesTerms": {
+          "post": "share/ket-qua-hoc-tap/danh-sach-diem-hoc-ky-mon-hoc/v2?tuychon=BANGDIEM_HOCKY"
+        },
+        "curriculumInfo": {
+          "post": "share/ket-qua-hoc-tap/thong-tin-mo-ta-ctdt/v2?tuychon=VIEWONLINE"
+        },
+        "curriculum": {
+          "post": "share/ket-qua-hoc-tap/danh-sach-mon-hoc-ctdt/v2"
+        },
+        "components": {
+          "post": "share/ket-qua-hoc-tap/thong-tin-tinh-trang-diem-thanh-phan-mon-hoc/v2",
+          "body": "{id}"
+        },
+        "decisions": "v1/student/status-decision/by-student-code/{mssv}",
+        "socialWork": "v1/student-activities/social-workdays/by-student-code/{mssv}",
+        "fees": "v1/tuition-fees/by-student-code/{mssv}",
+        "registered": "v1/course-register-results/by-student-code/{mssv}"
+      },
+      "syncHours": 12,
+      "specialScores": {
+        "12": "MT",
+        "13": "VT",
+        "17": "RT",
+        "21": "DT"
+      }
+    }
+  },
+  "sso": {
+    "hosts": [
+      "sso.hcmut.edu.vn",
+      "lms.hcmut.edu.vn",
+      "mybk.hcmut.edu.vn",
+      "bkpay.hcmut.edu.vn",
+      "account.hcmut.edu.vn",
+      "wiki.hcmut.edu.vn"
+    ],
+    "rememberDays": 30
+  },
+  "folders": {
+    "root": "",
+    "subjects": "Môn học",
+    "archiveDuplicates": "_Lưu trữ/Trùng lặp",
+    "archiveOldVersions": "_Lưu trữ/Bản cũ",
+    "lmsSubfolder": "Tài liệu LMS",
+    "downloadsSubfolder": "Tải ngoài",
+    "archiveArchives": "_Lưu trữ/File nén đã giải nén"
+  },
+  "subjects": {
+    "parts": {
+      "thí nghiệm": "Thí nghiệm",
+      "tn": "Thí nghiệm",
+      "bt": "Bài tập",
+      "bài tập": "Bài tập"
+    },
+    "btlMarker": "_BTL_",
+    "aliases": {
+      "thí nghiệm vật lý": "Thí nghiệm Vật lý",
+      "hệ thống máy tính": "Hệ thống Máy tính và Ngôn ngữ Lập trình",
+      "xác suất thống kê": "Xác suất và Thống kê",
+      "vật lý bán dẫn": "Vật lý Bán dẫn",
+      "đại số tuyến tính": "Đại số Tuyến tính"
+    }
+  },
+  "downloads": {
+    "watch": true,
+    "folder": "~/Downloads",
+    "extensions": [
+      ".pdf",
+      ".ppt",
+      ".pptx",
+      ".doc",
+      ".docx",
+      ".xls",
+      ".xlsx",
+      ".zip",
+      ".rar",
+      ".m"
+    ]
+  },
+  "notify": {
+    "hoursBefore": 24,
+    "lastHours": 2
+  },
+  "archives": {
+    "extract": true,
+    "extensions": [
+      ".zip",
+      ".rar",
+      ".7z"
+    ],
+    "sevenZip": [
+      "C:/Program Files/7-Zip/7z.exe",
+      "C:/Program Files (x86)/7-Zip/7z.exe"
+    ],
+    "skip": [
+      "font-vni",
+      "Drivers"
+    ]
+  },
+  "viewer": {
+    "pdfApp": ""
+  },
+  "app": {
+    "virtualHost": "sohoc.app",
+    "schedulerMinutes": 10,
+    "language": "vi",
+    "closeToTray": true
+  }
+}
