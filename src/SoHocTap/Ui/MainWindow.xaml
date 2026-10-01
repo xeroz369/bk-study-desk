@@ -1,0 +1,99 @@
+﻿<!-- Main window kiểu app Windows. Có năm mục chính nên dùng thanh điều hướng ngang phía trên (guideline Windows: ≤ 5 mục
+     ngang hàng thì để top nav), Cài đặt là nút bánh răng; nội dung chiếm hết bề ngang.
+     [điều hướng · · · Đồng bộ · LMS · MyBK · ⚙] / InfoBar / dòng mô tả page / page / status bar. Tên app chỉ nằm ở title bar. -->
+<Window x:Class="SoHocTap.Ui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:SoHocTap.Ui"
+        MinWidth="760" MinHeight="480" Icon="/app.ico">
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{x:Static NavigationCommands.Refresh}" />
+        <KeyBinding Key="Left" Modifiers="Alt" Command="{x:Static NavigationCommands.BrowseBack}" />
+    </Window.InputBindings>
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static NavigationCommands.GoToPage}" Executed="OnGoTo" />
+        <CommandBinding Command="{x:Static NavigationCommands.Refresh}" Executed="OnSync" />
+        <CommandBinding Command="{x:Static NavigationCommands.BrowseBack}" Executed="OnBack" />
+    </Window.CommandBindings>
+
+    <DockPanel>
+        <!-- Status bar -->
+        <StatusBar DockPanel.Dock="Bottom" Padding="8,0" Background="{DynamicResource LayerFillColorDefaultBrush}">
+            <StatusBarItem><TextBlock x:Name="StAccount" /></StatusBarItem>
+            <Separator />
+            <StatusBarItem><TextBlock x:Name="StLms" /></StatusBarItem>
+            <Separator />
+            <StatusBarItem><TextBlock x:Name="StMybk" /></StatusBarItem>
+            <Separator />
+            <StatusBarItem><TextBlock x:Name="StMessage" TextTrimming="CharacterEllipsis" /></StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right"><TextBlock x:Name="StExam" /></StatusBarItem>
+        </StatusBar>
+
+        <!-- Điều hướng + lệnh -->
+        <Border DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                Background="{DynamicResource LayerFillColorDefaultBrush}" Padding="12,4">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="SyncButton" AutomationProperties.Name="{ui:T nav.sync}" Click="OnSyncClick" ToolTip="{ui:T nav.sync.tip}" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock x:Name="SyncText" Text="{ui:T nav.sync}" />
+                        </StackPanel>
+                    </Button>
+                    <Button AutomationProperties.Name="BK-LMS" Click="OnOpenLms" ToolTip="{ui:T nav.lms.tip}" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="LMS" />
+                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="11" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button AutomationProperties.Name="MyBK" Click="OnOpenMybk" ToolTip="{ui:T nav.mybk.tip}" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="MyBK" />
+                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="11" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <ToggleButton x:Name="SettingsButton" AutomationProperties.Name="{ui:T nav.settings}" Click="OnSettings" ToolTip="{ui:T nav.settings.tip}" Padding="8,5">
+                        <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" FontSize="15" />
+                    </ToggleButton>
+                    <ToggleButton x:Name="AboutButton" AutomationProperties.Name="{ui:T about.title}" Click="OnAbout" ToolTip="{ui:T about.tip}" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock Text="{ui:T about.title}" />
+                        </StackPanel>
+                    </ToggleButton>
+                </StackPanel>
+                <ListBox x:Name="Nav" ItemContainerStyle="{StaticResource TopNavItem}" BorderThickness="0" Background="Transparent"
+                         SelectionChanged="OnNav" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Center">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Tip}">
+                                <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="15" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Badge}" Margin="6,0,0,0" VerticalAlignment="Center" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- InfoBar: nằm thành một dòng trong layout, không đè lên nội dung -->
+        <Border x:Name="InfoBar" DockPanel.Dock="Top" Visibility="Collapsed" Margin="16,10,16,0" Padding="12,8" CornerRadius="4"
+                Background="{DynamicResource SystemFillColorCautionBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="&#xE711;" FontFamily="{StaticResource IconFont}" Padding="6,4" Margin="6,0,0,0" AutomationProperties.Name="{ui:T common.close}" Click="OnInfoClose" ToolTip="{ui:T common.close}" />
+                <Button x:Name="InfoAction" DockPanel.Dock="Right" Click="OnInfoAction" Margin="8,0,0,0" />
+                <TextBlock x:Name="InfoIcon" FontFamily="{StaticResource IconFont}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" Text="&#xE7BA;" />
+                <TextBlock x:Name="InfoText" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </DockPanel>
+        </Border>
+
+        <!-- Dòng mô tả page (ngày, học kỳ, MSSV…); tên page thì đã hiện ở mục điều hướng đang chọn -->
+        <TextBlock x:Name="PageSubtitle" DockPanel.Dock="Top" Margin="18,10,16,0" Style="{StaticResource Muted}" FontSize="13" />
+
+        <ContentControl x:Name="Page" Margin="16,8,16,12" Focusable="False" />
+    </DockPanel>
+</Window>

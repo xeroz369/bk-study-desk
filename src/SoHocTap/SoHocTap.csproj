@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- UI dùng WPF với theme Fluent (Windows 11) có sẵn của .NET. WinForms chỉ để lấy NotifyIcon cho tray icon. -->
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SoHocTap</RootNamespace>
+    <!--
+      Build ra 2 bản từ cùng source (-p:Edition=…):
+        Private: "Sổ học tập", có thêm tab Luyện tập (HTML trong ui\ và content\), chỉ dùng riêng.
+        Public:  "BK Study Desk", chỉ có LMS và MyBK, bản public (xem tools-dev\export-public.ps1).
+      Hai bản khác tên exe và app ID (mutex, taskbar, autostart) nên cài song song được.
+    -->
+    <Edition Condition="'$(Edition)' == ''">Public</Edition>
+    <Version Condition="'$(Version)' == ''">1.0.5</Version>
+    <Authors>xeroz369</Authors>
+    <Copyright>MIT License</Copyright>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <SatelliteResourceLanguages>vi</SatelliteResourceLanguages>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <StartupObject>SoHocTap.Program</StartupObject>
+    <!-- Package WebView2.Wpf tham chiếu WindowsBase 5.0, warning này vô hại. -->
+    <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Edition)' == 'Private'">
+    <AssemblyName>SoHocTap</AssemblyName>
+    <Product>Sổ học tập</Product>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Edition)' == 'Public'">
+    <AssemblyName>BKStudyDesk</AssemblyName>
+    <Product>BK Study Desk</Product>
+    <Description>Unofficial desktop companion for HCMUT BK-LMS and MyBK</Description>
+    <DefineConstants>$(DefineConstants);PUBLIC_EDITION</DefineConstants>
+  </PropertyGroup>
+
+  <!--
+    Bản Microsoft Store (-p:Store=true, chỉ đi với Edition=Public): đóng gói MSIX bằng tools-dev\package-store.ps1.
+    Cần Windows SDK projection để gọi StartupTask (autostart trong package), nên đổi TFM sang windows10.0.19041.
+  -->
+  <PropertyGroup Condition="'$(Store)' == 'true'">
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <DefineConstants>$(DefineConstants);STORE</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Tab Luyện tập (HTML + API nội bộ) chỉ có ở bản private. -->
+  <ItemGroup Condition="'$(Edition)' == 'Public'">
+    <Compile Remove="Ui\Pages\PracticePage.xaml.cs;Shell\WebUi.cs;Shell\StaticFiles.cs;Api\**" />
+    <Page Remove="Ui\Pages\PracticePage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="tools-dev\**;Branding\**" />
+    <None Remove="tools-dev\**;Branding\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bỏ global using của WinForms/Drawing để khỏi trùng tên với WPF (Application, MessageBox, Color…). -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <Using Include="System.Net.Http" />
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Core\DefaultConfig.json" />
+    <Resource Include="app.ico" />
+    <!-- Language pack: lang\<code>.json nằm cạnh exe, sửa hay thêm ngôn ngữ không cần build lại. -->
+    <None Update="lang\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+  </ItemGroup>
+
+</Project>
