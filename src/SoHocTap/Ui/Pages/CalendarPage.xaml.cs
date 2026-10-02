@@ -73,7 +73,7 @@ public partial class CalendarPage : UserControl, IPage
 
     private void RefreshWeek()
     {
-        var monday = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7) + _offset * 7);
+        var monday = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7) + _offset * 7.0);
         var week = Format.IsoWeek(monday);
         WeekText.Text = L.F("calendar.week", week, monday, monday.AddDays(6));
         ThisWeek.IsEnabled = _offset != 0;
