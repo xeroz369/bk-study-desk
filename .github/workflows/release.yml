@@ -1,0 +1,123 @@
+name: release
+
+# Build bộ cài Windows (x64, ARM64) và gói tự cập nhật.
+# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt; gói cập nhật để ở artifact.
+# - Bấm Publish release: job publish-feed mới đưa gói cập nhật lên release cố định "updates",
+#   nên app của người dùng chỉ thấy bản mới sau khi người làm app đã duyệt bản nháp.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Phiên bản (vd. 1.0.7)'
+        required: true
+      tag:
+        description: 'Tên tag cho release nháp (để trống = v<phiên bản>)'
+        required: false
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  id-token: write       # chứng thực nguồn gốc bản build (artifact attestation)
+  attestations: write
+
+env:
+  VPK_VERSION: '1.2.161'
+  PACK_ID: BKStudyDesk
+
+jobs:
+  build:
+    if: github.event_name != 'release'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/ui/package-lock.json
+      - name: Version
+        id: v
+        shell: pwsh
+        run: |
+          $v = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.version }}' } else { '${{ github.ref_name }}'.TrimStart('v') }
+          $tag = if ('${{ inputs.tag }}') { '${{ inputs.tag }}' } else { "v$v" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+      - name: Unit tests
+        run: dotnet test tests/SoHocTap.Tests
+      - name: Practice UI
+        working-directory: src/ui
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $v = '${{ steps.v.outputs.version }}'
+          dotnet tool install -g vpk --version $env:VPK_VERSION
+          $env:VPK_SKIP_UPDATES = 'true'
+          New-Item -ItemType Directory -Force dist, feed | Out-Null
+          Set-Content notes.md "BK Study Desk $v" -NoNewline
+          $common = "-p:Version=$v", '-p:DebugType=none', '-p:DebugSymbols=false', '-p:ContinuousIntegrationBuild=true', '-p:Deterministic=true', '-p:SatelliteResourceLanguages=en%3Bvi'
+          foreach ($rid in 'win-x64', 'win-arm64') {
+            # Lấy bản trước từ release "updates" (nếu có) để vpk tạo gói delta nhỏ cho người đang dùng bản cũ.
+            vpk download http --url "https://github.com/${{ github.repository }}/releases/download/updates" -c $rid -o "feed/$rid" --allowEmptyChannel
+            if ($LASTEXITCODE) { Write-Host "Chưa có bản trước cho $rid, chỉ tạo gói đầy đủ."; $global:LASTEXITCODE = 0 }
+            dotnet publish src/SoHocTap -c Release -r $rid --self-contained true -o "stage/$rid" @common
+            vpk pack -u $env:PACK_ID -v $v -r $rid -c $rid -p "stage/$rid" -e BKStudyDesk.exe --packTitle 'BK Study Desk' --packAuthors xeroz369 `
+              -i src/SoHocTap/app.ico --aumid $env:PACK_ID --releaseNotes notes.md --noPortable -o "feed/$rid"
+            dotnet build src/BKStudyDesk.Setup -c Release -o "uninstall-$rid" "-p:PackId=$env:PACK_ID" "-p:Version=$v"
+            dotnet build src/BKStudyDesk.Setup -c Release -o "setup-$rid" "-p:PackId=$env:PACK_ID" "-p:Version=$v" `
+              "-p:VelopackSetup=$PWD/feed/$rid/$env:PACK_ID-$rid-Setup.exe" "-p:UninstallerExe=$PWD/uninstall-$rid/BKStudyDesk-Setup.exe"
+            Copy-Item "setup-$rid/BKStudyDesk-Setup.exe" "dist/$env:PACK_ID-$v-Setup-$($rid.Split('-')[1]).exe"
+            Remove-Item "feed/$rid/$env:PACK_ID-$rid-Setup.exe"
+          }
+          $sums = Get-ChildItem dist -File | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)" }
+          [IO.File]::WriteAllLines("$PWD/dist/SHA256SUMS.txt", [string[]]$sums)
+      # Chứng thực bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
+      # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
+      - uses: actions/attest-build-provenance@v2
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-path: 'dist/*.exe'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: feed-${{ steps.v.outputs.tag }}
+          path: |
+            feed/**/*.nupkg
+            feed/**/releases.*.json
+          retention-days: 90
+      - name: Draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ steps.v.outputs.tag }}'
+          gh release create $tag --draft --target $env:GITHUB_SHA --title "BK Study Desk ${{ steps.v.outputs.version }}" --notes "Bản nháp do CI tạo. Kiểm tra bộ cài rồi bấm Publish." (Get-ChildItem dist -File | ForEach-Object FullName)
+
+  publish-feed:
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload update packages to the "updates" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          run=$(gh run list -R "$REPO" --workflow release.yml --json databaseId,headBranch,conclusion,event \
+            --jq "[.[] | select(.conclusion==\"success\" and .event!=\"release\" and .headBranch==\"$TAG\")][0].databaseId")
+          [ -n "$run" ] || { echo "Không tìm thấy lần build của $TAG"; exit 1; }
+          gh run download "$run" -R "$REPO" -n "feed-$TAG" -D feed
+          gh release view updates -R "$REPO" >/dev/null 2>&1 || \
+            gh release create updates -R "$REPO" --prerelease --title "Gói tự cập nhật (không cần tải)" \
+              --notes "App tự tải các file ở đây khi bạn cho phép cập nhật. Muốn cài app thì tải bộ cài ở bản phát hành mới nhất."
+          gh release upload updates -R "$REPO" --clobber $(find feed -type f)

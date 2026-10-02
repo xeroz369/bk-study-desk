@@ -1,0 +1,22 @@
+# Dependabot: báo và tự mở PR khi thư viện có lỗ hổng hoặc bản mới. Gom theo tuần cho đỡ nhiễu.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directories: ['/src/SoHocTap', '/src/BKStudyDesk.Core', '/src/BKStudyDesk.Desktop', '/src/BKStudyDesk.Setup', '/tests/SoHocTap.Tests']
+    schedule: { interval: weekly }
+    groups:
+      nuget: { patterns: ['*'] }
+  - package-ecosystem: npm
+    directory: /src/ui
+    schedule: { interval: weekly }
+    ignore:
+      # svelte-check chưa chạy được với TypeScript 7; prettier-plugin-svelte 4 đổi cách định dạng. Xem lại khi svelte-check hỗ trợ.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      - dependency-name: prettier-plugin-svelte
+        update-types: ['version-update:semver-major']
+    groups:
+      npm: { patterns: ['*'] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

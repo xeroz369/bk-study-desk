@@ -87,6 +87,10 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             var env = await WebHost.EnvironmentAsync();
             _controller = await env.CreateCoreWebView2ControllerAsync(hwnd());
             _controller.IsVisible = false;
+            // WebView ẩn chạy script của trang trường: chỉ cho đi tới host trường qua https, không mở cửa sổ mới.
+            var core = _controller.CoreWebView2;
+            core.NavigationStarting += (_, e) => { if (e.Uri != "about:blank" && !WebHost.IsSchoolDomain(e.Uri)) e.Cancel = true; };
+            core.NewWindowRequested += (_, e) => e.Handled = true;
         }
         return _controller.CoreWebView2;
     }

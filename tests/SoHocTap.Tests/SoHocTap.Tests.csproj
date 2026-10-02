@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Unit test cho phần logic thuần (không WPF, không mạng): tìm thư mục app, chính sách cập nhật. Link file nguồn từ src\SoHocTap. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Src>..\..\src\SoHocTap\</Src>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Compile Include="$(Src)Core\AppDirs.cs" Link="Linked\AppDirs.cs" />
+    <Compile Include="$(Src)Core\UpdatePolicy.cs" Link="Linked\UpdatePolicy.cs" />
+    <Compile Include="$(Src)Core\DataImport.cs" Link="Linked\DataImport.cs" />
+    <Compile Include="..\..\src\BKStudyDesk.Setup\InstallTarget.cs" Link="Linked\InstallTarget.cs" />
+  </ItemGroup>
+
+</Project>

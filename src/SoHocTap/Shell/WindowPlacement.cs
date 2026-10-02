@@ -58,7 +58,7 @@ internal sealed class WindowPlacement
 /// </summary>
 internal static class SingleInstance
 {
-    private static string SignalName => AppInfo.Id + ".show";
+    private static string SignalName => AppInfo.InstanceKey + ".show";
 
     public static void ActivateExisting()
     {

@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using SoHocTap.Core;
 using SoHocTap.Files;
 using SoHocTap.Shell;
+using SoHocTap.Updates;
 
 namespace SoHocTap.Ui.Pages;
 
@@ -43,6 +44,92 @@ public partial class SettingsPage : UserControl, IPage
         LanguageBox.SelectedItem = langs.FirstOrDefault(x => x.Code == Config.Str("app.language", L.Base)) ?? langs.FirstOrDefault(x => x.Code == L.Code);
         _languageReady = true;
         ShowRestart();
+        LoadUpdates();
+    }
+
+    // ------------------------------------------------------------------ cập nhật
+
+    private sealed record ModeItem(UpdateMode Mode, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    private bool _updateReady;
+
+    private void LoadUpdates()
+    {
+        if (!UpdateService.Supported) return;
+        UpdateCard.Visibility = Visibility.Visible;
+        var items = new List<ModeItem>
+        {
+            new(UpdateMode.Notify, L.T("update.mode.notify")),
+            new(UpdateMode.Off, L.T("update.mode.off")),
+        };
+        if (UpdateService.CanSelfUpdate) items.Insert(1, new(UpdateMode.Auto, L.T("update.mode.auto")));
+        ImportZip.Visibility = Paths.Kind == InstallKind.Installed ? Visibility.Visible : Visibility.Collapsed;
+        UpdateModeBox.ItemsSource = items;
+        UpdateModeBox.SelectedItem = items.FirstOrDefault(x => x.Mode == UpdateService.Mode);
+        _updateReady = true;
+        ShowUpdateNote();
+    }
+
+    private void ShowUpdateNote()
+    {
+        var u = _host.Updates;
+        UpdateNote.Text = u.LastError is { } err ? L.F("update.error", err)
+            : u.Offer is { } o ? L.F("update.available", o.Version)
+            : u.LastCheck is { } t ? L.F("update.latest", AppInfo.Version) + " · " + L.F("update.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
+            : !UpdateService.CanSelfUpdate ? L.T("update.zipNote") : "";
+    }
+
+    /// <summary>
+    /// Chép data\ của bản zip cũ sang bản cài (DataImport.Plan chọn file), rồi khởi động lại để app đọc dữ liệu mới.
+    /// Người dùng chọn thư mục bản zip (thư mục chứa data\ hoặc chính data\, hay app\ bên trong).
+    /// </summary>
+    private void OnImportZip(object sender, RoutedEventArgs e)
+    {
+        var owner = Window.GetWindow(this)!;
+        var d = new Microsoft.Win32.OpenFolderDialog { Title = L.T("update.importPick") };
+        if (d.ShowDialog(owner) != true) return;
+        var picked = d.FolderName;
+        var src = new[] { Path.Combine(picked, "data"), picked, Path.Combine(Path.GetDirectoryName(picked) ?? picked, "data") }
+            .FirstOrDefault(x => File.Exists(Path.Combine(x, "config.json")) && !string.Equals(Path.GetFullPath(x), Path.GetFullPath(Paths.Data), StringComparison.OrdinalIgnoreCase));
+        if (src is null) { MessageBox.Show(owner, L.T("update.importNone"), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Information); return; }
+        if (MessageBox.Show(owner, L.F("update.importConfirm", src), AppInfo.Name, MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.Cancel) != MessageBoxResult.OK)
+            return;
+        try
+        {
+            var files = DataImport.Plan(Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories).Select(f => Path.GetRelativePath(src, f)));
+            foreach (var rel in files)
+            {
+                var to = Path.Combine(Paths.Data, rel);
+                Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                File.Copy(Path.Combine(src, rel), to, overwrite: true);
+            }
+            Log.Info($"Đã chép {files.Count} file dữ liệu từ bản zip");
+        }
+        catch (Exception x) when (x is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(owner, L.F("update.importFailed", x.Message), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        OnRestart(sender, e);
+    }
+
+    private void OnUpdateMode(object sender, SelectionChangedEventArgs e)
+    {
+        if (_updateReady && UpdateModeBox.SelectedItem is ModeItem m) UpdateService.SetMode(m.Mode);
+    }
+
+    private async void OnUpdateCheck(object sender, RoutedEventArgs e)
+    {
+        UpdateCheck.IsEnabled = false;
+        UpdateNote.Text = L.T("update.checking");
+        UpdateOffer? offer;
+        try { offer = await _host.Updates.CheckAsync(manual: true, default); }
+        finally { UpdateCheck.IsEnabled = true; }
+        ShowUpdateNote();
+        if (offer is not null) new UpdateWindow(_host.Updates, offer) { Owner = Window.GetWindow(this) }.ShowDialog();
     }
 
     public string Title => L.T("nav.settings");
@@ -64,6 +151,8 @@ public partial class SettingsPage : UserControl, IPage
         MaxMb.Text = Config.Int("sources.lms.maxFileMB", 200).ToString(CultureInfo.InvariantCulture);
         AutoDownload.IsChecked = Config.Bool("sources.lms.autoDownload", true);
         AutoExtract.IsChecked = Config.Bool("archives.extract", true);
+        SaveQuizzes.IsChecked = Config.Bool("sources.lms.saveQuizzes", true);
+        SaveQuizzes.Visibility = AppInfo.Practice ? Visibility.Visible : Visibility.Collapsed;
         Remember.Content = L.F("settings.remember", RememberDays);
         Remember.IsChecked = Config.Int("sso.rememberDays", RememberDays) > 0;
     }
@@ -79,8 +168,12 @@ public partial class SettingsPage : UserControl, IPage
         catch (IOException x) { SaveText.Text = L.F("settings.saveError", x.Message); }
     }
 
+    /// <summary>Tự lưu quiz LMS: lưu ngay (cùng giá trị với công tắc ở Kho quiz), không chờ nút Lưu.</summary>
+    private void OnSaveQuizzes(object sender, RoutedEventArgs e) => Config.Set("sources.lms.saveQuizzes", SaveQuizzes.IsChecked == true);
+
     public void Refresh()
     {
+        SaveQuizzes.IsChecked = Config.Bool("sources.lms.saveQuizzes", true);   // có thể vừa đổi ở Kho quiz
         var s = _host.State;
         var need = s.Account;
         AccountText.Text = need == AccountNeed.None ? (s.Lms?.User is { } u ? L.F("settings.signedInAs", u) : L.T("settings.signedIn")) : L.T("settings.needLogin");

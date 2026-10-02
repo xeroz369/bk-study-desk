@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- BK Study Desk đa nền tảng (Windows, Linux, macOS) bằng Avalonia 12. Bước 2 của PLAN-DA-NEN-TANG.md:
+       khung app + các trang chỉ đọc, dùng lõi chung BKStudyDesk.Core. App WPF (src\SoHocTap) vẫn là bản chính. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BKStudyDesk.Desktop</RootNamespace>
+    <AssemblyName>BKStudyDesk</AssemblyName>
+    <Product>BK Study Desk</Product>
+    <Version Condition="'$(Version)' == ''">1.0.6</Version>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
+    <!-- ICU đi kèm app: Linux/macOS không cần cài libicu, ngày tháng tiếng Việt vẫn đúng. -->
+    <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
+    <!-- Bộ cài AppImage và cập nhật (Velopack), cùng phiên bản với app WPF. -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\app.ico" />
+  </ItemGroup>
+
+</Project>

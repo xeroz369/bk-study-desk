@@ -1,15 +1,15 @@
-# Language pack
+# Gói ngôn ngữ (language pack)
 
-Mọi chữ trên UI đều lấy từ language pack trong folder này.
+Mọi chữ trên giao diện đều lấy từ các gói ngôn ngữ trong thư mục này.
 
 - Mỗi ngôn ngữ là một file JSON, đặt tên theo mã ngôn ngữ:
   - `vi.json`: tiếng Việt, ngôn ngữ **gốc** và mặc định;
   - `en.json`: tiếng Anh.
-- Folder này được copy ra cạnh exe, nên sửa hay thêm pack không cần build lại app.
+- Thư mục này được chép ra cạnh file exe, nên sửa hay thêm gói không cần build lại app.
 
-## Format
+## Định dạng
 
-Mỗi pack là một JSON object phẳng gồm các cặp `"key": "text"`. File lưu UTF-8, indent 2 dấu cách:
+Mỗi gói là một JSON object phẳng gồm các cặp `"key": "chữ"`. File lưu UTF-8, thụt lề 2 dấu cách:
 
 ```json
 {
@@ -21,13 +21,13 @@ Mỗi pack là một JSON object phẳng gồm các cặp `"key": "text"`. File 
 }
 ```
 
-- **Key** có dạng `nhóm.tên`, ví dụ `nav.today`, `settings.save`. Chỉ dịch value, **đừng đổi key**.
-  - Các nhóm: `app`, `nav`, `status`, `info`, `login`, `common`, `col` (header cột bảng), `home`, `calendar`, `subjects`, `download`, `grades`, `curriculum`, `services`, `settings`, `tray`, `notify`, `timeline`, `format`, `kind`, `files`.
+- **Key** có dạng `nhóm.tên`, ví dụ `nav.today`, `settings.save`. Chỉ dịch phần value, **không đổi key**.
+  - Các nhóm: `app`, `nav`, `status`, `info`, `login`, `common`, `col` (tiêu đề cột bảng), `home`, `calendar`, `subjects`, `download`, `grades`, `curriculum`, `services`, `settings`, `tray`, `notify`, `timeline`, `format`, `kind`, `files`.
 - **`_meta.name`**: tên ngôn ngữ hiện trong Cài đặt.
 - **`_meta.culture`**: culture .NET dùng để format số và ngày, ví dụ `vi-VN`, `en-US`, `fr-FR`.
-- **Placeholder** `{0}`, `{1}`…: app tự điền số, tên hay ngày vào đây (theo [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).
-  - Phải giữ đủ placeholder của bản gốc. Đổi thứ tự thì được.
-  - Một số placeholder có kèm format:
+- **Chỗ trống** `{0}`, `{1}`… (placeholder): app tự điền số, tên hay ngày vào đây (theo [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).
+  - Giữ đủ các chỗ trống của bản gốc; đổi thứ tự thì được.
+  - Một số chỗ trống có kèm định dạng:
     - `{0:0}`: số nguyên;
     - `{1:dd/MM}`: ngày/tháng;
     - `{0:N0}`: có dấu phân cách hàng nghìn.
@@ -37,21 +37,21 @@ Mỗi pack là một JSON object phẳng gồm các cặp `"key": "text"`. File 
 
 ## Khi thiếu key
 
-- Pack đang chọn thiếu key nào thì app fallback về chữ tiếng Việt trong `vi.json`.
-- Thiếu luôn trong `vi.json` thì app hiện chính cái key, ví dụ `settings.save`. Nhờ vậy dễ thấy chỗ chưa dịch.
-- Pack lỗi (JSON sai cú pháp) bị bỏ qua và app dùng tiếng Việt. Lý do được ghi vào log `data\app.log`.
+- Gói đang chọn thiếu key nào thì app dùng chữ tiếng Việt trong `vi.json`.
+- Thiếu luôn trong `vi.json` thì app hiện chính cái key, ví dụ `settings.save`. Nhờ vậy dễ thấy chỗ còn thiếu.
+- Gói lỗi (JSON sai cú pháp) bị bỏ qua và app dùng tiếng Việt; lý do ghi trong `data\app.log`.
 
 ## Thêm ngôn ngữ
 
 1. Copy `vi.json` thành `<mã>.json`, ví dụ `fr.json`.
 2. Sửa `_meta.name` (ví dụ `"Français"`) và `_meta.culture` (ví dụ `"fr-FR"`).
-3. Dịch các value. Giữ nguyên key và placeholder.
+3. Dịch các value. Giữ nguyên key và các chỗ trống `{0}`, `{1}`…
 4. Mở lại app.
 5. Vào **Cài đặt → Ngôn ngữ**, chọn ngôn ngữ mới, rồi bấm **Khởi động lại ngay**.
 
-Lựa chọn được lưu trong `data\config.json`, ở key `app.language`. PR thêm pack mới đều welcome.
+Lựa chọn được lưu trong `data\config.json`, ở key `app.language`. Rất hoan nghênh PR thêm ngôn ngữ mới.
 
-**Khi thêm hay sửa chữ trên UI:** viết `vi.json` trước, rồi mới thêm bản dịch vào các pack khác. Chữ trong UI là cho sinh viên đọc, nên viết tiếng Việt dễ hiểu và hạn chế thuật ngữ.
+**Khi thêm hay sửa chữ trên giao diện:** sửa `vi.json` trước, rồi mới thêm bản dịch vào các gói khác. Người đọc là sinh viên, nên viết tiếng Việt dễ hiểu, ít thuật ngữ.
 
 ---
 

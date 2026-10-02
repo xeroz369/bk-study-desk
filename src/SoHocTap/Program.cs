@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using SoHocTap.Core;
 using SoHocTap.Shell;
 
@@ -12,8 +12,18 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+#if PUBLIC_EDITION
+        // Velopack phải chạy đầu tiên: lúc cài/gỡ/cập nhật, Update.exe gọi exe với tham số riêng, xử lý xong là thoát luôn.
+        // Không tự cài bản đã tải khi mở app: chỉ cài khi người dùng bấm, hoặc lúc thoát ở chế độ tự động (UpdateService).
+        // Gỡ app: xóa mục tự chạy. Dữ liệu (…\BKStudyDesk.Data) do bộ gỡ tiếng Việt (Uninstall.exe) xóa nếu người dùng chọn.
+        Velopack.VelopackApp.Build()
+            .SetAutoApplyOnStartup(false)
+            .OnBeforeUninstallFastCallback(_ => Startup.Remove())
+            .Run();
+        Updates.UpdateService.EnsureUninstaller();
+#endif
         // Single instance: mở bản thứ hai thì nó chỉ đưa window đang mở lên trước rồi thoát.
-        using var mutex = new Mutex(initiallyOwned: true, AppInfo.Id, out bool first);
+        using var mutex = new Mutex(initiallyOwned: true, AppInfo.InstanceKey, out bool first);
         // Restart (Cài đặt → Ngôn ngữ): bản cũ đang thoát, đợi nó nhả mutex tối đa 5 giây.
         if (!first && args.Contains("--restart"))
         {
@@ -33,8 +43,14 @@ internal static class Program
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Error("Unhandled exception", e.ExceptionObject as Exception);
         Log.Info("App khởi động");
         // Khóa ACL data\ cho riêng tài khoản Windows hiện tại (ổ D: thường để Everyone full quyền).
-        // Bản Store để data trong LocalAppData, vốn đã chỉ của user này.
-        if (!AppPackage.IsPackaged) SecretStore.Lockdown(Paths.Data);
+        // Bản Store và bản cài nằm trong LocalAppData, vốn chỉ của user này; bản zip/local thì tự khóa.
+        if (Paths.Kind == InstallKind.Portable)
+        {
+            SecretStore.Lockdown(Paths.Data);
+            // Code và nội dung app (exe, ui\, content\) cũng chỉ cho user này ghi: nếu không, user khác trên máy thay được
+            // dll/exe (chạy lại lúc đăng nhập qua Run key) hay chèn script vào ui\. Chạy nền vì lần đầu phải áp quyền cho cả cây.
+            _ = Task.Run(() => { foreach (var d in new[] { AppContext.BaseDirectory, Paths.Ui, Paths.Content }.Distinct()) SecretStore.Lockdown(d); });
+        }
         var app = new App { StartInTray = args.Contains(Startup.TrayArg) || Startup.LaunchedAtLogin };
         app.InitializeComponent();
         app.Run();

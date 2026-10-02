@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/xeroz369/studypack/studypack-v1.schema.json",
+  "title": "Study Pack v1 (gói luyện tập)",
+  "description": "Study Pack v1 dạng JSON (dạng lưu trong app). Dạng chính để soạn và chia sẻ là Study Markdown: xem SPEC.md.",
+  "type": "object",
+  "required": [
+    "format",
+    "id",
+    "title",
+    "version",
+    "course",
+    "authors",
+    "units"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "format": {
+      "const": "studypack/1"
+    },
+    "id": {
+      "$ref": "#/$defs/id",
+      "description": "Id duy nhất của gói, cũng là tên file: <trường>-<mã môn>-<chủ đề>, vd. hcmut-mt1009-chia-doi"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "language": {
+      "type": "string",
+      "description": "vi, en…",
+      "default": "vi"
+    },
+    "course": {
+      "type": "object",
+      "required": [
+        "code",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Mã môn trên MyBK/LMS, vd. MT1009. App ghép gói vào môn cùng mã."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "school": {
+          "type": "string",
+          "description": "vd. HCMUT"
+        }
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contact": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "description": "vd. CC-BY-SA-4.0"
+    },
+    "createdWith": {
+      "type": "string",
+      "description": "Người soạn tay, hoặc tên AI/model đã dùng"
+    },
+    "verified": {
+      "type": "object",
+      "required": [
+        "method"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "Đáp án đã kiểm bằng gì: python, máy tính fx-580, giải tay, đối chiếu đáp án chính thức…"
+        },
+        "by": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string",
+          "description": "YYYY-MM-DD"
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "lessons"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lessons": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/lesson"
+            }
+          }
+        }
+      }
+    },
+    "exams": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/exam"
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Mặc định xáo câu/phương án khi làm",
+      "properties": {
+        "shuffleQuestions": {
+          "type": "boolean"
+        },
+        "shuffleOptions": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "description": "HTML đơn giản + TeX \\( \\) \\[ \\]. Trong JSON viết \\\\frac, \\\\right… (hai dấu \\)."
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": [
+        "prompt",
+        "solution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id",
+          "description": "Mặc định q1, q2… theo thứ tự"
+        },
+        "type": {
+          "enum": [
+            "single",
+            "multi",
+            "truefalse",
+            "numeric",
+            "short"
+          ],
+          "description": "Mặc định single"
+        },
+        "tag": {
+          "type": "string",
+          "description": "Nhãn nguồn ngắn, vd. 'GK251 câu 8', 'Slide tr.36', 'Tự soạn'"
+        },
+        "prompt": {
+          "$ref": "#/$defs/text"
+        },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "description": "single, multi: 2–8 phương án"
+        },
+        "answer": {
+          "description": "single: chỉ số đúng (từ 0) · truefalse: true/false · numeric: đáp số",
+          "type": [
+            "integer",
+            "number",
+            "boolean"
+          ]
+        },
+        "solution": {
+          "$ref": "#/$defs/text",
+          "description": "Lời giải đủ để tự làm lại, không chỉ đáp số"
+        },
+        "difficulty": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1,
+          "description": "multi: các chỉ số đúng"
+        },
+        "tolerance": {
+          "type": "number",
+          "minimum": 0,
+          "description": "numeric: sai số tuyệt đối cho phép"
+        },
+        "unit": {
+          "type": "string",
+          "description": "numeric: đơn vị hiển thị"
+        },
+        "accept": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "description": "short: các đáp án chữ được chấp nhận"
+        },
+        "keepOrder": {
+          "type": "boolean",
+          "description": "không xáo phương án của câu này"
+        }
+      }
+    },
+    "lesson": {
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "body"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "body": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          }
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/question"
+          }
+        }
+      }
+    },
+    "exam": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "minutes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minutes": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 600
+        },
+        "scoring": {
+          "type": "object",
+          "required": [
+            "count",
+            "right",
+            "wrong"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "right": {
+              "type": "number"
+            },
+            "wrong": {
+              "type": "number",
+              "description": "Âm nếu sai bị trừ điểm"
+            }
+          }
+        },
+        "questionRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "<id bài>.<id câu> trong cùng gói"
+          }
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/question"
+          }
+        }
+      }
+    }
+  }
+}

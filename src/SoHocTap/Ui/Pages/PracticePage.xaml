@@ -1,0 +1,9 @@
+<!-- Luyện tập: bài học, câu hỏi có chấm, ôn câu sai, thi thử. Nội dung có công thức toán nên render bằng WebView2 (MathJax),
+     nằm gọn trong vùng page; phần còn lại của app là WPF. -->
+<UserControl x:Class="SoHocTap.Ui.Pages.PracticePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
+    <!-- Nền trong suốt để khung HTML vẽ thẳng lên nền window; card bên trong dùng cùng màu card Fluent (app.css, :root.embed). -->
+    <wv2:WebView2 x:Name="Web" DefaultBackgroundColor="Transparent" Margin="-4,0,-4,0" />
+</UserControl>

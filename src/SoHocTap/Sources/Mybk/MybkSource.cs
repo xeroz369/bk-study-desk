@@ -83,12 +83,29 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
             ["fees"] = NormFees(extra.GetValueOrDefault("fees") as JsonArray),
             ["registered"] = NormRegistered(extra.GetValueOrDefault("registered") as JsonArray, sem),
         };
-        // Đăng ký môn là trang HTML riêng nên để cuối cùng (WebView ẩn phải rời /app).
-        try { output["registration"] = ParseRegistration(await browser.PageAsync(Config.Str("sources.mybk.registration"), ct)); }
-        catch (Exception e) when (e is not OperationCanceledException)
+        // Đăng ký môn là trang HTML riêng nên để cuối cùng (WebView ẩn phải rời /app). Trang này nằm trên hệ thống đăng ký môn,
+        // hay quá tải vào đợt đăng ký, nên chỉ tải lại mỗi ngày một lần; giữa chừng dùng bản đã lưu.
+        var prev = JsonStore.Read(DataFile);
+        var regAt = prev?["registrationAt"]?.GetValue<long>() ?? 0;
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (prev?["registration"] is JsonArray cached && now - regAt < 86400)
         {
-            log($"  đăng ký môn: {e.Message}");
-            output["registration"] = JsonStore.Read(DataFile)?["registration"]?.DeepClone() ?? new JsonArray();
+            output["registration"] = cached.DeepClone();
+            output["registrationAt"] = regAt;
+        }
+        else
+        {
+            try
+            {
+                output["registration"] = ParseRegistration(await browser.PageAsync(Config.Str("sources.mybk.registration"), ct));
+                output["registrationAt"] = now;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                log($"  đăng ký môn: {e.Message}");
+                output["registration"] = prev?["registration"]?.DeepClone() ?? new JsonArray();
+                output["registrationAt"] = regAt;
+            }
         }
         JsonStore.Write(DataFile, output);
         log($"Xong: {output["schedule"]!.AsArray().Count} buổi học, {output["exams"]!.AsArray().Count} lịch thi, {output["grades"]!.AsArray().Count} môn có điểm");

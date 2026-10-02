@@ -19,7 +19,8 @@ internal static class Startup
     public const string TrayArg = "--tray";
     public const string TaskId = "BKStudyDeskStartup";
 
-    private static string Command => $"\"{Environment.ProcessPath}\" {TrayArg}";
+    private static string ExePath => Paths.LongPath(Environment.ProcessPath ?? "");
+    private static string Command => $"\"{ExePath}\" {TrayArg}";
 
     /// <summary>Bản Store được Windows mở lúc đăng nhập (StartupTask): chạy dưới tray như --tray.</summary>
     public static bool LaunchedAtLogin
@@ -48,7 +49,7 @@ internal static class Startup
             }
 #endif
             using var k = Registry.CurrentUser.OpenSubKey(RunKey);
-            return k?.GetValue(AppInfo.Id) is string v && v.Contains(Environment.ProcessPath ?? "\0", StringComparison.OrdinalIgnoreCase);
+            return k?.GetValue(AppInfo.Id) is string v && v.Contains(ExePath.Length > 0 ? ExePath : "\0", StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -86,37 +87,28 @@ internal static class Startup
         return Enabled;
     }
 
-    /// <summary>App bị dời chỗ (vd. giải nén ra folder khác) thì cập nhật path trong Run, nếu đang bật. Bản Store không cần.</summary>
+    /// <summary>Gỡ app (hook của Velopack): xóa mục Run nếu nó trỏ tới chính exe này, không đụng bản khác cùng tên.</summary>
+    public static void Remove()
+    {
+        try
+        {
+            using var k = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
+            if (k?.GetValue(AppInfo.Id) is string v && ExePath.Length > 0 && v.Contains(ExePath, StringComparison.OrdinalIgnoreCase))
+                k.DeleteValue(AppInfo.Id);
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException or System.Security.SecurityException or IOException) { }
+    }
+
+    /// <summary>
+    /// App bị dời chỗ (vd. giải nén ra folder khác) thì cập nhật path trong Run, nếu đang bật. Chỉ khi exe cũ không còn:
+    /// exe cũ vẫn còn là một bản khác đang dùng (bản demo, bản thử) thì không đụng vào. Bản Store không cần.
+    /// </summary>
     public static void Refresh()
     {
         if (AppPackage.IsPackaged) return;
         using var k = Registry.CurrentUser.OpenSubKey(RunKey);
-        if (k?.GetValue(AppInfo.Id) is string v && !v.Equals(Command, StringComparison.OrdinalIgnoreCase)) Set(true);
+        if (k?.GetValue(AppInfo.Id) is not string v || v.Equals(Command, StringComparison.OrdinalIgnoreCase)) return;
+        var old = v.StartsWith('"') ? v[1..Math.Max(1, v.IndexOf('"', 1))] : v.Split(' ')[0];
+        if (!File.Exists(old)) Set(true);
     }
-}
-
-/// <summary>Tên và id của bản app. Bản riêng (Sổ học tập, có Luyện tập) và bản public (BK Study Desk) chạy song song được.</summary>
-internal static class AppInfo
-{
-#if PUBLIC_EDITION
-    public const string Id = "BKStudyDesk";
-    public const string Name = "BK Study Desk";
-    public static bool Practice => false;
-#else
-    public const string Id = "HCMUT.SoHocTap";
-    public const string Name = "Sổ học tập";
-    public static bool Practice => true;
-#endif
-
-    // Credit: giữ nguyên khi fork hoặc build lại (MIT yêu cầu giữ thông báo bản quyền). Mục Giới thiệu trong Cài đặt đọc từ đây.
-    public const string Author = "xeroz369";
-    public const string Repo = "https://github.com/xeroz369/bk-study-desk";
-    public const string Issues = Repo + "/issues";
-    public const string License = "MIT";
-    public const string Support = "";
-
-    /// <summary>Version của bản build (bỏ phần "+commit" mà SDK tự gắn).</summary>
-    public static string Version { get; } =
-        (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(typeof(AppInfo).Assembly)
-            ?.InformationalVersion ?? "").Split('+')[0];
 }
