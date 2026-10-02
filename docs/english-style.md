@@ -2,7 +2,7 @@
 
 [Văn phong tiếng Việt](van-phong.md) · **English**
 
-How to write the English documents (the **English** section at the end of each document, English Wiki pages, the English half of release notes) and the English UI (`src/SoHocTap/lang/en.json`). Vietnamese is the source language; English documents are complete translations, not summaries.
+How to write the English documents (`*.en.md`, English Wiki pages, the English half of release notes) and the English UI (`src/SoHocTap/lang/en.json`). Vietnamese is the source language; English documents are complete translations, not summaries.
 
 The main reference is the **Microsoft Writing Style Guide**, because this is a Windows app and Windows uses its terms. The Google developer documentation style guide fills gaps.
 
@@ -30,7 +30,7 @@ The main reference is the **Microsoft Writing Style Guide**, because this is a W
 
 - **Sentence case**: capitalize only the first word and proper nouns. "Install the app", not "Install The App". No period or colon at the end. (MSG, GDG [headings](https://developers.google.com/style/headings))
 - Task headings use a bare verb ("Update the app"); concept headings use a noun phrase ("Security and privacy"). (GDG)
-- Put a language switcher on the first line under the title: `[Tiếng Việt](X.md) · **English**`.
+- Put the language badges on the first line under the title (pattern: [multilanguage-readme-pattern](https://github.com/jonatasemidio/multilanguage-readme-pattern)): `[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](X.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](X.en.md)`.
 
 ## UI text in documents
 
