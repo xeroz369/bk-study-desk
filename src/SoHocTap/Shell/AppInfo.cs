@@ -15,7 +15,6 @@ internal static class AppInfo
     // Credit: giữ nguyên khi fork hoặc build lại (giấy phép yêu cầu giữ dòng Required Notice ghi tác giả). Mục Giới thiệu đọc từ đây.
     public const string Author = "xeroz369";
     public const string Repo = "https://github.com/xeroz369/bk-study-desk";
-    public const string Kofi = "https://ko-fi.com/F1F3SN4UE";
     public const string Issues = Repo + "/issues";
     public const string License = "PolyForm Noncommercial 1.0.0";
     /// <summary>Link support (để trống: app không hiện gì; thông tin support chỉ đăng trên GitHub).</summary>

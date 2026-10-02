@@ -2,7 +2,7 @@
 
 [Tiếng Việt](PRIVACY.md) · **English**
 
-> Translated from PRIVACY.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from PRIVACY.md (Vietnamese) for BK Study Desk 1.1.3.
 
 Updated: 3 October 2026
 

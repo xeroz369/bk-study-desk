@@ -26,6 +26,4 @@ public partial class AboutPage : UserControl, IPage
     // Tài liệu có bản tiếng Anh riêng (*.en.md): giao diện tiếng Anh thì mở bản tiếng Anh.
     private static string Doc(string name) => AppInfo.Repo + "/blob/main/" + (L.Code == "en" ? name.Replace(".md", ".en.md", StringComparison.Ordinal) : name);
     private void OnPrivacy(object sender, RoutedEventArgs e) => OpenLink(Doc("PRIVACY.md"));
-    private void OnKofi(object sender, RoutedEventArgs e) => OpenLink(AppInfo.Kofi);
-    private void OnSupport(object sender, RoutedEventArgs e) => OpenLink(Doc("README.md") + (L.Code == "en" ? "#support" : "#ủng-hộ"));
 }

@@ -2,7 +2,7 @@
 
 [Tiếng Việt](CODE_OF_CONDUCT.md) · **English**
 
-> Translated from CODE_OF_CONDUCT.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from CODE_OF_CONDUCT.md (Vietnamese) for BK Study Desk 1.1.3.
 
 This project is for students helping each other learn. In issues, pull requests and the Wiki:
 

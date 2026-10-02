@@ -481,8 +481,5 @@
   "calendar.exportNoData": "Chưa có dữ liệu MyBK. Đăng nhập HCMUT rồi đồng bộ trước.",
   "calendar.exportEmpty": "Không có buổi học hay lịch thi nào để xuất.",
   "calendar.exportDone": "Đã xuất {0} sự kiện vào {1}.\n\nNhập vào Google Calendar: mở calendar.google.com → Cài đặt → Nhập và xuất → chọn file này. Nên tạo một lịch riêng (ví dụ \"Thời khóa biểu\") rồi nhập vào đó để dễ xóa khi đổi kỳ.",
-  "calendar.exportFailed": "Không lưu được file. Chọn thư mục khác rồi thử lại. (Chi tiết: {0})",
-  "about.supportTitle": "Ủng hộ",
-  "about.support": "App miễn phí và sẽ tiếp tục được sửa lỗi, thêm tính năng. Nếu app giúp ích cho bạn, bạn có thể mời người làm app một ly cà phê. Ủng hộ là tự nguyện, không mở khóa gì thêm.",
-  "about.supportQr": "Mã QR MoMo / ngân hàng"
+  "calendar.exportFailed": "Không lưu được file. Chọn thư mục khác rồi thử lại. (Chi tiết: {0})"
 }

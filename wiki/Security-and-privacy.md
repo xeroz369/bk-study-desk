@@ -1,6 +1,6 @@
 [Tiếng Việt](Bảo-mật-và-quyền-riêng-tư) · **English**
 
-> Translated from Bảo-mật-và-quyền-riêng-tư (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from Bảo-mật-và-quyền-riêng-tư (Vietnamese) for BK Study Desk 1.1.3.
 
 - Your password is typed only on the university SSO page; the app never reads it. If you choose **Save** when asked, WebView2 stores it encrypted on your PC for autofill.
 - The LMS token is encrypted with Windows DPAPI; cookies are encrypted by WebView2. Data lives in `%LOCALAPPDATA%`, readable only by your Windows account (plus SYSTEM and Administrators).

@@ -1,6 +1,6 @@
 [Tiếng Việt](Cập-nhật) · **English**
 
-> Translated from Cập-nhật (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from Cập-nhật (Vietnamese) for BK Study Desk 1.1.3.
 
 **Installed from the Microsoft Store:** the Store updates the app; there's nothing to set in the app. New versions reach the Store after Microsoft review (sometimes a few days), so the Store can lag behind GitHub. The rest of this page is for the GitHub installer.
 
