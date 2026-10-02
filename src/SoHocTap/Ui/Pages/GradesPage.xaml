@@ -46,7 +46,7 @@
             </TabItem>
             <TabItem Header="{ui:T grades.tabReg}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
-                    <StackPanel>
+                    <StackPanel Margin="0,0,14,0">
                         <TextBlock x:Name="RegTitle" Style="{StaticResource SectionTitle}" />
                         <DataGrid x:Name="Registered" Margin="0,0,0,16" />
                         <TextBlock Text="{ui:T grades.fees}" Style="{StaticResource SectionTitle}" />

@@ -50,7 +50,14 @@ public static partial class Organizer
         }
         var btl = Config.Str("subjects.btlMarker");
         if (btl.Length > 0 && fullname.Contains(btl)) part = "BTL";
-        return new SubjectName(Canonical(baseName), code, part);
+        return new SubjectName(SafeFolderName(Canonical(baseName)), code, part);
+    }
+
+    /// <summary>Tên môn lấy từ LMS dùng làm tên thư mục: bỏ ký tự Windows không cho phép, không cho "." hay "..".</summary>
+    internal static string SafeFolderName(string name)
+    {
+        var s = new string(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray()).Trim().TrimEnd('.');
+        return s.Length == 0 || s.All(c => c == '.') ? "_" : s;
     }
 
     public static string TermOf(string fullname)
@@ -160,8 +167,15 @@ public static partial class Organizer
         var tmp = Path.Combine(Paths.Data, "tmp", "unz-" + Guid.NewGuid().ToString("N"));
         try
         {
+            // Zip bomb: xem tổng dung lượng khai trong file nén trước khi giải (archives.maxMB, mặc định 2048 MB).
+            var limit = Config.Int("archives.maxMB", 2048) * 1024L * 1024;
+            if (ListSize(exe, path) is not { } size || size > limit)
+            {
+                log($"  bỏ qua {Path.GetFileName(path)}: không đọc được dung lượng hoặc lớn hơn {limit >> 20} MB khi giải nén");
+                return null;
+            }
             if (!Run7z(exe, path, tmp)) { log($"  không giải nén được {Path.GetFileName(path)}"); return null; }
-            var inside = Directory.EnumerateFiles(tmp, "*", SearchOption.AllDirectories).ToList();
+            var inside = Directory.EnumerateFiles(tmp, "*", NoLinks).ToList();
             if (Directory.Exists(dest))
             {
                 var have = HashesIn(dest).Keys.ToHashSet();
@@ -172,7 +186,7 @@ public static partial class Organizer
             var tops = Directory.GetFileSystemEntries(tmp);
             var src = tops.Length == 1 && Directory.Exists(tops[0]) ? tops[0] : tmp;
             int kept = 0;
-            foreach (var f in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories).ToList())
+            foreach (var f in Directory.EnumerateFiles(src, "*", NoLinks).ToList())
             {
                 var d = Path.Combine(dest, Path.GetRelativePath(src, f));
                 if (known is null) { MoveFile(f, UniquePath(d)); kept++; }
@@ -186,6 +200,28 @@ public static partial class Organizer
         {
             try { if (Directory.Exists(tmp)) Directory.Delete(tmp, recursive: true); } catch (IOException) { }
         }
+    }
+
+    /// <summary>Duyệt file sau khi giải nén: bỏ qua symlink và junction (file nén có thể chứa link trỏ ra ngoài thư mục tạm).</summary>
+    private static readonly EnumerationOptions NoLinks = new()
+    {
+        RecurseSubdirectories = true,
+        AttributesToSkip = FileAttributes.ReparsePoint,
+        IgnoreInaccessible = true,
+    };
+
+    /// <summary>Tổng dung lượng sau giải nén theo danh sách của 7-Zip (`7z l -slt`); null nếu không đọc được.</summary>
+    private static long? ListSize(string exe, string archive)
+    {
+        var psi = new ProcessStartInfo(exe) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (var a in new[] { "l", "-slt", "-ba", archive }) psi.ArgumentList.Add(a);
+        using var p = Process.Start(psi)!;
+        long total = 0;
+        string? line;
+        while ((line = p.StandardOutput.ReadLine()) is not null)
+            if (line.StartsWith("Size = ", StringComparison.Ordinal) && long.TryParse(line.AsSpan(7), out var n)) total += n;
+        p.WaitForExit();
+        return p.ExitCode == 0 ? total : null;
     }
 
     private static bool Run7z(string exe, string archive, string outDir)
@@ -204,24 +240,6 @@ public static partial class Organizer
         var dest = UniquePath(Path.Combine(Config.Folder("archiveArchives"), Paths.RelativeToStudy(path)));
         MoveFile(path, dest);
         return dest;
-    }
-
-    /// <summary>Giải nén mọi file nén trong các thư mục môn. Trả về (file gốc, folder giải nén, chỗ cất file gốc).</summary>
-    public static List<(string Original, string? Folder, string Archived)> ExtractAll(Action<string> log)
-    {
-        var done = new List<(string, string?, string)>();
-        if (!Config.Bool("archives.extract", true) || !Directory.Exists(SubjectsRoot)) return done;
-        foreach (var subject in Directory.GetDirectories(SubjectsRoot))
-        {
-            Dictionary<string, string>? known = null;
-            foreach (var f in Directory.EnumerateFiles(subject, "*", SearchOption.AllDirectories).Where(IsArchive).ToList())
-            {
-                known ??= HashesIn(subject);
-                if (ExtractArchive(f, known, log) is { } got) done.Add((f, got.Folder, got.Archived));
-            }
-        }
-        SaveHashCache();
-        return done;
     }
 
     // ------------------------------------------------------------------ nhận file từ thư mục Tải xuống

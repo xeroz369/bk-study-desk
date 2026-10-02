@@ -11,7 +11,7 @@ App Windows nhỏ gọn cho sinh viên **Bách Khoa TP.HCM (HCMUT)**. App gom **
 - **luyện tập**: tự soạn quiz, ôn lại quiz LMS đã nộp, thi thử;
 - lối tắt tới khoảng 30 dịch vụ của trường.
 
-> **Không chính thức.** Đây là project cá nhân, không liên quan và không được trường bảo trợ. App chỉ đọc những gì bạn vốn xem được sau khi đăng nhập.
+> **Không chính thức.** Đây là dự án cá nhân, không liên quan và không được Trường Đại học Bách khoa hay Moodle HQ xác nhận. App dùng tài khoản của chính bạn và chỉ đọc những gì bạn vốn xem được sau khi đăng nhập. Mọi địa chỉ và API app gọi được liệt kê ở Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động). Nếu trường yêu cầu, dự án sẽ thay đổi hoặc dừng tính năng tương ứng.
 
 Giao diện mặc định tiếng Việt, có thêm tiếng Anh. *English summary at the bottom.*
 
@@ -19,9 +19,15 @@ Giao diện mặc định tiếng Việt, có thêm tiếng Anh. *English summar
 
 ## Cài đặt
 
+**Cách 1: Microsoft Store (khuyên dùng).** Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Không có cảnh báo SmartScreen vì Microsoft ký gói; Store tự cập nhật app.
+
+**Cách 2: bộ cài trên GitHub.**
+
 1. Tải `BKStudyDesk-x.y.z-Setup-x64.exe` ở [Releases](../../releases) (máy chip ARM: bản `-Setup-arm64.exe`).
-2. Mở file, chọn thư mục cài, bấm **Cài đặt**. Không cần quyền admin. Windows hiện cảnh báo SmartScreen thì bấm **Thông tin thêm → Vẫn chạy** (chỉ một lần).
+2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm → Vẫn chạy** (chỉ một lần).
 3. Lần mở đầu, chọn cách cập nhật và thư mục lưu tài liệu, rồi **Đăng nhập HCMUT**.
+
+Hai cách cài dùng chung mã nguồn nhưng là hai bản riêng, dữ liệu không dùng chung. Chỉ nên cài một trong hai.
 
 ![Bộ cài](docs/bo-cai.png)
 
@@ -29,7 +35,7 @@ Hướng dẫn chi tiết trên **[Wiki](../../wiki)**: [Cài đặt](../../wiki
 
 ### Sau khi cài
 
-Mở app, bấm **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO của trường. Một lần đăng nhập dùng được cho cả LMS và MyBK.
+Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO của trường. Một lần đăng nhập dùng được cho cả LMS và MyBK.
 
 **Yêu cầu:**
 - Windows 10 1809 trở lên, hoặc Windows 11 (x64 hoặc ARM64).
@@ -47,7 +53,7 @@ Mở app, bấm **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - duyệt thư mục từng môn kiểu File Explorer;
   - xem file mới, deadline, thông báo, sổ điểm và các lớp trên LMS.
   - **Tải tài liệu theo từng mục** của lớp trên LMS, tùy chọn tự giải nén .zip/.rar/.7z.
-  - Bật tự tải: mỗi lần đồng bộ, app tải file mới (cả đề và file đính kèm bài tập), LMS lag vẫn mở được.
+  - Bật tự tải: mỗi lần đồng bộ, app tải file mới (cả đề và file đính kèm bài tập), LMS chậm vẫn mở được.
 - **Điểm và học vụ**:
   - bảng điểm theo học kỳ kèm điểm thành phần;
   - tiến độ CTĐT theo khối kiến thức;
@@ -56,7 +62,7 @@ Mở app, bấm **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - **Tự soạn quiz** cho từng môn, chương, bài. Có đủ 5 dạng câu như quiz LMS (chọn một, chọn nhiều, đúng/sai, điền số, điền chữ), chèn được ảnh và công thức.
   - **Nhờ AI soạn**: app viết sẵn câu lệnh cho AI, bạn chỉ cần dán câu trả lời của AI vào app.
   - **Nhập và xuất** quiz dạng Markdown (`.md`, hoặc `.zip` nếu có ảnh), Moodle XML, GIFT, Aiken. Định dạng file xem ở [`studypack/`](studypack/).
-  - **Lưu lại quiz LMS đã nộp** để xem lại sau, kể cả lúc LMS lag (tắt được trong Cài đặt). App chỉ đọc trang xem lại sau khi bạn nộp, không đụng tới quiz đang làm. Quiz đã đóng thì chia sẻ được.
+  - **Lưu lại quiz LMS đã nộp** để xem lại sau, kể cả lúc LMS chậm (tắt được trong Cài đặt). App chỉ đọc trang xem lại sau khi bạn nộp, không đụng tới quiz đang làm. Quiz đã đóng thì chia sẻ được.
   - **Ôn tập**: mục "Ôn hôm nay" nhắc lại những câu bạn hay sai, nhớ rồi thì giãn lịch ra; có đề thi thử ngẫu nhiên, đánh dấu câu nghi sai và ghi chú riêng.
 - **Dịch vụ**: mở MyBK, LMS, BKPay, đăng ký môn… ngay trong app, dùng chung một lần đăng nhập.
 - **Đăng nhập một lần**: SSO HCMUT một lần là vào được cả LMS và MyBK. Phiên đăng nhập còn hạn thì app tự đăng nhập lại.
@@ -66,7 +72,7 @@ Mở app, bấm **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - phím tắt Ctrl+1…7, F5, Alt+←;
   - biểu tượng ở khay hệ thống, nhắc deadline;
   - tự chạy cùng Windows;
-  - bấm X thì thu xuống khay hệ thống hoặc thoát hẳn, tùy bạn chọn.
+  - chọn X thì thu xuống khay hệ thống hoặc thoát hẳn, tùy bạn chọn.
 - **Chọn thư mục lưu tài liệu** trong Cài đặt.
 - **Ngôn ngữ**: tiếng Việt (gốc) và tiếng Anh. Muốn thêm ngôn ngữ thì thả một file JSON vào `lang\`, xem [`src/SoHocTap/lang/README.md`](src/SoHocTap/lang/README.md).
 
@@ -74,29 +80,32 @@ Mở app, bấm **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
 
 Chính sách đầy đủ: [PRIVACY.md](PRIVACY.md).
 
-- Mật khẩu chỉ gõ trên trang SSO của trường. App không đọc, không lưu mật khẩu.
+- Mật khẩu chỉ gõ trên trang SSO của trường. App không đọc mật khẩu. Nếu bạn chọn Lưu khi cửa sổ đăng nhập hỏi, trình duyệt nhúng WebView2 sẽ lưu mật khẩu (mã hóa trên máy, giống Edge) để tự điền lần sau; không chọn Lưu thì không lưu.
 - Mọi thứ nằm trong thư mục dữ liệu `%LOCALAPPDATA%\BKStudyDesk.Data\data`, không nằm trong thư mục cài:
   - cookie trong `data\webview`, do WebView2 tự mã hóa;
   - token LMS trong `data\secrets\`, **mã hóa bằng Windows DPAPI**. Chép sang máy khác hay tài khoản Windows khác thì không dùng được.
 - Thư mục dữ liệu nằm trong `%LOCALAPPDATA%`, chỉ tài khoản Windows của bạn (cùng SYSTEM và Administrators) mở được.
-- Có thể tắt **Ghi nhớ đăng nhập** trong Cài đặt. Khi đó mỗi lần mở app phải đăng nhập lại.
-- Giới hạn: malware chạy dưới chính tài khoản Windows của bạn vẫn có thể đọc được phiên đăng nhập. App nào trên Windows cũng vậy. Nghi máy dính malware thì bấm **Đăng xuất** rồi đổi mật khẩu HCMUT.
+- **Giữ đăng nhập khi tắt rồi mở lại app** giữ cookie tối đa 8 giờ, bằng giới hạn phiên của máy chủ SSO; tắt được trong Cài đặt.
+- Token LMS lấy bằng luồng đăng nhập có sẵn của Moodle dành cho app di động (`launch.php`, service `moodle_mobile_app`, URL scheme `moodlemobile` của app Moodle chính thức). Chi tiết ở Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động).
+- Giới hạn: malware chạy dưới chính tài khoản Windows của bạn vẫn có thể đọc được phiên đăng nhập. App nào trên Windows cũng vậy. Nghi máy dính malware thì chọn **Đăng xuất** rồi đổi mật khẩu HCMUT.
 - App chỉ gọi API **đọc** và không gửi dữ liệu đi đâu ngoài server của trường (riêng GitHub chỉ được hỏi phiên bản mới khi bạn cho phép). App không bao giờ nộp bài, đăng ký, hủy, thanh toán hay làm quiz thay bạn.
 - App không lưu CCCD, địa chỉ, số điện thoại, ngày sinh hay email cá nhân mà MyBK trả về.
 - Gọi server trường càng ít càng tốt:
   - chưa đăng nhập thì không gọi gì;
-  - LMS chỉ hỏi phần thay đổi, khoảng 20 request mỗi 3 giờ;
+  - LMS mỗi 3 giờ, chỉ đọc lớp học kỳ này và chỉ hỏi phần thay đổi (thường 15–30 request);
   - MyBK đồng bộ 12 giờ một lần;
-  - phiên hết hạn thì chờ hết chu kỳ mới thử lại.
+  - request cách nhau 300 ms; máy chủ báo quá tải thì app chờ theo `Retry-After`;
+  - lỗi thì chờ hết chu kỳ mới tự thử lại (bạn vẫn chọn **Thử lại** được).
 
 ## Tự build
 
 ```powershell
+cd src/ui; npm ci; npm run build; cd ../..     # khung Luyện tập (Svelte), build ra ui/
 dotnet build src/SoHocTap -c Release
 dotnet publish src/SoHocTap -c Release -r win-x64 --self-contained -o publish
 ```
 
-Cần .NET 10 SDK và Windows. Cấu trúc code:
+Cần .NET 10 SDK, Node 24 và Windows. Cấu trúc code:
 
 | Thư mục | Nội dung |
 |---|---|
@@ -111,7 +120,7 @@ Cần .NET 10 SDK và Windows. Cấu trúc code:
 | `src/ui` | khung Luyện tập (Svelte) |
 | `tests/SoHocTap.Tests` | unit test (thư mục app, chính sách cập nhật, chọn thư mục cài) |
 
-Mọi URL của trường, API path, tên thư mục và chu kỳ đồng bộ đều nằm trong config, không hardcode. Xem `Core/DefaultConfig.json`. Lần chạy đầu, app chép file này thành `data\config.json`.
+URL của trường, API path, tên thư mục và chu kỳ đồng bộ nằm trong config (`Core/DefaultConfig.json`), không rải trong code. `data\config.json` chỉ lưu những gì bạn đổi so với mặc định.
 
 ## Đóng góp
 
@@ -125,6 +134,8 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 - **Ủng hộ** người làm app (nút Sponsor) là tự nguyện, không phải mua app.
 
 Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép này.
+
+Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).
 
 ---
 

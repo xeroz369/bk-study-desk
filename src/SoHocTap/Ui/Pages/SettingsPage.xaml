@@ -18,6 +18,8 @@
                         <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0"
                                    Text="{ui:T settings.accountNote}" />
                         <CheckBox x:Name="Remember" Margin="0,10,0,0" Click="OnRemember" />
+                        <CheckBox x:Name="KeepAlive" Margin="0,6,0,0" Content="{ui:T settings.keepAlive}" Click="OnKeepAlive" />
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.keepAlive.note}" />
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -126,6 +128,16 @@
                     </StackPanel>
                     <TextBox x:Name="PlanText" Margin="0,8,0,0" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" MaxHeight="200"
                              VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Visibility="Collapsed" />
+                </StackPanel>
+            </Border>
+
+            <!-- Nhật ký lỗi: log chi tiết chỉ bật khi cần báo lỗi (app.debugLog); không ghi mật khẩu, token, cookie. -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{ui:T settings.debug}" Style="{StaticResource SectionTitle}" />
+                    <CheckBox x:Name="DebugLog" Content="{ui:T settings.debugLog}" Click="OnDebugLog" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.debugNote}" />
+                    <Button Content="{ui:T settings.openLog}" Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnOpenLog" />
                 </StackPanel>
             </Border>
 

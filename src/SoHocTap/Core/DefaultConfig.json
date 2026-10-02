@@ -1,4 +1,5 @@
 {
+  "configVersion": 2,
   "sources": {
     "lms": {
       "site": "https://lms.hcmut.edu.vn",
@@ -16,7 +17,11 @@
         "Lớp Chủ nhiệm"
       ],
       "maxFileMB": 200,
-      "autoDownload": true,
+      "autoDownload": false,
+      "pastTerms": false,
+      "gapMs": 300,
+      "fileGapMs": 1000,
+      "timeoutSeconds": 45,
       "saveQuizzes": true,
       "groupPattern": "(?<![A-Za-z0-9])L[0-9]{2,3}(?![A-Za-z0-9])",
       "announcementDays": 120,
@@ -203,6 +208,8 @@
         "registered": "v1/course-register-results/by-student-code/{mssv}"
       },
       "syncHours": 12,
+      "gapMs": 300,
+      "timeoutSeconds": 45,
       "specialScores": {
         "12": "MT",
         "13": "VT",
@@ -220,7 +227,9 @@
       "account.hcmut.edu.vn",
       "wiki.hcmut.edu.vn"
     ],
-    "rememberDays": 30
+    "rememberDays": 30,
+    "rememberHours": 8,
+    "keepAliveMinutes": 60
   },
   "folders": {
     "root": "",
@@ -248,7 +257,6 @@
     }
   },
   "downloads": {
-    "watch": true,
     "folder": "~/Downloads",
     "extensions": [
       ".pdf",
@@ -287,7 +295,9 @@
     "pdfApp": ""
   },
   "app": {
-    "virtualHost": "sohoc.app",
+    "debugLog": false,
+    "debugLogUntil": 0,
+    "virtualHost": "sohoc.example",
     "schedulerMinutes": 10,
     "language": "vi",
     "closeToTray": true,

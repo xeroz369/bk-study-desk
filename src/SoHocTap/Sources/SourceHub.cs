@@ -16,6 +16,10 @@ public sealed class SourceHub : IDisposable
         public DateTimeOffset StartedAt;
         public string? Error;
         public List<string> Log = [];
+        public string? Step;             // key ngôn ngữ của bước đang làm
+        public int Done, Total;
+        public DateTimeOffset StepShownAt;
+        public List<string> Warnings = [];   // phần không đọc được ở lần đồng bộ gần nhất
     }
 
     private readonly Dictionary<string, ISource> _sources;
@@ -40,10 +44,14 @@ public sealed class SourceHub : IDisposable
         _state = _sources.Keys.ToDictionary(k => k, _ => new State());
         var saved = JsonStore.ReadObject(StateFile);
         foreach (var (name, st) in _state)
-            if (saved[name] is JsonObject o && o["failedAt"]?.GetValue<long>() is { } t)
+            if (saved[name] is JsonObject o)
             {
-                st.FailedAt = DateTimeOffset.FromUnixTimeSeconds(t);
-                st.Error = o["error"]?.GetValue<string>();
+                if (o["failedAt"]?.GetValue<long>() is { } t)
+                {
+                    st.FailedAt = DateTimeOffset.FromUnixTimeSeconds(t);
+                    st.Error = o["error"]?.GetValue<string>();
+                }
+                st.Warnings = (o["warnings"] as JsonArray ?? []).Select(w => w?.GetValue<string>() ?? "").Where(w => w.Length > 0).ToList();
             }
     }
 
@@ -52,8 +60,12 @@ public sealed class SourceHub : IDisposable
         var o = new JsonObject();
         foreach (var (name, st) in _state)
             lock (st)
-                if (st.Error is not null)
-                    o[name] = new JsonObject { ["failedAt"] = st.FailedAt.ToUnixTimeSeconds(), ["error"] = st.Error };
+            {
+                var s = new JsonObject();
+                if (st.Error is not null) { s["failedAt"] = st.FailedAt.ToUnixTimeSeconds(); s["error"] = st.Error; }
+                if (st.Warnings.Count > 0) s["warnings"] = new JsonArray(st.Warnings.Select(w => (JsonNode)w).ToArray());
+                if (s.Count > 0) o[name] = s;
+            }
         JsonStore.Write(StateFile, o);
     }
 
@@ -77,6 +89,10 @@ public sealed class SourceHub : IDisposable
                     ["term"] = s.Term,
                     ["syncing"] = st.Running,
                     ["error"] = st.Error,
+                    ["warnings"] = new JsonArray(st.Warnings.Select(w => (JsonNode)w).ToArray()),
+                    ["step"] = st.Running ? st.Step : null,
+                    ["done"] = st.Done,
+                    ["total"] = st.Total,
                     ["log"] = new JsonArray(st.Log.TakeLast(30).Select(x => (JsonNode)x).ToArray()),
                 };
             }
@@ -96,14 +112,40 @@ public sealed class SourceHub : IDisposable
         {
             if (st.Running || DateTimeOffset.UtcNow - st.StartedAt < MinRestart) return false;
             st.Running = true; st.Error = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
+            st.Step = null; st.Done = st.Total = 0; st.Warnings = [];
         }
         Changed?.Invoke(name, "start");
+        Log.Debug($"Sync {name}: bắt đầu{(force ? " (bấm tay)" : "")}");
         _ = Task.Run(async () =>
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                await src.SyncAsync(line => { lock (st) st.Log.Add(line); }, force, _stop.Token);
+                await src.SyncAsync(line =>
+                {
+                    if (line == SyncSignal.DataReady) { Changed?.Invoke(name, "data"); return; }
+                    if (SyncSignal.TryParseWarn(line, out var warn))
+                    {
+                        lock (st) { if (st.Warnings.Count < 30) st.Warnings.Add(warn); st.Log.Add("  lỗi: " + warn); }
+                        return;
+                    }
+                    if (SyncSignal.TryParseStep(line, out var key, out var done, out var total))
+                    {
+                        bool show;
+                        lock (st)
+                        {
+                            // Đổi bước thì báo ngay; cùng bước chỉ tăng số thì tối đa 4 lần/giây (đỡ vẽ lại giao diện liên tục).
+                            show = key != st.Step || DateTimeOffset.UtcNow - st.StepShownAt > TimeSpan.FromMilliseconds(250) || done == total;
+                            st.Step = key; st.Done = done; st.Total = total;
+                            if (show) st.StepShownAt = DateTimeOffset.UtcNow;
+                        }
+                        if (show) Changed?.Invoke(name, "progress");
+                        return;
+                    }
+                    lock (st) st.Log.Add(line);
+                }, force, _stop.Token);
                 SaveState();
+                Log.Debug($"Sync {name}: xong sau {sw.Elapsed.TotalSeconds:0.0} giây");
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

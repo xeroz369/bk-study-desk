@@ -149,12 +149,31 @@ public partial class SettingsPage : UserControl, IPage
         NotifyHours.Text = Config.Int("notify.hoursBefore", 24).ToString(CultureInfo.InvariantCulture);
         LastHours.Text = Config.Int("notify.lastHours", 2).ToString(CultureInfo.InvariantCulture);
         MaxMb.Text = Config.Int("sources.lms.maxFileMB", 200).ToString(CultureInfo.InvariantCulture);
-        AutoDownload.IsChecked = Config.Bool("sources.lms.autoDownload", true);
+        AutoDownload.IsChecked = Config.Bool("sources.lms.autoDownload", false);
         AutoExtract.IsChecked = Config.Bool("archives.extract", true);
         SaveQuizzes.IsChecked = Config.Bool("sources.lms.saveQuizzes", true);
         SaveQuizzes.Visibility = AppInfo.Practice ? Visibility.Visible : Visibility.Collapsed;
-        Remember.Content = L.F("settings.remember", RememberDays);
+        Remember.Content = L.F("settings.remember", Config.Int("sso.rememberHours", 8));
         Remember.IsChecked = Config.Int("sso.rememberDays", RememberDays) > 0;
+        KeepAlive.IsChecked = Config.Int("sso.keepAliveMinutes", KeepAliveMinutes) > 0;
+        DebugLog.IsChecked = DiagnosticLog.Active();
+    }
+
+    private const int KeepAliveMinutes = 60;
+
+    /// <summary>Giữ phiên SSO khi app mở: lưu ngay sso.keepAliveMinutes (60 hoặc 0 = tắt).</summary>
+    private void OnKeepAlive(object sender, RoutedEventArgs e) => Config.Set("sso.keepAliveMinutes", KeepAlive.IsChecked == true ? KeepAliveMinutes : 0);
+
+    /// <summary>Log chẩn đoán: có hiệu lực ngay, tự tắt sau DiagnosticLog.Days ngày.</summary>
+    private void OnDebugLog(object sender, RoutedEventArgs e) => DiagnosticLog.Set(DebugLog.IsChecked == true);
+
+    /// <summary>Mở Explorer, chọn sẵn app.log để người dùng kéo vào issue/tin nhắn báo lỗi.</summary>
+    private void OnOpenLog(object sender, RoutedEventArgs e)
+    {
+        if (!File.Exists(Log.LogFile)) Log.Info("Mở file log");
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{Log.LogFile}\"")
+        { UseShellExecute = false });
     }
 
     private const int RememberDays = 30;

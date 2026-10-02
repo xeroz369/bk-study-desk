@@ -12,7 +12,9 @@ namespace SoHocTap.Shell;
 /// </summary>
 internal static class WebUi
 {
-    public static string VirtualHost => Config.Str("app.virtualHost", "sohoc.app");
+    // Tên host ảo phải là tên không ai đăng ký được (RFC 6761: .example/.invalid/.test), theo khuyến nghị của
+    // SetVirtualHostNameToFolderMapping: nếu request lỡ không được app trả lời, nó không tới máy chủ của ai trên Internet.
+    public static string VirtualHost => Config.Str("app.virtualHost", "sohoc.example");
     /// <summary>URL của khung HTML. accent là màu accent hiện tại của Windows (#RRGGBB) để khung đồng màu với phần WPF.</summary>
     public static string Url(string hash, string accent = "") =>
         $"https://{VirtualHost}/index.html?embed=1&app={Uri.EscapeDataString(AppInfo.Name)}{(accent.Length > 0 ? "&accent=" + Uri.EscapeDataString(accent) : "")}#{hash}";
@@ -47,6 +49,11 @@ internal static class WebUi
         s.IsSwipeNavigationEnabled = false;
         s.IsGeneralAutofillEnabled = false;
         s.IsPasswordAutosaveEnabled = false;
+        // Không dùng web message, host object, hộp thoại alert/confirm mặc định; không cấp quyền nào (camera, vị trí…).
+        s.IsWebMessageEnabled = false;
+        s.AreHostObjectsAllowed = false;
+        s.AreDefaultScriptDialogsEnabled = false;
+        core.PermissionRequested += (_, e) => e.State = CoreWebView2PermissionState.Deny;
     }
 
     private static async Task RespondAsync(CoreWebView2WebResourceRequestedEventArgs e, ApiRouter router)
@@ -81,6 +88,12 @@ internal static class WebUi
             e.Response = env.CreateWebResourceResponse(new MemoryStream(res.Body), res.Status, res.Status == 200 ? "OK" : "Error",
                 $"Content-Type: {res.ContentType}\nCache-Control: no-store");
         }
-        catch (Exception ex) { Log.Error("Request " + e.Request.Uri, ex); }
+        catch (Exception ex)
+        {
+            // Luôn trả lời ở đây: request không có Response thì WebView2 gửi tiếp ra mạng thật.
+            Log.Error("Request " + Log.Where(e.Request.Uri), ex);
+            var env = await WebHost.EnvironmentAsync();
+            e.Response = env.CreateWebResourceResponse(null, 500, "Error", "Cache-Control: no-store");
+        }
     }
 }

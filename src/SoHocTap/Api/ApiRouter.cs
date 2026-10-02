@@ -27,7 +27,7 @@ public sealed record ApiResponse(int Status, string ContentType, byte[] Body)
 }
 
 /// <summary>
-/// Router cho https://sohoc.app/api/* của khung Luyện tập (HTML nhúng trong trang Luyện tập, xem Shell/WebUi.cs).
+/// Router cho https://sohoc.example/api/* của khung Luyện tập (HTML nhúng trong trang Luyện tập, xem Shell/WebUi.cs).
 /// Chỉ có: kết quả luyện tập, gói luyện tập, mở tài liệu, mở web. Không chứa business logic, không mở port mạng nào.
 /// </summary>
 public sealed partial class ApiRouter(IShellActions shell)
@@ -68,8 +68,9 @@ public sealed partial class ApiRouter(IShellActions shell)
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
+            // Chi tiết lỗi chỉ ghi log, không trả về cho trang (ASVS: không lộ thông tin nội bộ qua thông báo lỗi).
             Log.Error($"API {r.Method} {r.Path}", e);
-            return Task.FromResult(ApiResponse.Error(500, e.Message));
+            return Task.FromResult(ApiResponse.Error(500, "lỗi trong app, xem app.log"));
         }
     }
 
@@ -184,6 +185,7 @@ public sealed partial class ApiRouter(IShellActions shell)
     /// <summary>Lưu kết quả luyện tập; lần ghi đầu tiên mỗi ngày thì backup một bản vào data/backup.</summary>
     private static ApiResponse PutState(string? body)
     {
+        if ((body?.Length ?? 0) > 10_000_000) return ApiResponse.Error(413, "kết quả luyện tập quá lớn");
         if (JsonNode.Parse(body ?? "") is not JsonObject state || state["questions"] is not JsonObject) return ApiResponse.Error(400, "sai định dạng");
         var backup = Paths.DataFile(Path.Combine("backup", $"ket-qua-{DateTime.Now:yyyy-MM-dd}.json"));
         if (File.Exists(StateFile) && !File.Exists(backup))

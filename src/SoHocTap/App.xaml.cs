@@ -27,6 +27,7 @@ public partial class App : Application
             }));
         EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGrid), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((sender, _) => Ui.Grids.RestoreWidths((System.Windows.Controls.DataGrid)sender)));
+        Ui.ScrollBubble.Register();
         var main = new Ui.MainWindow();
         MainWindow = main;
         main.Start(hidden: StartInTray);

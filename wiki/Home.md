@@ -4,8 +4,8 @@ App Windows gom **BK-LMS** và **MyBK** của Bách Khoa TP.HCM vào một cửa
 
 ## Bắt đầu
 
-1. [[Cài đặt]]: tải bộ cài, chọn thư mục, qua cảnh báo SmartScreen.
-2. Mở app, bấm **Đăng nhập HCMUT**, đăng nhập trên trang SSO của trường.
+1. [[Cài đặt]]: cài từ Microsoft Store, hoặc tải bộ cài trên GitHub.
+2. Mở app, chọn **Đăng nhập HCMUT**, đăng nhập trên trang SSO của trường.
 3. [[Luyện tập]]: tự soạn quiz, nhờ AI soạn, ôn quiz LMS đã nộp.
 
 ## Khác

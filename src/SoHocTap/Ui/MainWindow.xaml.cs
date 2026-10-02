@@ -46,7 +46,6 @@ public partial class MainWindow : Window, IDisposable
     private bool _exiting, _trayHintShown;
     private bool _infoClosedFor;
     private string _loginStage = "";
-    private Action? _infoAction;
 
     public MainWindow()
     {
@@ -67,6 +66,9 @@ public partial class MainWindow : Window, IDisposable
         _host = new AppHost(this);
         Nav.ItemsSource = _nav;
         _host.State.Changed += OnState;
+        _host.State.Progress += UpdateStatus;
+        _progressDelay.Tick += (_, _) => { _progressDelay.Stop(); UpdateStatus(); };
+        InfoBar.Closed += OnInfoClose;
         _host.LoginProgress += OnLogin;
         _host.Navigate += Go;
         _host.Updates.Changed += () => Dispatcher.InvokeAsync(ShowUpdateState);
@@ -209,8 +211,16 @@ public partial class MainWindow : Window, IDisposable
 
     /// <summary>Số phím Ctrl+số đang dùng (các mục điều hướng và Cài đặt).</summary>
     internal static int PageKeys => AppInfo.Practice ? 7 : 6;
-    private void OnSettings(object sender, RoutedEventArgs e) => Go("cai-dat");
-    private void OnAbout(object sender, RoutedEventArgs e) => Go("gioi-thieu");
+    // Nghe Checked thay vì Click: UI Automation (trình đọc màn hình, test) bấm ToggleButton qua TogglePattern, chỉ đổi IsChecked
+    // chứ không bắn Click (ToggleButtonAutomationPeer trong dotnet/wpf).
+    private void OnSettings(object sender, RoutedEventArgs e) { if (_current != "cai-dat") Go("cai-dat"); }
+    private void OnAbout(object sender, RoutedEventArgs e) { if (_current != "gioi-thieu") Go("gioi-thieu"); }
+
+    /// <summary>Bấm lại nút của trang đang mở thì giữ nguyên trạng thái chọn (nút là chỉ báo trang hiện tại).</summary>
+    private void OnToggleOff(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Primitives.ToggleButton b && (b == SettingsButton ? "cai-dat" : "gioi-thieu") == _current) b.IsChecked = true;
+    }
     private void OnBack(object sender, ExecutedRoutedEventArgs e) => Back();
 
     internal void Back()
@@ -236,24 +246,51 @@ public partial class MainWindow : Window, IDisposable
 
     internal void Say(string text) => StMessage.Text = text;
 
-    private void OnState()
+    /// <summary>Thanh trạng thái: từng nguồn đang làm bước nào (kèm số), lỗi gì, đồng bộ lúc nào; thanh tiến độ khi đang đồng bộ.</summary>
+    private void UpdateStatus()
     {
         var s = _host.State;
         string Src(string name, string label)
         {
-            if (s.Syncing(name)) return L.F("status.syncing", label);
+            if (s.Syncing(name))
+                return s.Step(name) is { } st
+                    ? L.F("status.step", label, L.T(st.Key)) + (st.Total > 0 ? $" ({st.Done}/{st.Total})" : "")
+                    : L.F("status.syncing", label);
             if (s.Error(name) is { } err) return L.F("status.syncError", label);
             return s.SyncedAt(name) is { } t ? L.F("status.syncedAt", label, Format.DayDiff(t) == 0 ? Format.Hm(t) : Format.DateTime(t)) : L.F("status.neverSynced", label);
         }
-        StLms.Text = Src("lms", "LMS");
-        StLms.ToolTip = s.Error("lms");
-        StMybk.Text = Src("mybk", "MyBK");
-        StMybk.ToolTip = s.Error("mybk");
+        // Lỗi cả lượt hoặc lỗi từng phần: biểu tượng lỗi chuẩn cạnh tên nguồn, chi tiết trong tooltip (và trên InfoBar).
+        void Show(string name, string label, TextBlock text, SeverityIcon icon)
+        {
+            text.Text = Src(name, label);
+            List<string> problems = s.Syncing(name) ? [] : s.Error(name) is { } err ? [AppState.Explain(label, err).Text]
+                : s.Warnings(name).Select(x => x.What).Distinct().ToList();
+            icon.Visibility = problems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            var tip = problems.Count > 0 ? string.Join("\n", problems) : null;
+            text.ToolTip = icon.ToolTip = tip;
+            System.Windows.Automation.AutomationProperties.SetHelpText(text, tip ?? "");
+        }
+        Show("lms", "LMS", StLms, StLmsIcon);
+        Show("mybk", "MyBK", StMybk, StMybkIcon);
         StAccount.Text = L.T(s.Account == AccountNeed.None ? "status.signedIn" : "status.signedOut");
         var syncing = s.Syncing("lms") || s.Syncing("mybk");
         SyncButton.IsEnabled = !syncing;
         SyncText.Text = L.T(syncing ? "nav.syncing" : "nav.sync");
-        if (!syncing && StMessage.Text == L.T("status.syncStarted")) Say(L.T("status.synced"));
+        // Hết đồng bộ: nói đúng kết quả, có nguồn lỗi thì không ghi "Đã đồng bộ".
+        if (!syncing && StMessage.Text == L.T("status.syncStarted")) Say(L.T(SyncFailure() is null ? "status.synced" : "status.syncHadError"));
+
+        // Thanh tiến độ không xác định: các bước đếm riêng nên thanh xác định sẽ quay về 0 giữa chừng ("Don't restart progress").
+        // Chỉ hiện khi đồng bộ đã quá 1 giây (Fluent 2 wait UX: dưới 1 giây không hiện chỉ báo), số đếm nằm ở chữ bên cạnh.
+        if (!syncing) _syncSince = null;
+        else if (_syncSince is null) { _syncSince = DateTime.UtcNow; _progressDelay.Start(); }
+        StProgress.IsIndeterminate = true;
+        StProgressItem.Visibility = syncing && DateTime.UtcNow - _syncSince >= TimeSpan.FromSeconds(1) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnState()
+    {
+        var s = _host.State;
+        UpdateStatus();
 
         var exam = s.Timeline.FirstOrDefault(e => e.Kind == "exam" && e.Time > Format.Now);
         StExam.Text = exam is null ? "" : L.F("status.exam", exam.Subject, Format.DayDiff(exam.Time) is var d && d > 0 ? L.F("format.days", d) : L.T("status.examToday"));
@@ -291,47 +328,84 @@ public partial class MainWindow : Window, IDisposable
             "error" => L.F("info.error", message),
             _ => LoginText.TryGetValue(stage, out var key) ? L.T(key) : "",
         };
-        ShowInfo(text, stage is "error" or "cancel", null, null);
-        if (stage is "done" or "logout")
-        {
-            var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
-            t.Tick += (_, _) => { t.Stop(); _loginStage = ""; UpdateInfoBar(); };
-            t.Start();
-        }
+        ShowInfo(stage switch { "error" => Severity.Error, "cancel" => Severity.Warning, "done" => Severity.Success, _ => Severity.Informational }, text, null, null);
+        // InfoBar dành cho thông báo dài hạn, không tự ẩn (hướng dẫn InfoBar của Microsoft): báo xong thì để người dùng tự đóng.
+        if (stage is "done" or "logout") { _loginStage = ""; _keepShown = true; }
     }
+
+    private bool _keepShown;
+    private DateTime? _syncSince;
+    private readonly System.Windows.Threading.DispatcherTimer _progressDelay = new() { Interval = TimeSpan.FromSeconds(1.05) };   // đang hiện "đăng nhập xong/đã đăng xuất": giữ tới khi người dùng đóng hoặc có lỗi mới
 
     private void UpdateInfoBar()
     {
         if (_loginStage.Length > 0) return;   // đang hiện tiến độ login
         var need = _host.State.Account;
+        if (need == AccountNeed.None && SyncFailure() is { } fail)
+        {
+            // Lỗi không phải hết phiên (mất mạng, server chậm, LMS giới hạn...): báo rõ trên thanh, không chỉ trong tooltip.
+            _keepShown = false;
+            if (_errorClosed == fail.Text) { InfoBar.Hide(); return; }
+            InfoBar.Show(Severity.Error, "", fail.Text, L.T("web.retry"), () => { _host.SyncAll(force: true); Say(L.T("status.syncStarted")); }, fail.Detail);
+            return;
+        }
+        if (need == AccountNeed.None && _keepShown) return;
         if (need == AccountNeed.None || _infoClosedFor)
         {
-            InfoBar.Visibility = Visibility.Collapsed;
+            InfoBar.Hide();
             if (need == AccountNeed.None) _infoClosedFor = false;
             return;
         }
         var what = need switch { AccountNeed.Both => L.T("info.both"), AccountNeed.Lms => "LMS", _ => "MyBK" };
         // Lần đầu chạy (chưa có dữ liệu gì) thì mời đăng nhập, chứ không báo hết session.
         var firstRun = _host.State.Lms is null && _host.State.Mybk is null;
-        ShowInfo(firstRun ? L.T("info.firstRun") : L.F("info.needLogin", what), !firstRun, L.T("common.loginHcmut"), () => _host.Login());
+        // Hết phiên là sự cố đã xảy ra (đồng bộ bị chặn) nên là Error, theo định nghĩa mức độ của InfoBar.
+        _keepShown = false;
+        ShowInfo(firstRun ? Severity.Informational : Severity.Error, firstRun ? L.T("info.firstRun") : L.F("info.needLogin", what), L.T("common.loginHcmut"), () => _host.Login());
     }
 
-    private void ShowInfo(string text, bool warn, string? action, Action? run)
+    private string? _errorClosed;   // lỗi đồng bộ người dùng đã đóng: lỗi khác (hoặc lỗi lần sau) thì hiện lại
+
+    /// <summary>
+    /// Lỗi đồng bộ gần nhất của LMS/MyBK (đang đồng bộ thì chưa tính) để hiện trên InfoBar: câu dễ hiểu (vấn đề + cách xử lý) và chữ
+    /// kỹ thuật cho mục Chi tiết. Lỗi cả lượt, hoặc lượt xong nhưng có phần không đọc được.
+    /// </summary>
+    private (string Text, string? Detail)? SyncFailure()
     {
-        InfoText.Text = text;
-        InfoIcon.Text = warn ? "" : "";
-        InfoBar.Background = (System.Windows.Media.Brush)FindResource(warn ? "SystemFillColorCautionBackgroundBrush" : "SystemFillColorAttentionBackgroundBrush");
-        InfoAction.Visibility = action is null ? Visibility.Collapsed : Visibility.Visible;
-        InfoAction.Content = action;
-        _infoAction = run;
-        InfoBar.Visibility = text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        var s = _host.State;
+        foreach (var (name, label) in new[] { ("lms", "LMS"), ("mybk", "MyBK") })
+        {
+            if (s.Syncing(name)) continue;
+            if (s.Error(name) is { } err)
+            {
+                var (text, detail) = AppState.Explain(label, err);
+                return (L.F("info.syncFailed", label, text), detail);
+            }
+            if (s.Warnings(name) is { Count: > 0 } w)
+                return (L.F("info.syncWarnings", label, string.Join(", ", w.Select(x => x.What).Distinct().Take(4)) + (w.Count > 4 ? "…" : "")),
+                        string.Join("\n", w.Select(x => $"{x.What}: {x.Detail}")));
+        }
+        return null;
     }
 
-    private void OnInfoAction(object sender, RoutedEventArgs e) => _infoAction?.Invoke();
-    private void OnInfoClose(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// Mức độ theo hướng dẫn InfoBar của Microsoft: Error = sự cố đã xảy ra (đồng bộ lỗi, đăng nhập lỗi), Warning = cần làm gì đó kẻo
+    /// dữ liệu cũ dần (phiên hết, huỷ đăng nhập), Success = việc chạy nền xong (đăng nhập xong), Informational = đang làm, mời đăng nhập.
+    /// </summary>
+    private void ShowInfo(Severity severity, string text, string? action, Action? run)
     {
-        if (_loginStage.Length == 0) _infoClosedFor = true;
+        if (text.Length == 0) { InfoBar.Hide(); return; }
+        InfoBar.Show(severity, "", text, action, run);
+    }
+
+    private void OnInfoClose()
+    {
+        if (_loginStage.Length == 0)
+        {
+            if (_host.State.Account == AccountNeed.None && SyncFailure() is { } fail) _errorClosed = fail.Text;
+            else _infoClosedFor = true;
+        }
         _loginStage = "";
-        InfoBar.Visibility = Visibility.Collapsed;
+        _keepShown = false;
     }
 }

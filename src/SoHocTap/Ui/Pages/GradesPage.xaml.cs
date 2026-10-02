@@ -43,7 +43,7 @@ public partial class GradesPage : UserControl, IPage
         Grades.Columns.Add(Grids.Text(L.T("col.parts"), nameof(GradeLine.Parts), star: true));
         Grades.Columns.Add(Grids.Right(L.T("col.credits"), nameof(GradeLine.Credits), 50));
         Grades.Columns.Add(Grids.Right(L.T("col.score"), nameof(GradeLine.Score), 60, nameof(GradeLine.SortScore)));
-        Grades.Columns.Add(Grids.Text(L.T("col.letter"), nameof(GradeLine.Letter), 60));
+        Grades.Columns.Add(Grids.Text(L.T("col.letter"), nameof(GradeLine.Letter), 84));
         Grades.Columns.Add(Grids.Text(L.T("col.result"), nameof(GradeLine.Result), 100));
         Grades.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         Grades.LoadingRow += (_, e) => e.Row.Foreground = e.Row.Item is GradeLine { Fail: true }
@@ -55,7 +55,7 @@ public partial class GradesPage : UserControl, IPage
         ProgramGrid.Columns.Add(Grids.Text(L.T("col.subject"), nameof(CourseView.Name), star: true));
         ProgramGrid.Columns.Add(Grids.Right(L.T("col.credits"), nameof(CourseView.Credits), 50));
         ProgramGrid.Columns.Add(Grids.Right(L.T("col.score"), nameof(CourseView.Score), 60));
-        ProgramGrid.Columns.Add(Grids.Text(L.T("col.letter"), nameof(CourseView.Letter), 60));
+        ProgramGrid.Columns.Add(Grids.Text(L.T("col.letter"), nameof(CourseView.Letter), 84));
         ProgramGrid.Columns.Add(Grids.Text(L.T("col.status"), nameof(CourseView.StatusText), 220));
         ProgramGrid.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         ProgramGrid.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is CourseView { Status: CourseStatus.ChuaHoc or CourseStatus.LuaChon } ? 0.6 : 1;
@@ -65,7 +65,7 @@ public partial class GradesPage : UserControl, IPage
 
         LmsGrades.Columns.Add(Grids.Text(L.T("col.item"), nameof(LmsGradeLine.Name), star: true));
         LmsGrades.Columns.Add(Grids.Right(L.T("col.score"), nameof(LmsGradeLine.GradeText), 70, nameof(LmsGradeLine.SortGrade)));
-        LmsGrades.Columns.Add(Grids.Right(L.T("col.max"), nameof(LmsGradeLine.MaxText), 70));
+        LmsGrades.Columns.Add(Grids.Right(L.T("col.max"), nameof(LmsGradeLine.MaxText), 96));
         LmsGrades.Columns.Add(Grids.Right("%", nameof(LmsGradeLine.Percent), 90));
         LmsGrades.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         LmsGrades.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is LmsGradeLine { Grade: null } ? 0.55 : 1;
@@ -82,8 +82,8 @@ public partial class GradesPage : UserControl, IPage
         Fees.Columns.Add(Grids.Text(L.T("col.due"), nameof(MybkFee.Due), 150));
 
         Social.Columns.Add(Grids.Text(L.T("col.activity"), nameof(MybkActivity.Name), star: true));
-        Social.Columns.Add(Grids.Text(L.T("col.start"), nameof(MybkActivity.Date), 150));
-        Social.Columns.Add(Grids.Right(L.T("col.daysConverted"), nameof(MybkActivity.Days), 110));
+        Social.Columns.Add(Grids.Text(L.T("col.start"), nameof(MybkActivity.DateText), 110));
+        Social.Columns.Add(Grids.Right(L.T("col.daysConverted"), nameof(MybkActivity.DaysText), 120));
 
         Decisions.Columns.Add(Grids.Text(L.T("col.date"), nameof(MybkDecision.Date), 100));
         Decisions.Columns.Add(Grids.Text(L.T("col.kind"), nameof(MybkDecision.Type), 120));

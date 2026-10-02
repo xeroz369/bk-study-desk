@@ -49,11 +49,27 @@ public sealed partial class LmsSource : ISource
         finally { Gate.Release(); }
     }
 
+    // Kênh báo lỗi từng phần của lần đồng bộ đang chạy (các hàm Collect* là static, không nhận log).
+    private static readonly AsyncLocal<Action<string>?> SyncLog = new();
+
+    /// <summary>
+    /// Một phần không đọc được: ghi log và báo lên giao diện, đồng bộ vẫn chạy tiếp. Riêng "nopermissions" (giảng viên không cho xem,
+    /// vd. sổ điểm) là bình thường, chỉ ghi log.
+    /// </summary>
+    private static void Warn(string what, Exception e)
+    {
+        if (e is LmsException { Code: "nopermissions" or "nopermission" }) { Log.Debug($"LMS {what}: {e.Message}"); return; }
+        Log.Warn($"LMS {what}: {e.Message}");
+        SyncLog.Value?.Invoke(SyncSignal.Warn(what, e.Message));
+    }
+
     private async Task SyncCoreAsync(Action<string> log, bool force, CancellationToken ct)
     {
+        SyncLog.Value = log;
         // sources.lms.autoDownload = false thì chỉ đọc lịch, quiz, thông báo, cấu trúc khóa; tài liệu thì tải tay theo mục (DownloadSectionsAsync).
-        var autoDownload = Config.Bool("sources.lms.autoDownload", true);
+        var autoDownload = Config.Bool("sources.lms.autoDownload", false);
         var callsBefore = Calls;
+        log(SyncSignal.Step("sync.lms.courses"));
         var info = await CallAsync("core_webservice_get_site_info", [], ct);
         var uid = info["userid"]!.GetValue<long>();
         var raw = (JsonArray)await CallAsync("core_enrol_get_users_courses", [Arg("userid", uid)], ct);
@@ -66,12 +82,19 @@ public sealed partial class LmsSource : ISource
         var index = JsonStore.ReadObject(FilesIndex);
         var hashes = new Dictionary<string, Dictionary<string, string>>();
         var newFiles = new List<JsonObject>();
+        // Lớp có tài liệu cần xem/tải: tải sau khi đã lưu lịch, quiz, điểm. Fresh = lần đầu đọc lớp (file không tính là "mới").
+        var pending = new List<(CourseInfo M, List<(JsonObject Sec, JsonObject Mod, JsonObject F)> Files, bool Fresh, string Key, JsonObject Done)>();
         var changedModules = new HashSet<long>();   // module có update từ lần check trước (vd. diễn đàn có bài mới)
         int nNew = 0, nChanged = 0, nChecked = 0, nSkipped = 0;
         var pastDays = Config.Int("sources.lms.pastSyncDays", 7);
 
-        foreach (var m in metas.OrderByDescending(m => m.Term))   // kỳ mới làm trước để bản mới giữ tên gốc
+        // Mặc định chỉ đọc lớp của học kỳ hiện tại (sources.lms.pastTerms = false): lớp kỳ trước không gọi API nào.
+        var pastTerms = Config.Bool("sources.lms.pastTerms", false);
+        var toCheck = metas.Where(m => pastTerms || m.Term == term).OrderByDescending(m => m.Term).ToList();   // kỳ mới làm trước để bản mới giữ tên gốc
+        var nth = 0;
+        foreach (var m in toCheck)
         {
+            log(SyncSignal.Step("sync.lms.check", nth++, toCheck.Count));
             var key = m.Id.ToString();
             var st = state[key] as JsonObject;
             var started = Now();
@@ -104,27 +127,32 @@ public sealed partial class LmsSource : ISource
                 nChanged++;
             }
             var contents = (JsonArray)await CallAsync("core_course_get_contents", [Arg("courseid", m.Id)], ct);
-            if (autoDownload)
-                foreach (var (sec, mod, f) in Downloadable(contents))
-                {
-                    if (only is not null && !only.Contains(mod["id"]!.GetValue<long>())) continue;
-                    var got = await SyncFileAsync(m, sec, mod, f, index, hashes, log, ct);
-                    if (got is not null && st is not null) { newFiles.Add(got); JsonStore.Write(FilesIndex, index); }   // lần đầu đọc lớp thì không tính là "mới"
-                }
             SaveStructure(m, contents, index);
-            state[key] = new JsonObject { ["synced"] = started, ["checked"] = started, ["term"] = m.Term };
-            JsonStore.Write(CourseState, state);                    // ghi ngay, lỡ tắt app giữa chừng thì lần sau làm tiếp
+            var done = new JsonObject { ["synced"] = started, ["checked"] = started, ["term"] = m.Term };
+            var files = Downloadable(contents).Where(x => autoDownload && (only is null || only.Contains(x.Mod["id"]!.GetValue<long>()))).ToList();
+            if (files.Count == 0)
+            {
+                state[key] = done;
+                JsonStore.Write(CourseState, state);
+            }
+            else pending.Add((m, files, st is null, key, done));
         }
-        JsonStore.Write(FilesIndex, index);
-        Organizer.SaveHashCache();
 
+        // Lịch, quiz, thông báo, điểm lưu trước rồi mới tải tài liệu: lần đầu đăng nhập có thể phải tải hàng trăm file (vài phút),
+        // không để các trang trống trong lúc đó. Tài liệu tải sau, giãn cách theo sources.lms.fileGapMs.
         var current = metas.Where(m => m.Term == term).ToList();
         var prev = JsonStore.ReadObject(LmsFile);
         var recent = (prev["newFiles"] as JsonArray ?? []).OfType<JsonObject>()
             .Where(x => (x["seenAt"]?.GetValue<long>() ?? 0) > Now() - 14 * 86400).Select(x => x.DeepClone());
         foreach (var x in newFiles) x["seenAt"] = Now();
+        log(SyncSignal.Step("sync.lms.events"));
         var events = await CollectEventsAsync(current, uid, ct);
-        if (autoDownload) await SaveAssignmentsAsync(current, events, index, hashes, log, ct);
+        log(SyncSignal.Step("sync.lms.quizzes"));
+        var quizzes = await CollectQuizzesAsync(current, prev["quizzes"] as JsonArray, prev["syncedAt"]?.GetValue<long>() ?? 0, log, ct);
+        log(SyncSignal.Step("sync.lms.news"));
+        var announcements = await CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct);
+        log(SyncSignal.Step("sync.lms.grades"));
+        var grades = await CollectGradesAsync(current, uid, ct);
         var output = new JsonObject
         {
             ["syncedAt"] = Now(),
@@ -132,13 +160,42 @@ public sealed partial class LmsSource : ISource
             ["term"] = term,
             ["courses"] = new JsonArray(metas.Select(m => (JsonNode)m.ToJson()).ToArray()),
             ["events"] = events,
-            ["quizzes"] = await CollectQuizzesAsync(current, prev["quizzes"] as JsonArray, prev["syncedAt"]?.GetValue<long>() ?? 0, log, ct),
+            ["quizzes"] = quizzes,
             ["newFiles"] = new JsonArray(newFiles.Cast<JsonNode>().Concat(recent).Take(300).ToArray()),
-            ["announcements"] = await CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct),
-            ["grades"] = await CollectGradesAsync(current, uid, ct),
+            ["announcements"] = announcements,
+            ["grades"] = grades,
             ["lastRun"] = new JsonObject { ["new"] = nNew, ["changed"] = nChanged, ["checked"] = nChecked, ["skipped"] = nSkipped, ["files"] = newFiles.Count },
         };
         output["forumsSeen"] = prev["forumsSeen"]?.DeepClone();
+        JsonStore.Write(LmsFile, output);
+        log(SyncSignal.DataReady);   // giao diện đọc lại ngay: đã có lịch, quiz, điểm
+
+        var total = pending.Sum(p => p.Files.Count);
+        if (total > 0) log($"Đang xem {total} tài liệu của {pending.Count} lớp…");
+        var seen = 0;
+        foreach (var p in pending)
+        {
+            foreach (var (sec, mod, f) in p.Files)
+            {
+                log(SyncSignal.Step("sync.lms.files", seen, total));
+                var got = await SyncFileAsync(p.M, sec, mod, f, index, hashes, log, ct);
+                if (got is not null && !p.Fresh) newFiles.Add(got);    // lần đầu đọc lớp thì không tính là "mới"
+                if (got is not null) JsonStore.Write(FilesIndex, index);
+                if (++seen % 20 == 0) log($"Tài liệu: {seen}/{total}");
+            }
+            state[p.Key] = p.Done;
+            JsonStore.Write(CourseState, state);                    // ghi ngay, lỡ tắt app giữa chừng thì lần sau làm tiếp
+        }
+        JsonStore.Write(FilesIndex, index);
+        Organizer.SaveHashCache();
+        if (autoDownload)
+        {
+            log(SyncSignal.Step("sync.lms.assign"));
+            await SaveAssignmentsAsync(current, events, index, hashes, log, ct);
+        }
+        foreach (var x in newFiles) x["seenAt"] = Now();
+        output["newFiles"] = new JsonArray(newFiles.Cast<JsonNode>().Concat(recent).Take(300).ToArray());
+        output["lastRun"]!["files"] = newFiles.Count;
         JsonStore.Write(LmsFile, output);
         log($"Xong: {nNew} lớp mới, {nChanged} lớp có thay đổi, {nChecked - Math.Min(nChecked, nChanged)} lớp không đổi, {nSkipped} lớp kỳ trước chưa tới hạn · {newFiles.Count} tài liệu mới · {Calls - callsBefore} request API");
         Log.Info($"Sync LMS: {Calls - callsBefore} request, check {nChecked} lớp, {nChanged} lớp có đổi");
@@ -275,7 +332,7 @@ public sealed partial class LmsSource : ISource
         var dest = Path.Combine([m.LmsFolder, .. sub, SafeName(f["filename"]!.GetValue<string>())]);
         var tmp = Path.Combine(Paths.Data, "tmp", Convert.ToHexStringLower(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(url))));
         try { await DownloadAsync(url, tmp, ct); }
-        catch (HttpRequestException e) { log($"  lỗi tải {f["filename"]}: {e.Message}"); return null; }
+        catch (HttpRequestException e) { Warn($"tải {f["filename"]}", e); return null; }
 
         var subjDir = Path.Combine(Organizer.SubjectsRoot, m.Subject);
         if (!hashesBySubject.TryGetValue(subjDir, out var hashes)) hashesBySubject[subjDir] = hashes = Organizer.HashesIn(subjDir);
@@ -329,9 +386,21 @@ public sealed partial class LmsSource : ISource
         var outMap = new Dictionary<string, JsonObject>();
         try
         {
-            var res = await CallAsync("core_calendar_get_action_events_by_timesort",
-                [Arg("timesortfrom", Now() - 7 * 86400), Arg("timesortto", Now() + 120 * 86400), Arg("limitnum", 100)], ct);
-            foreach (var e in res["events"]!.AsArray().OfType<JsonObject>())
+            // Moodle chỉ cho tối đa 50 mục mỗi lần (limitnum 1..50): đọc theo trang bằng aftereventid, tối đa 4 trang.
+            var events = new List<JsonObject>();
+            long after = 0;
+            for (var page = 0; page < 4; page++)
+            {
+                var res = await CallAsync("core_calendar_get_action_events_by_timesort",
+                    [Arg("timesortfrom", Now() - 7 * 86400), Arg("timesortto", Now() + 120 * 86400), Arg("limitnum", 50), Arg("aftereventid", after),
+                     Arg("limittononsuspendedevents", 1)], ct);
+                var batch = res["events"]!.AsArray().OfType<JsonObject>().ToList();
+                events.AddRange(batch);
+                if (batch.Count < 50) break;
+                after = batch[^1]["id"]?.GetValue<long>() ?? 0;
+                if (after == 0) break;
+            }
+            foreach (var e in events)
             {
                 var cid = e["course"]?["id"]?.GetValue<long>() ?? -1;
                 var name = e["name"]?.GetValue<string>() ?? "";
@@ -350,7 +419,7 @@ public sealed partial class LmsSource : ISource
                 };
             }
         }
-        catch (LmsException) { }
+        catch (LmsException ex) { Warn("lịch LMS", ex); }
         try
         {
             var res = await CallAsync("mod_assign_get_assignments", Arr("courseids", courses.Select(c => (object)c.Id)), ct);
@@ -385,7 +454,7 @@ public sealed partial class LmsSource : ISource
                     });
                 }
         }
-        catch (LmsException) { }
+        catch (LmsException ex) { Warn("bài tập LMS", ex); }
         return new JsonArray(outMap.Values.OrderBy(e => e["time"]?.GetValue<long>() ?? 0).Cast<JsonNode>().ToArray());
     }
 
@@ -405,10 +474,14 @@ public sealed partial class LmsSource : ISource
         var nowSeen = new JsonObject();
         int asked = 0, reused = 0;
         var subjects = current.Select(c => c.Subject).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Chỉ lớp của học kỳ hiện tại (kể cả lớp bị bỏ khi đồng bộ tài liệu như lớp video của môn): lớp kỳ trước cùng tên môn
+        // (học lại, học cải thiện) không đọc diễn đàn nữa.
+        var term = current.FirstOrDefault()?.Term;
         var courseSubject = enrolled.OfType<JsonObject>()
-            .Select(c => (Id: c["id"]!.GetValue<long>(), S: Organizer.SubjectOf(c["fullname"]?.GetValue<string>() ?? "")))
-            .Where(x => x.S is not null && subjects.Contains(x.S.Subject))
-            .ToDictionary(x => x.Id, x => x.S!.Subject);
+            .Where(c => Organizer.SubjectOf(c["fullname"]?.GetValue<string>() ?? "") is not null)
+            .Select(CourseMeta)
+            .Where(m => m.Term == term && subjects.Contains(m.Subject))
+            .ToDictionary(m => m.Id, m => m.Subject);
         var since = Now() - Config.Int("sources.lms.announcementDays", 60) * 86400L;
         var perForum = Config.Int("sources.lms.announcementsPerForum", 10);
         var items = new List<JsonObject>();
@@ -458,7 +531,7 @@ public sealed partial class LmsSource : ISource
                 }
             }
         }
-        catch (LmsException e) { Log.Info("Thông báo LMS (diễn đàn): " + e.Message); nowSeen.Clear(); }   // lần sau đọc lại hết diễn đàn
+        catch (LmsException e) { Warn("thông báo diễn đàn", e); nowSeen.Clear(); }   // lần sau đọc lại hết diễn đàn
         Log.Info($"Thông báo LMS: {courseSubject.Count} khóa của môn đang học, {items.Count} bài trong {Config.Int("sources.lms.announcementDays", 60)} ngày; gọi {asked} diễn đàn, dùng cache {reused}");
         prev["forumsSeen"] = nowSeen;   // ghi chung với lms.json (xem SyncCoreAsync)
         try
@@ -485,7 +558,7 @@ public sealed partial class LmsSource : ISource
                 });
             }
         }
-        catch (LmsException) { }
+        catch (LmsException e) { Warn("thông báo LMS", e); }
         return new JsonArray(items.OrderByDescending(i => i["time"]!.GetValue<long>()).Cast<JsonNode>().ToArray());
     }
 
@@ -520,7 +593,7 @@ public sealed partial class LmsSource : ISource
                 if (!items.Any(i => i!["kind"]?.GetValue<string>() is not ("course" or "category"))) continue;
                 list.Add(new JsonObject { ["course"] = c.Id, ["subject"] = c.Subject, ["part"] = c.Part, ["items"] = new JsonArray(items) });
             }
-            catch (LmsException e) { Log.Info($"Sổ điểm LMS {c.Subject}: {e.Message}"); }
+            catch (LmsException e) { Warn($"sổ điểm {c.Subject}", e); }
         }
         return list;
     }
@@ -544,7 +617,7 @@ public sealed partial class LmsSource : ISource
                 var r = await CallAsync("core_group_get_course_user_groups", [Arg("courseid", c.Id), Arg("userid", uid)], ct);
                 map[c.Id] = r["groups"]!.AsArray().Select(g => g?["name"]?.GetValue<string>() ?? "").ToHashSet();
             }
-            catch (LmsException) { map[c.Id] = []; }
+            catch (LmsException e) { map[c.Id] = []; Warn($"nhóm lớp {c.Subject}", e); }
         }
         if (asked) JsonStore.Write(GroupsFile, map);
         return map;
@@ -566,7 +639,7 @@ public sealed partial class LmsSource : ISource
         var old = (previous ?? []).OfType<JsonObject>().ToDictionary(q => q["id"]!.GetValue<long>());
         JsonNode res;
         try { res = await CallAsync("mod_quiz_get_quizzes_by_courses", Arr("courseids", courses.Select(c => (object)c.Id)), ct); }
-        catch (LmsException e) { log($"  không lấy được quiz: {e.Message}"); return previous?.DeepClone().AsArray() ?? []; }
+        catch (LmsException e) { Warn("danh sách quiz", e); return previous?.DeepClone().AsArray() ?? []; }
         Directory.CreateDirectory(QuizDir);
         var t = Now();
         var list = new JsonArray();
@@ -592,9 +665,18 @@ public sealed partial class LmsSource : ISource
             // Quiz cũ đã đóng: dùng lại data, trừ khi còn lượt đã nộp chưa lưu (vừa bật tự lưu, hoặc file bị xóa).
             if (old.TryGetValue(id, out var prev) && !active && !Unsaved(id, prev)) { item["attempts"] = prev["attempts"]?.DeepClone(); list.Add(item); continue; }
             if (!opened) { list.Add(item); continue; }
+            // Quiz không có hạn đóng thì không biết bao giờ hết làm được: hỏi lượt làm tối đa ngày một lần, không hỏi ở mọi lần đồng bộ.
+            if (close is null && old.TryGetValue(id, out var last) && (last["checked"]?.GetValue<long>() ?? 0) > t - 86400 && !Unsaved(id, last))
+            {
+                item["attempts"] = last["attempts"]?.DeepClone();
+                item["checked"] = last["checked"]?.DeepClone();
+                list.Add(item);
+                continue;
+            }
+            item["checked"] = t;
             JsonArray attempts;
             try { attempts = (await CallAsync("mod_quiz_get_user_attempts", [Arg("quizid", id), Arg("status", "finished")], ct))["attempts"]!.AsArray(); }
-            catch (LmsException) { attempts = []; }
+            catch (LmsException e) { attempts = []; Warn($"lượt làm quiz {item["name"]}", e); }
             foreach (var a in attempts.OfType<JsonObject>())
             {
                 var aid = a["id"]!.GetValue<long>();
@@ -637,7 +719,7 @@ public sealed partial class LmsSource : ISource
                 catch (LmsException e) when (e.Code is not ("noreview" or "noreviewattempt" or "noreviewavailable"))
                 {
                     // Lỗi thoáng qua (mạng, hết phiên…): không ghi file, lần đồng bộ sau thử lại (một request).
-                    log($"  chưa lưu được quiz {item["name"]}: {e.Message}");
+                    Warn($"lưu quiz {item["name"]}", e);
                 }
                 catch (LmsException e)
                 {
@@ -766,21 +848,6 @@ public sealed partial class LmsSource : ISource
     {
         var s = BadCharsRx().Replace(name, "_").Trim().TrimEnd('.');
         return s.Length == 0 ? "_" : s.Length > 150 ? s[..150] : s;
-    }
-
-    /// <summary>Cập nhật index khi file đã tải bị dời chỗ (vd. file zip sau khi giải nén).</summary>
-    public static void RemapPaths(IEnumerable<(string Original, string? Folder, string Archived)> moves)
-    {
-        var index = JsonStore.ReadObject(FilesIndex);
-        var byPath = index.Where(kv => kv.Value?["path"] is not null)
-            .ToDictionary(kv => kv.Value!["path"]!.GetValue<string>().ToLowerInvariant(), kv => kv.Key);
-        foreach (var (orig, folder, archived) in moves)
-            if (byPath.TryGetValue(orig.ToLowerInvariant(), out var k) && index[k] is JsonObject e)
-            {
-                e["path"] = archived;
-                e["extractedTo"] = folder;
-            }
-        JsonStore.Write(FilesIndex, index);
     }
 }
 

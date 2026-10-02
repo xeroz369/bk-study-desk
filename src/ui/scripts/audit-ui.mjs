@@ -1,16 +1,17 @@
-// Kiá»ƒm tra UI tá»± Ä‘á»™ng (design-system/so-hoc-tap/MASTER.md má»¥c 7) â€” cháº¡y trÃªn app tháº­t qua DevTools Protocol.
-// Gá»“m cáº£ luáº­t á»©ng dá»¥ng Windows (DESIGN.md má»¥c 7): cá»­a sá»• khÃ´ng cuá»™n, con trá» mÅ©i tÃªn, khung khÃ´ng bÃ´i chá»n chá»¯.
-// CÃ¡ch cháº¡y: má»Ÿ app vá»›i WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333, rá»“i
-//   npm run audit                       â†’ 1280/900 Ã— sÃ¡ng/tá»‘i, má»i trang
-//   node scripts/audit-ui.mjs 900 light lms mybk/ctdt   â†’ má»™t cáº¥u hÃ¬nh, vÃ i trang
-// Káº¿t quáº£: in sá»‘ lá»—i theo loáº¡i; chi tiáº¿t á»Ÿ scripts/out/audit-<rá»™ng>-<cháº¿ Ä‘á»™>.json. BÃ n giao khi má»i cáº¥u hÃ¬nh = {}.
+// Kiểm tra UI tự động (design-system/so-hoc-tap/MASTER.md mục 7) — chạy trên app thật qua DevTools Protocol.
+// Gồm cả luật ứng dụng Windows (DESIGN.md mục 7): cửa sổ không cuộn, con trỏ mũi tên, khung không bôi chọn chữ.
+// Cách chạy: mở app với WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333, rồi
+//   npm run audit                       → 1280/900 × sáng/tối, mọi trang
+//   node scripts/audit-ui.mjs 900 light lms mybk/ctdt   → một cấu hình, vài trang
+// Kết quả: in số lỗi theo loại; chi tiết ở scripts/out/audit-<rộng>-<chế độ>.json. Bàn giao khi mọi cấu hình = {}.
 import fs from 'node:fs';
 fs.mkdirSync(new URL('./out/', import.meta.url), { recursive: true });
 const [width = '1280', scheme = 'dark', ...only] = process.argv.slice(2);
-const PAGES = only.length ? only : ['luyen-tap', 'luyen-tap/ppt', 'bai/ppt-02', 'on-cau-sai', 'thi/ppt-gk251-chia-doi', 'ket-qua', 'trang/lo-trinh'];
+// Mặc định chỉ các trang có ở cả hai bản; trang bài học, đề thi cụ thể thì truyền tên trang qua tham số.
+const PAGES = only.length ? only : ['luyen-tap', 'on-cau-sai', 'ket-qua'];
 
 const list = await (await fetch('http://127.0.0.1:9333/json')).json();
-const ws = new WebSocket(list.find((p) => p.url.includes('sohoc.app')).webSocketDebuggerUrl);
+const ws = new WebSocket(list.find((p) => p.url.includes('sohoc.example')).webSocketDebuggerUrl);
 await new Promise((r) => (ws.onopen = r));
 let id = 0; const pending = {}; const errors = [];
 ws.onmessage = (m) => { const d = JSON.parse(m.data); if (pending[d.id]) pending[d.id](d);

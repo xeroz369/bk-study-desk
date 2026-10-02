@@ -4,7 +4,7 @@
 // In PASS/FAIL từng bước; có FAIL hoặc lỗi console thì thoát với mã 1. Bài, môn, đề lấy theo dữ liệu đang có trong app.
 const port = process.env.CDP_PORT ?? 9334;
 const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
-const page = list.find((t) => t.type === 'page' && t.url.includes('sohoc.app'));
+const page = list.find((t) => t.type === 'page' && t.url.includes('sohoc.example'));
 const ws = new WebSocket(page.webSocketDebuggerUrl);
 let id = 0;
 const pending = new Map();

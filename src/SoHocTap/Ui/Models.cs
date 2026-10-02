@@ -34,7 +34,13 @@ public sealed record MybkRegistration(string Code, string Name, long Start, long
 public sealed record MybkComponentItem(string Code, string Name, double? Weight, double? Score, string? Special);
 public sealed record MybkComponents(long TermId, long CourseId, string? Status, List<MybkComponentItem> Items);
 public sealed record MybkDecision(string? Type, string? Term, string? Reason, string? Status, string? Date);
-public sealed record MybkActivity(string Name, string? Date, double Days, bool? Confirmed, bool? Canceled);
+public sealed record MybkActivity(string Name, string? Date, double Days, bool? Confirmed, bool? Canceled)
+{
+    /// <summary>Ngày kiểu Việt Nam (MyBK trả yyyy-MM-dd), số ngày dùng dấu phẩy: giống các bảng khác trong app.</summary>
+    public string DateText => DateTime.TryParseExact(Date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d)
+        ? d.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture) : Date ?? "";
+    public string DaysText => Days.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture);
+}
 public sealed record MybkSocialWork(double? Days, List<MybkActivity> Activities);
 public sealed record MybkFee(string Content, long Amount, long Remaining, string Due);
 public sealed record MybkRegistered(string Code, string Name, string ClassGroup, string? Theory, string? Lab, string Round, string Result);

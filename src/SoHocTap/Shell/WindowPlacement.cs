@@ -28,8 +28,10 @@ internal sealed class WindowPlacement
 
     public void Apply(Window w)
     {
-        w.Width = Math.Max(Width, w.MinWidth);
-        w.Height = Math.Max(Height, w.MinHeight);
+        // Không lớn hơn vùng làm việc của màn hình (đổi độ phân giải, rút màn hình phụ): cửa sổ tràn ra ngoài thì nút bị khuất.
+        var area = SystemParameters.WorkArea;
+        w.Width = Math.Max(Math.Min(Width, area.Width), w.MinWidth);
+        w.Height = Math.Max(Math.Min(Height, area.Height), w.MinHeight);
         // Vị trí cũ nằm ngoài mọi màn hình (vd. đã rút màn hình phụ) thì bỏ.
         bool visible = !double.IsNaN(X) && X >= SystemParameters.VirtualScreenLeft - 50 && Y >= SystemParameters.VirtualScreenTop - 50
                        && X < SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - 100
@@ -39,6 +41,12 @@ internal sealed class WindowPlacement
             w.WindowStartupLocation = WindowStartupLocation.Manual;
             w.Left = X;
             w.Top = Y;
+            // Trên màn hình chính mà mép phải/dưới tràn ra ngoài thì kéo vào trong.
+            if (X >= area.Left && X < area.Right && Y >= area.Top && Y < area.Bottom)
+            {
+                w.Left = Math.Max(area.Left, Math.Min(X, area.Right - w.Width));
+                w.Top = Math.Max(area.Top, Math.Min(Y, area.Bottom - w.Height));
+            }
         }
         else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         if (Maximized) w.WindowState = WindowState.Maximized;

@@ -22,7 +22,7 @@ Mỗi gói là một JSON object phẳng gồm các cặp `"key": "chữ"`. File
 ```
 
 - **Key** có dạng `nhóm.tên`, ví dụ `nav.today`, `settings.save`. Chỉ dịch phần value, **không đổi key**.
-  - Các nhóm: `app`, `nav`, `status`, `info`, `login`, `common`, `col` (tiêu đề cột bảng), `home`, `calendar`, `subjects`, `download`, `grades`, `curriculum`, `services`, `settings`, `tray`, `notify`, `timeline`, `format`, `kind`, `files`.
+  - Các nhóm: `app`, `nav`, `status`, `info`, `login`, `common`, `col` (tiêu đề cột bảng), `home`, `calendar`, `subjects`, `download`, `grades`, `curriculum`, `services`, `settings`, `tray`, `notify`, `timeline`, `format`, `kind`, `files`, `about`, `data`, `link`, `setup`, `sync`, `update`, `web`.
 - **`_meta.name`**: tên ngôn ngữ hiện trong Cài đặt.
 - **`_meta.culture`**: culture .NET dùng để format số và ngày, ví dụ `vi-VN`, `en-US`, `fr-FR`.
 - **Chỗ trống** `{0}`, `{1}`… (placeholder): app tự điền số, tên hay ngày vào đây (theo [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).

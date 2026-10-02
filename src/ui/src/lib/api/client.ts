@@ -1,4 +1,4 @@
-// Lời gọi tới app (C#) từ khung Luyện tập. Mọi yêu cầu đi qua https://sohoc.app/api/* — không có cổng mạng (Api/ApiRouter.cs).
+// Lời gọi tới app (C#) từ khung Luyện tập. Mọi yêu cầu đi qua https://sohoc.example/api/* — không có cổng mạng (Api/ApiRouter.cs).
 
 import type { ProgressState } from '$lib/study/types';
 import type { StudyPack } from '$lib/study/pack';
