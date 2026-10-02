@@ -1,5 +1,3 @@
-# Câu hỏi thường gặp
-
 **Windows báo "Windows đã bảo vệ máy tính của bạn".**
 Bộ cài trên GitHub chưa có chữ ký số (chứng chỉ tốn phí hằng năm). Cài từ [Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850) thì không có cảnh báo này. Dùng bộ cài GitHub thì chọn **Thông tin thêm** → **Vẫn chạy**. Chỉ hiện một lần lúc cài; cập nhật sau không bị hỏi lại. Muốn chắc file không bị sửa, so mã SHA-256 như ở [[Cài đặt]].
 

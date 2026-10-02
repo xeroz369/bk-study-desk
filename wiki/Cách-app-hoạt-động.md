@@ -1,5 +1,3 @@
-# Cách app hoạt động
-
 Trang này ghi đúng những gì app gửi tới máy chủ của trường, để ai cũng kiểm tra được. Mã nguồn tương ứng nằm trong `src/SoHocTap/Shell` và `src/SoHocTap/Sources`; địa chỉ và API nằm trong `src/SoHocTap/Core/DefaultConfig.json`.
 
 > BK Study Desk **không chính thức**: không được Trường Đại học Bách khoa hay Moodle HQ xác nhận. App chỉ dùng tài khoản của chính bạn và chỉ đọc. Nếu trường yêu cầu, dự án sẽ thay đổi hoặc dừng tính năng tương ứng.
