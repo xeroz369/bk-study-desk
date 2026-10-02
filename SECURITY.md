@@ -2,7 +2,7 @@
 
 ## Báo lỗ hổng
 
-**Đừng báo lỗ hổng bảo mật ở issue công khai.** Hãy báo riêng qua [Security → Report a vulnerability](https://github.com/xeroz369/bk-study-desk/security/advisories/new).
+**Đừng báo lỗ hổng bảo mật ở issue công khai.** Hãy báo riêng qua [Security → Report a vulnerability](https://github.com/xeroz369/bk-study-desk/security/advisories/new), hoặc gửi email tới [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 
 Nên có:
 - phiên bản app, Windows;

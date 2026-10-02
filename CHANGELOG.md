@@ -13,6 +13,17 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 - README và Wiki: hướng dẫn cài từ Microsoft Store, lưu ý kiểm tra số phiên bản vì bản Store phải chờ Microsoft duyệt.
 - Ảnh minh họa mới (dữ liệu demo) cho README, Wiki và trang Store.
+- Email liên hệ chính thức của dự án: bkstudydesk@xerozsoft.com (README, SECURITY, PRIVACY, quy tắc ứng xử).
+
+### Sửa lỗi
+
+- Mốc **quiz mở** trên LMS bị hiện như hạn nộp ("còn 2 ngày" tính tới giờ mở). Giờ mốc này ghi "Quiz mở" kèm hạn đóng, và không còn được tính vào "Quiz trong 14 ngày".
+- Đồng bộ MyBK báo "không phản hồi sau 45 giây (đang ở blank)" và lần **Thử lại** nào cũng lỗi y hệt:
+  - Lần mở MyBK bị hủy hoặc lỗi thì app báo ngay, kèm lý do.
+  - Sau lỗi, app bỏ WebView ẩn cũ, lần thử lại dùng WebView mới.
+  - Log ghi rõ khi WebView2 bị lỗi hoặc khi MyBK chuyển sang trang ngoài trường.
+- Bảng trống (Sổ điểm LMS, Bảng điểm, Chương trình đào tạo, đăng ký, công tác xã hội, quyết định học vụ) hiện các cột co lại, không có chữ. Giờ bảng trống ghi rõ lý do: đang đồng bộ, đồng bộ lỗi, hoặc thật sự không có gì.
+- Bấm chuột vào tab hoặc mục trên thanh điều hướng thì hiện khung trắng quanh mục đó. Giờ khung focus chỉ hiện khi dùng bàn phím.
 
 ## [1.1.0] - 2026-10-03
 

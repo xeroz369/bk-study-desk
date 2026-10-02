@@ -68,7 +68,7 @@ Dữ liệu tải xuống có thể có thông tin của người khác (tên gi
 
 ## Liên hệ
 
-Câu hỏi hoặc báo lỗi: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issue là công khai: đừng dán tên, MSSV, điểm, token hay ảnh chụp có thông tin cá nhân. Vấn đề bảo mật thì báo riêng theo [SECURITY.md](SECURITY.md).
+Câu hỏi hoặc báo lỗi: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issue là công khai: đừng dán tên, MSSV, điểm, token hay ảnh chụp có thông tin cá nhân. Vấn đề bảo mật thì báo riêng theo [SECURITY.md](SECURITY.md). Câu hỏi về quyền riêng tư cần trao đổi riêng: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 
 ---
 
@@ -88,4 +88,4 @@ BK Study Desk is an unofficial app made by an individual developer (xeroz369) fo
 - **Other people's data:** downloaded data may include lecturers' names or classmates' forum posts. Use it only for your studies; do not republish or share it.
 - **Delete data:** *Settings → Sign out* deletes tokens and cookies (synced data is kept for offline viewing). To delete everything, quit the app and delete `%LOCALAPPDATA%\BKStudyDesk.Data`, or uninstall and tick *Delete app data*. The uninstaller never deletes downloaded course documents.
 - **Update checks:** GitHub (US) sees your IP address when the app checks for updates, under GitHub's own privacy statement.
-- **Contact:** [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues) (public: do not post personal data). Security issues: [SECURITY.md](SECURITY.md).
+- **Contact:** [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues) (public: do not post personal data). Security issues: [SECURITY.md](SECURITY.md). Private questions: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

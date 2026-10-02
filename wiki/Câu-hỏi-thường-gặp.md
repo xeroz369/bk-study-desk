@@ -22,4 +22,4 @@ Chưa. Bản đa nền tảng đang làm; khi ổn định sẽ có ở trang Re
 Được, tải bản `-Setup-arm64.exe`.
 
 **Báo lỗi ở đâu?**
-[Issues](https://github.com/xeroz369/bk-study-desk/issues/new/choose). Đừng dán mật khẩu, MSSV hay token. Lỗ hổng bảo mật thì báo riêng, xem [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.md).
+[Issues](https://github.com/xeroz369/bk-study-desk/issues/new/choose). Đừng dán mật khẩu, MSSV hay token. Lỗ hổng bảo mật thì báo riêng, xem [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.md). Việc cần trao đổi riêng: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

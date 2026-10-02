@@ -128,6 +128,12 @@ URL của trường, API path, tên thư mục và chu kỳ đồng bộ nằm t
 
 Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUCT.md). Nhớ giữ quy tắc **chỉ đọc**: không tính năng nào được nộp bài hay sửa dữ liệu trên hệ thống của trường.
 
+## Liên hệ
+
+- Báo lỗi, góp ý: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issue là công khai, đừng dán MSSV, điểm hay token.
+- Lỗ hổng bảo mật: báo riêng theo [SECURITY.md](SECURITY.md).
+- Liên hệ chính thức của dự án (quyền riêng tư, giấy phép, việc cần trao đổi riêng): [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+
 ## Giấy phép
 
 [PolyForm Noncommercial 1.0.0](LICENSE.md) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
@@ -156,5 +162,7 @@ Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet tro
 **Install:** download `BKStudyDesk-x.y.z-Setup-x64.exe` (or `-arm64.exe`) from Releases, pick an install folder and click Install; no admin rights needed. SmartScreen may warn once because the app is not code-signed: click *More info → Run anyway*. On first launch the app asks how to handle updates (notify, auto-install on exit, or never check); nothing is checked until you choose. Uninstall from Windows Settings → Apps; you choose whether to keep the app data.
 
 **License:** [PolyForm Noncommercial 1.0.0](LICENSE.md): free for personal, educational and nonprofit use; no commercial use. Donations via Sponsor are voluntary.
+
+**Contact:** bugs and ideas in [Issues](https://github.com/xeroz369/bk-study-desk/issues); security reports per [SECURITY.md](SECURITY.md); official project contact: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 
 **Privacy:** see [PRIVACY.md](PRIVACY.md). The app is read-only. Your password is typed only on the school's SSO page. The LMS token is DPAPI-encrypted, and the data folder is restricted to your Windows account.
