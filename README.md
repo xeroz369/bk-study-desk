@@ -119,7 +119,7 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
+[PolyForm Noncommercial 1.0.0](LICENSE.md) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
 - **Được:** dùng, sửa, chia sẻ cho cá nhân, học tập, nghiên cứu, trường học, tổ chức phi lợi nhuận. Giữ dòng ghi tác giả (Required Notice) trong LICENSE.
 - **Không được:** bán app hay bản sửa, đưa vào sản phẩm hoặc dịch vụ thu tiền.
 - **Ủng hộ** người làm app (nút Sponsor) là tự nguyện, không phải mua app.
@@ -142,6 +142,6 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 
 **Install:** download `BKStudyDesk-x.y.z-Setup-x64.exe` (or `-arm64.exe`) from Releases, pick an install folder and click Install; no admin rights needed. SmartScreen may warn once because the app is not code-signed: click *More info → Run anyway*. On first launch the app asks how to handle updates (notify, auto-install on exit, or never check); nothing is checked until you choose. Uninstall from Windows Settings → Apps; you choose whether to keep the app data.
 
-**License:** [PolyForm Noncommercial 1.0.0](LICENSE): free for personal, educational and nonprofit use; no commercial use. Donations via Sponsor are voluntary.
+**License:** [PolyForm Noncommercial 1.0.0](LICENSE.md): free for personal, educational and nonprofit use; no commercial use. Donations via Sponsor are voluntary.
 
 **Privacy:** see [PRIVACY.md](PRIVACY.md). The app is read-only. Your password is typed only on the school's SSO page. The LMS token is DPAPI-encrypted, and the data folder is restricted to your Windows account.
