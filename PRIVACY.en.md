@@ -66,7 +66,7 @@ Downloaded data may contain other people's information (lecturers' names, classm
 
 ## Deleting data
 
-- In the app: **Settings** > **Sign out** deletes the token and sign-in cookies. Synced data (timetable, grades…) is kept for offline viewing.
+- In the app: **Settings** > **Sign out** deletes the token and sign-in cookies. Synced data (timetable, grades...) is kept for offline viewing.
 - Delete all app data: quit the app, then delete the folder `%LOCALAPPDATA%\BKStudyDesk.Data`, or uninstall as below.
 - Uninstall: Windows **Settings** > **Apps** > **BK Study Desk** > **Uninstall**, and select **Xóa cả dữ liệu của app** (Delete app data) in the uninstaller. Documents downloaded to your chosen folder are kept; delete them yourself if you wish.
 

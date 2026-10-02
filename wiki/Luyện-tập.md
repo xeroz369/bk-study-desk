@@ -1,4 +1,4 @@
-**Tiếng Việt** · [English](Practice)
+**Tiếng Việt** | [English](Practice)
 
 Làm quiz, tự soạn câu hỏi, nhờ AI soạn giúp và gửi cho bạn bè. Không cần biết lập trình: chỉ cần chọn, gõ, sao chép và dán.
 
@@ -53,7 +53,7 @@ Các câu này được gom lại ở ô **Đánh dấu** trên trang Luyện t�
 3. Ở tab **Tạo**:
    - Chọn loại câu: **Một đáp án**, **Nhiều đáp án**, **Đúng / Sai**, **Điền số** hoặc **Điền chữ**.
    - Gõ **đề bài**. Có hình thì chụp màn hình rồi dán vào ô bằng **Ctrl+V**.
-   - Gõ các **phương án**, rồi chọn chữ cái (A, B, C…) của phương án đúng để đánh dấu.
+   - Gõ các **phương án**, rồi chọn chữ cái (A, B, C...) của phương án đúng để đánh dấu.
    - Gõ **lời giải**, ghi đủ các bước để người khác đọc là tự làm lại được.
 4. Chọn **Lưu câu vào bài**. Câu vừa soạn hiện ngay trong bài.
 
@@ -85,10 +85,10 @@ Dùng được ChatGPT, Claude, Gemini hay bất kỳ AI chat nào.
 
 ## 5. Nhận quiz bạn bè gửi
 
-Bạn bè gửi cho bạn một file đuôi **`.md`** hoặc **`.zip`** (qua Zalo, Messenger, email…).
+Bạn bè gửi cho bạn một file đuôi **`.md`** hoặc **`.zip`** (qua Zalo, Messenger, email...).
 
 1. Tải file xuống máy.
-2. Vào **Luyện tập**, chọn **Nhập file…** (góc phải ô *Quiz tự soạn và đã nhập*).
+2. Vào **Luyện tập**, chọn **Nhập file** (góc phải ô *Quiz tự soạn và đã nhập*).
 3. Chọn file vừa tải. Xong.
 
 Quiz mới hiện trong ô **Quiz tự soạn và đã nhập**, câu hỏi được thêm vào đúng môn, chương và bài. Bạn bè gửi bản cập nhật thì cứ nhập lại: app giữ nguyên kết quả bạn đã làm.
@@ -99,7 +99,7 @@ App còn mở được file **Moodle XML**, **GIFT**, **Aiken** (dạng câu h�
 
 1. Vào môn, chọn **Soạn · Nhập · Xuất**, rồi chọn tab **Xuất**.
 2. Gõ **tên bạn** để người nhận biết ai soạn.
-3. Chọn **Lưu Markdown (.md / .zip)…** và chọn chỗ lưu.
+3. Chọn **Lưu Markdown (.md / .zip)** và chọn chỗ lưu.
 4. Gửi file đó cho bạn bè. Bạn ấy làm theo mục 5.
 
 ![Tab Xuất: lưu file để gửi](images/7-xuat.png)
@@ -114,7 +114,7 @@ Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** �
 - App **chỉ đọc** bản xem lại sau khi bạn nộp. App không đọc quiz đang làm, không làm hay nộp bài thay bạn.
 - Quiz không cho xem lại thì app chỉ lưu tên và điểm. Chọn **Ghi lại** để tự gõ những câu bạn còn nhớ; đáp án thì bạn tự kiểm.
 - Quiz LMS đã lưu **chỉ gửi cho người khác được khi quiz đã đóng**. App tự khóa nút xuất trước thời điểm đó.
-- Không muốn lưu thì tắt ở **Cài đặt** → **Đồng bộ và nhắc hạn** → **Tự lưu quiz LMS đã nộp để ôn lại**.
+- Không muốn lưu thì tắt ở **Cài đặt** > **Đồng bộ và nhắc hạn** > **Tự lưu quiz LMS đã nộp để ôn lại**.
 
 ## 8. Gặp lỗi thì làm gì
 
@@ -123,7 +123,7 @@ Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** �
 | Chọn **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì sao chép nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
 | Công thức hiện ra toàn ký hiệu lạ | Bảo AI: "viết công thức trong `\(` và `\)`, không gấp đôi dấu `\`". |
 | Câu bị vào nhầm bài | Tên chương và tên bài trong file phải trùng với tên trong app. Nhờ AI ở đúng bài (mục 4) thì app tự điền tên sẵn. |
-| Muốn xóa một câu tự soạn | Vào **Soạn** → tab **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
+| Muốn xóa một câu tự soạn | Vào **Soạn** > tab **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
 | Muốn gỡ cả quiz đã nhập | Trang Luyện tập, bấm chuột phải vào quiz, chọn **Gỡ quiz này**. |
 
 ---
@@ -155,17 +155,17 @@ Trung điểm \(x_n=\frac{a_n+b_n}{2}\).
 
 | Viết | Nghĩa |
 |---|---|
-| `# …` | tên chương |
-| `## …` | tên bài; chữ ngay bên dưới là phần kiến thức |
-| `### …` | một câu hỏi; sau dấu `·` ghi nguồn, ví dụ `### Câu 3 · GK251 câu 8` |
+| `# ...` | tên chương |
+| `## ...` | tên bài; chữ ngay bên dưới là phần kiến thức |
+| `### ...` | một câu hỏi; sau dấu `·` ghi nguồn, ví dụ `### Câu 3 · GK251 câu 8` |
 | `- [x]` / `- [ ]` | phương án đúng / sai; nhiều ô `[x]` là câu nhiều đáp án |
 | `= Đúng` hoặc `= Sai` | câu đúng/sai |
 | `= 0,125 ± 0,001` | câu điền số; `±` là sai số cho phép |
 | `= Newton \| Newton-Raphson` | câu điền chữ; các cách viết đúng ngăn bằng `\|` |
-| `> …` | lời giải; mỗi dòng lời giải đều bắt đầu bằng `>` |
-| `\( … \)` | công thức toán |
+| `> ...` | lời giải; mỗi dòng lời giải đều bắt đầu bằng `>` |
+| `\( ... \)` | công thức toán |
 
 - Thêm `xao-cau: co` và `xao-dap-an: co` vào phần đầu file để xáo câu và đáp án khi làm. Câu có phương án kiểu "Cả A và B" thì thêm `· giữ thứ tự` vào cuối dòng `###`.
 - Quiz có hình: soạn trong app (mục 3) rồi xuất (mục 6) cho đơn giản.
 
-Đặc tả đầy đủ: [SPEC.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/SPEC.md) · Prompt cho AI: [PROMPT.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/PROMPT.md).
+Đặc tả đầy đủ: [SPEC.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/SPEC.md) | Prompt cho AI: [PROMPT.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/PROMPT.md).

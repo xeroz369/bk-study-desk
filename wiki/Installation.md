@@ -1,4 +1,4 @@
-[Tiếng Việt](Cài-đặt) · **English**
+[Tiếng Việt](Cài-đặt) | **English**
 
 > Translated from Cài-đặt (Vietnamese) for BK Study Desk 1.1.3.
 

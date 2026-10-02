@@ -1,4 +1,4 @@
-**Tiếng Việt** · [English](How-the-app-works)
+**Tiếng Việt** | [English](How-the-app-works)
 
 Trang này ghi đúng những gì app gửi tới máy chủ của trường, để ai cũng kiểm tra được. Mã nguồn tương ứng nằm trong `src/SoHocTap/Shell` và `src/SoHocTap/Sources`; địa chỉ và API nằm trong `src/SoHocTap/Core/DefaultConfig.json`.
 
@@ -21,7 +21,7 @@ https://lms.hcmut.edu.vn/admin/tool/mobile/launch.php?service=moodle_mobile_app&
 ```
 
 - Đây là luồng có sẵn trong Moodle (mã nguồn mở: `admin/tool/mobile/launch.php`). Vì đã đăng nhập SSO ở bước 1 nên không phải gõ mật khẩu lần nữa.
-- `urlscheme=moodlemobile` là URL scheme của app Moodle chính thức. Moodle mặc định chỉ trả token cho scheme này (cài đặt `forcedurlscheme`), nên app khai đúng scheme đó và **bắt lại đường dẫn `moodlemobile://token=…` ngay trong cửa sổ nhúng**. App không đăng ký scheme này với Windows và không mạo danh tên hay user-agent của app Moodle.
+- `urlscheme=moodlemobile` là URL scheme của app Moodle chính thức. Moodle mặc định chỉ trả token cho scheme này (cài đặt `forcedurlscheme`), nên app khai đúng scheme đó và **bắt lại đường dẫn `moodlemobile://token=...` ngay trong cửa sổ nhúng**. App không đăng ký scheme này với Windows và không mạo danh tên hay user-agent của app Moodle.
 - App kiểm chữ ký của token (MD5 của địa chỉ site + passport) rồi lưu token vào `data\secrets\`, mã hóa bằng Windows DPAPI.
 
 **Gọi API.** Mọi lời gọi là POST tới `https://lms.hcmut.edu.vn/webservice/rest/server.php` với token. Chỉ dùng các hàm **đọc** sau:
@@ -46,7 +46,7 @@ App **không** gọi hàm nào để nộp bài, bắt đầu hay lưu lượt l
 
 ## 3. MyBK
 
-- App mở MyBK trong một cửa sổ WebView2 ẩn bằng phiên SSO của bạn: `sso.hcmut.edu.vn/cas/login?service=…/my/homeSSO.action` → `/app/login?type=cas` → `/app/`.
+- App mở MyBK trong một cửa sổ WebView2 ẩn bằng phiên SSO của bạn: `sso.hcmut.edu.vn/cas/login?service=.../my/homeSSO.action`, rồi `/app/login?type=cas`, rồi `/app/`.
 - Trang `/app/` của MyBK chứa token đăng nhập của chính trang. App chạy `fetch()` **ngay trong trang** để gọi các API JSON mà trang MyBK dùng; token không ra khỏi trang.
 - Danh sách API (đường dẫn sau `https://mybk.hcmut.edu.vn/api/`):
 
@@ -56,10 +56,10 @@ App **không** gọi hàm nào để nộp bài, bắt đầu hay lưu lượt l
 | `v1/semester-year/short` | học kỳ |
 | `v1/student/schedule` | thời khóa biểu |
 | `thoi-khoa-bieu/lich-thi-sinh-vien/v1` | lịch thi |
-| `share/ket-qua-hoc-tap/…` (POST, gửi MSSV) | bảng điểm, chương trình đào tạo, điểm thành phần |
-| `v1/student/status-decision/…`, `v1/student-activities/social-workdays/…`, `v1/tuition-fees/…`, `v1/course-register-results/…` | quyết định học vụ, ngày công tác xã hội, học phí, môn đã đăng ký |
+| `share/ket-qua-hoc-tap/...` (POST, gửi MSSV) | bảng điểm, chương trình đào tạo, điểm thành phần |
+| `v1/student/status-decision/...`, `v1/student-activities/social-workdays/...`, `v1/tuition-fees/...`, `v1/course-register-results/...` | quyết định học vụ, ngày công tác xã hội, học phí, môn đã đăng ký |
 
-- Các API POST `share/ket-qua-hoc-tap/…` là truy vấn đọc: chính trang **Bảng điểm môn học** và **Chương trình đào tạo** của MyBK gửi đúng các request này khi bạn chỉ mở trang để xem (kiểm ngày 02/10/2026). Các API còn lại lấy từ mã nguồn trang MyBK.
+- Các API POST `share/ket-qua-hoc-tap/...` là truy vấn đọc: chính trang **Bảng điểm môn học** và **Chương trình đào tạo** của MyBK gửi đúng các request này khi bạn chỉ mở trang để xem (kiểm ngày 02/10/2026). Các API còn lại lấy từ mã nguồn trang MyBK.
 - Trang đăng ký môn (`/dkmh/dangKyMonHocForm.action`) chỉ được mở để đọc bảng các đợt đăng ký, tối đa một lần mỗi ngày.
 
 ## 4. Tần suất

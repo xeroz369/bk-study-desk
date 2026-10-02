@@ -64,7 +64,7 @@ Withdrawn because this build had a support section inside the app. All changes m
 ### Added
 
 - Available on the Microsoft Store: no SmartScreen warning, and the Store updates the app.
-- The status bar shows the current sync step (for example "LMS: reading quizzes…", "checking classes… (3/5)").
+- The status bar shows the current sync step (for example "LMS: reading quizzes...", "checking classes... (3/5)").
 - Errors appear in a standard Windows InfoBar: an icon for the severity, a plain sentence with what to do, and **Details** with the server's original text (with a **Copy** button). The status bar shows an error icon next to LMS/MyBK.
 - The LMS/MyBK windows tell you when a page takes more than 10 seconds, the network is down, the server fails or the session has ended, with a **Retry** button.
 - Keeps the sign-in session alive while the app is open: one SSO visit every 60 minutes (can be turned off in Settings). The university's SSO session still ends at most 8 hours after you sign in.

@@ -25,7 +25,7 @@ If you change the Practice view (`src/ui`), also run `npm run check` and `npx pr
 - **Style:** follow [docs/van-phong.md](docs/van-phong.md) (Vietnamese) and [docs/english-style.md](docs/english-style.md) (English) for terms, capitalization, punctuation, error messages and the changelog. Every rule there cites a source.
 - **Two languages:** when you change the Vietnamese part of a document, update its English counterpart (the `.en.md` file with the same name, the English Wiki page) in the same pull request.
 - **No guessing:** UI patterns, API limits, timeouts and similar numbers must come from primary sources (Microsoft Learn, source code, RFCs) or real measurements, cited in a comment. Anything the README or Wiki promises, the code must actually do.
-- **Commits** are short and follow [Conventional Commits](https://www.conventionalcommits.org/): `feat: …`, `fix: …`, `docs: …`.
+- **Commits** are short and follow [Conventional Commits](https://www.conventionalcommits.org/): `feat: ...`, `fix: ...`, `docs: ...`.
 
 ## Testing
 

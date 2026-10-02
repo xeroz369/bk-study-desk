@@ -1,6 +1,6 @@
 # Văn phong tiếng Việt
 
-**Tiếng Việt** · [English writing style](english-style.md)
+**Tiếng Việt** | [English writing style](english-style.md)
 
 Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template, chú thích code, commit và chữ trong app (`src/SoHocTap/lang/vi.json`, khung Luyện tập). Mỗi quy tắc đều có nguồn; quy tắc nào là lựa chọn của dự án (không có nguồn) thì ghi rõ.
 
@@ -26,7 +26,7 @@ Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template
 
 ## Tránh mùi văn dịch
 
-- Không mở câu bằng "Việc" trước động từ (MSG). Đúng: "Đọc kỹ đề trước khi làm." Sai: "Việc đọc kỹ đề…"
+- Không mở câu bằng "Việc" trước động từ (MSG). Đúng: "Đọc kỹ đề trước khi làm." Sai: "Việc đọc kỹ đề..."
 - Dùng câu chủ động (Mozilla). Đúng: "App tải tài liệu về máy." Sai: "Tài liệu được tải về bởi app."
 - Bỏ "các/những" khi không cần (Mozilla). Đúng: "Cài đặt". Sai: "Các cài đặt".
 - Rút gọn (MSG). Đúng: "Nếu còn lỗi". Sai: "Nếu bạn vẫn còn gặp lỗi".
@@ -35,7 +35,7 @@ Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template
 
 - Nút, nhãn, tiêu đề: chỉ viết hoa chữ đầu (MSG, Mozilla). Đúng: "Tải tài liệu". Sai: "Tải Tài Liệu". Tên riêng viết hoa mọi âm tiết: "Bách Khoa", "Việt Nam".
 - Không có khoảng trắng trước `. , : ; ! ? )`; có khoảng trắng sau. Không đặt dấu phẩy trước "và", "hoặc" (MSG).
-- Dấu ba chấm là ký tự `…`, không gõ `...` (Mozilla). Chữ trên nút mở cửa sổ/hộp thoại tiếp theo kết thúc bằng `…`.
+- Dấu ba chấm gõ ba dấu chấm `...`, không dùng ký tự `...` (lựa chọn của dự án, xem mục Ký tự tránh dùng). Trong tài liệu, nhãn nút mở cửa sổ/hộp thoại viết không kèm dấu ba chấm: **Tải tài liệu**.
 - Câu thông báo lỗi kết thúc bằng dấu chấm (MSG).
 - Số: `5,25`, `1.526`, `250 GB` (cách bằng khoảng trắng), `80%` (không cách). Số phiên bản giữ dấu chấm: `1.1.0` (MSG).
 - Ngày giờ trong app và văn bản: `dd/MM/yyyy`, `HH:mm` (CLDR; QĐ 1989 Điều 10). CHANGELOG dùng `YYYY-MM-DD` (KaC).
@@ -64,20 +64,35 @@ Theo MST, trừ chỗ ghi khác:
 | Error / Warning | lỗi / cảnh báo | |
 | Details | Chi tiết | |
 | File / Folder | file / thư mục | dự án giữ "file" (quen dùng), MST là "tệp" |
-| Browse | Chọn… | nút mở hộp thoại chọn file/thư mục |
+| Browse | Chọn... | nút mở hộp thoại chọn file/thư mục |
 | Default | mặc định | |
 | Notification | thông báo | |
 | Privacy | quyền riêng tư | |
 | Release / Changelog | bản phát hành / nhật ký thay đổi | |
-| Repository, issue, pull request, commit, build, token, API | giữ tiếng Anh | MST dịch "cam kết", "yêu cầu kéo"… mang nghĩa khác hoặc ít người dùng |
+| Repository, issue, pull request, commit, build, token, API | giữ tiếng Anh | MST dịch "cam kết", "yêu cầu kéo"... mang nghĩa khác hoặc ít người dùng |
 
 - Tên sản phẩm, thương hiệu không dịch: BK-LMS, MyBK, Windows, GitHub (MSG).
 - **Từ dịch sang tiếng Việt mà dài hoặc dân IT ít dùng thì giữ tiếng Anh** (MSG §4.1.4: không dịch khái niệm mà bản dịch gây khó hiểu): DevTools, attestation, token, ticket, cookie, session, InfoBar, mock server, build, log. Tài liệu cho người dùng phổ thông thì lần đầu nhắc giải thích ngắn trong ngoặc. Cụm tiếng Việt đã quen (phiên đăng nhập, tự điền, chữ ký số, mã hóa) thì giữ tiếng Việt.
 - Từ viết tắt và từ đã quen giữ nguyên: API, URL, SSO, OK, tab (MSG). Lần đầu dùng khái niệm lạ thì ghi kèm: "đăng nhập một lần (SSO)".
 
+## Ký tự tránh dùng (lựa chọn của dự án)
+
+Tài liệu, release notes, commit, PR, trả lời issue và Wiki không dùng các ký tự hay gặp trong văn bản do AI viết:
+
+| Không dùng | Thay bằng |
+|---|---|
+| gạch dài `—` | dấu phẩy, hai chấm, dấu chấm, ngoặc đơn hoặc `-` |
+| mũi tên `→`, `⇒`, `↔` | chữ ("rồi", "sang", "và ngược lại"); đường dẫn menu dùng `>` |
+| chấm giữa `·` làm dấu ngăn | dấu phẩy, `/`, `|` hoặc xuống dòng |
+| ký tự ba chấm `...` | `...` |
+| ngoặc kép cong `“ ”` | ngoặc thẳng `"` |
+| emoji, ký hiệu trang trí (có, ★...) | chữ ("có", "không") |
+
+Ngoại lệ: chữ trên giao diện app (ví dụ nhãn "Soạn · Nhập · Xuất") và cú pháp của gói quiz (`### Câu 1 · Slide`) giữ nguyên vì phải khớp với app.
+
 ## Nhắc tới giao diện
 
-- Tên nút, mục menu in đậm; đường đi dùng `→`: **Cài đặt**** → ****Nhật ký hoạt động**.
+- Tên nút, mục menu in đậm; đường đi dùng `>`, dấu `>` không in đậm: **Cài đặt** > **Nhật ký hoạt động** (giống chuẩn tiếng Anh của Microsoft).
 - Dùng "Chọn" cho mọi cách bấm (chuột, bàn phím, cảm ứng, công cụ trợ năng) (MSG). "Bấm đúp" giữ nguyên cho double-click.
 
 ## Thông báo lỗi
@@ -86,7 +101,7 @@ Theo MSG và Google, mỗi thông báo có: chuyện gì xảy ra, vì sao (nế
 
 - Đúng: "Không tải được lịch LMS. Chọn **Thử lại** sau ít phút."
 - Sai: "Lỗi: core_calendar_get_action_events_by_timesort thất bại!"
-- Mẫu câu: "Không tìm thấy…", "Không kết nối được…", "Không đủ…" (MSG).
+- Mẫu câu: "Không tìm thấy...", "Không kết nối được...", "Không đủ..." (MSG).
 - Không dùng "Làm ơn", "Xin hãy"; cần lịch sự thì "Vui lòng", thường thì bỏ (Mozilla).
 
 ## Tài liệu hai ngôn ngữ
@@ -96,14 +111,14 @@ Tiếng Việt là bản chính, cho sinh viên trường. Tiếng Anh là bản
 - **Tên file:** bản Việt giữ tên chuẩn mà GitHub nhận (`README.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`); bản Anh thêm `.en` trước đuôi: `PRIVACY.en.md`. `LICENSE.md` không dịch.
 - **Badge chuyển ngôn ngữ** ngay dưới tiêu đề, giống nhau ở cả hai file, theo mẫu [multilanguage-readme-pattern](https://github.com/jonatasemidio/multilanguage-readme-pattern): `[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](X.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](X.en.md)`.
 - **CHANGELOG:** `CHANGELOG.md` và `CHANGELOG.en.md`, cùng số phiên bản và ngày.
-- **Release notes:** một bài, tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ.
+- **Release notes:** GitHub chỉ cho một bài nên viết cả hai thứ tiếng trong cùng bài: tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ. Dòng đầu là hàng badge giống tài liệu, link tới mục phiên bản đó trong `CHANGELOG.md` và `CHANGELOG.en.md` (ví dụ `#113---2026-10-03`).
 - **Wiki:** trang Việt giữ tên có dấu; trang Anh đặt tên tiếng Anh (`Home-en`, `Installation`, `Updating`, `Uninstalling`, `Practice`, `FAQ`, `How-the-app-works`, `Security-and-privacy`). Một `_Sidebar` chia hai khối Tiếng Việt / English.
 - **Issue template:** một file, ghi hai thứ tiếng: `Báo lỗi / Bug report`.
-- **Đồng bộ:** sửa bản Việt trước, bản Anh trong cùng PR. Bản Anh có dòng `> Translated from … (Vietnamese) for BK Study Desk x.y.z.`
+- **Đồng bộ:** sửa bản Việt trước, bản Anh trong cùng PR. Bản Anh có dòng `> Translated from ... (Vietnamese) for BK Study Desk x.y.z.`
 
 ## Trang Wiki
 
-- Không mở đầu trang bằng tiêu đề `# …`: GitHub Wiki tự hiện tên file làm tiêu đề trang, thêm `#` sẽ lặp tiêu đề. Trang Home được ngoại lệ vì tên trang là "Home".
+- Không mở đầu trang bằng tiêu đề `# ...`: GitHub Wiki tự hiện tên file làm tiêu đề trang, thêm `#` sẽ lặp tiêu đề. Trang Home được ngoại lệ vì tên trang là "Home".
 - Tên file chính là tên trang: viết hoa chữ đầu, các từ nối bằng `-` (ví dụ `Câu-hỏi-thường-gặp.md`).
 
 ## Commit

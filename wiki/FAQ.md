@@ -1,4 +1,4 @@
-[Tiếng Việt](Câu-hỏi-thường-gặp) · **English**
+[Tiếng Việt](Câu-hỏi-thường-gặp) | **English**
 
 > Translated from Câu-hỏi-thường-gặp (Vietnamese) for BK Study Desk 1.1.3.
 

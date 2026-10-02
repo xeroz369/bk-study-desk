@@ -1,4 +1,4 @@
-**Tiếng Việt** · [English](Installation)
+**Tiếng Việt** | [English](Installation)
 
 **Yêu cầu:** Windows 10 1809 trở lên hoặc Windows 11, x64 hoặc ARM64. Không cần cài .NET. Cần Microsoft Edge WebView2 Runtime (Windows 11 có sẵn).
 
@@ -7,7 +7,7 @@
 Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản sau.
 
 1. Vào [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest), tải `BKStudyDesk-x.y.z-Setup-x64.exe`. Máy chip ARM (Surface Pro X, Snapdragon) tải bản `-Setup-arm64.exe`.
-2. Mở file. Nếu Windows hiện **"Windows đã bảo vệ máy tính của bạn"**: chọn **Thông tin thêm** → **Vẫn chạy**. Cảnh báo này có vì bộ cài chưa có chữ ký số; chỉ hiện một lần lúc cài.
+2. Mở file. Nếu Windows hiện **"Windows đã bảo vệ máy tính của bạn"**: chọn **Thông tin thêm** > **Vẫn chạy**. Cảnh báo này có vì bộ cài chưa có chữ ký số; chỉ hiện một lần lúc cài.
 3. Chọn thư mục cài (mặc định trong tài khoản của bạn; đổi sang ổ D: được), chọn **Cài đặt**. Không cần quyền admin.
 4. Cài xong app tự mở. Lối tắt có ở Desktop và Start menu.
 
@@ -29,7 +29,7 @@ Hai cách cài là hai bản riêng, dữ liệu không dùng chung. Chỉ nên 
 
 ## Đang dùng bản zip cũ?
 
-Cài bản mới, rồi vào **Cài đặt** → **Cập nhật** → **Lấy dữ liệu từ bản zip…**, chọn thư mục bản zip. App chép đăng nhập LMS, kết quả luyện tập, quiz và cài đặt sang, rồi khởi động lại. Sau đó đăng nhập HCMUT lại một lần. Xong thì xóa thư mục bản zip được.
+Cài bản mới, rồi vào **Cài đặt** > **Cập nhật** > **Lấy dữ liệu từ bản zip**, chọn thư mục bản zip. App chép đăng nhập LMS, kết quả luyện tập, quiz và cài đặt sang, rồi khởi động lại. Sau đó đăng nhập HCMUT lại một lần. Xong thì xóa thư mục bản zip được.
 
 ## Kiểm tra file tải xuống (không bắt buộc)
 

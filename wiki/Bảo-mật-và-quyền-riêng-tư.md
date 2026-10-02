@@ -1,4 +1,4 @@
-**Tiếng Việt** · [English](Security-and-privacy)
+**Tiếng Việt** | [English](Security-and-privacy)
 
 - Mật khẩu chỉ gõ trên trang SSO của trường; app không đọc. Chọn **Lưu** khi được hỏi thì WebView2 lưu mã hóa trên máy để tự điền lần sau.
 - Token LMS mã hóa bằng Windows DPAPI; cookie do WebView2 mã hóa. Dữ liệu nằm trong `%LOCALAPPDATA%`, chỉ tài khoản Windows của bạn (cùng SYSTEM và Administrators) mở được.
@@ -7,4 +7,4 @@
 - Không server riêng, không analytics, không quảng cáo. GitHub chỉ được hỏi phiên bản mới khi bạn cho phép.
 - Gói cập nhật kiểm SHA-256; quiz nhận từ người khác được lọc HTML, không chạy script.
 
-Chi tiết: [PRIVACY.md](https://github.com/xeroz369/bk-study-desk/blob/main/PRIVACY.md) · Báo lỗ hổng: [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.md).
+Chi tiết: [PRIVACY.md](https://github.com/xeroz369/bk-study-desk/blob/main/PRIVACY.md) | Báo lỗ hổng: [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.md).

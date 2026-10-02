@@ -1,6 +1,6 @@
 # BK Study Desk
 
-**Tiếng Việt** · [English](Home-en)
+**Tiếng Việt** | [English](Home-en)
 
 App Windows gom **BK-LMS** và **MyBK** của Bách Khoa TP.HCM vào một cửa sổ: deadline, lịch, tài liệu từng môn, điểm và luyện tập bằng quiz. App không chính thức, chỉ **đọc** những gì bạn vốn xem được sau khi đăng nhập.
 

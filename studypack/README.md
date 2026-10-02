@@ -11,7 +11,7 @@ Soạn quiz để tự ôn và gửi cho bạn bè: gõ trong app, nhờ AI ho�
 | [PROMPT.md](PROMPT.md) | Prompt cho AI (app soạn sẵn ở tab **Nhờ AI**) |
 | `studypack-v1.schema.json` | JSON Schema của dạng JSON |
 | `validate.ts` | Kiểm tra file: `node studypack/validate.ts <file.md \| file.zip \| file.json>` |
-| `convert.ts` | Đổi JSON ↔ Markdown (`.md` hoặc `.zip` khi có ảnh) |
+| `convert.ts` | Đổi JSON sang Markdown và ngược lại (`.md` hoặc `.zip` khi có ảnh) |
 | `test-roundtrip.ts` | Kiểm thử: gói mẫu đổi sang Markdown rồi đổi ngược lại vẫn phải giữ nguyên từng câu |
 | `examples/` | Quiz mẫu, bắt đầu từ `vi-du.md` |
 
