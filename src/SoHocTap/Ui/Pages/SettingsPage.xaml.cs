@@ -152,7 +152,6 @@ public partial class SettingsPage : UserControl, IPage
         AutoDownload.IsChecked = Config.Bool("sources.lms.autoDownload", false);
         AutoExtract.IsChecked = Config.Bool("archives.extract", true);
         SaveQuizzes.IsChecked = Config.Bool("sources.lms.saveQuizzes", true);
-        SaveQuizzes.Visibility = AppInfo.Practice ? Visibility.Visible : Visibility.Collapsed;
         Remember.Content = L.F("settings.remember", Config.Int("sso.rememberHours", 8));
         Remember.IsChecked = Config.Int("sso.rememberDays", RememberDays) > 0;
         KeepAlive.IsChecked = Config.Int("sso.keepAliveMinutes", KeepAliveMinutes) > 0;

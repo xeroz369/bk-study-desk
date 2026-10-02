@@ -1,3 +1,5 @@
+**Tiếng Việt** · [English](Uninstalling)
+
 **Cài đặt Windows** → **Ứng dụng** → **BK Study Desk** → **Gỡ cài đặt** (hoặc chuột phải app trong Start → Gỡ cài đặt).
 
 ![Bộ gỡ](images/bo-go.png)

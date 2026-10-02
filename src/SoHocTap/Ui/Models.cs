@@ -20,7 +20,7 @@ public sealed record LmsGradeBook(long Course, string Subject, string? Part, Lis
 public sealed record LmsData(long SyncedAt, string? User, string Term, List<LmsCourse> Courses, List<LmsEvent> Events, List<LmsQuiz> Quizzes,
     List<LmsNewFile>? NewFiles, List<LmsAnnouncement>? Announcements, List<LmsGradeBook>? Grades);
 
-public sealed record MybkClass(string Code, string Name, string? Group, int Day, List<int> Weeks, string Start, string End, string Room, int Lesson, int Lessons, string? Teacher);
+public sealed record MybkClass(string Code, string Name, string? Group, int Day, List<int> Weeks, string Start, string End, string Room, int Lesson, int Lessons, string? Teacher, int? Year = null);
 public sealed record MybkExam(string Code, string Name, string Type, string Date, string Time, int? Minutes, string Room, string? Campus);
 public sealed record MybkGradeTerm(string Code, string Name, string GpaTerm, string GpaAll, JsonNode? CreditsTerm, JsonNode? CreditsAll, string? Updated);
 public sealed record MybkGrade(string Term, string Code, string Name, double? Credits, double? Score, string? Letter, string? Special, int Result,

@@ -2,21 +2,11 @@
 
 namespace SoHocTap.Shell;
 
-/// <summary>Tên và id của bản app. Bản local và bản public cùng tên "BK Study Desk", khác id nên chạy song song được.</summary>
+/// <summary>Tên và id của app.</summary>
 internal static class AppInfo
 {
-#if PUBLIC_EDITION
     public const string Id = "BKStudyDesk";
     public const string Name = "BK Study Desk";
-    /// <summary>Nhãn bản ở thanh trạng thái: bản public để trống, bản local ghi "local". Icon: xanh dương / xanh lá.</summary>
-    public const string Channel = "";
-    public static bool Practice => true;
-#else
-    public const string Id = "HCMUT.SoHocTap";   // giữ id cũ: mutex, autostart, data không đổi
-    public const string Name = "BK Study Desk";
-    public const string Channel = "local";
-    public static bool Practice => true;
-#endif
 
     /// <summary>Khóa chạy một instance: theo id và thư mục app, nên bản ở thư mục khác (bản demo, bản thử) chạy song song được.</summary>
     public static string InstanceKey { get; } =

@@ -1,5 +1,7 @@
 # Chính sách quyền riêng tư của BK Study Desk
 
+**Tiếng Việt** · [English](PRIVACY.en.md)
+
 Cập nhật: 03/10/2026
 
 BK Study Desk là app không chính thức, do cá nhân (xeroz369) phát triển cho sinh viên Trường Đại học Bách Khoa – ĐHQG TP.HCM (HCMUT). App không thuộc trường, không được trường hay Moodle HQ xác nhận. Mọi địa chỉ và API app gọi được liệt kê ở Wiki [Cách app hoạt động](https://github.com/xeroz369/bk-study-desk/wiki/C%C3%A1ch-app-ho%E1%BA%A1t-%C4%91%E1%BB%99ng).
@@ -69,23 +71,3 @@ Dữ liệu tải xuống có thể có thông tin của người khác (tên gi
 ## Liên hệ
 
 Câu hỏi hoặc báo lỗi: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issue là công khai: đừng dán tên, MSSV, điểm, token hay ảnh chụp có thông tin cá nhân. Vấn đề bảo mật thì báo riêng theo [SECURITY.md](SECURITY.md). Câu hỏi về quyền riêng tư cần trao đổi riêng: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
-
----
-
-# BK Study Desk Privacy Policy (English)
-
-BK Study Desk is an unofficial app made by an individual developer (xeroz369) for HCMUT students. It is not affiliated with or endorsed by the university.
-
-- **No data collection by the developer.** No server, no analytics, no ads. The app only talks to the university's own sites (SSO, BK-LMS, MyBK), plus GitHub to check for updates **only if you allow it** (no device or account info is sent).
-- **Data stored locally:** after you sign in, deadlines, schedules, course documents, grades, your name, student ID and class, reviews of LMS quizzes you have submitted (can be turned off), and your own quizzes and practice results are stored on your PC only, in `%LOCALAPPDATA%\BKStudyDesk.Data`. The uninstaller asks whether to delete it.
-- **Not stored:** ID card number, address, phone number, date of birth or personal email.
-- **Sign-in:** your password is typed only on the university SSO page and the app never reads it. If you choose Save when the sign-in window asks, WebView2 stores it encrypted on this PC for autofill. Cookies are encrypted by WebView2, and the LMS token is encrypted with Windows DPAPI.
-- **Read-only:** the app never submits, registers, pays or takes quizzes for you.
-- **Log:** activity log in `data\app.log` on your PC (about 4 MB max, rotated) for bug reports; tokens, cookies, sign-in tickets and emails are masked.
-- **Retention:** data stays on your PC until you delete it. Newer syncs overwrite older data.
-- **Roles and law:** applicable law is Vietnam's Personal Data Protection Law No. 91/2025/QH15 and Decree 356/2025/ND-CP (in force since 1 Jan 2026). HCMUT holds the source data; you use the app to view your own data on your own PC; the developer receives no data and, in the author's reading (not confirmed by any authority), is neither a controller nor a processor under Article 2.
-- **Your rights:** view everything in the app or the JSON files in `%LOCALAPPDATA%\BKStudyDesk.Data`; correct source data with the university; delete as below.
-- **Other people's data:** downloaded data may include lecturers' names or classmates' forum posts. Use it only for your studies; do not republish or share it.
-- **Delete data:** *Settings → Sign out* deletes tokens and cookies (synced data is kept for offline viewing). To delete everything, quit the app and delete `%LOCALAPPDATA%\BKStudyDesk.Data`, or uninstall and tick *Delete app data*. The uninstaller never deletes downloaded course documents.
-- **Update checks:** GitHub (US) sees your IP address when the app checks for updates, under GitHub's own privacy statement.
-- **Contact:** [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues) (public: do not post personal data). Security issues: [SECURITY.md](SECURITY.md). Private questions: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

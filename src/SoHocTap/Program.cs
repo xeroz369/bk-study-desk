@@ -12,7 +12,6 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-#if PUBLIC_EDITION
         // Velopack phải chạy đầu tiên: lúc cài/gỡ/cập nhật, Update.exe gọi exe với tham số riêng, xử lý xong là thoát luôn.
         // Không tự cài bản đã tải khi mở app: chỉ cài khi người dùng bấm, hoặc lúc thoát ở chế độ tự động (UpdateService).
         // Gỡ app: xóa mục tự chạy. Dữ liệu (…\BKStudyDesk.Data) do bộ gỡ tiếng Việt (Uninstall.exe) xóa nếu người dùng chọn.
@@ -21,7 +20,6 @@ internal static class Program
             .OnBeforeUninstallFastCallback(_ => Startup.Remove())
             .Run();
         Updates.UpdateService.EnsureUninstaller();
-#endif
         // Single instance: mở bản thứ hai thì nó chỉ đưa window đang mở lên trước rồi thoát.
         using var mutex = new Mutex(initiallyOwned: true, AppInfo.InstanceKey, out bool first);
         // Restart (Cài đặt → Ngôn ngữ): bản cũ đang thoát, đợi nó nhả mutex tối đa 5 giây.

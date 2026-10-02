@@ -263,8 +263,24 @@ public sealed partial class LmsSource : ISource
             }
     }
 
-    /// <summary>Một mục (section) của khóa trên LMS: số file tải được, dung lượng, số file đã có trên máy.</summary>
-    public sealed record SectionInfo(int Index, string Name, int Files, long Bytes, int Have);
+    /// <summary>Loại file để người dùng chọn tải: PDF, slide (thường nặng nhất), còn lại.</summary>
+    public enum FileKind { Pdf, Slide, Other }
+
+    public static FileKind KindOf(string? fileName) => Path.GetExtension(fileName ?? "").ToLowerInvariant() switch
+    {
+        ".pdf" => FileKind.Pdf,
+        ".ppt" or ".pptx" or ".pps" or ".ppsx" or ".odp" or ".key" => FileKind.Slide,
+        _ => FileKind.Other,
+    };
+
+    /// <summary>Một file tải được trong mục: loại, dung lượng, đã có trên máy chưa.</summary>
+    public sealed record FileStat(FileKind Kind, long Bytes, bool Have);
+
+    /// <summary>Một mục (section) của khóa trên LMS và các file tải được trong đó.</summary>
+    public sealed record SectionInfo(int Index, string Name, IReadOnlyList<FileStat> Items)
+    {
+        public IEnumerable<FileStat> Of(IReadOnlySet<FileKind> kinds) => Items.Where(f => kinds.Contains(f.Kind));
+    }
 
     private static CourseInfo? Course(long courseId) =>
         (JsonStore.ReadObject(LmsFile)["courses"] as JsonArray ?? []).OfType<JsonObject>()
@@ -284,15 +300,19 @@ public sealed partial class LmsSource : ISource
         {
             var mine = files.Where(x => ReferenceEquals(x.Sec, sec)).Select(x => x.File).ToList();
             if (mine.Count > 0)
-                list.Add(new SectionInfo(i, WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? "Mục " + i), mine.Count,
-                    mine.Sum(f => f["filesize"]?.GetValue<long>() ?? 0), mine.Count(Have)));
+                list.Add(new SectionInfo(i, WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? "Mục " + i),
+                    [.. mine.Select(f => new FileStat(KindOf(f["filename"]?.GetValue<string>()), f["filesize"]?.GetValue<long>() ?? 0, Have(f)))]));
             i++;
         }
         return list;
     }
 
-    /// <summary>Tải các mục đã chọn của một khóa vào thư mục môn (giống lúc sync: chống trùng, giữ bản cũ). extract = true thì tự giải nén file zip.</summary>
-    public async Task<int> DownloadSectionsAsync(long courseId, IReadOnlyCollection<int> sections, bool extract, Action<string> log, CancellationToken ct)
+    /// <summary>
+    /// Tải các mục đã chọn của một khóa vào thư mục môn (giống lúc sync: chống trùng, giữ bản cũ). extract = true thì tự giải nén file zip.
+    /// <paramref name="kinds"/>: chỉ tải các loại file này (null = mọi loại).
+    /// </summary>
+    public async Task<int> DownloadSectionsAsync(long courseId, IReadOnlyCollection<int> sections, bool extract, Action<string> log, CancellationToken ct,
+        IReadOnlySet<FileKind>? kinds = null)
     {
         var m = Course(courseId) ?? throw new InvalidOperationException("Chưa có khóa này, hãy đồng bộ LMS trước.");
         await Gate.WaitAsync(ct);
@@ -303,7 +323,8 @@ public sealed partial class LmsSource : ISource
             var index = JsonStore.ReadObject(FilesIndex);
             var hashes = new Dictionary<string, Dictionary<string, string>>();
             var n = 0;
-            foreach (var (sec, mod, f) in Downloadable(contents).Where(x => chosen.Contains(x.Sec)))
+            foreach (var (sec, mod, f) in Downloadable(contents).Where(x => chosen.Contains(x.Sec)
+                         && (kinds is null || kinds.Contains(KindOf(x.File["filename"]?.GetValue<string>())))))
             {
                 ct.ThrowIfCancellationRequested();
                 if (await SyncFileAsync(m, sec, mod, f, index, hashes, log, ct, extract) is not null) n++;

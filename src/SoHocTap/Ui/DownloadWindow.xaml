@@ -19,6 +19,13 @@
         <TextBox x:Name="Output" DockPanel.Dock="Bottom" Height="110" Margin="0,10,0,0" IsReadOnly="True" TextWrapping="NoWrap"
                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="12" />
 
+        <!-- Loại file: slide thường nặng nhất, bỏ chọn để chỉ tải PDF. Số file và dung lượng bên dưới tính theo lựa chọn này. -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="{ui:T download.kinds}" VerticalAlignment="Center" Margin="0,0,12,0" />
+            <CheckBox x:Name="KindPdf" Content="PDF" IsChecked="True" Checked="OnKinds" Unchecked="OnKinds" Margin="0,0,16,0" />
+            <CheckBox x:Name="KindSlide" Content="{ui:T download.kindSlide}" IsChecked="True" Checked="OnKinds" Unchecked="OnKinds" Margin="0,0,16,0" />
+            <CheckBox x:Name="KindOther" Content="{ui:T download.kindOther}" IsChecked="True" Checked="OnKinds" Unchecked="OnKinds" />
+        </StackPanel>
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Content="{ui:T download.all}" Click="OnAll" Padding="10,3" Margin="0,0,6,0" />

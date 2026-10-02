@@ -1,5 +1,7 @@
 # studypack: quiz tự soạn
 
+**Tiếng Việt** · [English](README.en.md)
+
 Soạn quiz để tự ôn và gửi cho bạn bè: gõ trong app, nhờ AI hoặc đổi qua lại với Moodle (BK-LMS).
 
 | File | Dùng để |

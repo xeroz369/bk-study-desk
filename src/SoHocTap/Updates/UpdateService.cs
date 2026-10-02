@@ -39,22 +39,14 @@ public sealed class UpdateService
 
     /// <summary>Bản này có phần cập nhật không (bản public, không phải Store).</summary>
     public static bool Supported =>
-#if PUBLIC_EDITION
         Paths.Kind != InstallKind.Store;
-#else
-        false;
-#endif
 
     /// <summary>Tự cài được (bản cài Velopack); bản zip chỉ báo link.</summary>
     public static bool CanSelfUpdate => Supported && Paths.Kind == InstallKind.Installed;
 
     /// <summary>Bản cài của bài test cập nhật (pack id BKStudyDeskTest): chỉ bản này nhận cờ --update-now.</summary>
     public static bool IsTestInstall =>
-#if PUBLIC_EDITION
         CanSelfUpdate && Velopack.Locators.VelopackLocator.Current?.AppId == "BKStudyDeskTest";
-#else
-        false;
-#endif
 
     public static void SetMode(UpdateMode m) => Config.Set("app.update.mode", m.ToString().ToLowerInvariant());
 
@@ -68,7 +60,7 @@ public sealed class UpdateService
     }
 
     /// <summary>Tới hạn kiểm tra tự động chưa (chế độ, kiểu bản, chu kỳ).</summary>
-    public bool Due() => Supported && UpdatePolicy.ShouldCheck(Mode, Paths.Kind, AppInfo.Channel == "local", DateTimeOffset.UtcNow, LastCheck,
+    public bool Due() => Supported && UpdatePolicy.ShouldCheck(Mode, Paths.Kind, DateTimeOffset.UtcNow, LastCheck,
         Config.Int("app.update.checkHours", 24));
 
     /// <summary>
@@ -77,7 +69,6 @@ public sealed class UpdateService
     /// </summary>
     public static void EnsureUninstaller()
     {
-#if PUBLIC_EDITION
         if (!CanSelfUpdate) return;
         try
         {
@@ -91,7 +82,6 @@ public sealed class UpdateService
             k.SetValue("QuietUninstallString", $"\"{exe}\" --uninstall --silent");
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) { Log.Warn($"Đăng ký bộ gỡ: {e.Message}"); }
-#endif
     }
 
     /// <summary>Ghi log khi vừa lên bản mới (so với lần chạy trước).</summary>
@@ -168,7 +158,6 @@ public sealed class UpdateService
         catch (OperationCanceledException) { return false; }
         try
         {
-#if PUBLIC_EDITION
             var mgr = Manager();
             var info = await mgr.CheckForUpdatesAsync();
             if (info is null || info.TargetFullRelease.Version.ToString() != offer.Version)
@@ -180,10 +169,6 @@ public sealed class UpdateService
             Downloaded = true;
             Log.Info($"Đã tải bản {offer.Version}");
             return true;
-#else
-            await Task.CompletedTask;
-            return false;
-#endif
         }
         catch (Exception e) when (!ct.IsCancellationRequested)
         {
@@ -202,12 +187,10 @@ public sealed class UpdateService
     /// <summary>Thoát, cài bản đã tải rồi mở lại app (người dùng bấm "Khởi động lại để cập nhật").</summary>
     public void ApplyAndRestart()
     {
-#if PUBLIC_EDITION
         if (!Downloaded || Offer?.Native is not Velopack.VelopackAsset a) return;
         MarkApplying(a.Version.ToString());
         Restarting?.Invoke();
         Manager().ApplyUpdatesAndRestart(a);
-#endif
     }
 
     /// <summary>
@@ -216,12 +199,10 @@ public sealed class UpdateService
     /// </summary>
     public void ApplyOnExit()
     {
-#if PUBLIC_EDITION
         if (Mode != UpdateMode.Auto || !Downloaded || Offer?.Native is not Velopack.VelopackAsset a) return;
         MarkApplying(a.Version.ToString());
         try { Manager().WaitExitThenApplyUpdates(a, silent: true, restart: false); }
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Cài bản cập nhật khi thoát: {e.Message}"); }
-#endif
     }
 
     /// <summary>Ghi lại bản sắp cài, để lần mở sau biết cài thành hay không (UpdatePolicy.ApplyResult).</summary>
@@ -245,7 +226,6 @@ public sealed class UpdateService
         return ok ? src : throw new InvalidOperationException(L.T("update.badSource"));
     }
 
-#if PUBLIC_EDITION
     /// <summary>
     /// Nguồn: repo GitHub (mặc định) hoặc thư mục trên máy (chỉ dùng để test cập nhật). Gói cập nhật nằm ở release cố định
     /// "updates" của repo (trang release cho người dùng chỉ có bộ cài), Velopack đọc releases.&lt;kênh&gt;.json ở đó.
@@ -265,9 +245,6 @@ public sealed class UpdateService
         var bytes = info.DeltasToTarget is { Length: > 0 } d ? d.Sum(x => x.Size) : a.Size;
         return new UpdateOffer(a.Version.ToString(), bytes, a.NotesMarkdown ?? "", ReleasesUrl, a);
     }
-#else
-    private static Task<UpdateOffer?> CheckInstalledAsync(CancellationToken ct) => Task.FromResult<UpdateOffer?>(null);
-#endif
 
     /// <summary>https://github.com/&lt;chủ&gt;/&lt;repo&gt; → link tải của release "updates".</summary>
     public static string FeedUrl(string repo) => repo.TrimEnd('/') + "/releases/download/updates";

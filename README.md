@@ -1,5 +1,7 @@
 # BK Study Desk
 
+**Tiếng Việt** · [English](README.en.md)
+
 ![BK Study Desk](docs/hero.png)
 
 App Windows nhỏ gọn cho sinh viên **Bách Khoa TP.HCM (HCMUT)**. App gom **BK-LMS** và **MyBK** vào một cửa sổ:
@@ -13,21 +15,19 @@ App Windows nhỏ gọn cho sinh viên **Bách Khoa TP.HCM (HCMUT)**. App gom **
 
 > **Không chính thức.** Đây là dự án cá nhân, không liên quan và không được Trường Đại học Bách khoa hay Moodle HQ xác nhận. App dùng tài khoản của chính bạn và chỉ đọc những gì bạn vốn xem được sau khi đăng nhập. Mọi địa chỉ và API app gọi được liệt kê ở Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động). Nếu trường yêu cầu, dự án sẽ thay đổi hoặc dừng tính năng tương ứng.
 
-Giao diện mặc định tiếng Việt, có thêm tiếng Anh. *English summary at the bottom.*
+Giao diện mặc định tiếng Việt, có thêm tiếng Anh.
 
 **Hướng dẫn chi tiết:** [Wiki](../../wiki) (cài đặt, cập nhật, gỡ app, luyện tập, câu hỏi thường gặp).
 
 ## Cài đặt
 
-**Cách 1: Microsoft Store (khuyên dùng).** Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Không có cảnh báo SmartScreen vì Microsoft ký gói; Store tự cập nhật app.
+**Cách 1: bộ cài trên GitHub (khuyên dùng).** Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản sau.
 
-**Kiểm tra số phiên bản trước khi cài.** Mỗi bản mới phải chờ Microsoft duyệt (thường vài giờ, có khi tới 3 ngày làm việc), nên bản trên Store có thể chậm hơn bản mới nhất trên GitHub. So số phiên bản ở trang Store với [Releases](../../releases/latest); cần bản mới ngay thì dùng bộ cài GitHub.
-
-**Cách 2: bộ cài trên GitHub.**
-
-1. Tải `BKStudyDesk-x.y.z-Setup-x64.exe` ở [Releases](../../releases) (máy chip ARM: bản `-Setup-arm64.exe`).
+1. Tải `BKStudyDesk-x.y.z-Setup-x64.exe` ở [Releases](../../releases/latest) (máy chip ARM: bản `-Setup-arm64.exe`).
 2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm** → **Vẫn chạy** (chỉ một lần).
 3. Lần mở đầu, chọn cách cập nhật và thư mục lưu tài liệu, rồi **Đăng nhập HCMUT**.
+
+**Cách 2: Microsoft Store.** [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850): không có cảnh báo SmartScreen. Mỗi bản mới phải chờ Microsoft duyệt (có khi vài ngày), nên bản Store thường chậm hơn bản trên GitHub. So số phiên bản ở trang Store với [Releases](../../releases/latest) trước khi cài.
 
 Hai cách cài dùng chung mã nguồn nhưng là hai bản riêng, dữ liệu không dùng chung. Chỉ nên cài một trong hai.
 
@@ -50,16 +50,19 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - đếm ngược tới kỳ thi gần nhất;
   - deadline trong 7 ngày và quiz;
   - thông báo mới trên LMS.
-- **Lịch**: việc sắp tới theo ngày, thời khóa biểu tuần, lịch thi.
+- **Lịch**:
+  - việc sắp tới theo ngày, lịch thi;
+  - thời khóa biểu dạng **lưới tuần** (giống Google Calendar) hoặc danh sách;
+  - **Xuất lịch (.ics)…**: lưu thời khóa biểu cả kỳ và lịch thi ra file để nhập vào Google Calendar, Outlook, Lịch của Windows.
 - **Môn học**:
   - duyệt thư mục từng môn kiểu File Explorer;
   - xem file mới, deadline, thông báo, sổ điểm và các lớp trên LMS.
-  - **Tải tài liệu theo từng mục** của lớp trên LMS, tùy chọn tự giải nén .zip/.rar/.7z.
+  - **Tải tài liệu theo từng mục** của lớp trên LMS, chọn loại file (PDF, slide, khác), tùy chọn tự giải nén .zip/.rar/.7z.
   - Bật tự tải: mỗi lần đồng bộ, app tải file mới (cả đề và file đính kèm bài tập), LMS chậm vẫn mở được.
 - **Điểm và học vụ**:
   - bảng điểm theo học kỳ kèm điểm thành phần;
   - tiến độ CTĐT theo khối kiến thức;
-  - sổ điểm LMS, kết quả đăng ký môn, ngày CTXH, quyết định học vụ.
+  - sổ điểm LMS, kết quả đăng ký môn (kèm giảng viên và giờ học), ngày CTXH, quyết định học vụ.
 - **Luyện tập**: tự làm quiz để ôn bài, không ảnh hưởng gì tới điểm trên LMS. **Hướng dẫn từng bước có ảnh: [Wiki** → **Luyện tập](../../wiki/Luyện-tập).**
   - **Tự soạn quiz** cho từng môn, chương, bài. Có đủ 5 dạng câu như quiz LMS (chọn một, chọn nhiều, đúng/sai, điền số, điền chữ), chèn được ảnh và công thức.
   - **Nhờ AI soạn**: app viết sẵn câu lệnh cho AI, bạn chỉ cần dán câu trả lời của AI vào app.
@@ -139,30 +142,18 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 [PolyForm Noncommercial 1.0.0](LICENSE.md) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
 - **Được:** dùng, sửa, chia sẻ cho cá nhân, học tập, nghiên cứu, trường học, tổ chức phi lợi nhuận. Giữ dòng ghi tác giả (Required Notice) trong LICENSE.
 - **Không được:** bán app hay bản sửa, đưa vào sản phẩm hoặc dịch vụ thu tiền.
-- **Ủng hộ** người làm app (nút Sponsor) là tự nguyện, không phải mua app.
+- **Ủng hộ** người làm app là tự nguyện, không phải mua app.
 
 Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép này.
 
 Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).
 
----
+## Ủng hộ
 
-## English
+App miễn phí và sẽ tiếp tục được sửa lỗi, thêm tính năng. Nếu app giúp ích cho bạn, bạn có thể mời người làm app một ly cà phê. Ủng hộ là tự nguyện, không mở khóa gì thêm trong app.
 
-**BK Study Desk** is an unofficial Windows desktop app for HCMUT students. It combines BK-LMS and MyBK in one window:
-- deadlines and quizzes;
-- timetable and exam schedule;
-- course documents, downloadable section by section;
-- grades and curriculum progress;
-- practice: make your own quizzes, review LMS quizzes you have submitted (saved locally, can be turned off), mock exams; saved LMS quizzes are shareable once the quiz has closed;
-- shortcuts to school services.
+- **Ko-fi:** [ko-fi.com/F1F3SN4UE](https://ko-fi.com/F1F3SN4UE) (thẻ quốc tế, PayPal).
+- **MoMo / ngân hàng (VietQR):** quét mã bên dưới bằng app MoMo hoặc app ngân hàng.
 
-**Language:** Vietnamese is the default UI language; English is available in Settings.
+<img src="docs/ung-ho-momo.png" alt="Mã QR ủng hộ qua MoMo" width="220">
 
-**Install:** download `BKStudyDesk-x.y.z-Setup-x64.exe` (or `-arm64.exe`) from Releases, pick an install folder and click Install; no admin rights needed. SmartScreen may warn once because the app is not code-signed: click *More info → Run anyway*. On first launch the app asks how to handle updates (notify, auto-install on exit, or never check); nothing is checked until you choose. Uninstall from Windows Settings → Apps; you choose whether to keep the app data.
-
-**License:** [PolyForm Noncommercial 1.0.0](LICENSE.md): free for personal, educational and nonprofit use; no commercial use. Donations via Sponsor are voluntary.
-
-**Contact:** bugs and ideas in [Issues](https://github.com/xeroz369/bk-study-desk/issues); security reports per [SECURITY.md](SECURITY.md); official project contact: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
-
-**Privacy:** see [PRIVACY.md](PRIVACY.md). The app is read-only. Your password is typed only on the school's SSO page. The LMS token is DPAPI-encrypted, and the data folder is restricted to your Windows account.

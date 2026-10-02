@@ -1,3 +1,5 @@
+**Tiếng Việt** · [English](Practice)
+
 Làm quiz, tự soạn câu hỏi, nhờ AI soạn giúp và gửi cho bạn bè. Không cần biết lập trình: chỉ cần chọn, gõ, sao chép và dán.
 
 Mục lục:
@@ -121,7 +123,7 @@ Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** �
 | Chọn **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì sao chép nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
 | Công thức hiện ra toàn ký hiệu lạ | Bảo AI: "viết công thức trong `\(` và `\)`, không gấp đôi dấu `\`". |
 | Câu bị vào nhầm bài | Tên chương và tên bài trong file phải trùng với tên trong app. Nhờ AI ở đúng bài (mục 4) thì app tự điền tên sẵn. |
-| Muốn xóa một câu tự soạn | Vào **Soạn**** → **tab**Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
+| Muốn xóa một câu tự soạn | Vào **Soạn** → tab **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
 | Muốn gỡ cả quiz đã nhập | Trang Luyện tập, bấm chuột phải vào quiz, chọn **Gỡ quiz này**. |
 
 ---
