@@ -1,6 +1,6 @@
 name: codeql
 
-# Quét lỗi bảo mật trong mã C# (WPF, cần Windows để build) và TypeScript/Svelte (khung Luyện tập).
+# Quét lỗi bảo mật trong mã C# (WPF, cần Windows để build), TypeScript/Svelte (khung Luyện tập) và workflow CI.
 on:
   push:
     branches: [main]
@@ -23,6 +23,10 @@ jobs:
             os: windows-latest
             build-mode: manual
           - language: javascript-typescript
+            os: ubuntu-latest
+            build-mode: none
+          # File workflow của GitHub Actions (quyền token, chèn lệnh từ dữ liệu PR...).
+          - language: actions
             os: ubuntu-latest
             build-mode: none
     runs-on: ${{ matrix.os }}
