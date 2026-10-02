@@ -53,7 +53,7 @@
 			i.lessonId && !i.shareable ? (q.closesAt ? `chia sẻ được sau ${day(q.closesAt)}` : 'chia sẻ được khi quiz đóng') : '',
 		]
 			.filter(Boolean)
-			.join(' · ');
+			.join(', ');
 	}
 	/** Quiz with no review: write down what you remember, as a lesson in "Quiz LMS đã lưu" (only on this computer, no LMS
 	 *  call). You check the answers yourself. */
@@ -86,7 +86,7 @@
 
 <PageShell title="Kho quiz LMS" crumbs={[{ label: 'Luyện tập', href: '#luyen-tap' }]} meta="quiz bạn đã nộp trên LMS">
 	{#snippet actions()}
-		<label class="flex min-h-6 items-center gap-2 text-xs" title="Giống ô trong Cài đặt → Đồng bộ và nhắc hạn">
+		<label class="flex min-h-6 items-center gap-2 text-xs" title="Giống ô trong Cài đặt > Đồng bộ và nhắc hạn">
 			<Switch checked={autoSave} onCheckedChange={setAutoSave} aria-label="Tự lưu quiz đã nộp" />Tự lưu sau khi nộp
 		</label>
 		<Button size="xs" variant="ghost" onclick={saveNow} disabled={!autoSave}>Lưu ngay</Button>

@@ -152,7 +152,7 @@ export function validatePack(input: unknown, rawSize = 0): PackReport {
 	if (!Array.isArray(p.authors) || p.authors.length === 0) err('authors', 'cần ít nhất một tác giả { name }');
 	else p.authors.forEach((a, i) => (isObj(a) ? str(a.name, `authors[${i}].name`) : err(`authors[${i}]`, 'cần { name }')));
 	if (p.license === undefined) warn('license', 'nên ghi giấy phép (vd. "CC-BY-SA-4.0") để người khác biết được dùng lại thế nào');
-	if (p.verified === undefined) warn('verified', 'chưa ghi đã kiểm đáp án bằng cách nào (python, máy tính, giải tay…)');
+	if (p.verified === undefined) warn('verified', 'chưa ghi đã kiểm đáp án bằng cách nào (python, máy tính, giải tay...)');
 
 	const text = (v: unknown, path: string, required = true) => {
 		if (!str(v, path, required)) return;
@@ -275,20 +275,20 @@ export function validatePack(input: unknown, rawSize = 0): PackReport {
 /** Kiểm tra một đoạn nội dung: HTML lạ, script, lỗi escape TeX trong JSON. */
 function checkText(s: string, path: string, err: (p: string, m: string) => void, warn: (p: string, m: string) => void) {
 	if (/<\s*(script|style|iframe|object|embed|form|input|link|meta|svg|math|base)\b/i.test(s))
-		err(path, 'không được có thẻ script/style/iframe/svg… (chỉ chữ, công thức TeX, HTML định dạng đơn giản, ảnh data URI)');
+		err(path, 'không được có thẻ script/style/iframe/svg... (chỉ chữ, công thức TeX, HTML định dạng đơn giản, ảnh data URI)');
 	for (const m of s.matchAll(/<img\b[^>]*>/gi)) {
 		const src = m[0].match(/\ssrc\s*=\s*"([^"]*)"/i)?.[1] ?? '';
 		if (!IMG_SRC.test(src)) {
-			err(path, 'ảnh phải nhúng dạng data:image/png|jpeg|gif|webp;base64,… (không link ngoài, không SVG)');
+			err(path, 'ảnh phải nhúng dạng data:image/png|jpeg|gif|webp;base64,... (không link ngoài, không SVG)');
 			break;
 		}
 		if (src.length > MAX_IMAGE_CHARS) warn(path, `ảnh lớn (${Math.round(src.length / 1024)} KB): nên thu nhỏ còn dưới 1 MB`);
 	}
-	if (/\son\w+\s*=/i.test(s) || /javascript:/i.test(s)) err(path, 'không được có thuộc tính sự kiện (onclick…) hay javascript:');
+	if (/\son\w+\s*=/i.test(s) || /javascript:/i.test(s)) err(path, 'không được có thuộc tính sự kiện (onclick...) hay javascript:');
 	// JSON hiểu "\f", "\b", "\t", "\v" là ký tự điều khiển: dấu hiệu quên viết "\\frac", "\\beta", "\\times"…
 	const ctl = s.match(/[\f\b\t\v\x00-\x08\x0e-\x1f]/);
 	if (ctl)
-		err(path, `có ký tự điều khiển (mã ${ctl[0].charCodeAt(0)}): trong JSON phải viết "\\\\frac", "\\\\beta", "\\\\times"… (hai dấu \\)`);
+		err(path, `có ký tự điều khiển (mã ${ctl[0].charCodeAt(0)}): trong JSON phải viết "\\\\frac", "\\\\beta", "\\\\times"... (hai dấu \\)`);
 	// "\right", "\rho" → CR + "ight"; "\neq", "\nabla", "\nu" → xuống dòng + "eq": cũng là quên escape.
 	if (/\r[a-z]/.test(s)) err(path, 'có "\\r" dính chữ (vd. "\\right", "\\rho" chưa escape): viết "\\\\right"');
 	if (/\n(eq|abla|u\b|ot\b|ewline|exists|leq|geq|i\b|cong|parallel|mid\b)/.test(s))

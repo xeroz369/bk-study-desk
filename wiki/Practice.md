@@ -1,6 +1,6 @@
 [Tiếng Việt](Luyện-tập) | **English**
 
-> Translated from Luyện-tập (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from Luyện-tập (Vietnamese) for BK Study Desk 1.1.4.
 
 Take quizzes, write your own questions, ask AI to write them and send them to friends. No programming needed: you only select, type, copy and paste.
 
@@ -52,7 +52,7 @@ These questions are collected in the **Đánh dấu** (Flagged) box on the Pract
 
 ## 3. Write your own questions
 
-1. Open a subject and select **Soạn · Nhập · Xuất** (Write · Import · Export) at the top right. Or, on the Practice page, select **Soạn** (Write).
+1. Open a subject and select **Tạo** (Create) at the top right, or right-click the subject and select **Tạo câu** (Create a question). The Practice page has a **Tạo** button too.
 2. Select a **chương** (chapter), then a **bài** (lesson). If it doesn't exist yet, type its name in *Chương mới* (New chapter) or *Bài mới* (New lesson).
 3. On the **Tạo** (Create) tab:
    - Choose the question type: **Một đáp án** (single answer), **Nhiều đáp án** (multiple answers), **Đúng / Sai** (true/false), **Điền số** (numeric) or **Điền chữ** (short text).
@@ -101,7 +101,7 @@ The app also opens **Moodle XML**, **GIFT** and **Aiken** files (question format
 
 ## 6. Send a quiz to a friend
 
-1. Open the subject, select **Soạn · Nhập · Xuất** (Write · Import · Export), then the **Xuất** (Export) tab.
+1. Open the subject and select **Xuất** (Export), or right-click the subject or quiz pack and select **Xuất để chia sẻ** (Export to share).
 2. Enter **your name** so the recipient knows who wrote it.
 3. Select **Lưu Markdown (.md / .zip)** (Save Markdown) and choose where to save.
 4. Send that file to your friend. They follow section 5.
@@ -127,7 +127,7 @@ After each sync, the app saves the LMS quizzes **you have submitted**, so you ca
 | Selecting **Nhập** (Import) shows an error | The app says which line is wrong. For an AI-written quiz, copy the whole error message, paste it to the AI with "fix these errors and return the whole markdown block", then import again. |
 | Formulas show strange symbols | Tell the AI: "write formulas inside `\(` and `\)`, don't double the `\`". |
 | A question landed in the wrong lesson | The chapter and lesson names in the file must match the names in the app. Asking AI from the right lesson (section 4) fills in the names for you. |
-| Delete a question you wrote | Go to **Soạn** (Write) > the **Tạo** (Create) tab in the right lesson, right-click the question and select **Xóa câu** (Delete question). |
+| Delete a question you wrote | Go to **Tạo** (Create) in the right lesson, right-click the question and select **Xóa câu** (Delete question). |
 | Remove a whole imported quiz | On the Practice page, right-click the quiz and select **Gỡ quiz này** (Remove this quiz). |
 
 ---

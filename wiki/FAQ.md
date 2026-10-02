@@ -1,6 +1,6 @@
 [Tiếng Việt](Câu-hỏi-thường-gặp) | **English**
 
-> Translated from Câu-hỏi-thường-gặp (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from Câu-hỏi-thường-gặp (Vietnamese) for BK Study Desk 1.1.4.
 
 **Windows says "Windows protected your PC".**
 The GitHub installer isn't code-signed yet (a certificate costs a yearly fee). Select **More info** > **Run anyway**. This appears only once, when installing; later updates don't ask again. To make sure the file wasn't altered, compare its SHA-256 as described in [Installation](Installation).

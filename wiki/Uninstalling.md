@@ -1,6 +1,6 @@
 [Tiếng Việt](Gỡ-cài-đặt) | **English**
 
-> Translated from Gỡ-cài-đặt (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from Gỡ-cài-đặt (Vietnamese) for BK Study Desk 1.1.4.
 
 Go to Windows **Settings** > **Apps** > **BK Study Desk** > **Uninstall** (or right-click the app in Start and select **Uninstall**). The uninstaller is in Vietnamese.
 

@@ -6,10 +6,29 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.4] - 2026-10-03
+
+### Thêm
+
+- Tab **Đăng ký và học vụ** có bảng **Giảng viên và lịch dạy kỳ này**, nhóm theo giảng viên: môn, mã, nhóm lớp, thứ, giờ, phòng ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)). Cột giảng viên và giờ học chuyển từ bảng **Kết quả đăng ký** sang bảng này.
+- Đăng nhập lại qua nút **Mở MyBK** / **Mở LMS** trên thanh báo lỗi xong thì app tự đồng bộ lại nguồn đó, không cần bấm **Đồng bộ** ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- **Luyện tập**: menu chuột phải ở gói quiz, môn và bài có đủ thao tác: mở, tạo câu, nhập vào môn, **Xuất để chia sẻ**, gỡ.
+
 ### Thay đổi
+
+- **Luyện tập**: nút **Soạn** đổi tên thành **Tạo**; **Tạo**, **Nhập**, **Xuất** là ba nút riêng.
+- Chữ trong giao diện bỏ các ký tự trang trí (dấu chấm giữa, dấu ba chấm, mũi tên), dùng dấu phẩy và chữ thường.
 
 - Bản tiếng Anh của tài liệu chuyển vào thư mục `docs/en/`; gốc repo chỉ còn bản tiếng Việt. Trang **Giới thiệu** mở `docs/en/PRIVACY.md` khi giao diện tiếng Anh.
 - Tài liệu (README, PRIVACY, SECURITY, CONTRIBUTING, CHANGELOG, quy tắc ứng xử, studypack) dùng hàng badge **Tiếng Việt** | **English** ở đầu để chuyển ngôn ngữ, theo mẫu multilanguage-readme-pattern.
+
+### Sửa lỗi
+
+- Hộp **Tải tài liệu** không mở được ở bản 1.1.3.
+- **Luyện tập**: **Gỡ quiz này**, **Xóa câu**, cập nhật hoặc thay gói đã có không chạy (hộp hỏi xác nhận không hiện). Giờ hiện hộp thoại Windows.
+- **Luyện tập**: tab đang chọn (Tạo, Nhập, Xuất, Nhờ AI) không có dấu hiệu nào khác tab còn lại.
+- **Lịch** > **Sắp tới**: menu chuột phải có hai mục mở giống nhau.
+- Bảng đợt đăng ký môn trống khi MyBK chuyển về trang chủ thay vì trang đăng ký. App mở lại đúng trang, báo lỗi nếu vẫn không có bảng, và không lưu kết quả trống.
 
 ## [1.1.3] - 2026-10-03
 
@@ -122,7 +141,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1

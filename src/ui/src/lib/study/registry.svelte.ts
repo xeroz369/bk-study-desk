@@ -129,7 +129,7 @@ class StudyRegistry {
 		const exam: Exam = {
 			id: `ngau-nhien-${c.id}-${Date.now()}`,
 			courseId: c.id,
-			title: `Đề ngẫu nhiên · ${c.name}`,
+			title: `Đề ngẫu nhiên, ${c.name}`,
 			minutes: Math.max(5, Math.round((bp.minutes * picked.length) / Math.max(total, 1))),
 			scoring: { count: picked.length, right, wrong: (base.wrong / base.right) * right },
 			shuffle: { questions: false, options: true },

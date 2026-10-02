@@ -384,7 +384,7 @@ public partial class MainWindow : Window, IDisposable
                 return (L.F("info.syncFailed", label, text), detail, name, label);
             }
             if (s.Warnings(name) is { Count: > 0 } w)
-                return (L.F("info.syncWarnings", label, string.Join(", ", w.Select(x => x.What).Distinct().Take(4)) + (w.Count > 4 ? "…" : "")),
+                return (L.F("info.syncWarnings", label, string.Join(", ", w.Select(x => x.What).Distinct().Take(4)) + (w.Count > 4 ? "..." : "")),
                         string.Join("\n", w.Select(x => $"{x.What}: {x.Detail}")), name, label);
         }
         return null;

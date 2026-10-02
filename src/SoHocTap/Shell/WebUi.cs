@@ -49,10 +49,31 @@ internal static class WebUi
         s.IsSwipeNavigationEnabled = false;
         s.IsGeneralAutofillEnabled = false;
         s.IsPasswordAutosaveEnabled = false;
-        // Không dùng web message, host object, hộp thoại alert/confirm mặc định; không cấp quyền nào (camera, vị trí…).
+        // Không dùng web message, host object, hộp thoại alert/confirm kiểu trình duyệt; không cấp quyền nào (camera, vị trí...).
         s.IsWebMessageEnabled = false;
         s.AreHostObjectsAllowed = false;
         s.AreDefaultScriptDialogsEnabled = false;
+        // Tắt hộp thoại mặc định thì confirm() luôn trả false (Gỡ quiz, Xóa câu không chạy được). Thay bằng hộp thoại Windows.
+        // Mở hộp thoại sau khi handler trả về (deferral) để không lồng vòng lặp message trong event của WebView2.
+        core.ScriptDialogOpening += (_, e) =>
+        {
+            if (e.Kind is not (CoreWebView2ScriptDialogKind.Confirm or CoreWebView2ScriptDialogKind.Alert)) return;
+            var deferral = e.GetDeferral();
+            var app = System.Windows.Application.Current;
+            app.Dispatcher.BeginInvoke(() =>
+            {
+                try
+                {
+                    var confirm = e.Kind == CoreWebView2ScriptDialogKind.Confirm;
+                    var owner = app.MainWindow;
+                    var r = System.Windows.MessageBox.Show(owner, e.Message, AppInfo.Name,
+                        confirm ? System.Windows.MessageBoxButton.OKCancel : System.Windows.MessageBoxButton.OK,
+                        confirm ? System.Windows.MessageBoxImage.Question : System.Windows.MessageBoxImage.Information);
+                    if (r == System.Windows.MessageBoxResult.OK) e.Accept();
+                }
+                finally { deferral.Complete(); }
+            });
+        };
         core.PermissionRequested += (_, e) => e.State = CoreWebView2PermissionState.Deny;
     }
 

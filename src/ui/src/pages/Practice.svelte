@@ -10,14 +10,15 @@
 	import * as Alert from '$lib/components/ui/alert';
 	import { api } from '$lib/api/client';
 	import type { PackIssue } from '$lib/study/pack';
-	import { install, prepareImport, readPackFile } from '$lib/study/transfer';
+	import { exportMarkdown, install, lessonActions, prepareImport, readPackFile, shareablePack } from '$lib/study/transfer';
+	import type { StudyPack } from '$lib/study/pack';
+	import type { MenuItem } from '$lib/menu.svelte';
 	import { dayDiff, examTime, num } from '$lib/format';
 	import { Study } from '$lib/study/registry.svelte';
 	import { Progress, today } from '$lib/study/progress.svelte';
-	import { STATUS_TEXT, type Question } from '$lib/study/types';
+	import { STATUS_TEXT, type Course, type Question } from '$lib/study/types';
 	import CalendarCheck from '@lucide/svelte/icons/calendar-check';
 	import Shuffle from '@lucide/svelte/icons/shuffle';
-	import Pencil from '@lucide/svelte/icons/pencil';
 
 	let { arg }: { arg: string } = $props();
 	const course = $derived(arg ? Study.course(arg) : undefined);
@@ -41,7 +42,7 @@
 		if (x) location.hash = '#thi/' + x.id;
 		else notice = { title: 'Môn này chưa có câu nào để ra đề', lines: [] };
 	}
-	// Nhập quiz từ file (.md, .zip có ảnh, .json): file tự ghi môn/chương/bài nên vào đúng chỗ. GIFT, Moodle XML cần chọn môn: dùng Soạn → Nhập.
+	// Nhập quiz từ file (.md, .zip có ảnh, .json): file tự ghi môn/chương/bài nên vào đúng chỗ. GIFT, Moodle XML cần chọn môn: dùng nút Nhập (trang Tạo quiz).
 	let picker = $state<HTMLInputElement>();
 	let notice = $state<{ title: string; lines: string[] } | null>(null);
 	const issueText = (i: PackIssue) => (i.path ? `${i.path}: ` : '') + i.message;
@@ -78,16 +79,67 @@
 	}
 	const packMeta = (x: (typeof Study.packs)[number]) =>
 		x.pack && x.report?.ok
-			? `${x.pack.course.name} · ${x.questions} câu · v${x.pack.version} · ${x.pack.authors.map((a) => a.name).join(', ')}${x.report.warnings.length ? ` · ${x.report.warnings.length} cảnh báo` : ''}`
+			? `${x.pack.course.name}, ${x.questions} câu, v${x.pack.version}, ${x.pack.authors.map((a) => a.name).join(', ')}${x.report.warnings.length ? `, ${x.report.warnings.length} cảnh báo` : ''}`
 			: x.report
 				? `lỗi: ${issueText(x.report.errors[0])}`
 				: `lỗi: ${x.error}`;
+	const go = (hash: string) => () => (location.hash = hash);
+	/** Tạo, Nhập, Xuất for one place: môn, chương or bài (same path as scopePath in transfer.ts). */
+	const soanMenu = (path: string, [tao, nhap, xuat]: [string, string, string]): MenuItem[] => [
+		{ label: tao, sep: true, run: go(`#soan/tao/${path}`) },
+		{ label: nhap, run: go(`#soan/nhap/${path}`) },
+		{ label: xuat, run: go(`#soan/xuat/${path}`) },
+	];
+	function courseMenu(c: Course): MenuItem[] {
+		return [
+			{ label: 'Mở', primary: true, run: go('#luyen-tap/' + c.id) },
+			...soanMenu(c.id, ['Tạo câu', 'Nhập vào môn này', 'Xuất môn này']),
+			...(examable.includes(c) ? [{ label: 'Thi thử đề ngẫu nhiên', sep: true, run: () => randomExam(c.id) }] : []),
+		];
+	}
+	const courseOfPack = (p: StudyPack) => Study.manifest.courses.find((c) => c.code?.toUpperCase() === p.course.code.trim().toUpperCase());
+	function packMenu(p: StudyPack, ok: boolean): MenuItem[] {
+		const c = ok ? courseOfPack(p) : undefined;
+		// Questions recalled from an LMS quiz still open stay on this computer (shareablePack leaves them out).
+		const share = ok ? shareablePack(p) : null;
+		return [
+			...(c
+				? [
+						{ label: 'Mở môn', primary: true, run: go('#luyen-tap/' + c.id) },
+						{ label: 'Tạo câu', sep: true, run: go(`#soan/tao/${c.id}`) },
+						{ label: 'Nhập vào môn này', run: go(`#soan/nhap/${c.id}`) },
+					]
+				: []),
+			{
+				label: 'Xuất để chia sẻ',
+				hint: share ? undefined : ok ? 'sau khi quiz đóng' : 'gói đang lỗi',
+				disabled: !share,
+				run: () => share && exportMarkdown(share),
+			},
+			{ label: 'Gỡ quiz này', sep: true, run: () => removePack(p.id, p.title) },
+		];
+	}
+	/** Chapter of saved LMS quizzes: no Tạo, Nhập, Xuất for the whole chapter (lessons decide one by one). */
+	const lmsUnit = (u: Course['units'][number]) => !!u.pack?.id.startsWith('quiz-lms');
+	function lessonMenu(c: Course, ui: number, id: string): MenuItem[] {
+		const can = lessonActions(id);
+		const [tao, nhap, xuat] = soanMenu(`${c.id}/${ui}/${id}`, ['Tạo câu trong bài', 'Nhập vào bài', 'Xuất bài']);
+		const more = [can.tao && tao, can.nhap && nhap, can.xuat && xuat].filter((m) => !!m);
+		return [{ label: 'Làm bài', primary: true, run: go('#bai/' + id) }, ...more.map((m, i) => ({ ...m, sep: i === 0 }))];
+	}
 	// Only show a tag when there is something to say (in progress / done); "not started" is the default.
 	const tone = (id: string) => (({ xong: 'ok', 'dang-hoc': 'warn' }) as Record<string, 'ok' | 'warn'>)[Progress.status(id)];
 </script>
 
+<!-- Tạo, Nhập, Xuất cho một chỗ (môn hoặc chương); trang bài có bộ nút giống vậy (Lesson.svelte). -->
+{#snippet soanButtons(path: string, where: string)}
+	<Button size="xs" variant="ghost" href={`#soan/tao/${path}`} title={`Tạo câu hỏi cho ${where}`}>Tạo</Button>
+	<Button size="xs" variant="ghost" href={`#soan/nhap/${path}`} title={`Nhập quiz vào ${where}`}>Nhập</Button>
+	<Button size="xs" variant="ghost" href={`#soan/xuat/${path}`} title={`Xuất ${where} để chia sẻ`}>Xuất</Button>
+{/snippet}
+
 {#if !arg}
-	<PageShell title="Luyện tập" meta="Tự soạn quiz, ôn tập, thi thử">
+	<PageShell title="Luyện tập" meta="Tự tạo quiz, ôn tập, thi thử">
 		{#snippet actions()}{#if Study.pages['lo-trinh']}<Button size="xs" variant="ghost" href="#trang/lo-trinh">Lộ trình ôn</Button
 				>{/if}{/snippet}
 	</PageShell>
@@ -96,7 +148,7 @@
 			<Button size="lg" variant={due ? 'default' : 'outline'} class="h-auto justify-start py-3 text-left" href="#on-hom-nay">
 				<CalendarCheck class="size-5" />
 				<span class="flex flex-col">
-					<span class="text-base font-semibold">Ôn hôm nay{due ? ` · ${due} câu` : ''}</span>
+					<span class="text-base font-semibold">Ôn hôm nay{due ? `: ${due} câu` : ''}</span>
 					<span class="text-xs font-normal opacity-80">{due ? 'câu hay sai lên trước' : 'chưa có câu cần ôn hôm nay'}</span>
 				</span>
 			</Button>
@@ -117,7 +169,7 @@
 		<StatStrip
 			items={[
 				{ label: 'Câu sai', value: review, note: 'sai ở lần đầu', href: '#on-cau-sai', tone: review ? 'warn' : undefined },
-				{ label: 'Đánh dấu', value: Progress.activeNotes().length, note: 'ghi chú · nghi sai', href: '#danh-dau' },
+				{ label: 'Đánh dấu', value: Progress.activeNotes().length, note: 'ghi chú, nghi sai', href: '#danh-dau' },
 				{ label: 'Lần thi thử', value: Progress.state.exams.length, href: '#ket-qua' },
 				{ label: 'Quiz LMS đã lưu', value: Study.quizInfo.length, note: 'kho quiz', href: '#kho-quiz' },
 			]}
@@ -128,7 +180,8 @@
 				<DataRow
 					title={c.name}
 					href={'#luyen-tap/' + c.id}
-					sub={`${s.done}/${s.total} bài xong · đã soạn ${s.written}${examsOf(c.id).length ? ` · ${examsOf(c.id).length} đề thi thử` : ''}`}
+					menu={() => courseMenu(c)}
+					sub={`${s.done}/${s.total} bài xong, đã tạo ${s.written}${examsOf(c.id).length ? `, ${examsOf(c.id).length} đề thi thử` : ''}`}
 					meta={c.exam ? `thi ${c.exam.date.slice(8)}/${c.exam.date.slice(5, 7)}` : ''}
 				>
 					{#snippet trailing()}<Bar class="h-1 w-24" value={s.total ? (s.done / s.total) * 100 : 0} />{/snippet}
@@ -147,20 +200,22 @@
 				{/if}
 			</Alert.Root>
 		{/if}
-		<Panel title="Quiz tự soạn và đã nhập" meta="chuột phải để gỡ">
+		<Panel title="Quiz tự tạo và đã nhập" meta="chuột phải để xem thêm">
 			{#snippet action()}
-				<Button size="xs" variant="ghost" href="#soan">Soạn</Button>
-				<Button size="xs" variant="ghost" onclick={() => picker?.click()}>Nhập file…</Button>
+				<Button size="xs" variant="ghost" href="#soan">Tạo</Button>
+				<Button size="xs" variant="ghost" onclick={() => picker?.click()}>Nhập file...</Button>
 			{/snippet}
 			{#each Study.packs as x (x.file)}
+				{@const c = x.pack && x.report?.ok ? courseOfPack(x.pack) : undefined}
 				<DataRow
 					title={x.pack?.title ?? x.file}
 					sub={packMeta(x)}
 					dim={!x.report?.ok}
-					menu={x.pack ? () => [{ label: 'Gỡ quiz này', run: () => removePack(x.pack!.id, x.pack!.title) }] : undefined}
+					href={c ? '#luyen-tap/' + c.id : undefined}
+					menu={x.pack ? () => packMenu(x.pack!, !!x.report?.ok) : undefined}
 				/>
 			{:else}
-				<DataRow title="Chưa có" sub="Soạn quiz của bạn hoặc Nhập file… (.md, .zip, .json)" dim />
+				<DataRow title="Chưa có" sub="Tạo quiz của bạn hoặc Nhập file... (.md, .zip, .json)" dim />
 			{/each}
 		</Panel>
 		<input bind:this={picker} type="file" accept=".md,.zip,.json" class="hidden" onchange={importFile} />
@@ -179,26 +234,21 @@
 			`${s.done}/${s.total} bài xong`,
 		]
 			.filter(Boolean)
-			.join(' · ')}
+			.join(', ')}
 	>
-		{#snippet actions()}<Button size="xs" variant="ghost" href={`#soan/tao/${course.id}`}>Soạn · Nhập · Xuất</Button>{/snippet}
+		{#snippet actions()}{@render soanButtons(course.id, 'môn này')}{/snippet}
 	</PageShell>
 	<div class="flex flex-col gap-stack">
 		{#each course.units as u, ui (u.title)}
 			<Panel title={u.title} meta={u.pack && !u.pack.id.startsWith('quiz-lms') ? `của ${u.pack.authors}` : ''}>
-				{#snippet action()}{#if !u.pack?.id.startsWith('quiz-lms')}<Button
-							size="icon-xs"
-							variant="ghost"
-							title="Soạn, nhập, xuất chương này"
-							aria-label="Soạn, nhập, xuất chương này"
-							href={`#soan/tao/${course.id}/${ui}`}><Pencil /></Button
-						>{/if}{/snippet}
+				{#snippet action()}{#if !lmsUnit(u)}{@render soanButtons(`${course.id}/${ui}`, 'chương này')}{/if}{/snippet}
 				{#each u.lessons as e (e.id)}
 					{@const l = Study.lessons[e.id]}
 					{@const qs = l?.questions ?? []}
 					<DataRow
 						title={e.title}
 						href={'#bai/' + e.id}
+						menu={() => lessonMenu(course, ui, e.id)}
 						dim={!l}
 						meta={qs.length ? `${qs.filter((q) => Progress.q(q.id)?.correct).length}/${qs.length} câu` : ''}
 					>
@@ -214,7 +264,7 @@
 					{@const last = Progress.state.exams.filter((a) => a.examId === x.id).at(-1)}
 					<DataRow
 						title={x.title}
-						sub={`${Study.examQuestions(x).length} câu · ${x.minutes} phút`}
+						sub={`${Study.examQuestions(x).length} câu, ${x.minutes} phút`}
 						href={'#thi/' + x.id}
 						meta={last ? `gần nhất ${num(last.score)}/${num(last.max)}` : 'chưa làm'}
 					/>

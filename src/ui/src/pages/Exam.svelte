@@ -111,7 +111,7 @@
 	<PageShell
 		title={exam.title}
 		crumbs={[{ label: course.name, href: '#luyen-tap/' + course.id }]}
-		meta={`${qs.length} câu · ${exam.minutes} phút · đúng +${num(sc.right, 3)}, sai −${num(-sc.wrong, 3)}, trống 0`}
+		meta={`${qs.length} câu, ${exam.minutes} phút, đúng +${num(sc.right, 3)}, sai −${num(-sc.wrong, 3)}, trống 0`}
 	/>
 	<p class="mb-2 text-xs text-muted-foreground">Nộp bài mới biết đúng sai. Chọn lại đáp án đã chọn để bỏ trống.</p>
 	<SourceList sources={exam.sources} subject={course.name} />
@@ -123,7 +123,7 @@
 				{
 					label: 'Điểm',
 					value: num(result.score),
-					note: `/${num(result.max)} · thang 10: ${num(result.max ? (Math.max(0, result.score) / result.max) * 10 : 0, 1)}`,
+					note: `/${num(result.max)}, thang 10: ${num(result.max ? (Math.max(0, result.score) / result.max) * 10 : 0, 1)}`,
 					tone: 'primary',
 				},
 				{ label: 'Đúng', value: result.right, tone: 'ok' },

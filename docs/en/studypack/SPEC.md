@@ -2,7 +2,7 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../../studypack/SPEC.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](SPEC.md)
 
-> Translated from SPEC.md (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from SPEC.md (Vietnamese) for BK Study Desk 1.1.4.
 
 User guide: [Wiki > Practice](https://github.com/xeroz369/bk-study-desk/wiki/Practice). This file is the full specification for tool authors and for AI.
 

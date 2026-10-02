@@ -2,7 +2,7 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../PRIVACY.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](PRIVACY.md)
 
-> Translated from PRIVACY.md (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from PRIVACY.md (Vietnamese) for BK Study Desk 1.1.4.
 
 Updated: 3 October 2026
 

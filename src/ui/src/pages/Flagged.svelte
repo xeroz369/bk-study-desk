@@ -26,16 +26,16 @@
 	});
 	const where = (q: Question) => {
 		const e = Study.entry(q.lessonId ?? '');
-		if (e) return `${e.courseName} · ${e.title}`;
+		if (e) return `${e.courseName}, ${e.title}`;
 		const x = q.examId ? Study.exams[q.examId] : undefined;
-		return x ? `${Study.course(x.courseId)?.name ?? ''} · ${x.title}` : '';
+		return x ? `${Study.course(x.courseId)?.name ?? ''}, ${x.title}` : '';
 	};
 	let copied = $state('');
 	async function copy(qs: Question[], key: string) {
 		const text = qs
 			.map((q) => {
 				const n = Progress.state.notes[q.fp!];
-				const head = [`<!-- ${where(q)}${q.packId ? ` · gói ${q.packId}` : ''} -->`];
+				const head = [`<!-- ${where(q)}${q.packId ? `, gói ${q.packId}` : ''} -->`];
 				if (n?.flag) head.push('<!-- nghi đáp án hoặc lời giải sai -->');
 				if (n?.text) head.push(`<!-- ghi chú: ${n.text.replace(/-->/g, '—>')} -->`);
 				return [...head, questionMarkdown(q)].join('\n');
@@ -53,7 +53,7 @@
 <PageShell
 	title="Đánh dấu"
 	crumbs={[{ label: 'Luyện tập', href: '#luyen-tap' }]}
-	meta={`${flagged.length} câu nghi sai · ${items.length - flagged.length} câu có ghi chú`}
+	meta={`${flagged.length} câu nghi sai, ${items.length - flagged.length} câu có ghi chú`}
 >
 	{#snippet actions()}
 		{#if copyable.length}

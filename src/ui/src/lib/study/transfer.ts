@@ -12,7 +12,7 @@ import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { fingerprint } from './fingerprint';
 import { Progress } from './progress.svelte';
 import { APP_NAME } from '$lib/app-name';
-import { RECALL_PREFIX } from './lmsquiz';
+import { isLmsQuizLesson, isRecallLesson, RECALL_PREFIX } from './lmsquiz';
 
 /** Chỗ đang thao tác: cả môn, một chương (unit) hoặc một bài. */
 export interface Scope {
@@ -91,6 +91,21 @@ export const quizLocked = (lessonId: string) => {
 	const recall = lessonId.startsWith(RECALL_PREFIX) ? Study.entries().find((e) => e.id === lessonId)?.title : undefined;
 	return Study.quizInfo.some((i) => !i.shareable && (i.lessonId === lessonId || recall === `Ghi lại: ${i.quiz.quiz}`));
 };
+
+/** Tạo, Nhập, Xuất for one lesson: a saved LMS quiz takes no new questions (except one recalled from memory)
+ *  and is shared only after it closes. */
+export function lessonActions(lessonId: string) {
+	const lms = isLmsQuizLesson(lessonId);
+	return { tao: !lms || isRecallLesson(lessonId), nhap: !lms, xuat: !quizLocked(lessonId) };
+}
+
+/** A pack as it may be shared: recalled questions of an LMS quiz still open are left out (same rule as quizLocked). */
+export function shareablePack(p: StudyPack): StudyPack | null {
+	if (!p.id.startsWith(RECALL_PREFIX)) return p;
+	const open = new Set(Study.quizInfo.filter((i) => !i.shareable).map((i) => `Ghi lại: ${i.quiz.quiz}`));
+	const units = p.units.map((u) => ({ ...u, lessons: u.lessons.filter((l) => !open.has(l.title)) })).filter((u) => u.lessons.length);
+	return units.length ? { ...p, units } : null;
+}
 
 /** One question as Study Markdown (for AI prompts: similar / explain). */
 export function questionMarkdown(q: Question): string {
@@ -292,7 +307,7 @@ function prepareRaw(raw: string, s: Scope | null, author: string, images: Record
 		const p = r.pack;
 		if (!p.course.code && s) p.course = { code: s.course.code ?? s.course.id.toUpperCase(), name: s.course.name, school: 'HCMUT' };
 		if (!p.authors.length) p.authors = [{ name: author || 'Không tên' }];
-		if (!p.course.code) return { error: 'File chưa ghi môn (dòng "mon: MT1009 …" ở phần đầu) và chưa chọn môn để nhập vào.', notes };
+		if (!p.course.code) return { error: 'File chưa ghi môn (dòng "mon: MT1009 ..." ở phần đầu) và chưa chọn môn để nhập vào.', notes };
 		data = p;
 	} else if (fmt && fmt !== 'studypack') {
 		// Aiken / GIFT / Moodle XML: đổi sang gói rồi xử lý như gói thường (đặt vào đúng chỗ bên dưới).
@@ -448,14 +463,14 @@ export function authoredPack(c: Course, author: string, recall = false): StudyPa
 		: {
 				format: PACK_FORMAT,
 				id,
-				title: `${c.name}: câu tự soạn`,
+				title: `${c.name}: câu tự tạo`,
 				version: '1.0.0',
 				language: 'vi',
 				course: { code, name: c.name, school: 'HCMUT' },
 				authors: [{ name: author || 'Không tên' }],
 				license: 'CC-BY-SA-4.0',
-				createdWith: `${APP_NAME} (soạn tay)`,
-				verified: { method: 'người soạn tự kiểm' },
+				createdWith: `${APP_NAME} (tự tạo)`,
+				verified: { method: 'người tạo tự kiểm' },
 				units: [],
 			};
 	if (author && !p.authors.some((a) => a.name === author)) p.authors.push({ name: author });

@@ -88,7 +88,7 @@ Tài liệu, release notes, commit, PR, trả lời issue và Wiki không dùng 
 | ngoặc kép cong `“ ”` | ngoặc thẳng `"` |
 | emoji, ký hiệu trang trí (có, ★...) | chữ ("có", "không") |
 
-Ngoại lệ: chữ trên giao diện app (ví dụ nhãn "Soạn · Nhập · Xuất") và cú pháp của gói quiz (`### Câu 1 · Slide`) giữ nguyên vì phải khớp với app.
+Ngoại lệ: chữ trên giao diện app (ví dụ tên nút, tên tab) và cú pháp của gói quiz (`### Câu 1 · Slide`) giữ nguyên vì phải khớp với app.
 
 ## Nhắc tới giao diện
 

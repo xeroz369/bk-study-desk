@@ -197,7 +197,9 @@ internal sealed class AppHost : IDisposable
         OnLogin("logout", "");
     });
 
-    public bool OpenWeb(string url, string title)
+    public bool OpenWeb(string url, string title) => OpenWeb(url, title, null);
+
+    public bool OpenWeb(string url, string title, Action? onSignedIn)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme is not ("http" or "https")) return false;
         url = WebHost.Secure(url);
@@ -206,16 +208,18 @@ internal sealed class AppHost : IDisposable
             Links.Open(url);
             return true;
         }
-        _ui.InvokeAsync(() => new SchoolWindow(url, title).Show());
+        _ui.InvokeAsync(() => new SchoolWindow(url, title, onSignedIn).Show());
         return true;
     }
 
     public bool SyncLms() => Hub.Start("lms");
 
+    /// <summary>Mở LMS/MyBK trong cửa sổ của app. Nếu người dùng đăng nhập lại trong cửa sổ đó thì đồng bộ lại nguồn này ngay
+    /// (đề xuất #6: đồng bộ lỗi vì hết phiên thì mở MyBK để đăng nhập).</summary>
     public bool OpenSource(string name) => name switch
     {
-        "lms" => OpenWeb(Config.Str("sources.lms.site"), "BK-LMS"),
-        "mybk" => OpenWeb(Config.Str("sources.mybk.home"), "MyBK"),
+        "lms" => OpenWeb(Config.Str("sources.lms.site"), "BK-LMS", () => Hub.Start("lms", force: true)),
+        "mybk" => OpenWeb(Config.Str("sources.mybk.home"), "MyBK", () => Hub.Start("mybk", force: true)),
         _ => false,
     };
 

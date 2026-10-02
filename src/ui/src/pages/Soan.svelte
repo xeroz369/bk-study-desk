@@ -141,7 +141,7 @@
 		return saveAuthored(p);
 	}
 	async function removeQuestion(qid: string) {
-		if (!scope || !unit || !lesson || !confirm('Xóa câu tự soạn này?')) return;
+		if (!scope || !unit || !lesson || !confirm('Xóa câu tự tạo này?')) return;
 		const p = authoredPack(scope.course, author, recall);
 		const l = lessonIn(p, unit.title, lesson.title);
 		const local = qid.split('.').at(-1);
@@ -191,7 +191,7 @@
 
 	// ------------------------------------------------------------------ Nhờ AI
 	const MODES: [PromptMode, string, string][] = [
-		['soan', 'Soạn mới', 'từ slide, đề bạn gửi kèm'],
+		['soan', 'Tạo mới', 'từ slide, đề bạn gửi kèm'],
 		['tuong-tu', 'Câu tương tự', 'đổi số liệu từ một câu có sẵn'],
 		['soat', 'Soát đáp án', 'AI kiểm lại các câu ở đây'],
 		['giai-thich', 'Giải thích', 'một câu bạn chưa hiểu'],
@@ -227,7 +227,7 @@
 </script>
 
 <PageShell
-	title={scope ? `Soạn quiz · ${scopeLabel(scope)}` : 'Soạn quiz'}
+	title={scope ? `Tạo quiz, ${scopeLabel(scope)}` : 'Tạo quiz'}
 	{crumbs}
 	tabs={scope ? tabs : []}
 	tab={`${tab}${rest ? '/' + rest : ''}`}
@@ -241,18 +241,18 @@
 	{/if}
 
 	{#if !scope}
-		<Panel title="Ba cách soạn quiz" pad>
+		<Panel title="Ba cách tạo quiz" pad>
 			<ul class="list-disc space-y-1 pl-5 text-sm">
-				<li><b>Tự soạn:</b> chọn môn, chương, bài rồi gõ câu hỏi (dán ảnh bằng Ctrl+V).</li>
-				<li><b>Nhờ AI:</b> tab <i>Nhờ AI</i> → sao chép prompt → dán kết quả AI trả về vào tab <i>Nhập</i>.</li>
-				<li><b>Nhập file:</b> tab <i>Nhập</i> → chọn file .md, .zip, Moodle XML, GIFT, Aiken. Lỗi báo đúng dòng.</li>
+				<li><b>Tự tạo:</b> chọn môn, chương, bài rồi gõ câu hỏi (dán ảnh bằng Ctrl+V).</li>
+				<li><b>Nhờ AI:</b> ở tab <i>Nhờ AI</i>, sao chép prompt, rồi dán kết quả AI trả về vào tab <i>Nhập</i>.</li>
+				<li><b>Nhập file:</b> sang tab <i>Nhập</i> rồi chọn file .md, .zip, Moodle XML, GIFT, Aiken. Lỗi báo đúng dòng.</li>
 			</ul>
 		</Panel>
 		<Panel title="Chọn môn" meta="môn đang học kỳ này (LMS, MyBK) và môn đã có bài">
 			{#each pickList as c (c.code + c.name)}
 				<DataRow
 					title={c.name}
-					sub={c.code + (c.course ? ` · ${c.course.units.reduce((n, u) => n + u.lessons.length, 0)} bài` : ' · chưa có bài')}
+					sub={c.code + (c.course ? `, ${c.course.units.reduce((n, u) => n + u.lessons.length, 0)} bài` : ', chưa có bài')}
 					onclick={() => pickCourse(c.code, c.name)}
 				/>
 			{:else}
@@ -261,12 +261,12 @@
 		</Panel>
 	{:else if tab === 'tao'}
 		{#if lesson && unit}
-			<Panel title="Câu hỏi mới" meta={`vào bài "${lesson.title}" · chương "${unit.title}"`} pad>
+			<Panel title="Câu hỏi mới" meta={`vào bài "${lesson.title}", chương "${unit.title}"`} pad>
 				<QuestionEditor onsave={saveQuestion} />
 				<label class="mt-3 flex flex-col gap-1 text-sm">Tên bạn (ghi vào gói)<Input bind:value={author} /></label>
 			</Panel>
 			{#if mine.length}
-				<Panel title="Câu bạn đã soạn trong bài này" meta="chuột phải để xóa">
+				<Panel title="Câu bạn đã tạo trong bài này" meta="chuột phải để xóa">
 					{#each mine as q (q.id)}
 						<DataRow
 							title={q.prompt.replace(/<[^>]+>/g, '').slice(0, 120)}
@@ -278,7 +278,7 @@
 			{/if}
 		{:else}
 			{#if !unit}
-				<Panel title="Chọn chương để soạn" meta="hoặc tạo chương mới bên dưới">
+				<Panel title="Chọn chương để tạo câu" meta="hoặc tạo chương mới bên dưới">
 					{#each scope.course.units as u, i (i)}
 						<DataRow title={u.title} sub={`${u.lessons.length} bài`} href={`#soan/tao/${scope.course.id}/${i}`} />
 					{/each}
@@ -293,7 +293,7 @@
 			<Panel title={unit ? 'Bài mới trong chương này' : 'Chương mới'} pad>
 				<div class="flex flex-col gap-3 text-sm">
 					{#if !unit}<label class="flex flex-col gap-1"
-							>Tên chương<Input bind:value={newUnit} placeholder="Chương 4 · Đạo hàm và tích phân số" /></label
+							>Tên chương<Input bind:value={newUnit} placeholder="Chương 4: Đạo hàm và tích phân số" /></label
 						>{/if}
 					<label class="flex flex-col gap-1">Tên bài<Input bind:value={newLesson} placeholder="Công thức hình thang" /></label>
 					<label class="flex flex-col gap-1"
@@ -328,11 +328,11 @@
 					bind:value={raw}
 					oninput={() => (rawImages = {})}
 					rows={8}
-					placeholder={'Dán khối Markdown AI trả về hoặc nội dung file…\n\n### Câu 1\nĐề bài\n- [x] đúng\n- [ ] sai\n> lời giải'}
+					placeholder={'Dán khối Markdown AI trả về hoặc nội dung file...\n\n### Câu 1\nĐề bài\n- [x] đúng\n- [ ] sai\n> lời giải'}
 					class="font-mono text-xs"
 				/>
 				<div class="flex gap-2">
-					<Button size="sm" variant="outline" onclick={() => picker?.click()}>Chọn file…</Button>
+					<Button size="sm" variant="outline" onclick={() => picker?.click()}>Chọn file...</Button>
 					<Button size="sm" onclick={doImport} disabled={!prepared?.report?.ok}>Nhập vào {level} này</Button>
 				</div>
 				<input bind:this={picker} type="file" accept=".md,.zip,.json,.xml,.txt,.gift" class="hidden" onchange={pickFile} />
@@ -345,7 +345,7 @@
 								</ul></Alert.Description
 							>{/if}
 					</Alert.Root>
-					<p class="text-xs text-muted-foreground">Nếu do AI soạn: sao chép các lỗi trên, dán lại cho AI để sửa.</p>
+					<p class="text-xs text-muted-foreground">Nếu do AI tạo: sao chép các lỗi trên, dán lại cho AI để sửa.</p>
 				{:else if prepared?.report}
 					{@const r = prepared.report}
 					<Alert.Root variant={r.ok ? 'default' : 'destructive'}>
@@ -369,7 +369,7 @@
 		<Panel title={`Xuất ${level} "${scopeLabel(scope)}"`} pad>
 			<div class="flex flex-col gap-3 text-sm">
 				<p>
-					{exportReport.stats.lessons} bài · {countQuestions(exported)} câu · {exportReport.stats.exams} đề. Người nhận nhập vào sẽ vào đúng chương,
+					{exportReport.stats.lessons} bài, {countQuestions(exported)} câu, {exportReport.stats.exams} đề. Người nhận nhập vào sẽ vào đúng chương,
 					bài.
 				</p>
 				<label class="flex flex-col gap-1">Tên bạn (ghi vào gói)<Input bind:value={author} /></label>
@@ -383,7 +383,7 @@
 					>
 				{/if}
 				<div class="flex flex-wrap gap-2">
-					<Button size="sm" onclick={() => exportMarkdown(exported)} disabled={exportOff}>Lưu Markdown (.md / .zip)…</Button>
+					<Button size="sm" onclick={() => exportMarkdown(exported)} disabled={exportOff}>Lưu Markdown (.md / .zip)...</Button>
 					<Button size="sm" variant="outline" onclick={() => copy(writeMarkdown(exported).md, 'Đã sao chép Markdown')} disabled={exportOff}
 						>Sao chép Markdown</Button
 					>
@@ -404,7 +404,8 @@
 					<Button size="xs" variant="ghost" onclick={() => download(exported)} disabled={exportOff}>JSON</Button>
 				</div>
 				<p class="text-xs text-muted-foreground">
-					Gửi file cho bạn qua Zalo, Messenger…; bạn ấy vào Luyện tập → Nhập file… Moodle XML dùng để đưa lên ngân hàng câu hỏi LMS.
+					Gửi file cho bạn qua Zalo hoặc Messenger. Bạn ấy mở <b>Luyện tập</b> > <b>Nhập file...</b> để nhập. Moodle XML dùng để đưa lên ngân
+					hàng câu hỏi LMS.
 				</p>
 			</div>
 		</Panel>
@@ -446,8 +447,8 @@
 				<ol class="list-decimal pl-5">
 					<li>Sao chép prompt, dán vào ChatGPT / Claude / Gemini{mode === 'soan' ? ', kèm slide hoặc đề (PDF, ảnh)' : ''}.</li>
 					{#if mode === 'giai-thich'}<li>Đọc lời giải thích của AI.</li>{:else}<li>
-							AI trả về một khối Markdown: sao chép hết, sang tab <a class="underline" href={`#soan/nhap/${scopePath(scope)}`}>Nhập</a>, dán
-							vào rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
+							AI trả về một khối Markdown: sao chép hết, sang tab <a class="link" href={`#soan/nhap/${scopePath(scope)}`}>Nhập</a>, dán vào
+							rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
 						</li>{/if}
 				</ol>
 				{#if mode === 'soan' || mode === 'tuong-tu'}
