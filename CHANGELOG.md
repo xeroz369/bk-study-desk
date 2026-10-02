@@ -15,7 +15,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 - Đồng bộ LMS/MyBK lỗi thì thanh báo có thêm nút **Mở MyBK** / **Mở LMS** để xem trang đang lỗi gì hoặc đăng nhập lại ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - **Tải tài liệu…** chọn được loại file: PDF, slide (.ppt, .pptx), khác; số file và dung lượng tính theo lựa chọn ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - Bảng **Kết quả đăng ký** có thêm cột giảng viên và giờ học, lấy từ thời khóa biểu MyBK ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
-- Tài liệu tiếng Anh tách thành file riêng, dịch đầy đủ: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, và các trang Wiki tiếng Anh. Chuẩn viết tiếng Anh: `docs/english-style.md`.
+- Tài liệu tiếng Anh tách thành file riêng, dịch đầy đủ: phần English cuối README, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, và các trang Wiki tiếng Anh. Chuẩn viết tiếng Anh: `docs/english-style.md`.
 - Mục **Ủng hộ** trong README và Wiki: Ko-fi và mã QR MoMo/VietQR.
 
 ### Thay đổi
