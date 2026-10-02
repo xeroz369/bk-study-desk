@@ -1,5 +1,3 @@
-# Luyện tập
-
 Làm quiz, tự soạn câu hỏi, nhờ AI soạn giúp và gửi cho bạn bè. Không cần biết lập trình: chỉ cần chọn, gõ, sao chép và dán.
 
 Mục lục:

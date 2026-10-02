@@ -1,5 +1,3 @@
-# Cài đặt
-
 **Yêu cầu:** Windows 10 1809 trở lên hoặc Windows 11, x64 hoặc ARM64. Không cần cài .NET. Cần Microsoft Edge WebView2 Runtime (Windows 11 có sẵn).
 
 ## Cách 1: Microsoft Store (khuyên dùng)

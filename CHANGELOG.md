@@ -4,6 +4,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.1] - 2026-10-03
+
 ### Thay đổi
 
 - Chữ trên giao diện và tài liệu theo chuẩn văn phong `docs/van-phong.md`: "Sao chép" thay "Copy", "Chọn" thay "Bấm", "tải xuống" thay "tải về"; câu lỗi nói rõ cần làm gì.
@@ -89,6 +91,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0
 [1.0.6]: https://github.com/xeroz369/bk-study-desk/releases/tag/v1.0.6

@@ -87,6 +87,11 @@ Theo MSG và Google, mỗi thông báo có: chuyện gì xảy ra, vì sao (nế
 - Mẫu câu: "Không tìm thấy…", "Không kết nối được…", "Không đủ…" (MSG).
 - Không dùng "Làm ơn", "Xin hãy"; cần lịch sự thì "Vui lòng", thường thì bỏ (Mozilla).
 
+## Trang Wiki
+
+- Không mở đầu trang bằng tiêu đề `# …`: GitHub Wiki tự hiện tên file làm tiêu đề trang, thêm `#` sẽ lặp tiêu đề. Trang Home được ngoại lệ vì tên trang là "Home".
+- Tên file chính là tên trang: viết hoa chữ đầu, các từ nối bằng `-` (ví dụ `Câu-hỏi-thường-gặp.md`).
+
 ## Commit
 
 - Theo CC: type giữ tiếng Anh (`feat`, `fix`, `docs`, `ci`, `build`, `refactor`, `test`), mô tả tiếng Việt, dạng câu mệnh lệnh ngắn (Google).
