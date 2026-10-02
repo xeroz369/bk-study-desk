@@ -21,9 +21,24 @@
         <StatusBar DockPanel.Dock="Bottom" Padding="8,0" Background="{DynamicResource LayerFillColorDefaultBrush}">
             <StatusBarItem><TextBlock x:Name="StAccount" /></StatusBarItem>
             <Separator />
-            <StatusBarItem><TextBlock x:Name="StLms" /></StatusBarItem>
+            <!-- Có lỗi thì hiện biểu tượng lỗi chuẩn (như InfoBar Error) cạnh tên nguồn; di chuột xem chi tiết. -->
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <ui:SeverityIcon x:Name="StLmsIcon" Severity="Error" Size="12" Margin="0,0,6,0" Visibility="Collapsed" />
+                    <TextBlock x:Name="StLms" VerticalAlignment="Center" />
+                </StackPanel>
+            </StatusBarItem>
             <Separator />
-            <StatusBarItem><TextBlock x:Name="StMybk" /></StatusBarItem>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <ui:SeverityIcon x:Name="StMybkIcon" Severity="Error" Size="12" Margin="0,0,6,0" Visibility="Collapsed" />
+                    <TextBlock x:Name="StMybk" VerticalAlignment="Center" />
+                </StackPanel>
+            </StatusBarItem>
+            <!-- Tiến độ đồng bộ: có tổng thì chạy theo số (3/5), không đếm được thì chạy vô định. -->
+            <StatusBarItem x:Name="StProgressItem" Visibility="Collapsed">
+                <ProgressBar x:Name="StProgress" Width="120" Height="4" Minimum="0" Maximum="100" />
+            </StatusBarItem>
             <Separator />
             <StatusBarItem><TextBlock x:Name="StMessage" TextTrimming="CharacterEllipsis" /></StatusBarItem>
             <!-- Tên bản + phiên bản: bản riêng và bản public chạy song song, nhìn là biết đang mở bản nào. Di chuột: thư mục app. -->
@@ -62,10 +77,10 @@
                             <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="11" VerticalAlignment="Center" Margin="6,0,0,0" />
                         </StackPanel>
                     </Button>
-                    <ToggleButton x:Name="SettingsButton" AutomationProperties.Name="{ui:T nav.settings}" Click="OnSettings" ToolTip="{ui:T nav.settings.tip}" Padding="8,5">
+                    <ToggleButton x:Name="SettingsButton" AutomationProperties.Name="{ui:T nav.settings}" Checked="OnSettings" Unchecked="OnToggleOff" ToolTip="{ui:T nav.settings.tip}" Padding="8,5">
                         <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" FontSize="15" />
                     </ToggleButton>
-                    <ToggleButton x:Name="AboutButton" AutomationProperties.Name="{ui:T about.title}" Click="OnAbout" ToolTip="{ui:T about.tip}" Margin="6,0,0,0">
+                    <ToggleButton x:Name="AboutButton" AutomationProperties.Name="{ui:T about.title}" Checked="OnAbout" Unchecked="OnToggleOff" ToolTip="{ui:T about.tip}" Margin="6,0,0,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" />
                             <TextBlock Text="{ui:T about.title}" />
@@ -90,16 +105,8 @@
             </DockPanel>
         </Border>
 
-        <!-- InfoBar: nằm thành một dòng trong layout, không đè lên nội dung -->
-        <Border x:Name="InfoBar" DockPanel.Dock="Top" Visibility="Collapsed" Margin="16,10,16,0" Padding="12,8" CornerRadius="4"
-                Background="{DynamicResource SystemFillColorCautionBackgroundBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-            <DockPanel>
-                <Button DockPanel.Dock="Right" Content="&#xE711;" FontFamily="{StaticResource IconFont}" Padding="6,4" Margin="6,0,0,0" AutomationProperties.Name="{ui:T common.close}" Click="OnInfoClose" ToolTip="{ui:T common.close}" />
-                <Button x:Name="InfoAction" DockPanel.Dock="Right" Click="OnInfoAction" Margin="8,0,0,0" />
-                <TextBlock x:Name="InfoIcon" FontFamily="{StaticResource IconFont}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" Text="&#xE7BA;" />
-                <TextBlock x:Name="InfoText" VerticalAlignment="Center" TextWrapping="Wrap" />
-            </DockPanel>
-        </Border>
+        <!-- InfoBar (Ui/SeverityBar.cs, theo InfoBar của WinUI): nằm thành một dòng trong layout, không đè lên nội dung -->
+        <ui:SeverityBar x:Name="InfoBar" DockPanel.Dock="Top" Margin="16,10,16,0" />
 
         <!-- Dòng mô tả page (ngày, học kỳ, MSSV…); tên page thì đã hiện ở mục điều hướng đang chọn -->
         <TextBlock x:Name="PageSubtitle" DockPanel.Dock="Top" Margin="18,10,16,0" Style="{StaticResource Muted}" FontSize="13" />

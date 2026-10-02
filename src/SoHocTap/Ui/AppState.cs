@@ -55,6 +55,15 @@ public sealed partial class AppState(SourceHub hub)
         RefreshStatus();
     }
 
+    /// <summary>Đang đồng bộ, chỉ đổi bước/tiến độ: đọc lại trạng thái nguồn, báo riêng cho thanh trạng thái.</summary>
+    public event Action? Progress;
+
+    public void RefreshProgress()
+    {
+        Sources = hub.StatusJson();
+        Progress?.Invoke();
+    }
+
     /// <summary>Chỉ đọc lại trạng thái nguồn (đang sync, lỗi), khá nhẹ nên gọi lúc nguồn vừa bắt đầu chạy.</summary>
     public void RefreshStatus()
     {
@@ -67,6 +76,42 @@ public sealed partial class AppState(SourceHub hub)
     public bool Syncing(string name) => Source(name)?["syncing"]?.GetValue<bool>() == true;
     public string? Error(string name) => Source(name)?["error"]?.GetValue<string>();
     public long? SyncedAt(string name) => Source(name)?["syncedAt"]?.GetValue<long?>();
+
+    /// <summary>Phần không đọc được ở lần đồng bộ gần nhất (đồng bộ vẫn xong): tên phần và chi tiết kỹ thuật.</summary>
+    public IReadOnlyList<(string What, string Detail)> Warnings(string name) =>
+        (Source(name)?["warnings"] as JsonArray ?? []).Select(w => w?.GetValue<string>() ?? "").Where(w => w.Length > 0)
+            .Select(w => w.Split(SyncSignal.DetailMark, 2) is var p && p.Length == 2 ? (p[0], p[1]) : (w, "")).ToList();
+
+    /// <summary>
+    /// Lỗi của cả lượt đồng bộ, viết lại cho người dùng theo hướng dẫn thông báo lỗi của Windows (vấn đề, nguyên nhân, cách xử lý; chữ kỹ
+    /// thuật để ở Chi tiết). Lỗi do app tự viết (mất mạng, server chậm, giới hạn, hết phiên) đã là câu dễ hiểu thì giữ nguyên.
+    /// </summary>
+    public static (string Text, string? Detail) Explain(string label, string raw)
+    {
+        if (raw.StartsWith("Không ", StringComparison.Ordinal) || raw.StartsWith("Phiên ", StringComparison.Ordinal)
+            || raw.Contains("không phản hồi", StringComparison.Ordinal) || raw.Contains("giới hạn", StringComparison.Ordinal)
+            || raw.Contains("bảo trì", StringComparison.Ordinal))
+            return (raw, null);
+        if (raw.Contains("Access to the path", StringComparison.OrdinalIgnoreCase) || raw.Contains("being used by another process", StringComparison.OrdinalIgnoreCase))
+            return (L.F("error.fileBusy", label), raw);
+        return (L.F("error.generic", label), raw);
+    }
+
+    /// <summary>Bước đang làm của lần đồng bộ (key ngôn ngữ, số đã xong, tổng); null nếu không đồng bộ.</summary>
+    public (string Key, int Done, int Total)? Step(string name) =>
+        Source(name) is { } o && o["step"]?.GetValue<string>() is { } k ? (k, o["done"]?.GetValue<int>() ?? 0, o["total"]?.GetValue<int>() ?? 0) : null;
+
+    /// <summary>
+    /// Câu nói thật về dữ liệu của một nguồn khi trang không có gì để hiện: đang lấy lần đầu, lấy lỗi, hay chưa đăng nhập.
+    /// null = đã có dữ liệu (trang trống nghĩa là thật sự không có gì).
+    /// </summary>
+    public string? NoDataReason(string name, string label)
+    {
+        if (SyncedAt(name) is not null) return null;
+        if (Syncing(name)) return L.F("data.loading", label);
+        if (Error(name) is { } err) return L.F("data.failed", label, err);
+        return L.F("data.none", label);
+    }
 
     [GeneratedRegex("hết hạn|chưa đăng nhập|cần đăng nhập|chưa sẵn sàng|invalidtoken", RegexOptions.IgnoreCase)] private static partial Regex LoginError();
 

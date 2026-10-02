@@ -28,6 +28,9 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
     public static void SetSignedIn(bool on) =>
         JsonStore.Write(SessionFile, new JsonObject { ["signedIn"] = on, ["at"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds() });
 
+    /// <summary>Đã đăng nhập HCMUT trong app (theo lần đăng nhập/đăng xuất gần nhất).</summary>
+    public static bool SignedIn => JsonStore.Read(SessionFile)?["signedIn"]?.GetValue<bool>() ?? File.Exists(DataFile);
+
     public SourceStatus Status()
     {
         var d = JsonStore.Read(DataFile);
@@ -42,6 +45,7 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
         var browser = runner() ?? throw new InvalidOperationException("Cần mở app để đồng bộ MyBK.");
         var api = Config.Node("sources.mybk.api") as JsonObject ?? throw new InvalidOperationException("Thiếu sources.mybk.api trong cấu hình.");
 
+        log(SyncSignal.Step("sync.mybk.open", 0, 4));
         var first = await RunAsync(browser, api, ["info", "semesters"], new(), log, ct);
         var info = first.GetValueOrDefault("info") as JsonObject;
         if (info?["id"] is null) throw new InvalidOperationException("Không đọc được thông tin sinh viên từ MyBK.");
@@ -57,8 +61,10 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
             ["year"] = sem.Length >= 4 ? sem[..4] : "",
             ["term"] = sem.Length > 4 ? sem[4..] : "",
         };
+        log(SyncSignal.Step("sync.mybk.study", 1, 4));
         var got = await RunAsync(browser, api, ["schedule", "exams", "gradesCourses", "gradesTerms", "curriculumInfo", "curriculum"], args, log, ct);
         // Mấy API đọc dò ra từ source trang MyBK (01/10/2026): điểm thành phần, quyết định học vụ, ngày CTXH, khoản phí. Lỗi thì bỏ qua.
+        log(SyncSignal.Step("sync.mybk.extra", 2, 4));
         var extra = await RunAsync(browser, api, ["components", "decisions", "socialWork", "fees", "registered"], args, log, ct);
 
         var output = new JsonObject
@@ -97,12 +103,14 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
         {
             try
             {
+                log(SyncSignal.Step("sync.mybk.registration", 3, 4));
                 output["registration"] = ParseRegistration(await browser.PageAsync(Config.Str("sources.mybk.registration"), ct));
                 output["registrationAt"] = now;
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                log($"  đăng ký môn: {e.Message}");
+                Log.Warn($"MyBK đăng ký môn: {e.Message}");
+                log(SyncSignal.Warn("đợt đăng ký môn", e.Message));
                 output["registration"] = prev?["registration"]?.DeepClone() ?? new JsonArray();
                 output["registrationAt"] = regAt;
             }
@@ -130,16 +138,43 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
         {
             if (!res.TryGetValue(n, out var r) || r.Status != 200)
             {
-                log($"  {n}: lỗi {r?.Status}");
                 if (r is { Status: 401 or 403 } || r is { HasToken: false }) throw new InvalidOperationException("Phiên MyBK hết hạn, cần đăng nhập HCMUT lại.");
+                var why = r is null ? "không gửi được (MyBK đang giới hạn, đã tạm dừng)" : r.Status <= 0 ? "không kết nối được" : $"HTTP {r.Status}";
+                Log.Warn($"MyBK {n}: {why}");
+                log(SyncSignal.Warn(Label(n), $"{n}: {why}"));
                 continue;
             }
-            var body = JsonNode.Parse(r.Body) as JsonObject;
-            if (body?["code"]?.ToString() is not ("200" or "204")) { log($"  {n}: mã {body?["code"]} {body?["msg"]}"); continue; }
+            JsonObject? body;
+            try { body = JsonNode.Parse(r.Body) as JsonObject; }
+            catch (JsonException) { body = null; }
+            if (body?["code"]?.ToString() is not ("200" or "204"))
+            {
+                var why = body is null ? "trả về không phải JSON" : $"mã {body["code"]} {body["msg"]}".Trim();
+                Log.Warn($"MyBK {n}: {why}");
+                log(SyncSignal.Warn(Label(n), $"{n}: {why}"));
+                continue;
+            }
             output[n] = body["data"]?.DeepClone();
         }
         return output;
     }
+
+    /// <summary>Tên dễ hiểu của từng API MyBK để báo lỗi.</summary>
+    private static string Label(string api) => api switch
+    {
+        "info" => "thông tin sinh viên",
+        "semesters" => "danh sách học kỳ",
+        "schedule" => "thời khóa biểu",
+        "exams" => "lịch thi",
+        "gradesCourses" or "gradesTerms" => "bảng điểm",
+        "curriculumInfo" or "curriculum" => "chương trình đào tạo",
+        "components" => "điểm thành phần",
+        "decisions" => "quyết định học vụ",
+        "socialWork" => "ngày công tác xã hội",
+        "fees" => "học phí",
+        "registered" => "môn đã đăng ký",
+        _ => api,
+    };
 
     // ------------------------------------------------------------------ normalize
 

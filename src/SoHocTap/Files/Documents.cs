@@ -129,6 +129,7 @@ public static class Documents
         ".exe", ".com", ".scr", ".pif", ".bat", ".cmd", ".ps1", ".psm1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh", ".hta",
         ".lnk", ".url", ".msi", ".msp", ".cpl", ".msc", ".jar", ".reg", ".scf", ".chm", ".application", ".appref-ms",
         ".settingcontent-ms", ".library-ms", ".iso", ".img", ".vhd", ".vhdx", ".xll", ".diagcab", ".appx", ".msix", ".appinstaller",
+        ".docm", ".dotm", ".xlsm", ".xltm", ".xlam", ".pptm", ".potm", ".ppam", ".website", ".mht", ".mhtml",
     };
 
     /// <summary>Liệt kê đúng một tầng: folder con (kèm số mục bên trong) và file. Không quét cả cây.</summary>

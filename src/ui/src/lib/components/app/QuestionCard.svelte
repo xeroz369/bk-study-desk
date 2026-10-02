@@ -1,6 +1,6 @@
 <!-- Một câu hỏi, đủ loại như quiz LMS: một đáp án, nhiều đáp án, điền số, điền chữ (Đúng/Sai là một đáp án 2 phương án).
      practice: báo đúng sai ngay, sai thì làm lại, đúng thì hiện lời giải.
-     exam: chỉ chọn/gõ (bấm lại để bỏ trống), không báo đúng sai.
+     exam: chỉ chọn/gõ (chọn lại để bỏ trống), không báo đúng sai.
      result: xem lại sau khi nộp, tô đáp án đúng và đáp án đã chọn.
      Dưới mỗi câu: mở slide đúng trang, ghi chú riêng, cờ "nghi đáp án sai" (lưu theo fingerprint). -->
 <script lang="ts">

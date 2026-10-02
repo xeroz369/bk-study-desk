@@ -1,0 +1,2 @@
+MathJax 3.2.2 (tex-svg.js), Copyright (c) The MathJax Consortium.
+Giấy phép Apache License 2.0 (file LICENSE bên cạnh). Mã nguồn: https://github.com/mathjax/MathJax

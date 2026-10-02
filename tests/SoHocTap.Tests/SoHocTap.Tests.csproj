@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Unit test cho phần logic thuần (không WPF, không mạng): tìm thư mục app, chính sách cập nhật. Link file nguồn từ src\SoHocTap. -->
   <PropertyGroup>
@@ -20,6 +20,8 @@
     <Compile Include="$(Src)Core\AppDirs.cs" Link="Linked\AppDirs.cs" />
     <Compile Include="$(Src)Core\UpdatePolicy.cs" Link="Linked\UpdatePolicy.cs" />
     <Compile Include="$(Src)Core\DataImport.cs" Link="Linked\DataImport.cs" />
+    <Compile Include="$(Src)Core\Pace.cs" Link="Linked\Pace.cs" />
+    <Compile Include="$(Src)Core\LogRedactor.cs" Link="Linked\LogRedactor.cs" />
     <Compile Include="..\..\src\BKStudyDesk.Setup\InstallTarget.cs" Link="Linked\InstallTarget.cs" />
   </ItemGroup>
 

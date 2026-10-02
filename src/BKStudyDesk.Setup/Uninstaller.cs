@@ -83,7 +83,7 @@ internal static class Uninstaller
     {
         var dir = Path.GetDirectoryName(Application.ExecutablePath)!;
         if (!Path.GetFileName(dir).StartsWith("BKStudyDesk-uninstall-", StringComparison.Ordinal)) return;
-        Process.Start(new ProcessStartInfo("cmd.exe", $"/c timeout /t 3 /nobreak >nul & rmdir /s /q \"{dir}\"")
+        Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), $"/c timeout /t 3 /nobreak >nul & rmdir /s /q \"{dir}\"")
         { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden })?.Dispose();
     }
 }
@@ -157,7 +157,7 @@ internal sealed class UninstallJob(string root, string packId)
         // sau vài giây, khi cả hai đã thoát.
         if (Directory.EnumerateFileSystemEntries(Root).All(f => Path.GetFileName(f).Equals(Uninstaller.FileName, StringComparison.OrdinalIgnoreCase)))
         {
-            Process.Start(new ProcessStartInfo("cmd.exe", $"/c timeout /t 3 /nobreak >nul & rmdir /s /q \"{Root}\"")
+            Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), $"/c timeout /t 3 /nobreak >nul & rmdir /s /q \"{Root}\"")
             { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden });
             return null;
         }

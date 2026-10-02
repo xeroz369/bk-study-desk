@@ -1,6 +1,6 @@
 # Luyện tập
 
-Làm quiz, tự soạn câu hỏi, nhờ AI soạn giúp và gửi cho bạn bè. Không cần biết lập trình: chỉ bấm, gõ, copy và dán.
+Làm quiz, tự soạn câu hỏi, nhờ AI soạn giúp và gửi cho bạn bè. Không cần biết lập trình: chỉ cần chọn, gõ, sao chép và dán.
 
 Mục lục:
 1. [Mở Luyện tập](#1-mở-luyện-tập)
@@ -16,20 +16,20 @@ Mục lục:
 
 ## 1. Mở Luyện tập
 
-Bấm **Luyện tập** trên thanh menu trên cùng.
+Chọn **Luyện tập** trên thanh menu trên cùng.
 
 ![Trang Luyện tập](images/1-luyen-tap.png)
 
 Trên trang này có:
 - **Ôn hôm nay**: những câu app nhắc bạn làm lại. Câu làm sai sẽ quay lại vào hôm sau; làm đúng thì lâu hơn mới gặp lại.
 - **Thi thử đề ngẫu nhiên**: app bốc câu thành một đề có đếm giờ.
-- **Các môn**: bấm vào tên môn để vào học.
+- **Các môn**: chọn tên môn để vào học.
 - **Quiz tự soạn và đã nhập**: các quiz bạn soạn hoặc nhận từ bạn bè. Muốn gỡ quiz nào thì bấm chuột phải vào quiz đó.
 
 ## 2. Làm quiz
 
-1. Bấm vào tên môn, ví dụ *Giải tích 1*.
-2. Bấm vào một bài, ví dụ *Đạo hàm*.
+1. Chọn tên môn, ví dụ *Giải tích 1*.
+2. Chọn một bài, ví dụ *Đạo hàm*.
 
    ![Danh sách bài trong môn](images/2-mon.png)
 
@@ -44,18 +44,18 @@ Dưới mỗi câu có hai nút:
 
 Các câu này được gom lại ở ô **Đánh dấu** trên trang Luyện tập.
 
-> Mẹo: muốn đổi thứ tự câu hoặc thứ tự đáp án, bấm **Xáo câu** hoặc **Xáo đáp án** ở góc phải.
+> Mẹo: muốn đổi thứ tự câu hoặc thứ tự đáp án, chọn **Xáo câu** hoặc **Xáo đáp án** ở góc phải.
 
 ## 3. Tự soạn câu hỏi
 
-1. Vào môn, bấm **Soạn · Nhập · Xuất** ở góc phải. Hoặc ở trang Luyện tập, bấm **Soạn**.
+1. Vào môn, chọn **Soạn · Nhập · Xuất** ở góc phải. Hoặc ở trang Luyện tập, chọn **Soạn**.
 2. Chọn **chương**, rồi chọn **bài**. Chưa có thì gõ tên vào ô *Chương mới* hoặc *Bài mới*.
 3. Ở tab **Tạo**:
    - Chọn loại câu: **Một đáp án**, **Nhiều đáp án**, **Đúng / Sai**, **Điền số** hoặc **Điền chữ**.
    - Gõ **đề bài**. Có hình thì chụp màn hình rồi dán vào ô bằng **Ctrl+V**.
-   - Gõ các **phương án**, rồi bấm vào chữ cái (A, B, C…) của phương án đúng để đánh dấu.
+   - Gõ các **phương án**, rồi chọn chữ cái (A, B, C…) của phương án đúng để đánh dấu.
    - Gõ **lời giải**, ghi đủ các bước để người khác đọc là tự làm lại được.
-4. Bấm **Lưu câu vào bài**. Câu vừa soạn hiện ngay trong bài.
+4. Chọn **Lưu câu vào bài**. Câu vừa soạn hiện ngay trong bài.
 
 ![Soạn câu hỏi trong app](images/4-tao.png)
 
@@ -65,30 +65,30 @@ Các câu này được gom lại ở ô **Đánh dấu** trên trang Luyện t�
 
 Dùng được ChatGPT, Claude, Gemini hay bất kỳ AI chat nào.
 
-1. Chọn môn, chương, bài như mục 3, rồi bấm tab **Nhờ AI**.
+1. Chọn môn, chương, bài như mục 3, rồi chọn tab **Nhờ AI**.
 2. Chọn việc cần làm:
    - **Soạn mới**: soạn câu mới từ slide hoặc đề bạn có.
    - **Câu tương tự**: thêm câu cùng dạng với một câu mẫu.
    - **Soát đáp án**: nhờ AI kiểm lại các câu đang có.
    - **Giải thích**: nhờ AI giảng lại một câu chưa hiểu.
 3. Gõ **số câu** muốn có (5–10 câu là vừa, AI ít sai hơn).
-4. Bấm **Copy prompt**.
-5. Mở trang AI, **dán** (Ctrl+V), **gửi kèm slide hoặc ảnh đề** (bấm nút đính kèm của trang AI), rồi gửi.
-6. AI trả về một khung chữ. Bấm nút **Copy** ở góc khung đó.
-7. Quay lại app, bấm tab **Nhập**, dán vào ô lớn, rồi bấm **Nhập vào bài này**.
+4. Chọn **Sao chép prompt**.
+5. Mở trang AI, **dán** (Ctrl+V), **gửi kèm slide hoặc ảnh đề** (chọn nút đính kèm của trang AI), rồi gửi.
+6. AI trả về một khung chữ. Chọn nút **Copy** ở góc khung đó.
+7. Quay lại app, chọn tab **Nhập**, dán vào ô lớn, rồi chọn **Nhập vào bài này**.
 
 ![Tab Nhờ AI: copy prompt gửi cho AI](images/5-nho-ai.png)
 
-![Tab Nhập: dán kết quả AI rồi bấm Nhập](images/6-nhap.png)
+![Tab Nhập: dán kết quả AI rồi chọn Nhập](images/6-nhap.png)
 
-> **Luôn tự làm thử vài câu.** AI có lúc tính sai đáp án. Thấy câu sai thì bấm **Nghi đáp án sai**, hoặc dùng **Soát đáp án** để nhờ AI kiểm lại.
+> **Luôn tự làm thử vài câu.** AI có lúc tính sai đáp án. Thấy câu sai thì chọn **Nghi đáp án sai**, hoặc dùng **Soát đáp án** để nhờ AI kiểm lại.
 
 ## 5. Nhận quiz bạn bè gửi
 
 Bạn bè gửi cho bạn một file đuôi **`.md`** hoặc **`.zip`** (qua Zalo, Messenger, email…).
 
 1. Tải file về máy.
-2. Vào **Luyện tập**, bấm **Nhập file…** (góc phải ô *Quiz tự soạn và đã nhập*).
+2. Vào **Luyện tập**, chọn **Nhập file…** (góc phải ô *Quiz tự soạn và đã nhập*).
 3. Chọn file vừa tải. Xong.
 
 Quiz mới hiện trong ô **Quiz tự soạn và đã nhập**, câu hỏi được thêm vào đúng môn, chương và bài. Bạn bè gửi bản cập nhật thì cứ nhập lại: app giữ nguyên kết quả bạn đã làm.
@@ -97,9 +97,9 @@ App còn mở được file **Moodle XML**, **GIFT**, **Aiken** (dạng câu h�
 
 ## 6. Gửi quiz cho bạn bè
 
-1. Vào môn, bấm **Soạn · Nhập · Xuất**, rồi bấm tab **Xuất**.
+1. Vào môn, chọn **Soạn · Nhập · Xuất**, rồi chọn tab **Xuất**.
 2. Gõ **tên bạn** để người nhận biết ai soạn.
-3. Bấm **Lưu Markdown (.md / .zip)…** và chọn chỗ lưu.
+3. Chọn **Lưu Markdown (.md / .zip)…** và chọn chỗ lưu.
 4. Gửi file đó cho bạn bè. Bạn ấy làm theo mục 5.
 
 ![Tab Xuất: lưu file để gửi](images/7-xuat.png)
@@ -112,7 +112,7 @@ App còn mở được file **Moodle XML**, **GIFT**, **Aiken** (dạng câu h�
 Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** để bạn ôn lại khi LMS chậm hoặc đã đóng. Xem ở ô **Quiz LMS đã lưu** trên trang Luyện tập (trang *Kho quiz LMS*).
 
 - App **chỉ đọc** bản xem lại sau khi bạn nộp. App không đọc quiz đang làm, không làm hay nộp bài thay bạn.
-- Quiz không cho xem lại thì app chỉ lưu tên và điểm. Bấm **Ghi lại** để tự gõ những câu bạn còn nhớ; đáp án thì bạn tự kiểm.
+- Quiz không cho xem lại thì app chỉ lưu tên và điểm. Chọn **Ghi lại** để tự gõ những câu bạn còn nhớ; đáp án thì bạn tự kiểm.
 - Quiz LMS đã lưu **chỉ gửi cho người khác được khi quiz đã đóng**. App tự khóa nút xuất trước thời điểm đó.
 - Không muốn lưu thì tắt ở **Cài đặt → Tự lưu quiz LMS đã nộp để ôn lại**.
 
@@ -120,7 +120,7 @@ Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** �
 
 | Gặp chuyện | Làm thế này |
 |---|---|
-| Bấm **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì copy nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
+| Chọn **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì copy nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
 | Công thức hiện ra toàn ký hiệu lạ | Bảo AI: "viết công thức trong `\(` và `\)`, không gấp đôi dấu `\`". |
 | Câu bị vào nhầm bài | Tên chương và tên bài trong file phải trùng với tên trong app. Nhờ AI ở đúng bài (mục 4) thì app tự điền tên sẵn. |
 | Muốn xóa một câu tự soạn | Vào **Soạn** → tab **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |

@@ -113,7 +113,7 @@
 		crumbs={[{ label: course.name, href: '#luyen-tap/' + course.id }]}
 		meta={`${qs.length} câu · ${exam.minutes} phút · đúng +${num(sc.right, 3)}, sai −${num(-sc.wrong, 3)}, trống 0`}
 	/>
-	<p class="mb-2 text-xs text-muted-foreground">Nộp bài mới biết đúng sai. Bấm lại đáp án đã chọn để bỏ trống.</p>
+	<p class="mb-2 text-xs text-muted-foreground">Nộp bài mới biết đúng sai. Chọn lại đáp án đã chọn để bỏ trống.</p>
 	<SourceList sources={exam.sources} subject={course.name} />
 
 	{#if result}
@@ -162,7 +162,7 @@
 			<span class="text-sm text-muted-foreground">{Object.keys(picked).length}/{qs.length} câu đã chọn</span>
 			<span class="flex gap-1"><ShuffleToggles bind:prefs /></span>
 			<Button class="ml-auto" variant={armed ? 'destructive' : 'default'} onclick={submit}
-				>{armed ? 'Bấm lần nữa để nộp' : 'Nộp bài'}</Button
+				>{armed ? 'Chọn lần nữa để nộp' : 'Nộp bài'}</Button
 			>
 		</div>
 		<Panel pad>

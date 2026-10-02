@@ -1,7 +1,7 @@
 // Chụp một trang của app đang chạy (cổng DevTools 9333). node scripts/shot.mjs '#lms' out/lms.png [rộng=1280] [light|dark]
 const [hash, out, width = '1280', scheme = 'light'] = process.argv.slice(2);
 const list = await (await fetch('http://127.0.0.1:9333/json')).json();
-const ws = new WebSocket(list.find(p => p.url.includes('sohoc.app')).webSocketDebuggerUrl);
+const ws = new WebSocket(list.find(p => p.url.includes('sohoc.example')).webSocketDebuggerUrl);
 await new Promise(r => ws.onopen = r);
 let id = 0; const pending = {};
 ws.onmessage = m => { const d = JSON.parse(m.data); if (pending[d.id]) pending[d.id](d); };

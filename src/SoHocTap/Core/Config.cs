@@ -5,7 +5,8 @@ namespace SoHocTap.Core;
 
 /// <summary>
 /// Config của app: data/config.json. Default chỉ nằm ở một chỗ là Core/DefaultConfig.json (nhúng vào exe).
-/// Lúc load thì merge default với file của người dùng (file người dùng được ưu tiên), key mới tự được thêm vào.
+/// Lúc load thì merge default với file của người dùng (file người dùng được ưu tiên). File chỉ lưu những gì khác default
+/// (kèm configVersion), nên đổi default ở bản sau thì người dùng cũ cũng nhận được, trừ chỗ họ đã tự chỉnh.
 /// </summary>
 public static class Config
 {
@@ -20,9 +21,11 @@ public static class Config
 
     public static JsonObject Load()
     {
+        var user = JsonStore.ReadObject(FilePath);
+        Migrate(user);
         var merged = Defaults();
-        Merge(merged, JsonStore.ReadObject(FilePath));
-        JsonStore.Write(FilePath, merged);
+        Merge(merged, user);
+        Write(merged);
         return merged;
     }
 
@@ -32,9 +35,49 @@ public static class Config
         {
             var merged = Defaults();
             Merge(merged, value);
-            JsonStore.Write(FilePath, merged);
+            Write(merged);
             _current = merged;
         }
+    }
+
+    private static void Write(JsonObject merged)
+    {
+        var diff = Diff(Defaults(), merged);
+        diff["configVersion"] = Version;   // luôn ghi: lần sau biết file đã qua bước nâng cấp nào
+        JsonStore.Write(FilePath, diff);
+    }
+
+    private const int Version = 2;
+
+    /// <summary>
+    /// Nâng cấp file config cũ. Bản 1.0.6 trở về trước ghi cả default ra file, nên không biết chỗ nào người dùng tự chọn:
+    /// v2 bỏ tự tải tài liệu (giờ tải theo mục người dùng chọn) và chỉ đọc lớp học kỳ hiện tại.
+    /// </summary>
+    internal static void Migrate(JsonObject user)
+    {
+        var v = user["configVersion"] is JsonValue jv && jv.TryGetValue<int>(out var n) ? n : 1;
+        if (v < 2 && user["sources"]?["lms"] is JsonObject lms)
+        {
+            lms.Remove("autoDownload");
+            lms.Remove("pastTerms");
+        }
+    }
+
+    /// <summary>Phần của <paramref name="current"/> khác <paramref name="defaults"/> (đệ quy theo object; mảng so cả mảng).</summary>
+    internal static JsonObject Diff(JsonObject defaults, JsonObject current)
+    {
+        var o = new JsonObject();
+        foreach (var (key, value) in current)
+        {
+            var d = defaults[key];
+            if (value is JsonObject co && d is JsonObject dob)
+            {
+                var sub = Diff(dob, co);
+                if (sub.Count > 0) o[key] = sub;
+            }
+            else if (!JsonNode.DeepEquals(d, value)) o[key] = value?.DeepClone();
+        }
+        return o;
     }
 
     /// <summary>Đổi một giá trị (path dạng chấm) rồi lưu ngay, cho các công tắc lưu liền không cần bấm Lưu.</summary>

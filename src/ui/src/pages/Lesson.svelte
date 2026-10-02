@@ -55,7 +55,7 @@
 	<div class="flex flex-col gap-stack">
 		<SourceList sources={lesson?.sources ?? entry.sources} subject={entry.courseName} />
 		{#if !lesson}
-			<Panel pad><p class="text-sm text-muted-foreground">Bài này chưa có câu hỏi. Bấm Soạn · Nhập · Xuất ở trên để thêm.</p></Panel>
+			<Panel pad><p class="text-sm text-muted-foreground">Bài này chưa có câu hỏi. Chọn Soạn · Nhập · Xuất ở trên để thêm.</p></Panel>
 		{:else}
 			<Panel title="Kiến thức" pad>
 				<div class="prose-lesson" use:typeset={arg}>

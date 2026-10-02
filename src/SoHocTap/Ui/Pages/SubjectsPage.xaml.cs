@@ -44,6 +44,8 @@ public partial class SubjectsPage : UserControl, IPage
     internal SubjectsPage(AppHost host, MainWindow main)
     {
         InitializeComponent();
+        // Trang đang ẩn thì không quét thư mục tài liệu (đồng bộ, đăng nhập đều gọi Refresh); mở lại trang thì quét một lần.
+        IsVisibleChanged += (_, _) => { if (IsVisible && _stale) Load(); };
         _host = host;
         _main = main;
 
@@ -87,7 +89,7 @@ public partial class SubjectsPage : UserControl, IPage
         Grades.Columns.Add(Grids.Text(L.T("col.class"), nameof(GradeRow.Book), 150));
         Grades.Columns.Add(Grids.Text(L.T("col.item"), nameof(GradeRow.Name), star: true));
         Grades.Columns.Add(Grids.Right(L.T("col.score"), nameof(GradeRow.GradeText), 70, nameof(GradeRow.SortGrade)));
-        Grades.Columns.Add(Grids.Right(L.T("col.max"), nameof(GradeRow.MaxText), 70));
+        Grades.Columns.Add(Grids.Right(L.T("col.max"), nameof(GradeRow.MaxText), 96));
         Grades.Columns.Add(Grids.Right("%", nameof(GradeRow.Percent), 80));
         Grades.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is GradeRow { Grade: null } ? 0.55 : 1;
         Grids.Setup<GradeRow>(Grades, null, g => [new(L.T("common.copy"), () => Grids.Copy($"{g.Name}\t{g.GradeText}/{g.MaxText}", _main))]);
@@ -109,12 +111,22 @@ public partial class SubjectsPage : UserControl, IPage
     public void Open(string arg)
     {
         var name = Uri.UnescapeDataString(arg);
+        if (_stale) Load();   // vừa chuyển sang trang (chưa hiện) mà cần chọn môn: quét luôn
         foreach (var o in List.Items)
             if (o is SubjectRow r && r.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) { List.SelectedItem = r; List.ScrollIntoView(r); return; }
     }
 
+    private bool _stale;
+
     public void Refresh()
     {
+        if (!IsVisible) { _stale = true; return; }
+        Load();
+    }
+
+    private void Load()
+    {
+        _stale = false;
         var lms = _host.State.Lms;
         var term = lms?.Term;
         var map = new Dictionary<string, (string Name, List<LmsCourse> Courses, int Files)>(StringComparer.OrdinalIgnoreCase);
@@ -130,7 +142,9 @@ public partial class SubjectsPage : UserControl, IPage
             var files = d["files"]?.GetValue<int>() ?? 0;
             map[n] = map.TryGetValue(n, out var v) ? v with { Files = files } : (n, [], files);
         }
-        var rows = map.Values.Select(v =>
+        // Môn kỳ trước chỉ có trên LMS (máy chưa có tài liệu nào) thì ẩn, trừ khi bật đọc cả lớp kỳ trước.
+        var pastTerms = Config.Bool("sources.lms.pastTerms", false);
+        var rows = map.Values.Where(v => pastTerms || v.Files > 0 || v.Courses.Any(c => c.Term == term)).Select(v =>
         {
             var current = v.Courses.Any(c => c.Term == term);
             var codes = string.Join(", ", v.Courses.Select(c => c.Code.Split('_')[0]).Distinct());

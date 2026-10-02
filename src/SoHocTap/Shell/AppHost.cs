@@ -40,6 +40,7 @@ internal sealed class AppHost : IDisposable
 
     public AppHost(Window main)
     {
+        Log.Verbose = DiagnosticLog.Active();
         _main = main;
         _ui = main.Dispatcher;
         _mybk = new MybkRunner(_ui, () => new WindowInteropHelper(_main).Handle);
@@ -60,7 +61,9 @@ internal sealed class AppHost : IDisposable
         Updates.Restarting += () => _ui.Invoke(() => { _tray.Dispose(); Hub.Dispose(); });
         Hub.Changed += (name, stage) => _ui.InvokeAsync(() =>
         {
-            if (stage == "done") State.Reload(); else State.RefreshStatus();
+            if (stage is "done" or "data") State.Reload();
+            else if (stage == "progress") State.RefreshProgress();   // chỉ cập nhật thanh trạng thái, không vẽ lại các trang
+            else State.RefreshStatus();
             if (name == "mybk" && stage == "done") _mybk.Release();
             if (name == "lms" && stage == "done") _notifier.Check();
         });
@@ -73,6 +76,53 @@ internal sealed class AppHost : IDisposable
         _notifier.Check();
         _notifyTimer.Start();
         StartUpdates();
+        StartKeepAlive();
+    }
+
+    private DateTime _ssoAliveAt = DateTime.MinValue;   // lần cuối biết chắc phiên SSO còn (đăng nhập, giữ phiên)
+    private bool _ssoExpired;                           // đã thấy phiên hết: thôi giữ phiên cho tới khi đăng nhập lại
+
+    /// <summary>
+    /// Giữ phiên SSO khi app đang mở (kể cả ẩn ở khay): SSO của trường tự hủy phiên sau vài giờ không dùng dù cookie còn hạn,
+    /// nên cứ sso.keepAliveMinutes phút (mặc định 60) đi qua cổng SSO một lần bằng WebView ẩn: 1 lượt GET chỉ đọc.
+    /// 0 = tắt (Cài đặt). Kiểm tra mỗi 5 phút để sau khi máy thức dậy thì làm ngay. Phiên đã hết thì đồng bộ MyBK một lần
+    /// để app báo "cần đăng nhập lại" thay vì vẫn ghi là đã đăng nhập.
+    /// </summary>
+    private void StartKeepAlive()
+    {
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+            while (await timer.WaitForNextTickAsync())
+            {
+                try { await KeepAliveTickAsync(); }
+                catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Giữ phiên SSO: {e.Message}"); }
+            }
+        });
+    }
+
+    private async Task KeepAliveTickAsync()
+    {
+        var minutes = Config.Int("sso.keepAliveMinutes", 60);
+        if (minutes <= 0 || _ssoExpired || !MybkSource.SignedIn) return;
+        if (DateTime.UtcNow - _ssoAliveAt < TimeSpan.FromMinutes(minutes)) return;
+        if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) return;
+        var since = _ssoAliveAt == DateTime.MinValue ? "chưa rõ" : $"{(DateTime.UtcNow - _ssoAliveAt).TotalMinutes:0} phút";
+        var alive = await _mybk.KeepAliveAsync(CancellationToken.None);
+        _mybk.Release();
+        switch (alive)
+        {
+            case true:
+                _ssoAliveAt = DateTime.UtcNow;
+                Log.Debug($"Giữ phiên SSO: còn phiên (lần trước {since})");
+                break;
+            case false:
+                _ssoExpired = true;
+                // Ghi cả mức Info: biết phiên SSO thật sự sống bao lâu (cookie còn mà server đã hủy).
+                Log.Info($"Phiên SSO đã hết hạn trên server (lần cuối còn phiên: {since} trước)");
+                Hub.Start("mybk", force: true);   // MyBK báo "phiên hết hạn" → thanh báo mời đăng nhập lại
+                break;
+        }
     }
 
     /// <summary>
@@ -120,7 +170,9 @@ internal sealed class AppHost : IDisposable
     private void OnLogin(string stage, string message)
     {
         LoginProgress?.Invoke(stage, message);
+        Log.Debug($"Đăng nhập: {stage}");
         if (stage is "done" or "logout") MybkSource.SetSignedIn(stage == "done");
+        if (stage == "done") { _ssoAliveAt = DateTime.UtcNow; _ssoExpired = false; }
         if (stage == "done") SyncAll();
         State.RefreshStatus();
     }

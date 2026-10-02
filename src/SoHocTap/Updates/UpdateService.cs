@@ -236,10 +236,13 @@ public sealed class UpdateService
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Ghi bản sắp cài: {e.Message}"); }
     }
 
+    /// <summary>Nguồn cập nhật: repo GitHub qua https. Thư mục trên máy chỉ nhận ở bản cài thử (tools-dev/test-update.ps1).</summary>
     private static string Source()
     {
         var src = Config.Str("app.update.source");
-        return UpdatePolicy.IsValidSource(src, Directory.Exists) ? src : throw new InvalidOperationException(L.T("update.badSource"));
+        var ok = src.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase)
+                 || (IsTestInstall && UpdatePolicy.IsValidSource(src, Directory.Exists));
+        return ok ? src : throw new InvalidOperationException(L.T("update.badSource"));
     }
 
 #if PUBLIC_EDITION

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Web.WebView2.Core;
@@ -17,6 +18,8 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
     private CoreWebView2Controller? _controller;
     private bool _onApp;                     // đang ở /app (có #hid_Token)
     private readonly SemaphoreSlim _gate = new(1, 1);
+    // Giãn cách các request API MyBK trong một lần đồng bộ (sources.mybk.gapMs); server báo 429/503 thì nghỉ hẳn một lúc.
+    private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.mybk.gapMs", 300)));
 
     // Bearer token lấy từ input ẩn #hid_Token của trang /app; token không bao giờ ra khỏi trang.
     private const string FetchJs = """
@@ -42,9 +45,20 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 {
                     var js = FetchJs.Replace("__URL__", JsonSerializer.Serialize(r.Url)).Replace("__METHOD__", JsonSerializer.Serialize(r.Method))
                         .Replace("__BODY__", r.Body is null ? "undefined" : JsonSerializer.Serialize(r.Body));
+                    await ApiPace.WaitAsync(ct);
+                    var sw = Stopwatch.StartNew();
                     var raw = await EvaluateAsync(js);
                     var o = JsonNode.Parse(raw ?? "{}") as JsonObject;
-                    results[r.Name] = new FetchResult(o?["status"]?.GetValue<int>() ?? 0, o?["body"]?.GetValue<string>() ?? "", o?["auth"]?.GetValue<bool>() ?? false);
+                    var res = new FetchResult(o?["status"]?.GetValue<int>() ?? 0, o?["body"]?.GetValue<string>() ?? "", o?["auth"]?.GetValue<bool>() ?? false);
+                    results[r.Name] = res;
+                    Log.Debug($"MyBK {r.Name}: HTTP {res.Status}, {res.Body.Length / 1024} KB, {sw.ElapsedMilliseconds} ms");
+                    if (Pace.IsThrottle(res.Status))
+                    {
+                        // MyBK đang giới hạn: nghỉ, bỏ các request còn lại của lần này (lần đồng bộ sau sẽ lấy).
+                        ApiPace.PauseFor(Pace.Backoff(null));
+                        Log.Warn($"MyBK {r.Name}: HTTP {res.Status}, tạm dừng gọi MyBK");
+                        break;
+                    }
                 }
                 return (IReadOnlyDictionary<string, FetchResult>)results;
             }
@@ -78,6 +92,30 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
 
     public void Dispose() { _controller?.Close(); _gate.Dispose(); }
 
+    /// <summary>
+    /// Giữ phiên SSO: mở cổng SSO của MyBK trong WebView ẩn. SSO còn phiên thì cấp vé và chuyển về MyBK (phiên SSO được tính
+    /// là vừa dùng, không bị hủy vì để lâu); hết phiên thì dừng ở trang đăng nhập. true = còn phiên, false = đã hết,
+    /// null = không biết (mất mạng, app đang đồng bộ MyBK, server chậm).
+    /// </summary>
+    public Task<bool?> KeepAliveAsync(CancellationToken ct) =>
+        UiThread.RunAsync<bool?>(owner, async () =>
+        {
+            if (!await _gate.WaitAsync(0, ct)) return null;   // đang đồng bộ MyBK: lần đồng bộ đó đã đi qua SSO rồi
+            try
+            {
+                var core = await CoreAsync();
+                _onApp = false;
+                var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
+                await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u => u.Host == mybkHost, ct,
+                    failAt: u => WebHost.IsSsoLogin(u.AbsoluteUri));
+                await SessionKeeper.PersistAsync(core);
+                return true;
+            }
+            catch (SessionExpiredException) { return false; }
+            catch (Exception e) when (e is InvalidOperationException or HttpRequestException) { Log.Debug($"Giữ phiên SSO: {e.Message}"); return null; }
+            finally { _gate.Release(); }
+        });
+
     // ------------------------------------------------------------------ internal (chạy trên UI thread)
 
     private async Task<CoreWebView2> CoreAsync()
@@ -89,6 +127,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             _controller.IsVisible = false;
             // WebView ẩn chạy script của trang trường: chỉ cho đi tới host trường qua https, không mở cửa sổ mới.
             var core = _controller.CoreWebView2;
+            core.Settings.AreDevToolsEnabled = System.Diagnostics.Debugger.IsAttached;
             core.NavigationStarting += (_, e) => { if (e.Uri != "about:blank" && !WebHost.IsSchoolDomain(e.Uri)) e.Cancel = true; };
             core.NewWindowRequested += (_, e) => e.Handled = true;
         }
@@ -112,7 +151,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 return;
             }
         }
-        catch (InvalidOperationException) { /* session MyBK hết hạn, đi qua SSO */ }
+        catch (SessionExpiredException) { /* session MyBK hết hạn, đi qua SSO */ }
         var appLogin = Config.Str("sources.mybk.appLogin");
         var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
         var ssoHost = WebHost.Host(Config.Str("sources.mybk.casLogin"));
@@ -126,12 +165,16 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             }
             return u.AbsolutePath.StartsWith("/app", StringComparison.Ordinal) && !u.AbsolutePath.Contains("/login") && !u.AbsolutePath.Contains("/401");
         }, ct, failAt: u => u.Host == ssoHost && u.AbsolutePath.Contains("/login", StringComparison.Ordinal));
+        Log.Debug("MyBK: vào lại qua SSO");
         _onApp = true;
         await SessionKeeper.PersistAsync(core);
     }
 
-    /// <summary>Mở url rồi chờ tới khi gặp trang thỏa <paramref name="arrived"/>. Gặp trang login (<paramref name="failAt"/>) thì dừng ngay vì session đã hết hạn,
-    /// khỏi chờ đủ 60 giây timeout.</summary>
+    /// <summary>
+    /// Mở url rồi chờ tới khi gặp trang thỏa <paramref name="arrived"/>. Gặp trang login (<paramref name="failAt"/>) thì dừng ngay vì
+    /// session đã hết (<see cref="SessionExpiredException"/>); mất mạng hoặc server lỗi thì báo <see cref="HttpRequestException"/>;
+    /// quá sources.mybk.timeoutSeconds giây thì báo trang trường phản hồi chậm. Không để người dùng chờ mà không biết vì sao.
+    /// </summary>
     private static async Task NavigateUntilAsync(CoreWebView2 core, string url, Func<Uri, bool> arrived, CancellationToken ct, Func<Uri, bool>? failAt = null)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -139,20 +182,26 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         void OnCompleted(object? s, CoreWebView2NavigationCompletedEventArgs e)
         {
             last = core.Source;
+            Log.Debug($"MyBK ẩn: {Log.Where(core.Source)} {(e.IsSuccess ? "ok" : e.WebErrorStatus.ToString())} HTTP {e.HttpStatusCode}");
             if (!Uri.TryCreate(core.Source, UriKind.Absolute, out var u)) return;
-            if (failAt?.Invoke(u) == true) done.TrySetException(new InvalidOperationException("Chưa đăng nhập MyBK. Cần đăng nhập HCMUT trong app."));
+            if (WebHost.NetworkError(e) is { } net) done.TrySetException(new HttpRequestException(net));
+            else if (failAt?.Invoke(u) == true) done.TrySetException(new SessionExpiredException("Phiên đăng nhập HCMUT đã hết hạn. Cần đăng nhập lại trong app."));
+            else if (e.HttpStatusCode >= 500 || e.HttpStatusCode == 429)
+                done.TrySetException(new HttpRequestException($"Máy chủ {u.Host} đang lỗi (HTTP {e.HttpStatusCode}). Thử lại sau ít phút."));
             else if (arrived(u)) done.TrySetResult();
         }
         core.NavigationCompleted += OnCompleted;
+        var seconds = Config.Int("sources.mybk.timeoutSeconds", 45);
         try
         {
             core.Navigate(url);
-            var timeout = Task.Delay(TimeSpan.FromSeconds(60), ct);
-            if (await Task.WhenAny(done.Task, timeout) == done.Task) await done.Task;   // có lỗi "chưa đăng nhập" thì throw ra luôn
+            var timeout = Task.Delay(TimeSpan.FromSeconds(seconds), ct);
+            if (await Task.WhenAny(done.Task, timeout) == done.Task) await done.Task;   // có lỗi thì throw ra luôn
             else
             {
-                var where = Uri.TryCreate(last, UriKind.Absolute, out var u) ? u.Host + u.AbsolutePath : "?";
-                throw new InvalidOperationException($"Phiên MyBK chưa sẵn sàng (đang ở {where}). Cần đăng nhập HCMUT trong app.");
+                ct.ThrowIfCancellationRequested();
+                Log.Warn($"MyBK: quá {seconds} giây chưa tới trang cần, đang ở {Log.Where(last)}");
+                throw new TimeoutException($"MyBK không phản hồi sau {seconds} giây (đang ở {Log.Where(last)}). Máy chủ trường có thể đang chậm, thử lại sau.");
             }
         }
         finally { core.NavigationCompleted -= OnCompleted; }

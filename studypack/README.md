@@ -10,11 +10,10 @@ Soạn quiz để tự ôn và gửi cho bạn bè: gõ trong app, nhờ AI, ho�
 | `studypack-v1.schema.json` | JSON Schema của dạng JSON |
 | `validate.ts` | Kiểm tra file: `node studypack/validate.ts <file.md \| file.zip \| file.json>` |
 | `convert.ts` | Đổi JSON ↔ Markdown (`.md`, hoặc `.zip` khi có ảnh) |
-| `export.mjs` | Xuất bài trong `content/*.js` thành gói JSON |
 | `test-roundtrip.ts` | Kiểm thử: gói mẫu đổi sang Markdown rồi đổi ngược lại vẫn phải giữ nguyên từng câu |
 | `examples/` | Quiz mẫu, bắt đầu từ `vi-du.md` |
 
-Các công cụ chạy bằng Node 22.6+ và dùng chung code với app (`src/ui/src/lib/study/`), nên file nào qua được `validate.ts` thì app nhập được.
+Các công cụ chạy bằng Node 23.6+ (Node 22.6+ thì thêm `--experimental-strip-types`) và dùng chung code với app (`src/ui/src/lib/study/`), nên file nào qua được `validate.ts` thì app nhập được.
 
 ## An toàn
 

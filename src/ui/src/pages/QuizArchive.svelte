@@ -99,7 +99,7 @@
 		<ul class="list-disc space-y-1 pl-5 text-sm">
 			<li>Mỗi lần đồng bộ, app lưu bản xem lại của quiz <b>đã nộp</b>. Không đọc quiz đang làm.</li>
 			<li>Quiz ẩn đáp án thì app tự lấy lại sau giờ đóng.</li>
-			<li>Quiz không cho xem lại: chỉ lưu tên và điểm; bấm <i>Ghi lại</i> để tự ghi câu còn nhớ.</li>
+			<li>Quiz không cho xem lại: chỉ lưu tên và điểm; chọn <i>Ghi lại</i> để tự ghi câu còn nhớ.</li>
 			<li>Chia sẻ được sau khi quiz đóng.</li>
 		</ul>
 	</Panel>
@@ -122,7 +122,7 @@
 		<Panel pad
 			><p class="text-sm text-muted-foreground">
 				{autoSave
-					? 'Chưa có quiz nào. Nộp quiz trên LMS rồi bấm Lưu ngay, hoặc chờ lần đồng bộ sau.'
+					? 'Chưa có quiz nào. Nộp quiz trên LMS rồi chọn Lưu ngay, hoặc chờ lần đồng bộ sau.'
 					: 'Tự lưu đang tắt. Bật công tắc ở trên để lưu quiz đã nộp.'}
 			</p></Panel
 		>

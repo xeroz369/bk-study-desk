@@ -102,7 +102,7 @@
 			const opts = options.filter((o) => o.text.trim());
 			if (opts.length < 2) return 'Cần ít nhất 2 phương án.';
 			const right = opts.map((o, i) => (o.right ? i : -1)).filter((i) => i >= 0);
-			if (!right.length) return 'Chưa chọn phương án đúng (bấm chữ cái A, B…).';
+			if (!right.length) return 'Chưa chọn phương án đúng (chọn chữ cái A, B…).';
 			const html = opts.map((o) => render(o.text).replace(/^<p>([\s\S]*)<\/p>$/, '$1'));
 			const keep = keepOrder ? { keepOrder: true } : {};
 			return type === 'single'
@@ -188,7 +188,7 @@
 		<div class="flex flex-col gap-1.5">
 			<span
 				>Phương án <span class="text-xs text-muted-foreground"
-					>bấm chữ cái để đánh dấu {type === 'multi' ? 'các phương án đúng' : 'phương án đúng'}</span
+					>chọn chữ cái để đánh dấu {type === 'multi' ? 'các phương án đúng' : 'phương án đúng'}</span
 				></span
 			>
 			{#each options as o, i (i)}

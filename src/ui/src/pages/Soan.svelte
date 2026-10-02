@@ -384,8 +384,8 @@
 				{/if}
 				<div class="flex flex-wrap gap-2">
 					<Button size="sm" onclick={() => exportMarkdown(exported)} disabled={exportOff}>Lưu Markdown (.md / .zip)…</Button>
-					<Button size="sm" variant="outline" onclick={() => copy(writeMarkdown(exported).md, 'Đã copy Markdown')} disabled={exportOff}
-						>Copy Markdown</Button
+					<Button size="sm" variant="outline" onclick={() => copy(writeMarkdown(exported).md, 'Đã sao chép Markdown')} disabled={exportOff}
+						>Sao chép Markdown</Button
 					>
 				</div>
 				<div class="flex flex-wrap gap-2">
@@ -444,10 +444,10 @@
 					</div>
 				{/if}
 				<ol class="list-decimal pl-5">
-					<li>Copy prompt, dán vào ChatGPT / Claude / Gemini{mode === 'soan' ? ', kèm slide hoặc đề (PDF, ảnh)' : ''}.</li>
+					<li>Sao chép prompt, dán vào ChatGPT / Claude / Gemini{mode === 'soan' ? ', kèm slide hoặc đề (PDF, ảnh)' : ''}.</li>
 					{#if mode === 'giai-thich'}<li>Đọc lời giải thích của AI.</li>{:else}<li>
 							AI trả về một khối Markdown: copy hết, sang tab <a class="underline" href={`#soan/nhap/${scopePath(scope)}`}>Nhập</a>, dán vào
-							rồi bấm Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
+							rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
 						</li>{/if}
 				</ol>
 				{#if mode === 'soan' || mode === 'tuong-tu'}
@@ -466,7 +466,7 @@
 					size="sm"
 					class="self-start"
 					disabled={(mode === 'tuong-tu' || mode === 'giai-thich') && !pickedQ}
-					onclick={() => copy(promptText, 'Đã copy prompt')}>Copy prompt</Button
+					onclick={() => copy(promptText, 'Đã sao chép prompt')}>Sao chép prompt</Button
 				>
 			</div>
 		</Panel>

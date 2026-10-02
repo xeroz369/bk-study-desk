@@ -68,25 +68,31 @@ public partial class HomePage : UserControl, IPage
         var bad = TryFindResource("SystemFillColorCriticalBrush") as Brush;
         var normal = TryFindResource("TextFillColorPrimaryBrush") as Brush;
         var examDays = exam is null ? 0 : Format.DayDiff(exam.Time);
+        // Chưa có dữ liệu LMS thì ghi "—" thay vì 0: số 0 nghĩa là đã đọc và thật sự không có gì.
+        string Count(int n) => s.SyncedAt("lms") is null ? "—" : n.ToString(CultureInfo.InvariantCulture);
         Stats.ItemsSource = new List<Stat>
         {
             new(exam is null ? L.T("home.nextExam") : L.F("home.nextExamOf", exam.Subject), exam is null ? "—" : examDays > 0 ? L.F("format.days", examDays) : L.T("format.group.today"),
                 exam is not null && examDays <= 3 ? bad : warn),
-            new(L.T("home.due7"), todo7.ToString(CultureInfo.InvariantCulture), todo7 > 0 ? warn : normal),
-            new(L.T("home.quiz14"), quiz14.ToString(CultureInfo.InvariantCulture), normal),
-            new(L.T("home.news7"), news.Count.ToString(CultureInfo.InvariantCulture), normal),
+            new(L.T("home.due7"), Count(todo7), todo7 > 0 ? warn : normal),
+            new(L.T("home.quiz14"), Count(quiz14), normal),
+            new(L.T("home.news7"), Count(news.Count), normal),
         };
         var today = Format.Sec(DateTime.Today);
         var week = s.Timeline.Where(e => e.Time >= today && Format.DayDiff(e.Time) <= 7 && e.Kind != "exam"
                                          && (e.Kind == "class" ? Format.DayDiff(e.Time) <= 1 : !e.Done)).ToList();
         Agenda.ItemsSource = Grids.Grouped(week, nameof(TimelineItem.Day), nameof(TimelineItem.Time));
+        // Trống vì chưa lấy được dữ liệu thì nói rõ (đang tải lần đầu / lỗi / chưa đăng nhập), không ghi "không có hạn nộp".
+        AgendaEmpty.Text = s.NoDataReason("lms", "LMS") ?? s.NoDataReason("mybk", "MyBK") ?? L.T("home.agendaEmpty");
         AgendaEmpty.Visibility = week.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Agenda.Visibility = week.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         var exams = s.Timeline.Where(e => e.Kind == "exam" && e.Time > now - 86400).ToList();
         Exams.ItemsSource = exams;
+        ExamsEmpty.Text = s.NoDataReason("mybk", "MyBK") ?? L.T("home.examsEmpty");
         ExamsEmpty.Visibility = exams.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Exams.Visibility = exams.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         News.ItemsSource = news.OrderByDescending(a => a.Time).Take(8).Select(a => new NewsRow(a.Title, Format.Ago(a.Time), a.Url ?? "")).ToList();
+        NewsEmpty.Text = s.NoDataReason("lms", "LMS") ?? L.T("home.newsEmpty");
         NewsEmpty.Visibility = news.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 }
