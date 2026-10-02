@@ -9,7 +9,7 @@ body:
         Lỗ hổng bảo mật thì không báo ở đây, xem [SECURITY.md](../blob/main/SECURITY.md).
 
         Thanks for reporting. **Don't paste passwords, student IDs, tokens or screenshots with personal information.**
-        Don't report security vulnerabilities here; see [SECURITY.md](../blob/main/SECURITY.md#english).
+        Don't report security vulnerabilities here; see [SECURITY.en.md](../blob/main/SECURITY.en.md).
   - type: input
     id: version
     attributes:
