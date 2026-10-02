@@ -16,7 +16,7 @@
       Hai bản khác tên exe và app ID (mutex, taskbar, autostart) nên cài song song được.
     -->
     <Edition Condition="'$(Edition)' == ''">Public</Edition>
-    <Version Condition="'$(Version)' == ''">1.0.6</Version>
+    <Version Condition="'$(Version)' == ''">1.1.0</Version>
     <Authors>xeroz369</Authors>
     <Copyright>Copyright (c) 2026 xeroz369. PolyForm Noncommercial 1.0.0</Copyright>
     <ApplicationIcon>app.ico</ApplicationIcon>

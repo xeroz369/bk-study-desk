@@ -415,6 +415,8 @@ public sealed partial class LmsSource : ISource
                     ["kind"] = mod is "assign" or "quiz" ? mod : "event",
                     ["time"] = e["timesort"]?.GetValue<long>() ?? e["timestart"]?.GetValue<long>(),
                     ["label"] = WebUtility.HtmlDecode(name),
+                    // Loại mốc của Moodle: quiz có "open"/"close", bài nộp có "due". Mốc mở không phải hạn nộp.
+                    ["phase"] = e["eventtype"]?.GetValue<string>(),
                     ["url"] = e["url"]?.GetValue<string>(),
                 };
             }

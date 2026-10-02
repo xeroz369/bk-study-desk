@@ -70,6 +70,18 @@
                 </Style.Triggers>
             </Style>
 
+            <!-- Khung focus khi dùng bàn phím (Tab, phím mũi tên). WPF chỉ vẽ FocusVisualStyle khi focus đến từ bàn phím, bấm chuột thì không hiện:
+                 trước đây dùng trigger IsKeyboardFocused nên bấm chuột vào tab cũng hiện khung trắng. -->
+            <Style x:Key="KeyFocus">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Border BorderBrush="{DynamicResource FocusStrokeColorOuterBrush}" BorderThickness="2" CornerRadius="4" Margin="-1" SnapsToDevicePixels="True" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- Tab trong page: tab đang chọn chữ đậm, màu chữ chính, có vạch accent bên dưới; tab khác dùng chữ phụ. Chỉ đổi style chữ của header tab
                  (set trên ContentPresenter) để không lan xuống nội dung tab. -->
             <Style TargetType="TabItem">
@@ -77,7 +89,7 @@
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                 <Setter Property="Padding" Value="12,7" />
                 <Setter Property="Margin" Value="0,0,2,0" />
-                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="FocusVisualStyle" Value="{StaticResource KeyFocus}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TabItem">
@@ -99,10 +111,6 @@
                                     <Setter TargetName="Hd" Property="TextElement.Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                                     <Setter TargetName="Hd" Property="TextElement.FontWeight" Value="SemiBold" />
                                 </Trigger>
-                                <Trigger Property="IsKeyboardFocused" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource FocusStrokeColorOuterBrush}" />
-                                    <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
-                                </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
@@ -113,7 +121,7 @@
             <Style x:Key="TopNavItem" TargetType="ListBoxItem">
                 <Setter Property="Padding" Value="12,8" />
                 <Setter Property="Margin" Value="0,0,2,0" />
-                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="FocusVisualStyle" Value="{StaticResource KeyFocus}" />
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -135,10 +143,6 @@
                                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                                     <Setter Property="FontWeight" Value="SemiBold" />
                                 </Trigger>
-                                <Trigger Property="IsKeyboardFocused" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource FocusStrokeColorOuterBrush}" />
-                                    <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
-                                </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
@@ -149,7 +153,7 @@
             <Style x:Key="NavItem" TargetType="ListBoxItem">
                 <Setter Property="Padding" Value="10,6" />
                 <Setter Property="Margin" Value="0,1" />
-                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="FocusVisualStyle" Value="{StaticResource KeyFocus}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
@@ -167,10 +171,6 @@
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                                     <Setter TargetName="Pill" Property="Visibility" Value="Visible" />
-                                </Trigger>
-                                <Trigger Property="IsKeyboardFocused" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource FocusStrokeColorOuterBrush}" />
-                                    <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

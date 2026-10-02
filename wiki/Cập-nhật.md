@@ -1,6 +1,6 @@
 # Cập nhật
 
-**Cài từ Microsoft Store:** Store tự cập nhật app, không cần chỉnh gì trong app. Phần dưới dành cho bản cài từ GitHub.
+**Cài từ Microsoft Store:** Store tự cập nhật app, không cần chỉnh gì trong app. Bản mới lên Store sau khi Microsoft duyệt (thường vài giờ, có khi tới 3 ngày làm việc), nên có thể chậm hơn bản trên GitHub một chút. Phần dưới dành cho bản cài từ GitHub.
 
 Lần mở đầu, app hỏi bạn muốn làm gì khi có bản mới. **Chưa chọn thì app không gọi mạng để kiểm tra.**
 
@@ -8,9 +8,9 @@ Lần mở đầu, app hỏi bạn muốn làm gì khi có bản mới. **Chưa 
 |---|---|
 | **Báo khi có bản mới** (khuyên dùng) | Mỗi ngày hỏi GitHub một lần. Có bản mới thì báo ở thanh dưới cùng; bạn chọn mới tải và cài. |
 | **Tự tải và cài khi tắt app** | Tải trong nền (hoãn nếu đang bật Tiết kiệm pin), cài lúc bạn thoát hẳn app. |
-| **Không kiểm tra** | Không bao giờ hỏi GitHub. Muốn cập nhật thì vào **Cài đặt → Cập nhật → Kiểm tra cập nhật**. |
+| **Không kiểm tra** | Không bao giờ hỏi GitHub. Muốn cập nhật thì vào **Cài đặt** → **Cập nhật** → **Kiểm tra cập nhật**. |
 
-- Đổi chế độ ở **Cài đặt → Cập nhật**.
+- Đổi chế độ ở **Cài đặt** → **Cập nhật**.
 - App **không bao giờ tự khởi động lại** khi bạn đang dùng.
 - Gói cập nhật chỉ chứa phần thay đổi (thường vài trăm KB) và được kiểm SHA-256 trước khi cài. Gói hỏng thì app giữ bản đang chạy.
 - Cài không thành thì lần mở sau thanh dưới cùng báo "Chưa cập nhật được lên bản …"; chọn để thử lại.

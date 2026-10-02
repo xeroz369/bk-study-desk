@@ -42,6 +42,7 @@ Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template
 
 - Bỏ dấu kiểu cũ: hòa, xóa, khóa, tùy, hủy (không viết hoà, xoá). Lý do: MST dùng kiểu này là chính, và toàn bộ repo đang dùng kiểu này (đếm ngày 02/10/2026: 60 chữ kiểu cũ, 0 chữ kiểu mới). QĐ 1989 dùng kiểu mới nhưng chỉ áp cho sách giáo khoa.
 - Dùng "y": kỹ, lý, ký (MST: "kỹ" 41/0, "quản lý" 209/13).
+- Tên trường: tên đầy đủ viết đúng tên chính thức "Trường Đại học Bách khoa – ĐHQG-HCM" (HCMUT); dạng ngắn quen gọi viết "Bách Khoa TP.HCM".
 
 ## Thuật ngữ
 
@@ -69,11 +70,12 @@ Theo MST, trừ chỗ ghi khác:
 | Repository, issue, pull request, commit, build, token, API | giữ tiếng Anh | MST dịch "cam kết", "yêu cầu kéo"… mang nghĩa khác hoặc ít người dùng |
 
 - Tên sản phẩm, thương hiệu không dịch: BK-LMS, MyBK, Windows, GitHub (MSG).
+- **Từ dịch sang tiếng Việt mà dài hoặc dân IT ít dùng thì giữ tiếng Anh** (MSG §4.1.4: không dịch khái niệm mà bản dịch gây khó hiểu): DevTools, attestation, token, ticket, cookie, session, InfoBar, mock server, build, log. Tài liệu cho người dùng phổ thông thì lần đầu nhắc giải thích ngắn trong ngoặc. Cụm tiếng Việt đã quen (phiên đăng nhập, tự điền, chữ ký số, mã hóa) thì giữ tiếng Việt.
 - Từ viết tắt và từ đã quen giữ nguyên: API, URL, SSO, OK, tab (MSG). Lần đầu dùng khái niệm lạ thì ghi kèm: "đăng nhập một lần (SSO)".
 
 ## Nhắc tới giao diện
 
-- Tên nút, mục menu in đậm; đường đi dùng `→`: **Cài đặt** → **Nhật ký hoạt động**.
+- Tên nút, mục menu in đậm; đường đi dùng `→`: **Cài đặt**** → ****Nhật ký hoạt động**.
 - Dùng "Chọn" cho mọi cách bấm (chuột, bàn phím, cảm ứng, công cụ trợ năng) (MSG). "Bấm đúp" giữ nguyên cho double-click.
 
 ## Thông báo lỗi
