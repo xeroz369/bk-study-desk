@@ -25,6 +25,9 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 ### Sửa lỗi
 
 - Hộp **Tải tài liệu** không mở được ở bản 1.1.3.
+- **Luyện tập**: **Gỡ quiz này**, **Xóa câu**, cập nhật hoặc thay gói đã có không chạy (hộp hỏi xác nhận không hiện). Giờ hiện hộp thoại Windows.
+- **Luyện tập**: tab đang chọn (Tạo, Nhập, Xuất, Nhờ AI) không có dấu hiệu nào khác tab còn lại.
+- **Lịch** > **Sắp tới**: menu chuột phải có hai mục mở giống nhau.
 - Bảng đợt đăng ký môn trống khi MyBK chuyển về trang chủ thay vì trang đăng ký. App mở lại đúng trang, báo lỗi nếu vẫn không có bảng, và không lưu kết quả trống.
 
 ## [1.1.3] - 2026-10-03

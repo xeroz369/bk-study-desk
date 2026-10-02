@@ -27,6 +27,9 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 ### Fixed
 
 - The **Download** dialog did not open in 1.1.3.
+- **Practice**: removing a quiz pack, deleting a question, and updating or replacing an installed pack did nothing (the confirmation never appeared). A Windows dialog now asks.
+- **Practice**: the selected tab (Tạo, Nhập, Xuất, Nhờ AI) looked the same as the others.
+- **Calendar** > **Upcoming**: the right-click menu had two identical open items.
 - The registration rounds table was empty when MyBK redirected to its home page instead of the registration page. The app now opens the right page again, reports an error if the table is still missing, and does not save an empty result.
 
 ## [1.1.3] - 2026-10-03
