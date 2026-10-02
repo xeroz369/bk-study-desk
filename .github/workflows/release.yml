@@ -83,7 +83,7 @@ jobs:
           [IO.File]::WriteAllText("$PWD/dist/SHA256SUMS.txt", ($sums -join "`n") + "`n")   # xuống dòng kiểu Unix: sha256sum -c đọc được
       # Chứng thực bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
       # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         if: ${{ !github.event.repository.private }}
         with:
           subject-path: 'dist/*.exe'
