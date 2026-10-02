@@ -36,7 +36,12 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          queries: security-and-quality
+          # Chỉ luật bảo mật: bộ "quality" báo hàng trăm nhắc kiểu code (Path.Combine, catch rỗng...) làm chìm cảnh báo thật.
+          queries: security-extended
+          # Script kiểm thử chạy trên máy dev (nối DevTools cục bộ), không nằm trong app phát hành.
+          config: |
+            paths-ignore:
+              - src/ui/scripts
       - name: Build
         if: matrix.build-mode == 'manual'
         run: |

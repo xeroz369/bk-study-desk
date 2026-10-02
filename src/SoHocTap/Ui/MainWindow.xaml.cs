@@ -304,7 +304,12 @@ public partial class MainWindow : Window, IDisposable
     {
         if (_loginStage.Length > 0) return;   // đang hiện tiến độ login
         var need = _host.State.Account;
-        if (need == AccountNeed.None || _infoClosedFor) { InfoBar.Visibility = Visibility.Collapsed; if (need == AccountNeed.None) _infoClosedFor = false; return; }
+        if (need == AccountNeed.None || _infoClosedFor)
+        {
+            InfoBar.Visibility = Visibility.Collapsed;
+            if (need == AccountNeed.None) _infoClosedFor = false;
+            return;
+        }
         var what = need switch { AccountNeed.Both => L.T("info.both"), AccountNeed.Lms => "LMS", _ => "MyBK" };
         // Lần đầu chạy (chưa có dữ liệu gì) thì mời đăng nhập, chứ không báo hết session.
         var firstRun = _host.State.Lms is null && _host.State.Mybk is null;

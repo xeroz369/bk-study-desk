@@ -99,7 +99,8 @@ public static partial class LmsClient
         };
         form.AddRange(args);
         Interlocked.Increment(ref _calls);
-        using var resp = await Http.PostAsync($"{Site}/webservice/rest/server.php", new FormUrlEncodedContent(form), ct);
+        using var content = new FormUrlEncodedContent(form);
+        using var resp = await Http.PostAsync($"{Site}/webservice/rest/server.php", content, ct);
         var node = JsonNode.Parse(await resp.Content.ReadAsStringAsync(ct)) ?? throw new LmsException($"{function}: trả về rỗng");
         if (node is JsonObject o && o["exception"] is not null)
         {
