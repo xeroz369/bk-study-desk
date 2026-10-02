@@ -13,7 +13,7 @@ Write quizzes to revise and share with friends: type them in the app, ask AI, or
 | [PROMPT.md](PROMPT.md) | AI prompt (Vietnamese; the app fills it in on the **Nhờ AI** (Ask AI) tab) |
 | `studypack-v1.schema.json` | JSON Schema of the JSON format |
 | `validate.ts` | Check a file: `node studypack/validate.ts <file.md \| file.zip \| file.json>` |
-| `convert.ts` | Convert JSON ↔ Markdown (`.md`, or `.zip` with images) |
+| `convert.ts` | Convert between JSON and Markdown (`.md`, or `.zip` with images) |
 | `test-roundtrip.ts` | Test: the sample packs converted to Markdown and back must keep every question unchanged |
 | `examples/` | Sample quizzes; start with `vi-du.md` |
 

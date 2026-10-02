@@ -1,6 +1,6 @@
 # English writing style
 
-[Văn phong tiếng Việt](van-phong.md) · **English**
+[Văn phong tiếng Việt](van-phong.md) | **English**
 
 How to write the English documents (`*.en.md`, English Wiki pages, the English half of release notes) and the English UI (`src/SoHocTap/lang/en.json`). Vietnamese is the source language; English documents are complete translations, not summaries.
 
@@ -34,7 +34,7 @@ The main reference is the **Microsoft Writing Style Guide**, because this is a W
 
 ## UI text in documents
 
-- **Bold** UI labels, spelled exactly as in `en.json`: **Settings**, **Sign in to HCMUT**. Drop the trailing `…` or `:` of a label. Don't add the word "button" unless it's needed. (MSG [formatting text in instructions](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/formatting-text-in-instructions), GDG [UI elements](https://developers.google.com/style/ui-elements))
+- **Bold** UI labels, spelled exactly as in `en.json`: **Settings**, **Sign in to HCMUT**. Drop the trailing `...` or `:` of a label. Don't add the word "button" unless it's needed. (MSG [formatting text in instructions](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/formatting-text-in-instructions), GDG [UI elements](https://developers.google.com/style/ui-elements))
 - Menu paths use `>` with spaces, and the `>` is not bold: **Settings** > **Updates**. (MSG)
 - **Input-neutral verbs**: *select* (buttons, items, checkboxes), *clear* (a checkbox), *enter* (type a value), *open*, *close*, *go to*, *turn on* / *turn off* (toggles). Not *click*, *tap* or *hit*. (MSG [describing interactions with UI](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/describing-interactions-with-ui))
 - Parts of the app that exist only in Vietnamese (the **Luyện tập** practice view, the installer and uninstaller): bold the Vietnamese label and add the meaning in parentheses: **Xóa cả dữ liệu của app** (Delete app data). This is a project choice.
@@ -57,8 +57,12 @@ Say what happened, why (if known), and what the user can do. Don't blame the use
 ## Buttons and dialogs
 
 - Buttons are one or two words and use an active verb: **Install now**, **Retry**. No period. (MSW)
-- A button that opens another window ends with `…` in the UI: **Export calendar (.ics)…**. In documents, drop the `…`.
+- In the UI, a button that opens another window ends with an ellipsis (for example "Export calendar (.ics)..."). In documents, write the label without it: **Export calendar (.ics)**.
 - The buttons must answer the question in the dialog title. (MSW)
+
+## Characters to avoid (project choice)
+
+Documents, release notes, commits, pull requests, issue replies and the Wiki avoid characters that are common in AI-written text: em dash `—` (use a comma, colon, period or parentheses), arrows `→ ⇒ ↔` (use words; menu paths use `>`), the middle dot `·` as a separator (use a comma, `/` or `|`), the ellipsis character `...` (type `...`), curly quotes (use straight quotes) and emoji or decorative symbols. UI text from the app and the quiz file syntax stay as they are, because they must match the app.
 
 ## Links
 

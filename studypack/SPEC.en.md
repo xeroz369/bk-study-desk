@@ -39,18 +39,18 @@ Between two `---` lines at the top of the file, one `key: value` per line.
 | `xao-dap-an` | | shuffle answer options | `co` |
 | `nguon` | | sources, separated by `;` | `Slide chương 1; GK251` |
 
-\* Without `mon`, the app uses the course selected at import time. English keys (`course`, `authors`, `title`, `shuffle-questions`…) also work.
+\* Without `mon`, the app uses the course selected at import time. English keys (`course`, `authors`, `title`, `shuffle-questions`...) also work.
 
 ### 2.2 Structure
 
 ```
-# Chapter           → unit; if a chapter with that name exists, merge into it
-## Lesson           → lesson; if the lesson exists in that chapter, add questions to it
-   (text below it)  → the lesson's key points; "#### Heading" splits them into sections
-### Câu …           → a question
-# Đề thi thử        → (reserved name: "mock exams") each ## below it is a mock exam
-## Exam name        → next line: "Thời gian: 50 phút · Đúng: 0.588 · Sai: -0.118" (time · points for right · points for wrong)
-### Câu …           → a question in that exam
+# Chapter           : unit; if a chapter with that name exists, merge into it
+## Lesson           : lesson; if the lesson exists in that chapter, add questions to it
+   (text below it)  : the lesson's key points; "#### Heading" splits them into sections
+### Câu ...           : a question
+# Đề thi thử        : (reserved name: "mock exams") each ## below it is a mock exam
+## Exam name        : next line: "Thời gian: 50 phút · Đúng: 0.588 · Sai: -0.118" (time · points for right · points for wrong)
+### Câu ...           : a question in that exam
 ```
 
 ### 2.3 Questions
@@ -64,7 +64,7 @@ Between two `---` lines at the top of the file, one `key: value` per line.
 
 | Type | How to write the answer | Moodle equivalent |
 |---|---|---|
-| Single answer | `- [ ] …` lines, exactly one `- [x] …` | multichoice (single) |
+| Single answer | `- [ ] ...` lines, exactly one `- [x] ...` | multichoice (single) |
 | Multiple answers | as above, several `- [x]` lines | multichoice (multiple) |
 | True/false | `= Đúng` or `= Sai` (`True`/`False` also work) | truefalse |
 | Numeric | `= 0,125`, `= 0.125 ± 0.001`, `= 9,8 ± 0,1 (m/s²)` | numerical |
@@ -72,21 +72,21 @@ Between two `---` lines at the top of the file, one `key: value` per line.
 
 - Each option is on **one line** and may include an image `![](img/a.webp)`.
 - Only a `###` line starts a new question; blank lines inside a question don't split it.
-- `· giữ thứ tự` (keep order): don't shuffle this question's options. Options like "Tất cả…" (All…), "Các đáp án khác…" (None of the others…), "Cả A và B…" (Both A and B…) always stay in place anyway.
+- `· giữ thứ tự` (keep order): don't shuffle this question's options. Options like "Tất cả..." (All...), "Các đáp án khác..." (None of the others...), "Cả A và B..." (Both A and B...) always stay in place anyway.
 
 ### 2.4 Content
 
 - **Markdown:** paragraphs, `**bold**`, `*italic*`, `` `code` ``, `-` and `1.` lists, tables `| a | b |`, images `![description](img/x.webp)`.
-- **TeX:** `\( … \)` inline, `\[ … \]` or `$$ … $$` on its own line. Write normal TeX; don't double the `\`.
-- **Simple HTML** also works, for example `<div class="warn">Note…</div>`:
+- **TeX:** `\( ... \)` inline, `\[ ... \]` or `$$ ... $$` on its own line. Write normal TeX; don't double the `\`.
+- **Simple HTML** also works, for example `<div class="warn">Note...</div>`:
   - allowed classes: `math`, `warn`, `keys` (calculator keystrokes), `tip`, `note`;
-  - the app strips everything else (scripts, event attributes…).
+  - the app strips everything else (scripts, event attributes...).
 - **A `<` in a formula** should be written `\lt`, because `x<y` can be mistaken for an HTML tag.
 
 ### 2.5 Images
 
 - Only PNG, JPEG, WebP and GIF. No SVG, because SVG can contain scripts.
-- No external links (`https://…`): a pack must work offline, and external links can be used to track who opens it.
+- No external links (`https://...`): a pack must work offline, and external links can be used to track who opens it.
 - In a `.zip`, images live in `img/` and are referenced by exactly that path. A missing image is only a warning: its place shows "[thiếu ảnh]" (missing image).
 - The app compresses images while you write: longest side at most 1,200 px, WebP. Keep each image under 1 MB; a whole pack can be at most 20 MB.
 
@@ -102,10 +102,10 @@ Between two `---` lines at the top of the file, one `key: value` per line.
 
 | Format | Import | Export | Notes |
 |---|---|---|---|
-| Moodle XML | ✓ | ✓ | category → lesson; `@@PLUGINFILE@@` images ↔ `img/`. Lecturers import the file into the LMS question bank |
-| GIFT | ✓ | ✓ | all 5 types; no images |
-| Aiken | ✓ | | single answer only, no solutions |
-| JSON (`studypack/1`) | ✓ | ✓ | the app's storage format |
+| Moodle XML | yes | yes | category becomes lesson; `@@PLUGINFILE@@` images convert to and from `img/`. Lecturers import the file into the LMS question bank |
+| GIFT | yes | yes | all 5 types; no images |
+| Aiken | yes | | single answer only, no solutions |
+| JSON (`studypack/1`) | yes | yes | the app's storage format |
 
 **Skipped with a message:** matching, essay, cloze, drag-and-drop, and calculated questions. Planned for v2.
 

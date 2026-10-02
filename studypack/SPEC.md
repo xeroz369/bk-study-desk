@@ -2,7 +2,7 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](SPEC.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](SPEC.en.md)
 
-Hướng dẫn cho người dùng: [Wiki → Luyện tập](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp). File này là đặc tả đầy đủ cho người viết công cụ và cho AI.
+Hướng dẫn cho người dùng: [Wiki: Luyện tập](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp). File này là đặc tả đầy đủ cho người viết công cụ và cho AI.
 
 ## 1. Ba dạng của cùng một gói
 
@@ -35,18 +35,18 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 | `xao-dap-an` | | xáo thứ tự phương án | `co` |
 | `nguon` | | tài liệu gốc, ngăn bằng `;` | `Slide chương 1; GK251` |
 
-\* Thiếu `mon` thì app dùng môn đang chọn lúc nhập. Khóa tiếng Anh (`course`, `authors`, `title`, `shuffle-questions`…) cũng được.
+\* Thiếu `mon` thì app dùng môn đang chọn lúc nhập. Khóa tiếng Anh (`course`, `authors`, `title`, `shuffle-questions`...) cũng được.
 
 ### 2.2 Cấu trúc
 
 ```
-# Chương            → unit; trùng tên chương có sẵn thì ghép vào đó
-## Bài              → lesson; trùng tên bài trong chương thì thêm câu vào bài đó
-   (chữ ngay dưới)  → kiến thức của bài; "#### Tiêu đề" chia thành nhiều mục
-### Câu …           → câu hỏi
-# Đề thi thử        → (tên dành riêng) các ## bên dưới là đề thi thử
-## Tên đề           → dòng kế: "Thời gian: 50 phút · Đúng: 0.588 · Sai: -0.118"
-### Câu …           → câu của đề
+# Chương            : unit; trùng tên chương có sẵn thì ghép vào đó
+## Bài              : lesson; trùng tên bài trong chương thì thêm câu vào bài đó
+   (chữ ngay dưới)  : kiến thức của bài; "#### Tiêu đề" chia thành nhiều mục
+### Câu ...           : câu hỏi
+# Đề thi thử        : (tên dành riêng) các ## bên dưới là đề thi thử
+## Tên đề           : dòng kế: "Thời gian: 50 phút · Đúng: 0.588 · Sai: -0.118"
+### Câu ...           : câu của đề
 ```
 
 ### 2.3 Câu hỏi
@@ -60,7 +60,7 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 
 | Loại | Đáp án viết | Tương ứng Moodle |
 |---|---|---|
-| Một đáp án | các dòng `- [ ] …`, đúng một dòng `- [x] …` | multichoice (single) |
+| Một đáp án | các dòng `- [ ] ...`, đúng một dòng `- [x] ...` | multichoice (single) |
 | Nhiều đáp án | như trên, nhiều dòng `- [x]` | multichoice (multiple) |
 | Đúng/Sai | `= Đúng` hoặc `= Sai` (`True`/`False` cũng được) | truefalse |
 | Điền số | `= 0,125`, `= 0.125 ± 0.001`, `= 9,8 ± 0,1 (m/s²)` | numerical |
@@ -68,21 +68,21 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 
 - Phương án nằm trên **một dòng**, có thể kèm ảnh `![](img/a.webp)`.
 - Chỉ dòng `###` bắt đầu một câu mới; dòng trống bên trong câu không làm tách câu.
-- `· giữ thứ tự`: không xáo phương án của câu này. Các phương án kiểu "Tất cả…", "Các đáp án khác…", "Cả A và B…" vốn đã luôn đứng yên.
+- `· giữ thứ tự`: không xáo phương án của câu này. Các phương án kiểu "Tất cả...", "Các đáp án khác...", "Cả A và B..." vốn đã luôn đứng yên.
 
 ### 2.4 Nội dung
 
 - **Markdown:** đoạn văn, `**đậm**`, `*nghiêng*`, `` `mã` ``, danh sách `-` và `1.`, bảng `| a | b |`, ảnh `![mô tả](img/x.webp)`.
-- **TeX:** `\( … \)` trong dòng, `\[ … \]` hoặc `$$ … $$` riêng dòng. Viết TeX bình thường, không gấp đôi `\`.
-- **HTML đơn giản** cũng được, ví dụ `<div class="warn">Lưu ý…</div>`:
+- **TeX:** `\( ... \)` trong dòng, `\[ ... \]` hoặc `$$ ... $$` riêng dòng. Viết TeX bình thường, không gấp đôi `\`.
+- **HTML đơn giản** cũng được, ví dụ `<div class="warn">Lưu ý...</div>`:
   - class hợp lệ: `math`, `warn`, `keys` (bấm máy), `tip`, `note`;
-  - app lọc bỏ mọi thứ khác (script, thuộc tính sự kiện…).
+  - app lọc bỏ mọi thứ khác (script, thuộc tính sự kiện...).
 - **Dấu `<` trong công thức** nên viết `\lt`, vì `x<y` có thể bị hiểu nhầm là thẻ HTML.
 
 ### 2.5 Ảnh
 
 - Chỉ nhận PNG, JPEG, WebP, GIF. Không nhận SVG, vì SVG có thể chứa script.
-- Không nhận link ngoài (`https://…`): gói phải dùng được offline, và link ngoài có thể dùng để theo dõi người mở.
+- Không nhận link ngoài (`https://...`): gói phải dùng được offline, và link ngoài có thể dùng để theo dõi người mở.
 - Trong `.zip`, ảnh nằm ở `img/` và được tham chiếu đúng đường dẫn đó. Thiếu ảnh chỉ là cảnh báo: chỗ ảnh hiện "[thiếu ảnh]".
 - App tự nén ảnh khi soạn: cạnh dài tối đa 1200 px, WebP. Mỗi ảnh nên dưới 1 MB; cả gói tối đa 20 MB.
 
@@ -98,10 +98,10 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 
 | Định dạng | Nhập | Xuất | Ghi chú |
 |---|---|---|---|
-| Moodle XML | ✓ | ✓ | category → bài; ảnh `@@PLUGINFILE@@` ↔ `img/`. Giảng viên nhập file vào Ngân hàng câu hỏi trên LMS |
-| GIFT | ✓ | ✓ | đủ 5 loại; không mang ảnh |
-| Aiken | ✓ | | chỉ một đáp án, không lời giải |
-| JSON (`studypack/1`) | ✓ | ✓ | dạng lưu trong app |
+| Moodle XML | có | có | category thành bài; ảnh `@@PLUGINFILE@@` đổi qua lại với `img/`. Giảng viên nhập file vào Ngân hàng câu hỏi trên LMS |
+| GIFT | có | có | đủ 5 loại; không mang ảnh |
+| Aiken | có | | chỉ một đáp án, không lời giải |
+| JSON (`studypack/1`) | có | có | dạng lưu trong app |
 
 **Bỏ qua kèm thông báo:** câu ghép cặp, tự luận, cloze, kéo thả, câu có biến số. Dự kiến hỗ trợ ở v2.
 

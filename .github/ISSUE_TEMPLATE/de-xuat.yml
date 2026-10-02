@@ -12,7 +12,7 @@ body:
     id: more
     attributes:
       label: Thêm (không bắt buộc) / More (optional)
-      description: Ảnh minh họa, app khác làm thế nào… / Screenshots, how other apps do it…
+      description: Ảnh minh họa, app khác làm thế nào... / Screenshots, how other apps do it...
   - type: markdown
     attributes:
       value: |

@@ -4,18 +4,18 @@
 
 ## Báo lỗ hổng
 
-**Đừng báo lỗ hổng bảo mật ở issue công khai.** Hãy báo riêng qua [Security → Report a vulnerability](https://github.com/xeroz369/bk-study-desk/security/advisories/new), hoặc gửi email tới [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+**Đừng báo lỗ hổng bảo mật ở issue công khai.** Hãy báo riêng qua [**Security** > **Report a vulnerability**](https://github.com/xeroz369/bk-study-desk/security/advisories/new), hoặc gửi email tới [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 
 Nên có:
 - phiên bản app, Windows;
 - các bước repeat lỗi;
-- ảnh hưởng: lộ token/phiên đăng nhập, chạy mã lạ, ghi file ngoài thư mục app, gửi request làm thay đổi dữ liệu trên LMS/MyBK…
+- ảnh hưởng: lộ token/phiên đăng nhập, chạy mã lạ, ghi file ngoài thư mục app, gửi request làm thay đổi dữ liệu trên LMS/MyBK...
 
 Mình sẽ phản hồi trong vòng 7 ngày, sửa ở bản kế tiếp và ghi công người báo (nếu bạn muốn).
 
 ## Phiên bản được hỗ trợ
 
-Chỉ bản mới nhất ở trang [Releases](https://github.com/xeroz369/bk-study-desk/releases) được sửa lỗi bảo mật. Bật cập nhật trong **Cài đặt** → **Cập nhật** để luôn ở bản mới.
+Chỉ bản mới nhất ở trang [Releases](https://github.com/xeroz369/bk-study-desk/releases) được sửa lỗi bảo mật. Bật cập nhật trong **Cài đặt** > **Cập nhật** để luôn ở bản mới.
 
 ## App bảo vệ bạn thế nào
 

@@ -11,7 +11,7 @@
 Please include:
 - the app version and Windows version;
 - steps to reproduce;
-- the impact: leaked token or session, running untrusted code, writing files outside the app folder, sending requests that change data on LMS/MyBK…
+- the impact: leaked token or session, running untrusted code, writing files outside the app folder, sending requests that change data on LMS/MyBK...
 
 You will get a reply within 7 days. The fix ships in the next release, with credit to the reporter if you wish.
 

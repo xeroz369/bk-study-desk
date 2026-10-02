@@ -1,4 +1,4 @@
-[Tiếng Việt](Luyện-tập) · **English**
+[Tiếng Việt](Luyện-tập) | **English**
 
 > Translated from Luyện-tập (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -57,7 +57,7 @@ These questions are collected in the **Đánh dấu** (Flagged) box on the Pract
 3. On the **Tạo** (Create) tab:
    - Choose the question type: **Một đáp án** (single answer), **Nhiều đáp án** (multiple answers), **Đúng / Sai** (true/false), **Điền số** (numeric) or **Điền chữ** (short text).
    - Type the **question**. To add a picture, take a screenshot and paste it into the box with **Ctrl+V**.
-   - Type the **options**, then select the letter (A, B, C…) of the correct option to mark it.
+   - Type the **options**, then select the letter (A, B, C...) of the correct option to mark it.
    - Type the **solution**, with every step, so others can redo it on their own.
 4. Select **Lưu câu vào bài** (Save to lesson). The new question appears in the lesson right away.
 
@@ -89,7 +89,7 @@ Works with ChatGPT, Claude, Gemini or any chat AI.
 
 ## 5. Receive a quiz from a friend
 
-Your friend sends you a **`.md`** or **`.zip`** file (by Zalo, Messenger, email…).
+Your friend sends you a **`.md`** or **`.zip`** file (by Zalo, Messenger, email...).
 
 1. Download the file.
 2. Go to **Practice** and select **Nhập file** (Import file) at the top right of the *Quiz tự soạn và đã nhập* box.
@@ -159,17 +159,17 @@ Trung điểm \(x_n=\frac{a_n+b_n}{2}\).
 
 | Write | Meaning |
 |---|---|
-| `# …` | chapter name |
-| `## …` | lesson name; the text right below it is the key points |
-| `### …` | a question; after `·` write the source, for example `### Câu 3 · GK251 câu 8` |
+| `# ...` | chapter name |
+| `## ...` | lesson name; the text right below it is the key points |
+| `### ...` | a question; after `·` write the source, for example `### Câu 3 · GK251 câu 8` |
 | `- [x]` / `- [ ]` | correct / wrong option; several `[x]` make a multiple-answer question |
 | `= Đúng` or `= Sai` | true/false question (Đúng = true, Sai = false) |
 | `= 0,125 ± 0,001` | numeric question; `±` is the allowed error |
 | `= Newton \| Newton-Raphson` | short-text question; accepted answers separated by `\|` |
-| `> …` | solution; every solution line starts with `>` |
-| `\( … \)` | math formula |
+| `> ...` | solution; every solution line starts with `>` |
+| `\( ... \)` | math formula |
 
 - Add `xao-cau: co` and `xao-dap-an: co` to the header to shuffle questions and answers. For a question with an option like "Both A and B", add `· giữ thứ tự` (keep order) at the end of its `###` line.
 - For quizzes with pictures, it's simpler to write them in the app (section 3) and export (section 6).
 
-Full specification: [SPEC.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/SPEC.md) · AI prompt: [PROMPT.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/PROMPT.md) (both in Vietnamese).
+Full specification: [SPEC.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/SPEC.md) | AI prompt: [PROMPT.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/PROMPT.md) (both in Vietnamese).

@@ -29,7 +29,7 @@ Each pack is a flat JSON object of `"key": "text"` pairs, saved as UTF-8 with 2-
   - Groups: `app`, `nav`, `status`, `info`, `login`, `common`, `col` (table column headers), `home`, `calendar`, `subjects`, `download`, `grades`, `curriculum`, `services`, `settings`, `tray`, `notify`, `timeline`, `format`, `kind`, `files`, `about`, `data`, `link`, `setup`, `sync`, `update`, `web`.
 - **`_meta.name`**: the language name shown in Settings.
 - **`_meta.culture`**: the .NET culture used to format numbers and dates, for example `vi-VN`, `en-US`, `fr-FR`.
-- **Placeholders** `{0}`, `{1}`…: the app fills in numbers, names or dates here (see [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).
+- **Placeholders** `{0}`, `{1}`...: the app fills in numbers, names or dates here (see [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).
   - Keep every placeholder from the source; you can change their order.
   - Some placeholders carry a format:
     - `{0:0}`: whole number;
@@ -49,7 +49,7 @@ Each pack is a flat JSON object of `"key": "text"` pairs, saved as UTF-8 with 2-
 
 1. Copy `vi.json` (or `en.json` if that's easier to translate from) to `<code>.json`, for example `fr.json`.
 2. Set `_meta.name` (for example `"Français"`) and `_meta.culture` (for example `"fr-FR"`).
-3. Translate the values. Keep the keys and the `{0}`, `{1}`… placeholders.
+3. Translate the values. Keep the keys and the `{0}`, `{1}`... placeholders.
 4. Reopen the app.
 5. Go to **Settings** > **Language**, select the new language, then select **Restart now**.
 

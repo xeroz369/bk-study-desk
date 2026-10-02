@@ -1,5 +1,5 @@
 name: Báo lỗi / Bug report
-description: App chạy sai, bị treo, hiện sai dữ liệu… / The app misbehaves, freezes or shows wrong data…
+description: App chạy sai, bị treo, hiện sai dữ liệu... / The app misbehaves, freezes or shows wrong data...
 labels: [bug]
 body:
   - type: markdown
@@ -26,7 +26,7 @@ body:
     id: steps
     attributes:
       label: Cách làm lại lỗi / Steps to reproduce
-      placeholder: "1. Mở Luyện tập / Open Practice\n2. Chọn … / Select …\n3. …"
+      placeholder: "1. Mở Luyện tập / Open Practice\n2. Chọn ... / Select ...\n3. ..."
   - type: textarea
     id: log
     attributes:

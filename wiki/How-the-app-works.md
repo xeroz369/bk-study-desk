@@ -1,4 +1,4 @@
-[Tiếng Việt](Cách-app-hoạt-động) · **English**
+[Tiếng Việt](Cách-app-hoạt-động) | **English**
 
 > Translated from Cách-app-hoạt-động (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -23,7 +23,7 @@ https://lms.hcmut.edu.vn/admin/tool/mobile/launch.php?service=moodle_mobile_app&
 ```
 
 - This flow is built into Moodle (open source: `admin/tool/mobile/launch.php`). Because you already signed in to SSO in step 1, you don't type your password again.
-- `urlscheme=moodlemobile` is the URL scheme of the official Moodle app. By default Moodle returns tokens only to this scheme (the `forcedurlscheme` setting), so the app uses that scheme and **catches the `moodlemobile://token=…` address inside its embedded window**. The app doesn't register this scheme with Windows and doesn't impersonate the Moodle app's name or user agent.
+- `urlscheme=moodlemobile` is the URL scheme of the official Moodle app. By default Moodle returns tokens only to this scheme (the `forcedurlscheme` setting), so the app uses that scheme and **catches the `moodlemobile://token=...` address inside its embedded window**. The app doesn't register this scheme with Windows and doesn't impersonate the Moodle app's name or user agent.
 - The app checks the token's signature (MD5 of the site address and passport), then stores the token in `data\secrets\`, encrypted with Windows DPAPI.
 
 **Calling the API.** Every call is a POST to `https://lms.hcmut.edu.vn/webservice/rest/server.php` with the token. Only these **read** functions are used:
@@ -48,7 +48,7 @@ The app **doesn't** call any function that submits work, starts or saves a quiz 
 
 ## 3. MyBK
 
-- The app opens MyBK in a hidden WebView2 window with your SSO session: `sso.hcmut.edu.vn/cas/login?service=…/my/homeSSO.action`, then `/app/login?type=cas`, then `/app/`.
+- The app opens MyBK in a hidden WebView2 window with your SSO session: `sso.hcmut.edu.vn/cas/login?service=.../my/homeSSO.action`, then `/app/login?type=cas`, then `/app/`.
 - MyBK's `/app/` page holds the page's own sign-in token. The app runs `fetch()` **inside that page** to call the JSON APIs the MyBK page uses; the token never leaves the page.
 - APIs (paths after `https://mybk.hcmut.edu.vn/api/`):
 
@@ -58,10 +58,10 @@ The app **doesn't** call any function that submits work, starts or saves a quiz 
 | `v1/semester-year/short` | terms |
 | `v1/student/schedule` | timetable |
 | `thoi-khoa-bieu/lich-thi-sinh-vien/v1` | exam schedule |
-| `share/ket-qua-hoc-tap/…` (POST, sends the student ID) | transcript, curriculum, component scores |
-| `v1/student/status-decision/…`, `v1/student-activities/social-workdays/…`, `v1/tuition-fees/…`, `v1/course-register-results/…` | academic decisions, community service days, tuition, registered courses |
+| `share/ket-qua-hoc-tap/...` (POST, sends the student ID) | transcript, curriculum, component scores |
+| `v1/student/status-decision/...`, `v1/student-activities/social-workdays/...`, `v1/tuition-fees/...`, `v1/course-register-results/...` | academic decisions, community service days, tuition, registered courses |
 
-- The `share/ket-qua-hoc-tap/…` POST APIs are read queries: MyBK's own **Bảng điểm môn học** (transcript) and **Chương trình đào tạo** (curriculum) pages send exactly these requests when you only open them to look (checked on October 2, 2026). The other APIs come from the MyBK page's source code.
+- The `share/ket-qua-hoc-tap/...` POST APIs are read queries: MyBK's own **Bảng điểm môn học** (transcript) and **Chương trình đào tạo** (curriculum) pages send exactly these requests when you only open them to look (checked on October 2, 2026). The other APIs come from the MyBK page's source code.
 - The course registration page (`/dkmh/dangKyMonHocForm.action`) is opened only to read the table of registration rounds, at most once a day.
 
 ## 4. How often

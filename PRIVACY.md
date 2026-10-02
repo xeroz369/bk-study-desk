@@ -15,7 +15,7 @@ App chỉ kết nối tới các trang của HCMUT mà bạn vốn dùng:
 - `lms.hcmut.edu.vn`: BK-LMS;
 - `mybk.hcmut.edu.vn`: MyBK;
 - các dịch vụ khác của trường mà bạn tự mở;
-- `github.com` / `api.github.com`: **chỉ khi bạn cho phép** kiểm tra bản mới (**Cài đặt** → **Cập nhật**; mặc định chưa kiểm tra cho tới khi bạn chọn). App chỉ hỏi phiên bản mới nhất và tải gói cập nhật, không gửi thông tin tài khoản. Như mọi kết nối mạng, GitHub (máy chủ ở Mỹ) thấy địa chỉ IP của bạn, theo [chính sách của GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). Chọn **Không kiểm tra** thì app không gọi tới GitHub.
+- `github.com` / `api.github.com`: **chỉ khi bạn cho phép** kiểm tra bản mới (**Cài đặt** > **Cập nhật**; mặc định chưa kiểm tra cho tới khi bạn chọn). App chỉ hỏi phiên bản mới nhất và tải gói cập nhật, không gửi thông tin tài khoản. Như mọi kết nối mạng, GitHub (máy chủ ở Mỹ) thấy địa chỉ IP của bạn, theo [chính sách của GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). Chọn **Không kiểm tra** thì app không gọi tới GitHub.
 
 ## Dữ liệu lưu trên máy bạn
 
@@ -33,7 +33,7 @@ Tài liệu môn học lưu ở thư mục bạn chọn, mặc định `Document
 
 App **không lưu** số CCCD, địa chỉ, số điện thoại, ngày sinh hay email cá nhân, kể cả khi MyBK trả về.
 
-App ghi nhật ký hoạt động vào `data\app.log` trên máy (tối đa khoảng 4 MB, tự xoay vòng) để bạn gửi kèm khi báo lỗi. Token, cookie, ticket đăng nhập và email được che trước khi ghi; log có thể có tên môn, tên file, giờ đồng bộ. Bạn mở file này được ở **Cài đặt** → **Nhật ký hoạt động**.
+App ghi nhật ký hoạt động vào `data\app.log` trên máy (tối đa khoảng 4 MB, tự xoay vòng) để bạn gửi kèm khi báo lỗi. Token, cookie, ticket đăng nhập và email được che trước khi ghi; log có thể có tên môn, tên file, giờ đồng bộ. Bạn mở file này được ở **Cài đặt** > **Nhật ký hoạt động**.
 
 **Thời gian lưu:** dữ liệu trên nằm trên máy tới khi bạn xóa (xem mục Xóa dữ liệu). Bản mới đồng bộ ghi đè bản cũ; app không gửi bản sao đi đâu.
 
@@ -64,9 +64,9 @@ Dữ liệu tải xuống có thể có thông tin của người khác (tên gi
 
 ## Xóa dữ liệu
 
-- Trong app: **Cài đặt** → **Đăng xuất** xóa token và cookie đăng nhập. Dữ liệu đã đồng bộ (lịch, điểm…) vẫn giữ để xem khi không có mạng.
+- Trong app: **Cài đặt** > **Đăng xuất** xóa token và cookie đăng nhập. Dữ liệu đã đồng bộ (lịch, điểm...) vẫn giữ để xem khi không có mạng.
 - Xóa hết dữ liệu app: thoát app rồi xóa thư mục `%LOCALAPPDATA%\BKStudyDesk.Data`, hoặc gỡ app như dưới.
-- Gỡ app: Cài đặt Windows → Ứng dụng → BK Study Desk → Gỡ cài đặt, chọn ô **Xóa cả dữ liệu của app**. Tài liệu đã tải trong thư mục bạn chọn vẫn còn, bạn tự xóa nếu muốn.
+- Gỡ app: **Cài đặt Windows** > **Ứng dụng** > **BK Study Desk** > **Gỡ cài đặt**, chọn ô **Xóa cả dữ liệu của app**. Tài liệu đã tải trong thư mục bạn chọn vẫn còn, bạn tự xóa nếu muốn.
 
 ## Liên hệ
 

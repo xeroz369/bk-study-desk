@@ -1,4 +1,4 @@
-[Tiếng Việt](Gỡ-cài-đặt) · **English**
+[Tiếng Việt](Gỡ-cài-đặt) | **English**
 
 > Translated from Gỡ-cài-đặt (Vietnamese) for BK Study Desk 1.1.3.
 
