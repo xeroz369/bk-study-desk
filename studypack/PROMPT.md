@@ -1,6 +1,6 @@
 # Prompt cho AI
 
-App soạn sẵn prompt: vào môn → **Soạn · Nhập · Xuất** → chọn bài → tab **Nhờ AI**. Prompt đã điền sẵn môn, chương và bài đang chọn, nên kết quả nhập vào đúng chỗ. Hướng dẫn từng bước có ảnh: [Wiki → Luyện tập, mục 4](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp#4-nh%E1%BB%9D-ai-so%E1%BA%A1n-d%E1%BB%85-nh%E1%BA%A5t). Có 4 loại:
+App soạn sẵn prompt: vào môn, chọn **Soạn · Nhập · Xuất**, chọn bài, rồi chọn tab **Nhờ AI**. Prompt đã điền sẵn môn, chương và bài đang chọn, nên kết quả nhập vào đúng chỗ. Hướng dẫn từng bước có ảnh: [Wiki: Luyện tập, mục 4](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp#4-nh%E1%BB%9D-ai-so%E1%BA%A1n-d%E1%BB%85-nh%E1%BA%A5t). Có 4 loại:
 
 | Loại | Dùng khi |
 |---|---|
@@ -30,5 +30,5 @@ Bản đầy đủ nằm trong `src/ui/src/lib/study/prompts.ts`. Sửa ở đó
 - **Gửi kèm tài liệu gốc** (PDF slide, ảnh đề) để AI bám đúng ký hiệu. Không có tài liệu thì AI dễ bịa.
 - **Mỗi lần 5–10 câu.** Xin 30 câu một lần thì AI dễ sai đáp án hơn.
 - **Bị báo lỗi khi nhập:** dán nguyên phần lỗi cho AI và bảo "sửa các lỗi này, trả lại toàn bộ khối markdown".
-- **AI chạy được lệnh** (Claude Code, Codex…): bảo AI chạy `node studypack/validate.ts <file.md>` và tự sửa đến khi hết lỗi.
+- **AI chạy được lệnh** (Claude Code, Codex...): bảo AI chạy `node studypack/validate.ts <file.md>` và tự sửa đến khi hết lỗi.
 - **Bộ kiểm chỉ soát định dạng, không soát đáp án.** Luôn tự làm thử vài câu trước khi gửi cho người khác.

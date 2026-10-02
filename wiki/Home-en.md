@@ -1,4 +1,4 @@
-[Tiếng Việt](Home) · **English**
+[Tiếng Việt](Home) | **English**
 
 > Translated from Home (Vietnamese) for BK Study Desk 1.1.3.
 

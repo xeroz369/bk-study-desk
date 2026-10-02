@@ -1,1 +1,1 @@
-[Tải bản mới nhất / Latest release](https://github.com/xeroz369/bk-study-desk/releases/latest) · [Báo lỗi / Report a bug](https://github.com/xeroz369/bk-study-desk/issues/new/choose) · [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com)
+[Tải bản mới nhất / Latest release](https://github.com/xeroz369/bk-study-desk/releases/latest) | [Báo lỗi / Report a bug](https://github.com/xeroz369/bk-study-desk/issues/new/choose) | [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com)

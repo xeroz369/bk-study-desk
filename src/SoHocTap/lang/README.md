@@ -27,7 +27,7 @@ Mỗi gói là một JSON object phẳng gồm các cặp `"key": "chữ"`. File
   - Các nhóm: `app`, `nav`, `status`, `info`, `login`, `common`, `col` (tiêu đề cột bảng), `home`, `calendar`, `subjects`, `download`, `grades`, `curriculum`, `services`, `settings`, `tray`, `notify`, `timeline`, `format`, `kind`, `files`, `about`, `data`, `link`, `setup`, `sync`, `update`, `web`.
 - **`_meta.name`**: tên ngôn ngữ hiện trong Cài đặt.
 - **`_meta.culture`**: culture .NET dùng để format số và ngày, ví dụ `vi-VN`, `en-US`, `fr-FR`.
-- **Chỗ trống** `{0}`, `{1}`… (placeholder): app tự điền số, tên hay ngày vào đây (theo [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).
+- **Chỗ trống** `{0}`, `{1}`... (placeholder): app tự điền số, tên hay ngày vào đây (theo [`string.Format`](https://learn.microsoft.com/dotnet/standard/base-types/composite-formatting)).
   - Giữ đủ các chỗ trống của bản gốc; đổi thứ tự thì được.
   - Một số chỗ trống có kèm định dạng:
     - `{0:0}`: số nguyên;
@@ -47,9 +47,9 @@ Mỗi gói là một JSON object phẳng gồm các cặp `"key": "chữ"`. File
 
 1. Sao chép `vi.json` thành `<mã>.json`, ví dụ `fr.json`.
 2. Sửa `_meta.name` (ví dụ `"Français"`) và `_meta.culture` (ví dụ `"fr-FR"`).
-3. Dịch các value. Giữ nguyên key và các chỗ trống `{0}`, `{1}`…
+3. Dịch các value. Giữ nguyên key và các chỗ trống `{0}`, `{1}`...
 4. Mở lại app.
-5. Vào **Cài đặt** → **Ngôn ngữ**, chọn ngôn ngữ mới, rồi chọn **Khởi động lại ngay**.
+5. Vào **Cài đặt** > **Ngôn ngữ**, chọn ngôn ngữ mới, rồi chọn **Khởi động lại ngay**.
 
 Lựa chọn được lưu trong `data\config.json`, ở key `app.language`. Rất hoan nghênh PR thêm ngôn ngữ mới.
 

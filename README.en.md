@@ -49,7 +49,7 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
 - **Calendar**:
   - upcoming items by day, exam schedule;
   - timetable as a **week grid** (like Google Calendar) or a list;
-  - **Export calendar (.ics)…**: save the whole-term timetable and exams to a file you can import into Google Calendar, Outlook or Windows Calendar.
+  - **Export calendar (.ics)**: save the whole-term timetable and exams to a file you can import into Google Calendar, Outlook or Windows Calendar.
 - **Subjects**:
   - browse each subject's folder like File Explorer;
   - see new files, deadlines, announcements, gradebook and classes on LMS;
@@ -65,12 +65,12 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
   - **Import and export** quizzes as Markdown (`.md`, or `.zip` with images), Moodle XML, GIFT, Aiken. Format: [`studypack/`](studypack/).
   - **Keep submitted LMS quizzes** for later review, even when LMS is slow (can be turned off). The app only reads the review page after you submit and never touches a quiz in progress. Closed quizzes can be shared.
   - **Review**: "Review today" brings back questions you often miss and spaces them out once you know them; random mock exams, flag questions, private notes.
-- **Services**: open MyBK, LMS, BKPay, course registration… inside the app with the same sign-in.
+- **Services**: open MyBK, LMS, BKPay, course registration... inside the app with the same sign-in.
 - **Single sign-on**: sign in once to HCMUT SSO for both LMS and MyBK; while the session is valid the app signs back in by itself.
 - **Behaves like a Windows app**:
   - Windows 11 (Fluent) theme that follows light/dark mode and your accent color;
   - sortable tables, right-click menus;
-  - shortcuts Ctrl+1…7, F5, Alt+←;
+  - shortcuts Ctrl+1...7, F5, Alt+←;
   - system tray icon and deadline reminders;
   - start with Windows;
   - the close button minimizes to the tray or exits, your choice.

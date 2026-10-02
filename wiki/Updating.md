@@ -1,4 +1,4 @@
-[Tiếng Việt](Cập-nhật) · **English**
+[Tiếng Việt](Cập-nhật) | **English**
 
 > Translated from Cập-nhật (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -15,5 +15,5 @@ On first launch the app asks what to do when a new version is out. **Until you c
 - Change the mode in **Settings** > **Updates**.
 - The app **never restarts by itself** while you're using it.
 - Update packages contain only what changed (usually a few hundred KB) and are verified with SHA-256 before installing. If a package is damaged, the app keeps the version you're running.
-- If an update can't be installed, the status bar shows "Could not update to …" the next time you open the app; select it to try again.
+- If an update can't be installed, the status bar shows "Could not update to ..." the next time you open the app; select it to try again.
 - Your data and sign-in are kept through every update.

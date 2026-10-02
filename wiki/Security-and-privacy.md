@@ -1,4 +1,4 @@
-[Tiếng Việt](Bảo-mật-và-quyền-riêng-tư) · **English**
+[Tiếng Việt](Bảo-mật-và-quyền-riêng-tư) | **English**
 
 > Translated from Bảo-mật-và-quyền-riêng-tư (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -9,4 +9,4 @@
 - No server of its own, no analytics, no ads. GitHub is asked about new versions only if you allow it.
 - Update packages are verified with SHA-256; quizzes from other people have their HTML sanitized and run no scripts.
 
-Details: [PRIVACY.en.md](https://github.com/xeroz369/bk-study-desk/blob/main/PRIVACY.en.md) · Report a vulnerability: [SECURITY.en.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.en.md).
+Details: [PRIVACY.en.md](https://github.com/xeroz369/bk-study-desk/blob/main/PRIVACY.en.md) | Report a vulnerability: [SECURITY.en.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.en.md).

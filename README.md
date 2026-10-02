@@ -24,7 +24,7 @@ Giao diện mặc định tiếng Việt, có thêm tiếng Anh.
 **Cách 1: bộ cài trên GitHub (khuyên dùng).** Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản sau.
 
 1. Tải `BKStudyDesk-x.y.z-Setup-x64.exe` ở [Releases](../../releases/latest) (máy chip ARM: bản `-Setup-arm64.exe`).
-2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm** → **Vẫn chạy** (chỉ một lần).
+2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm** > **Vẫn chạy** (chỉ một lần).
 3. Lần mở đầu, chọn cách cập nhật và thư mục lưu tài liệu, rồi **Đăng nhập HCMUT**.
 
 **Cách 2: Microsoft Store.** [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850): không có cảnh báo SmartScreen. Mỗi bản mới phải chờ Microsoft duyệt (có khi vài ngày), nên bản Store thường chậm hơn bản trên GitHub. So số phiên bản ở trang Store với [Releases](../../releases/latest) trước khi cài.
@@ -33,7 +33,7 @@ Hai cách cài dùng chung mã nguồn nhưng là hai bản riêng, dữ liệu 
 
 ![Bộ cài](docs/bo-cai.png)
 
-Hướng dẫn chi tiết trên **[Wiki](../../wiki)**: [Cài đặt](../../wiki/Cài-đặt) · [Cập nhật](../../wiki/Cập-nhật) · [Gỡ cài đặt](../../wiki/Gỡ-cài-đặt) · [Luyện tập](../../wiki/Luyện-tập) · [Câu hỏi thường gặp](../../wiki/Câu-hỏi-thường-gặp).
+Hướng dẫn chi tiết trên **[Wiki](../../wiki)**: [Cài đặt](../../wiki/Cài-đặt) | [Cập nhật](../../wiki/Cập-nhật) | [Gỡ cài đặt](../../wiki/Gỡ-cài-đặt) | [Luyện tập](../../wiki/Luyện-tập) | [Câu hỏi thường gặp](../../wiki/Câu-hỏi-thường-gặp).
 
 ### Sau khi cài
 
@@ -53,7 +53,7 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
 - **Lịch**:
   - việc sắp tới theo ngày, lịch thi;
   - thời khóa biểu dạng **lưới tuần** (giống Google Calendar) hoặc danh sách;
-  - **Xuất lịch (.ics)…**: lưu thời khóa biểu cả kỳ và lịch thi ra file để nhập vào Google Calendar, Outlook, Lịch của Windows.
+  - **Xuất lịch (.ics)**: lưu thời khóa biểu cả kỳ và lịch thi ra file để nhập vào Google Calendar, Outlook, Lịch của Windows.
 - **Môn học**:
   - duyệt thư mục từng môn kiểu File Explorer;
   - xem file mới, deadline, thông báo, sổ điểm và các lớp trên LMS.
@@ -63,18 +63,18 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - bảng điểm theo học kỳ kèm điểm thành phần;
   - tiến độ CTĐT theo khối kiến thức;
   - sổ điểm LMS, kết quả đăng ký môn (kèm giảng viên và giờ học), ngày CTXH, quyết định học vụ.
-- **Luyện tập**: tự làm quiz để ôn bài, không ảnh hưởng gì tới điểm trên LMS. **Hướng dẫn từng bước có ảnh: [Wiki** → **Luyện tập](../../wiki/Luyện-tập).**
+- **Luyện tập**: tự làm quiz để ôn bài, không ảnh hưởng gì tới điểm trên LMS. **Hướng dẫn từng bước có ảnh: [Wiki** > **Luyện tập](../../wiki/Luyện-tập).**
   - **Tự soạn quiz** cho từng môn, chương, bài. Có đủ 5 dạng câu như quiz LMS (chọn một, chọn nhiều, đúng/sai, điền số, điền chữ), chèn được ảnh và công thức.
   - **Nhờ AI soạn**: app viết sẵn câu lệnh cho AI, bạn chỉ cần dán câu trả lời của AI vào app.
   - **Nhập và xuất** quiz dạng Markdown (`.md` hoặc `.zip` nếu có ảnh), Moodle XML, GIFT, Aiken. Định dạng file xem ở [`studypack/`](studypack/).
   - **Lưu lại quiz LMS đã nộp** để xem lại sau, kể cả lúc LMS chậm (tắt được trong Cài đặt). App chỉ đọc trang xem lại sau khi bạn nộp, không đụng tới quiz đang làm. Quiz đã đóng thì chia sẻ được.
   - **Ôn tập**: mục "Ôn hôm nay" nhắc lại những câu bạn hay sai, nhớ rồi thì giãn lịch ra; có đề thi thử ngẫu nhiên, đánh dấu câu nghi sai và ghi chú riêng.
-- **Dịch vụ**: mở MyBK, LMS, BKPay, đăng ký môn… ngay trong app, dùng chung một lần đăng nhập.
+- **Dịch vụ**: mở MyBK, LMS, BKPay, đăng ký môn... ngay trong app, dùng chung một lần đăng nhập.
 - **Đăng nhập một lần**: SSO HCMUT một lần là vào được cả LMS và MyBK. Phiên đăng nhập còn hạn thì app tự đăng nhập lại.
 - **Dùng như app Windows thật**:
   - theme Windows 11 (Fluent), tự theo sáng/tối và màu nhấn;
   - bảng sắp xếp được, menu chuột phải;
-  - phím tắt Ctrl+1…7, F5, Alt+←;
+  - phím tắt Ctrl+1...7, F5, Alt+←;
   - biểu tượng ở khay hệ thống, nhắc deadline;
   - tự chạy cùng Windows;
   - chọn X thì thu xuống khay hệ thống hoặc thoát hẳn, tùy bạn chọn.
