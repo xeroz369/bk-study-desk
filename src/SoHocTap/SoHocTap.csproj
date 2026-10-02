@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -9,14 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>SoHocTap</RootNamespace>
-    <!--
-      Build ra 2 bản từ cùng source (-p:Edition=…):
-        Private: "BK Study Desk" bản local (icon xanh lá), dùng riêng: ui\ và content\ (bài học riêng) nằm ở gốc app.
-        Public:  "BK Study Desk" bản công khai (icon xanh dương, xem tools-dev\export-public.ps1): ui\ đã build và content\ trống đi kèm exe.
-      Hai bản khác tên exe và app ID (mutex, taskbar, autostart) nên cài song song được.
-    -->
-    <Edition Condition="'$(Edition)' == ''">Public</Edition>
-    <Version Condition="'$(Version)' == ''">1.1.1</Version>
+    <Version Condition="'$(Version)' == ''">1.1.2</Version>
     <Authors>xeroz369</Authors>
     <Copyright>Copyright (c) 2026 xeroz369. PolyForm Noncommercial 1.0.0</Copyright>
     <ApplicationIcon>app.ico</ApplicationIcon>
@@ -28,19 +21,14 @@
     <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Edition)' == 'Private'">
-    <AssemblyName>SoHocTap</AssemblyName>
-    <Product>BK Study Desk (local)</Product>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Edition)' == 'Public'">
+  <PropertyGroup>
     <AssemblyName>BKStudyDesk</AssemblyName>
     <Product>BK Study Desk</Product>
     <Description>Unofficial desktop companion for HCMUT BK-LMS and MyBK</Description>
-    <DefineConstants>$(DefineConstants);PUBLIC_EDITION</DefineConstants>
   </PropertyGroup>
 
   <!--
-    Bản Microsoft Store (-p:Store=true, chỉ đi với Edition=Public): đóng gói MSIX bằng tools-dev\package-store.ps1.
+    Bản Microsoft Store (-p:Store=true): đóng gói MSIX bằng tools-dev\package-store.ps1.
     Cần Windows SDK projection để gọi StartupTask (autostart trong package), nên đổi TFM sang windows10.0.19041.
   -->
   <PropertyGroup Condition="'$(Store)' == 'true'">
@@ -49,15 +37,12 @@
     <DefineConstants>$(DefineConstants);STORE</DefineConstants>
   </PropertyGroup>
 
-  <!-- Bản public: khung Luyện tập đã build (..\..\ui, từ src\ui: npm run build) và content\ trống đi kèm exe. -->
-  <ItemGroup Condition="'$(Edition)' == 'Public'">
-    <!-- Bộ cài và tự cập nhật (Setup.exe, gói delta). Chỉ bản public; bản local build từ source nên không cần. -->
+  <!-- Khung Luyện tập đã build (..\..\ui, từ src\ui: npm run build) và content\ trống đi kèm exe. -->
+  <ItemGroup>
+    <!-- Bộ cài và tự cập nhật (Setup.exe, gói delta).  -->
     <PackageReference Include="Velopack" Version="1.2.161" />
     <None Include="..\..\ui\**" Link="ui\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="PublicContent\**" Link="content\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(Edition)' == 'Private'">
-    <None Remove="PublicContent\**" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="tools-dev\**;Branding\**" />

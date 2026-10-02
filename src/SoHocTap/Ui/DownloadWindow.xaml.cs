@@ -5,18 +5,30 @@ using SoHocTap.Sources.Lms;
 
 namespace SoHocTap.Ui;
 
-internal sealed class SectionRow(LmsSource.SectionInfo s) : INotifyPropertyChanged
+/// <summary>Một mục trong danh sách. Số file và dung lượng tính theo các loại file đang chọn (<paramref name="kinds"/>).</summary>
+internal sealed class SectionRow(LmsSource.SectionInfo s, Func<IReadOnlySet<LmsSource.FileKind>> kinds) : INotifyPropertyChanged
 {
-    private bool _selected = s.Have < s.Files;   // default tick sẵn mục còn thiếu file
+    private bool _selected = s.Items.Any(f => !f.Have);   // default tick sẵn mục còn thiếu file
     public LmsSource.SectionInfo Info { get; } = s;
     public string Name => Info.Name;
-    public string Meta => L.F("download.meta", Info.Files, Format.Size(Info.Bytes),
-        Info.Have == Info.Files ? L.T("download.haveAll") : Info.Have > 0 ? L.F("download.haveSome", Info.Have) : L.T("download.notYet"));
+    public List<LmsSource.FileStat> Files => [.. Info.Of(kinds())];
+    public string Meta
+    {
+        get
+        {
+            var files = Files;
+            if (files.Count == 0) return L.T("download.noneOfKind");
+            var have = files.Count(f => f.Have);
+            return L.F("download.meta", files.Count, Format.Size(files.Sum(f => f.Bytes)),
+                have == files.Count ? L.T("download.haveAll") : have > 0 ? L.F("download.haveSome", have) : L.T("download.notYet"));
+        }
+    }
     public bool Selected
     {
         get => _selected;
         set { _selected = value; PropertyChanged?.Invoke(this, new(nameof(Selected))); }
     }
+    public void KindsChanged() => PropertyChanged?.Invoke(this, new(nameof(Meta)));
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
@@ -57,7 +69,7 @@ public partial class DownloadWindow : Window
         try
         {
             var list = await Task.Run(() => LmsSource.SectionsAsync(_course.Id, CancellationToken.None));
-            _rows = list.Select(s => new SectionRow(s)).ToList();
+            _rows = list.Select(s => new SectionRow(s, Kinds)).ToList();
             Sections.ItemsSource = _rows;
             Update();
             if (_rows.Count == 0) Summary.Text = L.T("download.empty");
@@ -69,14 +81,31 @@ public partial class DownloadWindow : Window
         }
     }
 
+    /// <summary>Các loại file đang chọn ở hàng "Loại file".</summary>
+    private HashSet<LmsSource.FileKind> Kinds()
+    {
+        var k = new HashSet<LmsSource.FileKind>();
+        if (KindPdf.IsChecked == true) k.Add(LmsSource.FileKind.Pdf);
+        if (KindSlide.IsChecked == true) k.Add(LmsSource.FileKind.Slide);
+        if (KindOther.IsChecked == true) k.Add(LmsSource.FileKind.Other);
+        return k;
+    }
+
     private void Update()
     {
         var picked = _rows.Where(r => r.Selected).ToList();
-        Summary.Text = L.F("download.summary", _rows.Count, picked.Count, picked.Sum(r => r.Info.Files), Format.Size(picked.Sum(r => r.Info.Bytes)));
-        Start.IsEnabled = _run is null && picked.Count > 0;
+        var files = picked.SelectMany(r => r.Files).ToList();
+        Summary.Text = L.F("download.summary", _rows.Count, picked.Count, files.Count, Format.Size(files.Sum(f => f.Bytes)));
+        Start.IsEnabled = _run is null && files.Count > 0;
     }
 
     private void OnPick(object sender, RoutedEventArgs e) => Update();
+
+    private void OnKinds(object sender, RoutedEventArgs e)
+    {
+        _rows.ForEach(r => r.KindsChanged());
+        Update();
+    }
     private void OnAll(object sender, RoutedEventArgs e) { _rows.ForEach(r => r.Selected = true); Update(); }
     private void OnNone(object sender, RoutedEventArgs e) { _rows.ForEach(r => r.Selected = false); Update(); }
     private void OnClose(object sender, RoutedEventArgs e) => Close();
@@ -85,6 +114,7 @@ public partial class DownloadWindow : Window
     {
         var picked = _rows.Where(r => r.Selected).Select(r => r.Info.Index).ToList();
         var extract = Extract.IsChecked == true;
+        var kinds = Kinds();
         _run = new CancellationTokenSource();
         Start.IsEnabled = false;
         Sections.IsEnabled = false;
@@ -92,7 +122,7 @@ public partial class DownloadWindow : Window
         try
         {
             var token = _run.Token;
-            var n = await Task.Run(() => _lms.DownloadSectionsAsync(_course.Id, picked, extract, line => Dispatcher.InvokeAsync(() => Write(line)), token));
+            var n = await Task.Run(() => _lms.DownloadSectionsAsync(_course.Id, picked, extract, line => Dispatcher.InvokeAsync(() => Write(line)), token, kinds));
             Write(n == 0 ? L.T("download.doneNone") : L.F("download.done", n));
         }
         catch (OperationCanceledException) { Write(L.T("download.stopped")); }

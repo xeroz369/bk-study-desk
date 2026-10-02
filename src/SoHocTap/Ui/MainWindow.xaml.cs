@@ -39,6 +39,7 @@ public partial class MainWindow : Window, IDisposable
         new("hom-nay", L.T("nav.today"), "", L.T("nav.today.tip")),
         new("lich", L.T("nav.calendar"), "", L.T("nav.calendar.tip")),
         new("mon", L.T("nav.subjects"), "", L.T("nav.subjects.tip")),
+        new("luyen-tap", L.T("nav.practice"), "\uE73E", L.T("nav.practice.tip")),
         new("diem", L.T("nav.grades"), "", L.T("nav.grades.tip")),
         new("dich-vu", L.T("nav.services"), "", L.T("nav.services.tip")),
     ];
@@ -51,8 +52,7 @@ public partial class MainWindow : Window, IDisposable
     {
         InitializeComponent();
         Title = AppInfo.Name;
-        if (AppInfo.Practice) _nav.Insert(3, new("luyen-tap", L.T("nav.practice"), "\uE73E", L.T("nav.practice.tip")));
-        // Ctrl+1…N đi theo thứ tự trên thanh điều hướng, số tiếp theo là Cài đặt (hai edition có số mục khác nhau).
+        // Ctrl+1…N đi theo thứ tự trên thanh điều hướng, số tiếp theo là Cài đặt.
         for (var i = 0; i < _nav.Count; i++)
         {
             _nav[i] = _nav[i] with { Tip = $"{_nav[i].Tip} (Ctrl+{i + 1})" };
@@ -60,7 +60,7 @@ public partial class MainWindow : Window, IDisposable
         }
         InputBindings.Add(new KeyBinding(NavigationCommands.GoToPage, Key.D1 + _nav.Count, ModifierKeys.Control) { CommandParameter = "cai-dat" });
         SettingsButton.ToolTip = $"{L.T("nav.settings.tip")} (Ctrl+{_nav.Count + 1})";
-        StVersion.Text = $"{AppInfo.Name} {AppInfo.Version}{(AppInfo.Channel.Length > 0 ? " · " + AppInfo.Channel : "")}";
+        StVersion.Text = $"{AppInfo.Name} {AppInfo.Version}";
         StVersion.ToolTip = Core.Paths.AppRoot;
         _placement.Apply(this);
         _host = new AppHost(this);
@@ -210,7 +210,7 @@ public partial class MainWindow : Window, IDisposable
     internal void GoIndex(int n) => Go(n >= 1 && n <= _nav.Count ? _nav[n - 1].Id : n == _nav.Count + 1 ? "cai-dat" : _current);
 
     /// <summary>Số phím Ctrl+số đang dùng (các mục điều hướng và Cài đặt).</summary>
-    internal static int PageKeys => AppInfo.Practice ? 7 : 6;
+    internal static int PageKeys => 7;
     // Nghe Checked thay vì Click: UI Automation (trình đọc màn hình, test) bấm ToggleButton qua TogglePattern, chỉ đổi IsChecked
     // chứ không bắn Click (ToggleButtonAutomationPeer trong dotnet/wpf).
     private void OnSettings(object sender, RoutedEventArgs e) { if (_current != "cai-dat") Go("cai-dat"); }
@@ -346,7 +346,9 @@ public partial class MainWindow : Window, IDisposable
             // Lỗi không phải hết phiên (mất mạng, server chậm, LMS giới hạn...): báo rõ trên thanh, không chỉ trong tooltip.
             _keepShown = false;
             if (_errorClosed == fail.Text) { InfoBar.Hide(); return; }
-            InfoBar.Show(Severity.Error, "", fail.Text, L.T("web.retry"), () => { _host.SyncAll(force: true); Say(L.T("status.syncStarted")); }, fail.Detail);
+            // Nút phụ mở trang trường trong cửa sổ app: thấy trang đang lỗi gì, hoặc đăng nhập lại khi app chưa nhận ra phiên đã hết.
+            InfoBar.Show(Severity.Error, "", fail.Text, L.T("web.retry"), () => { _host.SyncAll(force: true); Say(L.T("status.syncStarted")); }, fail.Detail,
+                L.F("info.openSource", fail.Label), () => _host.OpenSource(fail.Source));
             return;
         }
         if (need == AccountNeed.None && _keepShown) return;
@@ -370,7 +372,7 @@ public partial class MainWindow : Window, IDisposable
     /// Lỗi đồng bộ gần nhất của LMS/MyBK (đang đồng bộ thì chưa tính) để hiện trên InfoBar: câu dễ hiểu (vấn đề + cách xử lý) và chữ
     /// kỹ thuật cho mục Chi tiết. Lỗi cả lượt, hoặc lượt xong nhưng có phần không đọc được.
     /// </summary>
-    private (string Text, string? Detail)? SyncFailure()
+    private (string Text, string? Detail, string Source, string Label)? SyncFailure()
     {
         var s = _host.State;
         foreach (var (name, label) in new[] { ("lms", "LMS"), ("mybk", "MyBK") })
@@ -379,11 +381,11 @@ public partial class MainWindow : Window, IDisposable
             if (s.Error(name) is { } err)
             {
                 var (text, detail) = AppState.Explain(label, err);
-                return (L.F("info.syncFailed", label, text), detail);
+                return (L.F("info.syncFailed", label, text), detail, name, label);
             }
             if (s.Warnings(name) is { Count: > 0 } w)
                 return (L.F("info.syncWarnings", label, string.Join(", ", w.Select(x => x.What).Distinct().Take(4)) + (w.Count > 4 ? "…" : "")),
-                        string.Join("\n", w.Select(x => $"{x.What}: {x.Detail}")));
+                        string.Join("\n", w.Select(x => $"{x.What}: {x.Detail}")), name, label);
         }
         return null;
     }

@@ -1,5 +1,7 @@
 # Study Pack v1: định dạng gói luyện tập
 
+**Tiếng Việt** · [English](SPEC.en.md)
+
 Hướng dẫn cho người dùng: [Wiki → Luyện tập](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp). File này là đặc tả đầy đủ cho người viết công cụ và cho AI.
 
 ## 1. Ba dạng của cùng một gói

@@ -6,17 +6,14 @@ public class UpdatePolicyTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 2, 12, 0, 0, TimeSpan.Zero);
 
-    private static bool Check(UpdateMode mode, InstallKind kind = InstallKind.Installed, DateTimeOffset? last = null, bool local = false, int hours = 24) =>
-        UpdatePolicy.ShouldCheck(mode, kind, local, Now, last, hours);
+    private static bool Check(UpdateMode mode, InstallKind kind = InstallKind.Installed, DateTimeOffset? last = null, int hours = 24) =>
+        UpdatePolicy.ShouldCheck(mode, kind, Now, last, hours);
 
     [Fact]
     public void ShouldCheck_AskMode_NeverChecks() => Assert.False(Check(UpdateMode.Ask));
 
     [Fact]
     public void ShouldCheck_Off_NeverChecks() => Assert.False(Check(UpdateMode.Off));
-
-    [Fact]
-    public void ShouldCheck_LocalChannel_False() => Assert.False(Check(UpdateMode.Auto, local: true));
 
     [Fact]
     public void ShouldCheck_Store_False() => Assert.False(Check(UpdateMode.Notify, InstallKind.Store));

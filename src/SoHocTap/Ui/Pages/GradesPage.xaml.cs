@@ -12,6 +12,9 @@ internal sealed record GradeLine(string Term, string TermName, string Code, stri
     /// <summary>Kỳ mới nhất trước; nhóm chuyển điểm/miễn (BL) xuống cuối.</summary>
     public string TermSort => Term == "BL" ? "0" : Term;
 }
+/// <summary>Một môn đã đăng ký, kèm giảng viên và lịch học lấy từ thời khóa biểu MyBK (cùng mã môn, hoặc phần thí nghiệm cùng tên).</summary>
+internal sealed record RegisteredLine(string Code, string Name, string ClassGroup, string Teacher, string When, string Round, string Result);
+
 internal sealed record LmsGradeLine(string Book, string Name, double? Grade, double? Max, string Percent)
 {
     public string GradeText => Format.Score(Grade);
@@ -70,12 +73,15 @@ public partial class GradesPage : UserControl, IPage
         LmsGrades.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         LmsGrades.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is LmsGradeLine { Grade: null } ? 0.55 : 1;
 
-        Registered.Columns.Add(Grids.Text(L.T("col.code"), nameof(MybkRegistered.Code), 80));
-        Registered.Columns.Add(Grids.Text(L.T("col.subject"), nameof(MybkRegistered.Name), star: true));
-        Registered.Columns.Add(Grids.Text(L.T("col.group"), nameof(MybkRegistered.ClassGroup), 150));
-        Registered.Columns.Add(Grids.Text(L.T("col.round"), nameof(MybkRegistered.Round), 120));
-        Registered.Columns.Add(Grids.Text(L.T("col.result"), nameof(MybkRegistered.Result), 160));
-        Grids.Setup<MybkRegistered>(Registered, null, r => [new(L.T("grades.copyClass"), () => Grids.Copy(r.ClassGroup))]);
+        Registered.Columns.Add(Grids.Text(L.T("col.code"), nameof(RegisteredLine.Code), 80));
+        Registered.Columns.Add(Grids.Text(L.T("col.subject"), nameof(RegisteredLine.Name), star: true));
+        Registered.Columns.Add(Grids.Text(L.T("col.group"), nameof(RegisteredLine.ClassGroup), 140));
+        Registered.Columns.Add(Grids.Text(L.T("col.teacher"), nameof(RegisteredLine.Teacher), 190));
+        Registered.Columns.Add(Grids.Text(L.T("col.when"), nameof(RegisteredLine.When), 200));
+        Registered.Columns.Add(Grids.Text(L.T("col.round"), nameof(RegisteredLine.Round), 110));
+        Registered.Columns.Add(Grids.Text(L.T("col.result"), nameof(RegisteredLine.Result), 140));
+        Grids.Setup<RegisteredLine>(Registered, null, r => [new(L.T("grades.copyClass"), () => Grids.Copy(r.ClassGroup)),
+            new(L.T("common.copy"), () => Grids.Copy($"{r.Code} {r.Name} · {r.ClassGroup} · {r.Teacher} · {r.When}"))]);
 
         Fees.Columns.Add(Grids.Text(L.T("col.content"), nameof(MybkFee.Content), star: true));
         Fees.Columns.Add(Grids.Right(L.T("col.remaining"), nameof(MybkFee.Remaining), 120));
@@ -139,7 +145,7 @@ public partial class GradesPage : UserControl, IPage
         Show(LmsGrades, LmsEmpty, lms.Count, _host.State.NoDataReason("lms", "LMS") ?? L.T("grades.lmsEmpty"));
 
         RegTitle.Text = L.F("grades.regTitle", m?.Term.Name ?? L.T("grades.thisTerm"));
-        Registered.ItemsSource = m?.Registered ?? [];
+        Registered.ItemsSource = (m?.Registered ?? []).Select(r => Registration(r, m!.Schedule)).ToList();
         Show(Registered, RegisteredEmpty, m?.Registered?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.regEmpty"));
         Fees.ItemsSource = m?.Fees ?? [];
         FeesEmpty.Visibility = (m?.Fees?.Count ?? 0) == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
@@ -149,6 +155,19 @@ public partial class GradesPage : UserControl, IPage
         Show(Social, SocialEmpty, m?.SocialWork?.Activities?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.socialEmpty"));
         Decisions.ItemsSource = m?.Decisions ?? [];
         Show(Decisions, DecisionsEmpty, m?.Decisions?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.decisionsEmpty"));
+    }
+
+    /// <summary>
+    /// Giảng viên và giờ học của một môn đã đăng ký, theo thời khóa biểu MyBK của kỳ: buổi cùng mã môn, hoặc buổi thí nghiệm
+    /// cùng tên môn (MyBK cho phần thí nghiệm mã riêng, ví dụ "Kỹ thuật số (Thí nghiệm)").
+    /// </summary>
+    private static RegisteredLine Registration(MybkRegistered r, List<MybkClass> schedule)
+    {
+        var classes = schedule.Where(c => c.Code == r.Code || c.Name.StartsWith(r.Name + " (", StringComparison.Ordinal)).ToList();
+        var teachers = string.Join(", ", classes.Select(c => c.Teacher).Where(t => !string.IsNullOrWhiteSpace(t)).Distinct());
+        var when = string.Join("; ", classes.OrderBy(c => c.Day).ThenBy(c => c.Start)
+            .Select(c => $"{Format.MybkDays.GetValueOrDefault(c.Day) ?? c.Day.ToString(System.Globalization.CultureInfo.InvariantCulture)} {c.Start}–{c.End} {c.Room}").Distinct());
+        return new(r.Code, r.Name, r.ClassGroup, teachers, when, r.Round, r.Result);
     }
 
     /// <summary>

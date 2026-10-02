@@ -16,10 +16,16 @@
                     </WrapPanel>
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource Card}">
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="{ui:T about.officialTitle}" Style="{StaticResource SectionTitle}" />
                     <TextBlock x:Name="Official" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <WrapPanel Margin="0,12,0,0">
+                    </WrapPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

@@ -26,9 +26,9 @@ public static class UpdatePolicy
     public static TimeSpan Interval(int checkHours) => TimeSpan.FromHours(checkHours) < MinInterval ? MinInterval : TimeSpan.FromHours(checkHours);
 
     /// <param name="lastCheck">lần kiểm tra gần nhất, kể cả lần lỗi (lỗi thì chờ đủ một chu kỳ, không thử lại liên tục)</param>
-    public static bool ShouldCheck(UpdateMode mode, InstallKind kind, bool isLocalChannel, DateTimeOffset now, DateTimeOffset? lastCheck, int checkHours)
+    public static bool ShouldCheck(UpdateMode mode, InstallKind kind, DateTimeOffset now, DateTimeOffset? lastCheck, int checkHours)
     {
-        if (isLocalChannel || kind == InstallKind.Store || mode is UpdateMode.Ask or UpdateMode.Off) return false;
+        if (kind == InstallKind.Store || mode is UpdateMode.Ask or UpdateMode.Off) return false;
         // Đồng hồ máy từng bị chỉnh lùi: lần kiểm tra "ở tương lai" thì coi như đã tới hạn, tránh kẹt mãi.
         if (lastCheck is not { } last || last > now) return true;
         return now - last >= Interval(checkHours);

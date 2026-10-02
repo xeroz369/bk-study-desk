@@ -1,4 +1,4 @@
-**BK Study Desk**
+**Tiếng Việt**
 
 - [[Trang chủ|Home]]
 - [[Cài đặt]]
@@ -9,4 +9,13 @@
 - [[Bảo mật và quyền riêng tư]]
 - [[Cách app hoạt động]]
 
-[Tải bản mới nhất](https://github.com/xeroz369/bk-study-desk/releases/latest)
+**English**
+
+- [Home](Home-en)
+- [Installation](Installation)
+- [Updating](Updating)
+- [Uninstalling](Uninstalling)
+- [Practice](Practice)
+- [FAQ](FAQ)
+- [Security and privacy](Security-and-privacy)
+- [How the app works](How-the-app-works)

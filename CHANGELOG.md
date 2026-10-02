@@ -1,8 +1,29 @@
 # Nhật ký thay đổi
 
+**Tiếng Việt** · [English](CHANGELOG.en.md)
+
 Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) (tên mục dịch sang tiếng Việt), số phiên bản theo [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Chưa phát hành]
+
+## [1.1.2] - 2026-10-03
+
+### Thêm
+
+- **Lịch** → **Thời khóa biểu** có dạng **lưới tuần** giống Google Calendar ([#5](https://github.com/xeroz369/bk-study-desk/issues/5)). Lưới tự canh bố cục: Thứ 7, CN chỉ hiện khi có buổi học; khung giờ theo buổi sớm nhất và muộn nhất; buổi trùng giờ chia đôi cột. Dạng danh sách vẫn còn, chọn ở ô **Kiểu xem**.
+- **Xuất lịch (.ics)…**: lưu thời khóa biểu cả kỳ và lịch thi ra file iCalendar để nhập vào Google Calendar, Outlook, Lịch của Windows.
+- Đồng bộ LMS/MyBK lỗi thì thanh báo có thêm nút **Mở MyBK** / **Mở LMS** để xem trang đang lỗi gì hoặc đăng nhập lại ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- **Tải tài liệu…** chọn được loại file: PDF, slide (.ppt, .pptx), khác; số file và dung lượng tính theo lựa chọn ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- Bảng **Kết quả đăng ký** có thêm cột giảng viên và giờ học, lấy từ thời khóa biểu MyBK ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- Tài liệu tiếng Anh tách thành file riêng, dịch đầy đủ: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, và các trang Wiki tiếng Anh. Chuẩn viết tiếng Anh: `docs/english-style.md`.
+
+### Thay đổi
+
+- README và Wiki: khuyên dùng bộ cài trên GitHub trước, Microsoft Store sau (bản Store phải chờ Microsoft duyệt nên thường chậm hơn).
+
+### Sửa lỗi
+
+- Thời khóa biểu dạng danh sách có nhóm "Thứ 0" với giờ lạ (ví dụ "0:00–6:50"). Môn không có giờ cố định giờ ghi riêng ở dòng "Không có giờ cố định".
 
 ## [1.1.1] - 2026-10-03
 
@@ -40,7 +61,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thay đổi
 
-- Mặc định chỉ đọc môn của học kỳ này và không tự tải tài liệu. Muốn tải thì vào **Môn học**** → ****Tải tài liệu…** và chọn mục cần tải; bật lại tự tải trong Cài đặt nếu muốn.
+- Mặc định chỉ đọc môn của học kỳ này và không tự tải tài liệu. Muốn tải thì vào **Môn học** → **Tải tài liệu…** và chọn mục cần tải; bật lại tự tải trong Cài đặt nếu muốn.
 - Lần đầu đăng nhập, lịch, hạn nộp, quiz và điểm hiện ngay, không chờ tải tài liệu.
 - Đọc ít request hơn: thông báo diễn đàn chỉ lấy lớp học kỳ này; quiz không có hạn đóng chỉ kiểm tra ngày một lần; trang Môn học chỉ quét thư mục khi đang mở.
 - Giãn cách request tới LMS và MyBK. Máy chủ báo quá tải (HTTP 429/503) thì app chờ theo `Retry-After` rồi mới thử lại.
@@ -91,7 +112,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0
 [1.0.6]: https://github.com/xeroz369/bk-study-desk/releases/tag/v1.0.6
