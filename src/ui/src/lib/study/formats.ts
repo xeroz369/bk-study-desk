@@ -52,7 +52,7 @@ export function parseAiken(raw: string): Converted {
 				answer,
 				solution: '<p>Đáp án đúng: ' + answerLetter + '.</p>',
 			});
-		else notes.push(`Bỏ một câu Aiken không đủ đề/phương án: "${stem.join(' ').slice(0, 40)}…"`);
+		else notes.push(`Bỏ một câu Aiken không đủ đề/phương án: "${stem.join(' ').slice(0, 40)}..."`);
 		stem = [];
 		opts = [];
 	};
@@ -138,7 +138,7 @@ export function parseGift(raw: string): Converted {
 			}
 		}
 		if (open < 0 || close < 0) {
-			notes.push(`Bỏ câu GIFT không có {…}: "${(title || body).slice(0, 40)}…"`);
+			notes.push(`Bỏ câu GIFT không có {...}: "${(title || body).slice(0, 40)}..."`);
 			continue;
 		}
 		const before = body.slice(0, open).trim(),
@@ -158,7 +158,7 @@ export function parseGift(raw: string): Converted {
 			byCategory.get(category)!.push({ ...(title ? { tag: title } : {}), ...q });
 		};
 		if (!inner) {
-			notes.push(`Bỏ câu tự luận (essay): "${(title || before).slice(0, 40)}…"`);
+			notes.push(`Bỏ câu tự luận (essay): "${(title || before).slice(0, 40)}..."`);
 			continue;
 		}
 		const tf = inner.match(/^(T|TRUE|F|FALSE)\b/i);
@@ -186,7 +186,7 @@ export function parseGift(raw: string): Converted {
 			continue;
 		}
 		if (/->/.test(inner)) {
-			notes.push(`Bỏ câu ghép cặp (matching), chưa hỗ trợ: "${(title || before).slice(0, 40)}…"`);
+			notes.push(`Bỏ câu ghép cặp (matching), chưa hỗ trợ: "${(title || before).slice(0, 40)}..."`);
 			continue;
 		}
 		const answers = splitUnescaped(inner, /[=~]/)
@@ -218,7 +218,7 @@ export function parseGift(raw: string): Converted {
 		if (correct.length === 1 && answers.filter((a) => a.right).length <= 1)
 			push({ prompt, options: opts, answer: correct[0], solution: sol });
 		else if (correct.length > 1) push({ type: 'multi', prompt, options: opts, answers: correct, solution: sol });
-		else notes.push(`Bỏ câu không có đáp án đúng: "${(title || before).slice(0, 40)}…"`);
+		else notes.push(`Bỏ câu không có đáp án đúng: "${(title || before).slice(0, 40)}..."`);
 	}
 	const lessons = [...byCategory].map(([title, questions], i) => ({ id: `gift-${i + 1}`, title, questions }));
 	return { lessons, notes };

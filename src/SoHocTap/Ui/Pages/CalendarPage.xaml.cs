@@ -34,7 +34,7 @@ public partial class CalendarPage : UserControl, IPage
         Week.Columns.Add(Grids.Text(L.T("col.teacher"), nameof(ClassRow.Teacher), 200));
         Week.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         Week.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is ClassRow { InWeek: false } ? 0.5 : 1;
-        Grids.Setup<ClassRow>(Week, null, c => [new(L.T("common.copy"), () => Grids.Copy($"{c.Name} · {c.DayName} {c.Time} · {c.Room}"))]);
+        Grids.Setup<ClassRow>(Week, null, c => [new(L.T("common.copy"), () => Grids.Copy($"{c.Name}, {c.DayName} {c.Time}, {c.Room}"))]);
         Grid.Copy = b => Grids.Copy(b.Tip);
         View.ItemsSource = new[] { L.T("calendar.viewGrid"), L.T("calendar.viewList") };
         View.SelectedIndex = Core.Config.Str("app.calendarView", "grid") == "list" ? 1 : 0;
@@ -45,7 +45,7 @@ public partial class CalendarPage : UserControl, IPage
         Exams.Columns.Add(Grids.Text(L.T("col.roomDuration"), nameof(TimelineItem.Label), 220));
         Exams.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
         Exams.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is TimelineItem t && t.Time < Format.Now ? 0.5 : 1;
-        Grids.Setup<TimelineItem>(Exams, null, e => [new(L.T("common.copy"), () => Grids.Copy($"{e.Name} · {e.When} · {e.Label}"))]);
+        Grids.Setup<TimelineItem>(Exams, null, e => [new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}"))]);
     }
 
     public string Title => L.T("nav.calendar");
@@ -55,8 +55,8 @@ public partial class CalendarPage : UserControl, IPage
 
     private IEnumerable<MenuEntry> Menu(TimelineItem e)
     {
-        if (e.Url is { } u) yield return new(L.T("common.openWeb"), () => _host.OpenWeb(u, e.Name), Primary: true);
-        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name} · {e.When} · {e.Label}"), Separator: true);
+        // "Mở" (mở trên web) đã có sẵn ở đầu menu do Grids.Setup thêm, không lặp lại.
+        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}"));
     }
 
     private void OnFilter(object sender, RoutedEventArgs e) => Refresh();
@@ -71,7 +71,7 @@ public partial class CalendarPage : UserControl, IPage
     private void OnExport(object sender, RoutedEventArgs e)
     {
         var m = _host.State.Mybk;
-        if (m is null) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportNoData"), L.T("calendar.export"), MessageBoxButton.OK, MessageBoxImage.Information); return; }
+        if (m is null) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportNoData"), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information); return; }
         var events = new List<Core.IcsEvent>();
         foreach (var c in m.Schedule.Where(c => c.Day is >= 2 and <= 8 && c.Weeks.Count > 0))
         {
@@ -83,7 +83,7 @@ public partial class CalendarPage : UserControl, IPage
             {
                 var date = Core.Ics.ClassDate(year, first, w, c.Day);
                 events.Add(new Core.IcsEvent($"cl-{c.Code}-{c.Group}-{date:yyyyMMdd}-{s}", date.AddMinutes(s), date.AddMinutes(en), c.Name, c.Room,
-                    string.Join("\n", new[] { c.Code + (c.Group is { } g ? " · " + g : ""), c.Teacher ?? "" }.Where(x => x.Length > 0))));
+                    string.Join("\n", new[] { c.Code + (c.Group is { } g ? ", " + g : ""), c.Teacher ?? "" }.Where(x => x.Length > 0))));
             }
         }
         foreach (var x in m.Exams)
@@ -96,11 +96,11 @@ public partial class CalendarPage : UserControl, IPage
             var title = type.Length > 0 ? L.F("timeline.examTyped", type, x.Name) : L.F("timeline.exam", x.Name);
             events.Add(new Core.IcsEvent($"ex-{x.Code}-{x.Type}-{start:yyyyMMddHHmm}", start, start.AddMinutes(x.Minutes ?? 90), title, x.Room, x.Code));
         }
-        if (events.Count == 0) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportEmpty"), L.T("calendar.export"), MessageBoxButton.OK, MessageBoxImage.Information); return; }
+        if (events.Count == 0) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportEmpty"), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information); return; }
 
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            Title = L.T("calendar.export"),
+            Title = L.T("calendar.export").TrimEnd('.'),
             Filter = "iCalendar (*.ics)|*.ics",
             FileName = $"BK Study Desk - {m.Term.Name}.ics",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -108,13 +108,13 @@ public partial class CalendarPage : UserControl, IPage
         if (dlg.ShowDialog(Window.GetWindow(this)) != true) return;
         try
         {
-            File.WriteAllText(dlg.FileName, Core.Ics.Build($"BK Study Desk · {m.Term.Name}", events, DateTime.UtcNow), new System.Text.UTF8Encoding(false));
-            MessageBox.Show(Window.GetWindow(this), L.F("calendar.exportDone", events.Count, dlg.FileName), L.T("calendar.export"), MessageBoxButton.OK, MessageBoxImage.Information);
+            File.WriteAllText(dlg.FileName, Core.Ics.Build($"BK Study Desk, {m.Term.Name}", events, DateTime.UtcNow), new System.Text.UTF8Encoding(false));
+            MessageBox.Show(Window.GetWindow(this), L.F("calendar.exportDone", events.Count, dlg.FileName), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception x) when (x is IOException or UnauthorizedAccessException)
         {
             Core.Log.Warn($"Xuất lịch: {x.Message}");
-            MessageBox.Show(Window.GetWindow(this), L.F("calendar.exportFailed", x.Message), L.T("calendar.export"), MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(Window.GetWindow(this), L.F("calendar.exportFailed", x.Message), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -164,8 +164,8 @@ public partial class CalendarPage : UserControl, IPage
         Week.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         if (grid)
         {
-            Grid.Show(monday, thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}–{c.End} · {c.Room}",
-                string.Join("\n", new[] { c.Name, $"{Format.MybkDays.GetValueOrDefault(c.Day)} {c.Start}–{c.End} · {c.Room}", c.Teacher ?? "", c.Code + (c.Group is { } g ? " · " + g : "") }
+            Grid.Show(monday, thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}–{c.End}, {c.Room}",
+                string.Join("\n", new[] { c.Name, $"{Format.MybkDays.GetValueOrDefault(c.Day)} {c.Start}–{c.End}, {c.Room}", c.Teacher ?? "", c.Code + (c.Group is { } g ? ", " + g : "") }
                     .Where(x => x.Length > 0)), c.Code)));
             return;
         }

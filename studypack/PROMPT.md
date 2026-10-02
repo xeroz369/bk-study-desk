@@ -1,6 +1,6 @@
 # Prompt cho AI
 
-App soạn sẵn prompt: vào môn, chọn **Soạn · Nhập · Xuất**, chọn bài, rồi chọn tab **Nhờ AI**. Prompt đã điền sẵn môn, chương và bài đang chọn, nên kết quả nhập vào đúng chỗ. Hướng dẫn từng bước có ảnh: [Wiki: Luyện tập, mục 4](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp#4-nh%E1%BB%9D-ai-so%E1%BA%A1n-d%E1%BB%85-nh%E1%BA%A5t). Có 4 loại:
+App soạn sẵn prompt: vào môn, chọn **Tạo**, chọn bài, rồi chọn tab **Nhờ AI**. Prompt đã điền sẵn môn, chương và bài đang chọn, nên kết quả nhập vào đúng chỗ. Hướng dẫn từng bước có ảnh: [Wiki: Luyện tập, mục 4](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp#4-nh%E1%BB%9D-ai-so%E1%BA%A1n-d%E1%BB%85-nh%E1%BA%A5t). Có 4 loại:
 
 | Loại | Dùng khi |
 |---|---|

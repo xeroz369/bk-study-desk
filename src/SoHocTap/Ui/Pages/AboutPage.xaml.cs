@@ -23,7 +23,7 @@ public partial class AboutPage : UserControl, IPage
     private static void OpenLink(string url) => Links.Open(url);
     private void OnSource(object sender, RoutedEventArgs e) => OpenLink(AppInfo.Repo);
     private void OnIssues(object sender, RoutedEventArgs e) => OpenLink(AppInfo.Issues);
-    // Tài liệu có bản tiếng Anh riêng (*.en.md): giao diện tiếng Anh thì mở bản tiếng Anh.
-    private static string Doc(string name) => AppInfo.Repo + "/blob/main/" + (L.Code == "en" ? name.Replace(".md", ".en.md", StringComparison.Ordinal) : name);
+    // Bản tiếng Anh của tài liệu nằm trong docs/en (cùng tên file): giao diện tiếng Anh thì mở bản đó.
+    private static string Doc(string name) => AppInfo.Repo + "/blob/main/" + (L.Code == "en" ? "docs/en/" + name : name);
     private void OnPrivacy(object sender, RoutedEventArgs e) => OpenLink(Doc("PRIVACY.md"));
 }

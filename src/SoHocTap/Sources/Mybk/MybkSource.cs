@@ -94,7 +94,8 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
         var prev = JsonStore.Read(DataFile);
         var regAt = prev?["registrationAt"]?.GetValue<long>() ?? 0;
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        if (prev?["registration"] is JsonArray cached && now - regAt < 86400)
+        // Danh sách rỗng không giữ cả ngày: có thể là lần đọc trước bị lỗi (ví dụ rơi vào trang khác), thử lại ở lần đồng bộ sau.
+        if (prev?["registration"] is JsonArray { Count: > 0 } cached && now - regAt < 86400)
         {
             output["registration"] = cached.DeepClone();
             output["registrationAt"] = regAt;
@@ -104,7 +105,12 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
             try
             {
                 log(SyncSignal.Step("sync.mybk.registration", 3, 4));
-                output["registration"] = ParseRegistration(await browser.PageAsync(Config.Str("sources.mybk.registration"), ct));
+                var html = await browser.PageAsync(Config.Str("sources.mybk.registration"), ct);
+                var rounds = ParseRegistration(html);
+                // Trang không có bảng đợt đăng ký (cột "Đợt Đăng ký") là đã mở nhầm trang: báo, giữ bản cũ, không lưu danh sách rỗng.
+                if (rounds.Count == 0 && !html.Contains("Đợt Đăng ký", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("Trang đăng ký môn không có bảng đợt đăng ký (có thể chưa vào được hệ thống đăng ký).");
+                output["registration"] = rounds;
                 output["registrationAt"] = now;
             }
             catch (Exception e) when (e is not OperationCanceledException)

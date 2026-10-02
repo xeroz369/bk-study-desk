@@ -1,6 +1,6 @@
 [Tiếng Việt](Cài-đặt) | **English**
 
-> Translated from Cài-đặt (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from Cài-đặt (Vietnamese) for BK Study Desk 1.1.4.
 
 **Requirements:** Windows 10 1809 or later, or Windows 11, x64 or ARM64. No .NET installation needed. Microsoft Edge WebView2 Runtime is required (included in Windows 11).
 

@@ -19,7 +19,7 @@ public sealed record CourseView(MybkCurriculumCourse Course, CourseStatus Status
         _ => "curriculum.elective",
     });
     public string StatusText => Text(Status) + (FromGrades is null ? "" : " " + L.T("curriculum.fromGrades"))
-                                + (Fails > 0 && Status is not (CourseStatus.Dat or CourseStatus.Mien) ? " · " + L.F("curriculum.fails", Fails) : "");
+                                + (Fails > 0 && Status is not (CourseStatus.Dat or CourseStatus.Mien) ? ", " + L.F("curriculum.fails", Fails) : "");
     public string Code => Course.Code;
     public string Name => Course.Name + (string.IsNullOrWhiteSpace(Course.Equiv) ? "" : $" ({Course.Equiv.Trim()})");
     public double? Credits => Course.Credits;
@@ -29,8 +29,8 @@ public sealed record CourseView(MybkCurriculumCourse Course, CourseStatus Status
 
 public sealed record BlockView(MybkBlock Block, List<CourseView> Courses)
 {
-    public string Title => $"{Block.Name} · {L.T(Block.Required ? "curriculum.required" : "curriculum.optional")}" +
-                           (Block.CreditsNeed > 0 ? " · " + L.F("curriculum.credits", Block.CreditsDone, Block.CreditsNeed) : Block.Complete ? " · " + L.T("curriculum.complete") : "");
+    public string Title => $"{Block.Name}, {L.T(Block.Required ? "curriculum.required" : "curriculum.optional")}" +
+                           (Block.CreditsNeed > 0 ? ", " + L.F("curriculum.credits", Block.CreditsDone, Block.CreditsNeed) : Block.Complete ? ", " + L.T("curriculum.complete") : "");
 }
 
 public sealed record CurriculumView(List<BlockView> Blocks, List<CourseView> Courses, int Retake, int Studying, double? Missing, bool Stale)

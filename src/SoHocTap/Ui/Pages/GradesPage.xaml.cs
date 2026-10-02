@@ -13,7 +13,10 @@ internal sealed record GradeLine(string Term, string TermName, string Code, stri
     public string TermSort => Term == "BL" ? "0" : Term;
 }
 /// <summary>Một môn đã đăng ký, kèm giảng viên và lịch học lấy từ thời khóa biểu MyBK (cùng mã môn, hoặc phần thí nghiệm cùng tên).</summary>
-internal sealed record RegisteredLine(string Code, string Name, string ClassGroup, string Teacher, string When, string Round, string Result);
+internal sealed record RegisteredLine(string Code, string Name, string ClassGroup, string Round, string Result);
+
+/// <summary>Một buổi dạy trong tuần: giảng viên, môn, nhóm lớp, thứ, giờ, phòng (thời khóa biểu MyBK của kỳ).</summary>
+internal sealed record TeacherLine(string Teacher, string Name, string Code, string Group, string Day, int DaySort, string Time, string Room);
 
 internal sealed record LmsGradeLine(string Book, string Name, double? Grade, double? Max, string Percent)
 {
@@ -76,12 +79,19 @@ public partial class GradesPage : UserControl, IPage
         Registered.Columns.Add(Grids.Text(L.T("col.code"), nameof(RegisteredLine.Code), 80));
         Registered.Columns.Add(Grids.Text(L.T("col.subject"), nameof(RegisteredLine.Name), star: true));
         Registered.Columns.Add(Grids.Text(L.T("col.group"), nameof(RegisteredLine.ClassGroup), 140));
-        Registered.Columns.Add(Grids.Text(L.T("col.teacher"), nameof(RegisteredLine.Teacher), 190));
-        Registered.Columns.Add(Grids.Text(L.T("col.when"), nameof(RegisteredLine.When), 200));
         Registered.Columns.Add(Grids.Text(L.T("col.round"), nameof(RegisteredLine.Round), 110));
         Registered.Columns.Add(Grids.Text(L.T("col.result"), nameof(RegisteredLine.Result), 140));
         Grids.Setup<RegisteredLine>(Registered, null, r => [new(L.T("grades.copyClass"), () => Grids.Copy(r.ClassGroup)),
-            new(L.T("common.copy"), () => Grids.Copy($"{r.Code} {r.Name} · {r.ClassGroup} · {r.Teacher} · {r.When}"))]);
+            new(L.T("common.copy"), () => Grids.Copy($"{r.Code} {r.Name}, {r.ClassGroup}"))]);
+
+        Teachers.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TeacherLine.Name), star: true));
+        Teachers.Columns.Add(Grids.Text(L.T("col.code"), nameof(TeacherLine.Code), 80));
+        Teachers.Columns.Add(Grids.Text(L.T("col.group"), nameof(TeacherLine.Group), 90));
+        Teachers.Columns.Add(Grids.Text(L.T("col.day"), nameof(TeacherLine.Day), 110, sortPath: nameof(TeacherLine.DaySort)));
+        Teachers.Columns.Add(Grids.Text(L.T("col.time"), nameof(TeacherLine.Time), 110));
+        Teachers.Columns.Add(Grids.Text(L.T("col.room"), nameof(TeacherLine.Room), 100));
+        Teachers.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        Grids.Setup<TeacherLine>(Teachers, null, t => [new(L.T("common.copy"), () => Grids.Copy($"{t.Teacher}: {t.Name} ({t.Code}, {t.Group}), {t.Day} {t.Time}, {t.Room}"))]);
 
         Fees.Columns.Add(Grids.Text(L.T("col.content"), nameof(MybkFee.Content), star: true));
         Fees.Columns.Add(Grids.Right(L.T("col.remaining"), nameof(MybkFee.Remaining), 120));
@@ -99,7 +109,7 @@ public partial class GradesPage : UserControl, IPage
     }
 
     public string Title => L.T("nav.grades");
-    public string Subtitle => _host.State.Mybk is { } m ? $"{m.Student.Mssv} · {m.Student.Class} · {m.Term.Name}" : L.T("grades.noData");
+    public string Subtitle => _host.State.Mybk is { } m ? $"{m.Student.Mssv}, {m.Student.Class}, {m.Term.Name}" : L.T("grades.noData");
 
     public void Open(string arg) => Tabs.SelectedIndex = arg switch { "ctdt" => 1, "lms" => 2, "dang-ky" => 3, _ => 0 };
 
@@ -112,21 +122,21 @@ public partial class GradesPage : UserControl, IPage
         var real = (m?.GradeTerms ?? []).Where(t => t.Code != "BL").ToList();
         var latest = real.FirstOrDefault();
         var latestCredits = real.FirstOrDefault(t => double.TryParse(t.CreditsTerm.Text(), out var c) && c > 0);
-        static string Gpa(string? v) => double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d) && d > 0 ? v! : "—";
+        static string Gpa(string? v) => double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d) && d > 0 ? v! : "-";
         Stats.ItemsSource = new List<StatCard>
         {
             new(L.T("grades.gpaAll"), Gpa(latest?.GpaAll), latest?.Name),
-            new(L.T("grades.credits"), m?.Curriculum is { } c ? $"{c.CreditsDone:0}/{c.CreditsNeed:0}" : "—", _view?.Missing is { } miss ? L.F("grades.missing", miss) : null),
+            new(L.T("grades.credits"), m?.Curriculum is { } c ? $"{c.CreditsDone:0}/{c.CreditsNeed:0}" : "-", _view?.Missing is { } miss ? L.F("grades.missing", miss) : null),
             new(L.T("grades.gpaTerm"), Gpa(latestCredits?.GpaTerm), latestCredits?.Name),
-            new(L.T("grades.retake"), _view?.Retake.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—"),
-            new(L.T("grades.social"), m?.SocialWork?.Days is { } days ? Format.Score(days) : "—"),
+            new(L.T("grades.retake"), _view?.Retake.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-"),
+            new(L.T("grades.social"), m?.SocialWork?.Days is { } days ? Format.Score(days) : "-"),
         };
 
         // Bảng điểm: nhóm theo kỳ (mới nhất trước), ghép điểm thành phần chính thức.
         var termNames = (m?.GradeTerms ?? []).Where(t => t.Code is not null).DistinctBy(t => t.Code).ToDictionary(t => t.Code, t => t.Name);
         var comps = (m?.Components ?? []).GroupBy(c => (c.TermId, c.CourseId)).ToDictionary(g => g.Key, g => g.First());
         string Parts(MybkGrade g) => g.TermId is { } t && g.CourseId is { } c && comps.TryGetValue((t, c), out var x)
-            ? string.Join(" · ", x.Items.Where(i => i.Weight > 0).Select(i => $"{i.Name} {i.Weight:0}%: {i.Special ?? Format.Score(i.Score)}")) : "";
+            ? string.Join(", ", x.Items.Where(i => i.Weight > 0).Select(i => $"{i.Name} {i.Weight:0}%: {i.Special ?? Format.Score(i.Score)}")) : "";
         string ResultText(MybkGrade g) => g.Result == 1 ? L.T("grades.pass") : g.Special ?? L.T(g.Result == 0 ? "grades.fail" : "grades.notCounted");
         var lines = (m?.Grades ?? []).Select(g => new GradeLine(g.Term, termNames.GetValueOrDefault(g.Term, g.Term == "BL" ? L.T("grades.reserved") : g.Term),
             g.Code, g.Name, Parts(g), g.Credits, g.Special ?? Format.Score(g.Score), g.Score ?? -1, g.Letter ?? "", ResultText(g), g.Result == 0)).ToList();
@@ -140,13 +150,19 @@ public partial class GradesPage : UserControl, IPage
         Stale.Text = _view?.Stale == true ? L.F("grades.stale", m?.Curriculum?.Updated) : "";
 
         var lms = (_host.State.Lms?.Grades ?? []).SelectMany(b => b.Items.Select(i =>
-            new LmsGradeLine(b.Subject + (b.Part is null ? "" : " · " + b.Part), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? ""))).ToList();
+            new LmsGradeLine(b.Subject + (b.Part is null ? "" : ", " + b.Part), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? ""))).ToList();
         LmsGrades.ItemsSource = Grids.Grouped(lms, nameof(LmsGradeLine.Book));
         Show(LmsGrades, LmsEmpty, lms.Count, _host.State.NoDataReason("lms", "LMS") ?? L.T("grades.lmsEmpty"));
 
         RegTitle.Text = L.F("grades.regTitle", m?.Term.Name ?? L.T("grades.thisTerm"));
         Registered.ItemsSource = (m?.Registered ?? []).Select(r => Registration(r, m!.Schedule)).ToList();
         Show(Registered, RegisteredEmpty, m?.Registered?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.regEmpty"));
+        var teachers = TeacherLines(m);
+        var tv = Grids.Grouped(teachers, nameof(TeacherLine.Teacher));
+        tv.SortDescriptions.Add(new SortDescription(nameof(TeacherLine.Teacher), ListSortDirection.Ascending));
+        tv.SortDescriptions.Add(new SortDescription(nameof(TeacherLine.DaySort), ListSortDirection.Ascending));
+        Teachers.ItemsSource = tv;
+        Show(Teachers, TeachersEmpty, teachers.Count, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.teachersEmpty"));
         Fees.ItemsSource = m?.Fees ?? [];
         FeesEmpty.Visibility = (m?.Fees?.Count ?? 0) == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         Fees.Visibility = FeesEmpty.Visibility == System.Windows.Visibility.Visible ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
@@ -158,17 +174,25 @@ public partial class GradesPage : UserControl, IPage
     }
 
     /// <summary>
-    /// Giảng viên và giờ học của một môn đã đăng ký, theo thời khóa biểu MyBK của kỳ: buổi cùng mã môn, hoặc buổi thí nghiệm
-    /// cùng tên môn (MyBK cho phần thí nghiệm mã riêng, ví dụ "Kỹ thuật số (Thí nghiệm)").
+    /// Bảng giảng viên (đề xuất #6): mỗi buổi trong thời khóa biểu MyBK của kỳ là một dòng, nhóm theo giảng viên.
+    /// Nhóm lớp lấy từ kết quả đăng ký (đợt cuối) nếu có, không thì từ thời khóa biểu. Buổi không có giờ cố định ghi riêng.
     /// </summary>
-    private static RegisteredLine Registration(MybkRegistered r, List<MybkClass> schedule)
+    private static List<TeacherLine> TeacherLines(MybkData? m)
     {
-        var classes = schedule.Where(c => c.Code == r.Code || c.Name.StartsWith(r.Name + " (", StringComparison.Ordinal)).ToList();
-        var teachers = string.Join(", ", classes.Select(c => c.Teacher).Where(t => !string.IsNullOrWhiteSpace(t)).Distinct());
-        var when = string.Join("; ", classes.OrderBy(c => c.Day).ThenBy(c => c.Start)
-            .Select(c => $"{Format.MybkDays.GetValueOrDefault(c.Day) ?? c.Day.ToString(System.Globalization.CultureInfo.InvariantCulture)} {c.Start}–{c.End} {c.Room}").Distinct());
-        return new(r.Code, r.Name, r.ClassGroup, teachers, when, r.Round, r.Result);
+        if (m is null) return [];
+        string GroupOf(MybkClass c) => m.Registered?.FirstOrDefault(r => r.Code == c.Code)?.ClassGroup is { Length: > 0 } g ? g : c.Group ?? "";
+        return [.. m.Schedule.Select(c =>
+        {
+            var timed = c.Day is >= 2 and <= 8;
+            return new TeacherLine(
+                string.IsNullOrWhiteSpace(c.Teacher) ? L.T("grades.noTeacher") : c.Teacher!,
+                c.Name, c.Code, GroupOf(c),
+                timed ? Format.MybkDays.GetValueOrDefault(c.Day) ?? "" : L.T("grades.noFixedTime"), timed ? c.Day : 99,
+                timed ? $"{c.Start}–{c.End}" : "", c.Room);
+        }).DistinctBy(t => (t.Teacher, t.Code, t.Group, t.DaySort, t.Time, t.Room))];
     }
+
+    private static RegisteredLine Registration(MybkRegistered r, List<MybkClass> schedule) => new(r.Code, r.Name, r.ClassGroup, r.Round, r.Result);
 
     /// <summary>
     /// Bảng trống thì ẩn bảng, hiện câu nói rõ vì sao (đang đồng bộ, lỗi, hay thật sự không có gì).

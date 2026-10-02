@@ -74,11 +74,19 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             try
             {
                 var core = await CoreAsync();
-                var prefix = new Uri(url).AbsolutePath;
-                prefix = prefix[..(prefix.LastIndexOf('/') + 1)];
+                var target = new Uri(url);
+                var prefix = target.AbsolutePath[..(target.AbsolutePath.LastIndexOf('/') + 1)];
                 _onApp = false;
-                await NavigateUntilAsync(core, url, u => u.Host == new Uri(url).Host && u.AbsolutePath.StartsWith(prefix, StringComparison.Ordinal), ct,
-                    failAt: u => u.AbsolutePath.Contains("/cas/login", StringComparison.Ordinal));
+                // Hệ thống đăng ký môn (/dkmh) đi qua SSO rồi trả về trang chủ của nó (home.action) trước, không phải trang được hỏi.
+                // Chỉ coi là tới khi đúng trang; rơi vào trang khác cùng hệ thống thì mở lại trang đó (tối đa 2 lần).
+                var retries = 0;
+                await NavigateUntilAsync(core, url, u =>
+                {
+                    if (u.Host != target.Host || !u.AbsolutePath.StartsWith(prefix, StringComparison.Ordinal)) return false;
+                    if (u.AbsolutePath == target.AbsolutePath) return true;
+                    if (retries++ < 2) core.Navigate(url);
+                    return false;
+                }, ct, failAt: u => u.AbsolutePath.Contains("/cas/login", StringComparison.Ordinal));
                 return await EvaluateAsync("document.documentElement.outerHTML") ?? "";
             }
             catch (Exception e) when (e is TimeoutException or HttpRequestException) { Reset(e); throw; }

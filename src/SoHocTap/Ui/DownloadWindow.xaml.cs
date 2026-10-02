@@ -43,14 +43,16 @@ public partial class DownloadWindow : Window
     private readonly LmsCourse _course;
     private List<SectionRow> _rows = [];
     private CancellationTokenSource? _run;
+    private bool _ready;   // InitializeComponent đã xong
 
     internal DownloadWindow(LmsSource lms, LmsCourse course)
     {
         InitializeComponent();
+        _ready = true;
         _lms = lms;
         _course = course;
         Title = L.T("download.title");
-        Heading.Text = course.Subject + (course.Part is null ? "" : " · " + course.Part) + " · " + course.Term;
+        Heading.Text = course.Subject + (course.Part is null ? "" : ", " + course.Part) + ", " + course.Term;
         Sub.Text = L.F("download.saveTo", $"{Config.Str("folders.subjects", "Môn học")}\\{course.Subject}");
         Extract.IsChecked = Config.Bool("archives.extract", true);
         Start.IsEnabled = false;
@@ -103,6 +105,9 @@ public partial class DownloadWindow : Window
 
     private void OnKinds(object sender, RoutedEventArgs e)
     {
+        // Ô chọn loại file đặt IsChecked="True" trong XAML nên Checked chạy ngay trong InitializeComponent,
+        // lúc Summary/Start chưa được tạo (lỗi NullReferenceException ở 1.1.3). Chưa dựng xong cửa sổ thì bỏ qua.
+        if (!_ready) return;
         _rows.ForEach(r => r.KindsChanged());
         Update();
     }

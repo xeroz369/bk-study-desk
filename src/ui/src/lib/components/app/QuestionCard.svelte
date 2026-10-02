@@ -17,6 +17,8 @@
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Flag from '@lucide/svelte/icons/flag';
 	import StickyNote from '@lucide/svelte/icons/sticky-note';
+	import Square from '@lucide/svelte/icons/square';
+	import SquareCheck from '@lucide/svelte/icons/square-check';
 
 	let {
 		question: q,
@@ -167,13 +169,14 @@
 	<div class="flex items-center gap-2 text-xs text-muted-foreground">
 		<!-- Nhãn nguồn (ví dụ "GK251 câu 3"); bỏ khi chỉ lặp lại số câu. -->
 		{#if q.tag && q.tag.trim() !== `Câu ${index + 1}`}<span class="rounded bg-muted px-1.5 py-0.5 font-medium">{q.tag}</span>{/if}
-		<span class="font-medium text-foreground">Câu {index + 1}</span>
-		{#if hint}<span>· {hint}</span>{/if}
-		{#if status}<span>· {status}</span>{/if}
-		{#if mode === 'result' && seconds}<span class={slow ? 'font-medium text-warn' : ''}
-				>· {clock(seconds)}{slow ? ` (chậm, TB ${clock(Math.round(pace!))})` : ''}</span
-			>{/if}
-		{#if note?.flag}<span class="font-medium text-warn">· nghi đáp án sai</span>{/if}
+		<!-- One run of text (no flex gap) so the commas sit right after each part. -->
+		<span
+			><span class="font-medium text-foreground">Câu {index + 1}</span>{#if hint}<span>, {hint}</span>{/if}{#if status}<span
+					>, {status}</span
+				>{/if}{#if mode === 'result' && seconds}<span class={slow ? 'font-medium text-warn' : ''}
+					>, {clock(seconds)}{slow ? ` (chậm, TB ${clock(Math.round(pace!))})` : ''}</span
+				>{/if}{#if note?.flag}<span class="font-medium text-warn">, nghi đáp án sai</span>{/if}</span
+		>
 	</div>
 	<div class="prose-lesson">{@html q.prompt}</div>
 
@@ -186,7 +189,12 @@
 					onclick={() => choose(j)}
 					aria-pressed={type === 'multi' ? isPicked(j) : undefined}
 				>
-					<span class="font-semibold text-muted-foreground">{type === 'multi' ? (isPicked(j) ? '☑' : '☐') : L[pos] + '.'}</span>
+					<span class="font-semibold text-muted-foreground"
+						>{#if type === 'multi'}{#if isPicked(j)}<SquareCheck class="mt-0.5 size-4" aria-hidden="true" />{:else}<Square
+									class="mt-0.5 size-4"
+									aria-hidden="true"
+								/>{/if}{:else}{L[pos] + '.'}{/if}</span
+					>
 					<span class="min-w-0">{@html q.options[j]}</span>
 				</button>
 			{/each}
@@ -223,7 +231,7 @@
 		</div>
 	{:else}
 		<p class="text-sm">
-			Bạn trả lời: <b class={isCorrect(q, picked) ? 'text-ok' : 'text-bad'}>{isBlank(picked) ? '(trống)' : String(picked)}</b> · Đáp án:
+			Bạn trả lời: <b class={isCorrect(q, picked) ? 'text-ok' : 'text-bad'}>{isBlank(picked) ? '(trống)' : String(picked)}</b>. Đáp án:
 			<b>{answerText(q)}</b>
 		</p>
 	{/if}
@@ -240,7 +248,7 @@
 	{#if solved || mode === 'result'}
 		{#if (mode === 'practice' && type !== 'single') || reordered}<p class="text-sm">
 				Đáp án: <b>{rightText}</b>{#if reordered}<span class="text-xs text-muted-foreground"
-						>&nbsp;· phương án đã xáo, chữ cái trong lời giải theo thứ tự gốc</span
+						>&nbsp;(phương án đã xáo, chữ cái trong lời giải theo thứ tự gốc)</span
 					>{/if}
 			</p>{/if}
 		<div class="prose-lesson rounded-lg bg-muted/70 px-3 py-2 text-sm">{@html q.solution}</div>
@@ -254,7 +262,7 @@
 			</p>
 		{/if}
 		{#if editing}
-			<Textarea bind:value={draft} rows={2} class="text-sm" placeholder="Ghi chú cho riêng bạn: chỗ hay nhầm, cách bấm máy…" />
+			<Textarea bind:value={draft} rows={2} class="text-sm" placeholder="Ghi chú cho riêng bạn: chỗ hay nhầm, cách bấm máy..." />
 			<div class="flex gap-1.5">
 				<Button size="xs" onclick={saveNote}>Lưu ghi chú</Button>
 				<Button size="xs" variant="ghost" onclick={() => (editing = false)}>Hủy</Button>

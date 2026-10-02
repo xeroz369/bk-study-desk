@@ -126,7 +126,7 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 			if (m) meta[m[1].toLowerCase()] = m[2];
 		}
 		n++;
-	} else warnings.push({ line: 1, message: 'thiếu phần đầu --- (mon, tac-gia…): app sẽ dùng môn đang chọn khi nhập' });
+	} else warnings.push({ line: 1, message: 'thiếu phần đầu --- (mon, tac-gia...): app sẽ dùng môn đang chọn khi nhập' });
 	const pick = (...keys: string[]) => keys.map((k) => meta[k]).find((v) => v !== undefined && v !== '');
 
 	const missingImg = new Set<string>();
@@ -336,7 +336,7 @@ function parseQuestion(
 		return right.length === 1 ? { ...base, options: opts, answer: right[0] } : { ...base, type: 'multi', options: opts, answers: right };
 	}
 	if (!answer) {
-		errors.push({ line: b.line, message: 'câu chưa có đáp án: thêm các dòng - [x] / - [ ], hoặc một dòng = …' });
+		errors.push({ line: b.line, message: 'câu chưa có đáp án: thêm các dòng - [x] / - [ ], hoặc một dòng = ...' });
 		return null;
 	}
 	const a = answer.text;

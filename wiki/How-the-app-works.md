@@ -1,6 +1,6 @@
 [Tiếng Việt](Cách-app-hoạt-động) | **English**
 
-> Translated from Cách-app-hoạt-động (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from Cách-app-hoạt-động (Vietnamese) for BK Study Desk 1.1.4.
 
 This page lists exactly what the app sends to the university's servers, so anyone can check it. The matching source code is in `src/SoHocTap/Shell` and `src/SoHocTap/Sources`; addresses and APIs are in `src/SoHocTap/Core/DefaultConfig.json`.
 

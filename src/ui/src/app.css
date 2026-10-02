@@ -6,6 +6,13 @@
    Màu loại mốc (kind-*): assign, quiz, exam, class, reg, event — dùng cho dải màu lịch. */
 
 @custom-variant dark (&:is(.dark *));
+/* Component shadcn-svelte dùng data-active:, data-open:, data-horizontal:... nhưng bits-ui đặt data-state và data-orientation.
+   Không có các variant này thì tab đang chọn và menu mở/đóng không có style riêng. */
+@custom-variant data-active (&:where([data-state="active"], [data-active]:not([data-active="false"])));
+@custom-variant data-open (&:where([data-state="open"], [data-open]:not([data-open="false"])));
+@custom-variant data-closed (&:where([data-state="closed"], [data-closed]:not([data-closed="false"])));
+@custom-variant data-horizontal (&:where([data-orientation="horizontal"]));
+@custom-variant data-vertical (&:where([data-orientation="vertical"]));
 
 :root {
 	--radius: 0.375rem; /* Windows: 4px cho nút, ô nhập; 6px cho khối */

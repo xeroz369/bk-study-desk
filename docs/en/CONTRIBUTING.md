@@ -2,7 +2,7 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CONTRIBUTING.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CONTRIBUTING.md)
 
-> Translated from CONTRIBUTING.md (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from CONTRIBUTING.md (Vietnamese) for BK Study Desk 1.1.4.
 
 Issues and pull requests are very welcome, especially when the university changes its pages or APIs. You can write issues in Vietnamese or English; keep technical terms in English.
 
