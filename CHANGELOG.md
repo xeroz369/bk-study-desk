@@ -6,7 +6,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
-## [1.1.2] - 2026-10-03
+## [1.1.3] - 2026-10-03
 
 ### Thêm
 
@@ -24,6 +24,9 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 ### Sửa lỗi
 
 - Thời khóa biểu dạng danh sách có nhóm "Thứ 0" với giờ lạ (ví dụ "0:00–6:50"). Môn không có giờ cố định giờ ghi riêng ở dòng "Không có giờ cố định".
+
+## [1.1.2] - 2026-10-03 [YANKED]
+
 
 ## [1.1.1] - 2026-10-03
 
@@ -112,7 +115,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.2...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0

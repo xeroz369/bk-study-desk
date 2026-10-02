@@ -1,6 +1,6 @@
 [Tiếng Việt](Home) · **English**
 
-> Translated from Home (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from Home (Vietnamese) for BK Study Desk 1.1.3.
 
 A Windows app that brings Ho Chi Minh City University of Technology's **BK-LMS** and **MyBK** into one window: deadlines, calendar, course documents, grades, and practice quizzes. The app is unofficial and only **reads** what you can already see after signing in.
 

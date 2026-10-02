@@ -1,6 +1,6 @@
 [Tiếng Việt](Luyện-tập) · **English**
 
-> Translated from Luyện-tập (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from Luyện-tập (Vietnamese) for BK Study Desk 1.1.3.
 
 Take quizzes, write your own questions, ask AI to write them and send them to friends. No programming needed: you only select, type, copy and paste.
 

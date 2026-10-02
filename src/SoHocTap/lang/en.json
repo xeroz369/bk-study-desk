@@ -481,5 +481,5 @@
   "calendar.exportNoData": "No MyBK data yet. Sign in to HCMUT and sync first.",
   "calendar.exportEmpty": "There are no classes or exams to export.",
   "calendar.exportDone": "Exported {0} events to {1}.\n\nImport into Google Calendar: open calendar.google.com → Settings → Import & export → choose this file. Importing into a separate calendar (e.g. \"Timetable\") makes it easy to remove next term.",
-  "calendar.exportFailed": "Could not save the file. Choose another folder and try again. (Details: {0})",
+  "calendar.exportFailed": "Could not save the file. Choose another folder and try again. (Details: {0})"
 }

@@ -2,7 +2,7 @@
 
 [Tiếng Việt](SPEC.md) · **English**
 
-> Translated from SPEC.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from SPEC.md (Vietnamese) for BK Study Desk 1.1.3.
 
 User guide: [Wiki > Practice](https://github.com/xeroz369/bk-study-desk/wiki/Practice). This file is the full specification for tool authors and for AI.
 

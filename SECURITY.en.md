@@ -2,7 +2,7 @@
 
 [Tiếng Việt](SECURITY.md) · **English**
 
-> Translated from SECURITY.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from SECURITY.md (Vietnamese) for BK Study Desk 1.1.3.
 
 ## Reporting a vulnerability
 

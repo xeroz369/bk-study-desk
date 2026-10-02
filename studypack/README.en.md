@@ -2,7 +2,7 @@
 
 [Tiếng Việt](README.md) · **English**
 
-> Translated from README.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from README.md (Vietnamese) for BK Study Desk 1.1.3.
 
 Write quizzes to revise and share with friends: type them in the app, ask AI, or convert to and from Moodle (BK-LMS).
 

@@ -2,13 +2,13 @@
 
 [Tiếng Việt](CHANGELOG.md) · **English**
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.3.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [1.1.2] - 2026-10-03
+## [1.1.3] - 2026-10-03
 
 ### Added
 
@@ -27,6 +27,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 ### Fixed
 
 - The timetable list showed a "Thứ 0" (day 0) group with odd times such as "0:00–6:50". Courses without a fixed time are now listed separately under "No fixed time".
+
+## [1.1.2] - 2026-10-03 [YANKED]
+
+Withdrawn because this build had a support section inside the app. All changes moved to 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 
@@ -115,7 +119,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0

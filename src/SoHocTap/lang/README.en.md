@@ -2,7 +2,7 @@
 
 [Tiếng Việt](README.md) · **English**
 
-> Translated from README.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from README.md (Vietnamese) for BK Study Desk 1.1.3.
 
 All UI text comes from the language packs in this folder.
 
