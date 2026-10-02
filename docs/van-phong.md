@@ -94,8 +94,8 @@ Theo MSG và Google, mỗi thông báo có: chuyện gì xảy ra, vì sao (nế
 Tiếng Việt là bản chính, cho sinh viên trường. Tiếng Anh là bản dịch **đầy đủ**, để ở file riêng, không viết tóm tắt cuối bài. Nghiên cứu và nguồn: `docs/research/2026-10-03-tai-lieu-da-ngon-ngu.md` (bản riêng); chuẩn viết tiếng Anh: [english-style.md](english-style.md).
 
 - **Tên file:** bản Việt giữ tên chuẩn mà GitHub nhận (`README.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`); bản Anh thêm `.en` trước đuôi: `PRIVACY.en.md`. `LICENSE.md` không dịch.
-- **README** là ngoại lệ: trang chủ repo chỉ hiện một README, nên `export-public.ps1` ghép `README.en.md` vào cuối `README.md` dưới tiêu đề **English**, trong khối `<details>` thu gọn. Dòng chuyển ngôn ngữ của README trỏ tới `#english`.
-- **Dòng chuyển ngôn ngữ** ngay dưới tiêu đề: bản Việt `**Tiếng Việt** · [English](PRIVACY.en.md)`, bản Anh `[Tiếng Việt](README.md) · **English**`.
+- **Trên GitHub hiện chung một trang:** `export-public.ps1` ghép mỗi cặp `X.md` + `X.en.md` thành một file `X.md`: tiếng Việt trước, rồi tiêu đề **English** và bản tiếng Anh trong khối `<details>` thu gọn. Dòng chuyển ngôn ngữ trỏ tới `#english`, link `X.en.md` đổi thành `X.md#english`. Lý do: GitHub chỉ hiện một README ở trang chủ, một SECURITY ở tab Security, và link sang file `.en.md` mở trang xem file rời, khó dùng. Wiki thì giữ trang riêng cho từng thứ tiếng.
+- **Dòng chuyển ngôn ngữ** ngay dưới tiêu đề: bản Việt `**Tiếng Việt** · [English](PRIVACY.md#english)`, bản Anh `[Tiếng Việt](README.md) · **English**`.
 - **CHANGELOG:** `CHANGELOG.md` và `CHANGELOG.en.md`, cùng số phiên bản và ngày.
 - **Release notes:** một bài, tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ.
 - **Wiki:** trang Việt giữ tên có dấu; trang Anh đặt tên tiếng Anh (`Home-en`, `Installation`, `Updating`, `Uninstalling`, `Practice`, `FAQ`, `How-the-app-works`, `Security-and-privacy`). Một `_Sidebar` chia hai khối Tiếng Việt / English.
