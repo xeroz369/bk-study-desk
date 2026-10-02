@@ -20,7 +20,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 - Có trên Microsoft Store: cài không bị cảnh báo SmartScreen, Store tự cập nhật.
 - Thanh trạng thái hiện bước đang làm khi đồng bộ (ví dụ "LMS: đang đọc quiz…", "đang kiểm tra lớp… (3/5)").
-- Thanh báo lỗi theo kiểu InfoBar của Windows: biểu tượng theo mức độ, câu dễ hiểu kèm cách xử lý, mục **Chi tiết** chứa chữ gốc của máy chủ (có nút **Sao chép**). Thanh trạng thái có biểu tượng lỗi cạnh LMS/MyBK.
+- InfoBar báo lỗi theo chuẩn Windows: biểu tượng theo mức độ, câu dễ hiểu kèm cách xử lý, mục **Chi tiết** chứa chữ gốc của máy chủ (có nút **Sao chép**). Thanh trạng thái có biểu tượng lỗi cạnh LMS/MyBK.
 - Cửa sổ LMS/MyBK báo khi trang tải quá 10 giây, mất mạng, máy chủ lỗi hoặc phiên đăng nhập đã hết, kèm nút **Thử lại**.
 - Giữ phiên đăng nhập khi app đang mở: mỗi 60 phút ghé SSO một lần (tắt được trong Cài đặt). Phiên SSO của trường vẫn hết sau tối đa 8 giờ kể từ lúc đăng nhập.
 - **Cài đặt** → **Nhật ký hoạt động**: nút mở file log; bật ghi log chẩn đoán khi cần báo lỗi (tự tắt sau 7 ngày).
@@ -51,7 +51,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 ### Bảo mật
 
 - Nguồn cập nhật chỉ nhận repo GitHub qua https; thư mục trên máy chỉ dùng cho bản cài thử.
-- Log che token, cookie, vé đăng nhập CAS và email trước khi ghi.
+- Log che token, cookie, ticket đăng nhập CAS và email trước khi ghi.
 - Tắt tự điền dữ liệu chung của WebView2. Mật khẩu chỉ được lưu khi bạn chọn **Lưu** lúc trình duyệt trong app hỏi.
 
 ## [1.0.6] - 2026-10-02

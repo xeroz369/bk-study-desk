@@ -31,7 +31,7 @@ Tài liệu môn học lưu ở thư mục bạn chọn, mặc định `Document
 
 App **không lưu** số CCCD, địa chỉ, số điện thoại, ngày sinh hay email cá nhân, kể cả khi MyBK trả về.
 
-App ghi nhật ký hoạt động vào `data\app.log` trên máy (tối đa khoảng 4 MB, tự xoay vòng) để bạn gửi kèm khi báo lỗi. Token, cookie, vé đăng nhập và email được che trước khi ghi; log có thể có tên môn, tên file, giờ đồng bộ. Bạn mở file này được ở **Cài đặt** → **Nhật ký hoạt động**.
+App ghi nhật ký hoạt động vào `data\app.log` trên máy (tối đa khoảng 4 MB, tự xoay vòng) để bạn gửi kèm khi báo lỗi. Token, cookie, ticket đăng nhập và email được che trước khi ghi; log có thể có tên môn, tên file, giờ đồng bộ. Bạn mở file này được ở **Cài đặt** → **Nhật ký hoạt động**.
 
 **Thời gian lưu:** dữ liệu trên nằm trên máy tới khi bạn xóa (xem mục Xóa dữ liệu). Bản mới đồng bộ ghi đè bản cũ; app không gửi bản sao đi đâu.
 
@@ -55,7 +55,7 @@ Dữ liệu tải xuống có thể có thông tin của người khác (tên gi
 
 ## Đăng nhập và bảo mật
 
-- Mật khẩu chỉ được gõ trên trang SSO của trường, trong trình duyệt nhúng (WebView2). App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, WebView2 lưu mật khẩu (mã hóa trên máy) để tự điền lần sau.
+- Mật khẩu chỉ được gõ trên trang SSO của trường, trong trình duyệt trong app (WebView2). App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, WebView2 lưu mật khẩu (mã hóa trên máy) để tự điền lần sau.
 - Cookie đăng nhập nằm trong profile WebView2, do WebView2 mã hóa.
 - Token BK-LMS được mã hóa bằng Windows DPAPI, chỉ tài khoản Windows của bạn giải mã được.
 - App chỉ **đọc** dữ liệu. App không nộp bài, không đăng ký hay hủy môn, không thanh toán, không làm quiz thay bạn.

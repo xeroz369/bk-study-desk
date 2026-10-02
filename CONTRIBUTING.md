@@ -25,7 +25,7 @@ Sửa khung Luyện tập (`src/ui`) thì chạy thêm `npm run check` và `npx 
 ## Kiểm thử
 
 - **Test tự động** không gọi máy chủ thật của trường (LMS, MyBK, SSO) và không dùng tài khoản, cookie hay token thật.
-- **Lỗi mạng và máy chủ** (429 kèm `Retry-After`, 5xx, timeout, mất mạng, JSON hỏng) giả lập bằng `HttpMessageHandler` giả hoặc máy chủ giả, kèm dữ liệu mẫu đã ẩn danh (không tên, MSSV, token).
+- **Lỗi mạng và máy chủ** (429 kèm `Retry-After`, 5xx, timeout, mất mạng, JSON hỏng) giả lập bằng `HttpMessageHandler` giả hoặc mock server, kèm dữ liệu mẫu đã ẩn danh (không tên, MSSV, token).
 - **Logic phụ thuộc thời gian** dùng `TimeProvider`; test không `sleep`.
 - **Test giao diện** tìm control theo AutomationId và dùng UI Automation pattern (Invoke/Toggle/Value), không bấm theo tọa độ.
 - **Thử thật trên LMS/MyBK** chỉ do người làm bằng tay, chỉ đọc, trước khi phát hành.

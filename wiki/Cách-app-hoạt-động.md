@@ -6,7 +6,7 @@ Trang này ghi đúng những gì app gửi tới máy chủ của trường, đ
 
 ## 1. Đăng nhập HCMUT (SSO)
 
-- App mở trang đăng nhập SSO của trường (`sso.hcmut.edu.vn`, hệ thống CAS) trong một cửa sổ trình duyệt nhúng (WebView2). Bạn tự gõ tài khoản và mật khẩu; app không đọc mật khẩu.
+- App mở trang đăng nhập SSO của trường (`sso.hcmut.edu.vn`, hệ thống CAS) trong một cửa sổ trình duyệt trong app (WebView2). Bạn tự gõ tài khoản và mật khẩu; app không đọc mật khẩu.
 - Đăng nhập xong, máy chủ SSO đặt cookie phiên. Cookie nằm trong thư mục dữ liệu của WebView2 trên máy bạn.
 - Phiên SSO do máy chủ quyết định: hệ thống CAS mặc định hủy phiên sau 2 giờ không dùng và tối đa 8 giờ kể từ lúc đăng nhập. Khi app đang mở, cứ 60 phút app mở lại cổng SSO một lần để phiên không bị hủy vì để lâu (tắt được trong Cài đặt); quá 8 giờ thì vẫn phải đăng nhập lại.
 

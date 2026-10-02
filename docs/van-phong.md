@@ -70,6 +70,7 @@ Theo MST, trừ chỗ ghi khác:
 | Repository, issue, pull request, commit, build, token, API | giữ tiếng Anh | MST dịch "cam kết", "yêu cầu kéo"… mang nghĩa khác hoặc ít người dùng |
 
 - Tên sản phẩm, thương hiệu không dịch: BK-LMS, MyBK, Windows, GitHub (MSG).
+- **Từ dịch sang tiếng Việt mà dài hoặc dân IT ít dùng thì giữ tiếng Anh** (MSG §4.1.4: không dịch khái niệm mà bản dịch gây khó hiểu): DevTools, attestation, token, ticket, cookie, session, InfoBar, mock server, build, log. Tài liệu cho người dùng phổ thông thì lần đầu nhắc giải thích ngắn trong ngoặc. Cụm tiếng Việt đã quen (phiên đăng nhập, tự điền, chữ ký số, mã hóa) thì giữ tiếng Việt.
 - Từ viết tắt và từ đã quen giữ nguyên: API, URL, SSO, OK, tab (MSG). Lần đầu dùng khái niệm lạ thì ghi kèm: "đăng nhập một lần (SSO)".
 
 ## Nhắc tới giao diện

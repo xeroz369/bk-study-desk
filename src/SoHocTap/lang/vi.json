@@ -281,7 +281,7 @@
   "settings.keys": "Phím tắt",
   "settings.debug": "Nhật ký hoạt động",
   "settings.debugLog": "Ghi log chẩn đoán (tự tắt sau 7 ngày)",
-  "settings.debugNote": "Bình thường app chỉ ghi lỗi và các mốc chính vào app.log. Bật mục này khi cần báo lỗi để ghi thêm từng request và từng bước. Mật khẩu, token, cookie, vé đăng nhập và email được che trước khi ghi.",
+  "settings.debugNote": "Bình thường app chỉ ghi lỗi và các mốc chính vào app.log. Bật mục này khi cần báo lỗi để ghi thêm từng request và từng bước. Mật khẩu, token, cookie, ticket đăng nhập và email được che trước khi ghi.",
   "settings.openLog": "Mở file log",
   "settings.keys.back": "Quay lại trang trước",
   "settings.keys.click": "Chọn tiêu đề cột",
