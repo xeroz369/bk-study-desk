@@ -1,6 +1,6 @@
 # studypack: quiz tự soạn
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](../docs/en/studypack/README.md)
 
 Soạn quiz để tự ôn và gửi cho bạn bè: gõ trong app, nhờ AI hoặc đổi qua lại với Moodle (BK-LMS).
 
