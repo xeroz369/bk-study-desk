@@ -80,7 +80,7 @@ jobs:
             Remove-Item "feed/$rid/$env:PACK_ID-$rid-Setup.exe"
           }
           $sums = Get-ChildItem dist -File | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)" }
-          [IO.File]::WriteAllLines("$PWD/dist/SHA256SUMS.txt", [string[]]$sums)
+          [IO.File]::WriteAllText("$PWD/dist/SHA256SUMS.txt", ($sums -join "`n") + "`n")   # xuống dòng kiểu Unix: sha256sum -c đọc được
       # Chứng thực bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
       # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
       - uses: actions/attest-build-provenance@v2
