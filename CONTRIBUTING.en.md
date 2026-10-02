@@ -2,7 +2,7 @@
 
 [Tiếng Việt](CONTRIBUTING.md) · **English**
 
-> Translated from CONTRIBUTING.md (Vietnamese) for BK Study Desk 1.1.2.
+> Translated from CONTRIBUTING.md (Vietnamese) for BK Study Desk 1.1.3.
 
 Issues and pull requests are very welcome, especially when the university changes its pages or APIs. You can write issues in Vietnamese or English; keep technical terms in English.
 

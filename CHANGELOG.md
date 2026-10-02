@@ -6,7 +6,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
-## [1.1.2] - 2026-10-03
+## [1.1.3] - 2026-10-03
 
 ### Thêm
 
@@ -16,7 +16,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 - **Tải tài liệu…** chọn được loại file: PDF, slide (.ppt, .pptx), khác; số file và dung lượng tính theo lựa chọn ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - Bảng **Kết quả đăng ký** có thêm cột giảng viên và giờ học, lấy từ thời khóa biểu MyBK ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - Tài liệu tiếng Anh tách thành file riêng, dịch đầy đủ: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, và các trang Wiki tiếng Anh. Chuẩn viết tiếng Anh: `docs/english-style.md`.
-- Mục **Ủng hộ** trong README, Wiki và trang **Giới thiệu** của app: Ko-fi và mã QR MoMo/VietQR.
+- Mục **Ủng hộ** trong README và Wiki: Ko-fi và mã QR MoMo/VietQR.
 
 ### Thay đổi
 
@@ -25,6 +25,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 ### Sửa lỗi
 
 - Thời khóa biểu dạng danh sách có nhóm "Thứ 0" với giờ lạ (ví dụ "0:00–6:50"). Môn không có giờ cố định giờ ghi riêng ở dòng "Không có giờ cố định".
+
+## [1.1.2] - 2026-10-03 [YANKED]
+
+Đã gỡ khỏi trang phát hành vì bản này có mục ủng hộ trong app. Mọi thay đổi chuyển sang 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 
@@ -113,7 +117,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.2...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0

@@ -150,7 +150,7 @@ Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet tro
 
 ## Ủng hộ
 
-App miễn phí và sẽ tiếp tục được sửa lỗi, thêm tính năng. Nếu app giúp ích cho bạn, bạn có thể mời người làm app một ly cà phê. Ủng hộ là tự nguyện, không mở khóa gì thêm trong app. Trong app: **Giới thiệu** → **Ủng hộ**.
+App miễn phí và sẽ tiếp tục được sửa lỗi, thêm tính năng. Nếu app giúp ích cho bạn, bạn có thể mời người làm app một ly cà phê. Ủng hộ là tự nguyện, không mở khóa gì thêm trong app.
 
 - **Ko-fi:** [ko-fi.com/F1F3SN4UE](https://ko-fi.com/F1F3SN4UE) (thẻ quốc tế, PayPal).
 - **MoMo / ngân hàng (VietQR):** quét mã bên dưới bằng app MoMo hoặc app ngân hàng.
