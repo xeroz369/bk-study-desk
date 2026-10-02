@@ -62,7 +62,7 @@ public partial class HomePage : UserControl, IPage
         var now = Format.Now;
         var exam = s.Timeline.FirstOrDefault(e => e.Kind == "exam" && e.Time > now);
         var todo7 = s.Upcoming(24 * 7).Count(e => !e.Done && e.Kind is "assign" or "event");
-        var quiz14 = s.Upcoming(24 * 14).Count(e => e.Kind == "quiz" && !e.Done);
+        var quiz14 = s.Upcoming(24 * 14).Count(e => e.Kind == "quiz" && !e.Done && !e.Opens);
         var news = (s.Lms?.Announcements ?? []).Where(a => a.Time > now - 7 * 86400).ToList();
         var warn = TryFindResource("SystemFillColorCautionBrush") as Brush;
         var bad = TryFindResource("SystemFillColorCriticalBrush") as Brush;

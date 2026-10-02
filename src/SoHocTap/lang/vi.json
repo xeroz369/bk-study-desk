@@ -456,5 +456,14 @@
   "update.importPick": "Chọn thư mục bản zip BK Study Desk đang dùng trước đây",
   "update.importNone": "Không thấy dữ liệu của BK Study Desk trong thư mục này. Hãy chọn thư mục có thư mục con data.",
   "update.importConfirm": "Chép dữ liệu (đăng nhập LMS, kết quả luyện tập, quiz, cài đặt) từ:\n{0}\n\nDữ liệu hiện tại của bản cài sẽ bị thay. App sẽ khởi động lại. Đăng nhập HCMUT lại một lần sau đó.",
-  "update.importFailed": "Không chép được dữ liệu: {0}"
+  "update.importFailed": "Không chép được dữ liệu: {0}",
+  "grades.gradesEmpty": "Chưa có điểm môn nào.",
+  "grades.programEmpty": "Không có môn nào khớp bộ lọc.",
+  "grades.lmsEmpty": "Chưa có điểm nào trên LMS.",
+  "grades.regEmpty": "Chưa đăng ký môn nào trong kỳ này.",
+  "grades.socialEmpty": "Chưa có hoạt động công tác xã hội nào.",
+  "grades.decisionsEmpty": "Không có quyết định học vụ nào.",
+  "kind.quizOpen": "Quiz mở",
+  "timeline.dueOn": "hạn {0:dd/MM}",
+  "timeline.opens": "sắp mở"
 }

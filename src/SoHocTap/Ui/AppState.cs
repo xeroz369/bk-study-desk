@@ -7,7 +7,7 @@ namespace SoHocTap.Ui;
 
 /// <summary>Một mốc thời gian (hạn nộp, quiz, buổi học, thi, đợt đăng ký) gộp từ LMS và MyBK.</summary>
 public sealed record TimelineItem(string Id, string Kind, string Name, string Subject, long Time, string Label, string? Url, string Source,
-    bool Done = false, string? Warn = null, long? Course = null)
+    bool Done = false, string? Warn = null, long? Course = null, bool Opens = false, long? Due = null)
 {
     /// <summary>Loại mốc → key tên loại trong file ngôn ngữ.</summary>
     public static readonly Dictionary<string, string> KindText = new()
@@ -19,10 +19,12 @@ public sealed record TimelineItem(string Id, string Kind, string Name, string Su
         ["class"] = "kind.class",
         ["reg"] = "kind.reg",
     };
-    public string KindName => KindText.TryGetValue(Kind, out var k) ? L.T(k) : Kind;
+    public string KindName => Opens ? L.T("kind.quizOpen") : KindText.TryGetValue(Kind, out var k) ? L.T(k) : Kind;
     public string When => Format.DateTime(Time);
-    public string Left => Kind == "class" ? "" : Done ? L.T("timeline.done") : Format.Until(Time);
-    public bool Urgent => !Done && Kind != "class" && Time > Format.Now && Time - Format.Now < 86400;
+    /// <summary>Cột "Còn": mốc quiz mở thì ghi hạn đóng (mốc mở không phải hạn nộp, đếm ngược tới đó dễ hiểu nhầm).</summary>
+    public string Left => Kind == "class" ? "" : Done ? L.T("timeline.done")
+        : Opens ? (Due is { } d ? L.F("timeline.dueOn", Format.Local(d)) : L.T("timeline.opens")) : Format.Until(Time);
+    public bool Urgent => !Done && !Opens && Kind != "class" && Time > Format.Now && Time - Format.Now < 86400;
     public string Group => Format.DayGroup(Time);
     public string Hour => Format.Hm(Time);
     /// <summary>Nhóm theo ngày: "Hôm nay · Thứ năm 01/10".</summary>
@@ -150,7 +152,11 @@ public sealed partial class AppState(SourceHub hub)
             var seen = new HashSet<string>();
             foreach (var e in lms.Events)
             {
-                output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, e.Label, e.Url, "lms", Course: e.Course));
+                // Mốc mở của quiz: theo eventtype của Moodle; dữ liệu cũ chưa có eventtype thì so với giờ mở trong danh sách quiz.
+                var quiz = e.Kind == "quiz" ? lms.Quizzes.FirstOrDefault(q => q.Name == e.Name && q.Course == e.Course) : null;
+                var opens = e.Kind == "quiz" && (e.Phase == "open" || (e.Phase is null && quiz?.Open == e.Time && quiz.Close != e.Time));
+                var due = opens ? lms.Events.FirstOrDefault(x => x.Kind == "quiz" && x.Phase == "close" && x.Name == e.Name && x.Course == e.Course)?.Time ?? quiz?.Close : null;
+                output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, e.Label, e.Url, "lms", Course: e.Course, Opens: opens, Due: due));
                 seen.Add(e.Name + "|" + e.Time);
             }
             foreach (var q in lms.Quizzes)
@@ -162,7 +168,7 @@ public sealed partial class AppState(SourceHub hub)
                 foreach (var (t, label, close) in new[] { (q.Open, L.T("timeline.quizOpen"), false), (q.Close, L.T("timeline.quizClose"), true) })
                     if (t is { } time && !seen.Contains(q.Name + "|" + time))
                         output.Add(new TimelineItem($"qz{q.Id}{(close ? "close" : "open")}", "quiz", q.Name, q.Subject, time, label, q.Url, "lms",
-                            Done: close && q.Attempts.Count > 0, Warn: warn, Course: q.Course));
+                            Done: close && q.Attempts.Count > 0, Warn: warn, Course: q.Course, Opens: !close, Due: close ? null : q.Close));
             }
         }
         if (Mybk is { } M)

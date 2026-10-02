@@ -25,6 +25,7 @@
                 <DockPanel Margin="0,8,0,0">
                     <TextBlock DockPanel.Dock="Bottom" Margin="0,6,0,0" Style="{StaticResource Muted}" TextWrapping="Wrap"
                                Text="{ui:T grades.gradesNote}" />
+                    <TextBlock x:Name="GradesEmpty" DockPanel.Dock="Top" Margin="0,0,0,8" Style="{StaticResource Muted}" TextWrapping="Wrap" Visibility="Collapsed" />
                     <DataGrid x:Name="Grades" />
                 </DockPanel>
             </TabItem>
@@ -35,12 +36,14 @@
                         <ComboBox x:Name="Filter" Width="200" SelectionChanged="OnFilter" />
                         <TextBlock x:Name="Stale" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" />
                     </StackPanel>
+                    <TextBlock x:Name="ProgramEmpty" DockPanel.Dock="Top" Margin="0,0,0,8" Style="{StaticResource Muted}" TextWrapping="Wrap" Visibility="Collapsed" />
                     <DataGrid x:Name="ProgramGrid" />
                 </DockPanel>
             </TabItem>
             <TabItem Header="{ui:T grades.tabLms}">
                 <DockPanel Margin="0,8,0,0">
                     <TextBlock DockPanel.Dock="Bottom" Margin="0,6,0,0" Style="{StaticResource Muted}" Text="{ui:T grades.lmsNote}" />
+                    <TextBlock x:Name="LmsEmpty" DockPanel.Dock="Top" Margin="0,0,0,8" Style="{StaticResource Muted}" TextWrapping="Wrap" Visibility="Collapsed" />
                     <DataGrid x:Name="LmsGrades" />
                 </DockPanel>
             </TabItem>
@@ -48,13 +51,16 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
                     <StackPanel Margin="0,0,14,0">
                         <TextBlock x:Name="RegTitle" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="RegisteredEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" TextWrapping="Wrap" Visibility="Collapsed" />
                         <DataGrid x:Name="Registered" Margin="0,0,0,16" />
                         <TextBlock Text="{ui:T grades.fees}" Style="{StaticResource SectionTitle}" />
                         <TextBlock x:Name="FeesEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" Text="{ui:T grades.feesEmpty}" />
                         <DataGrid x:Name="Fees" Margin="0,0,0,16" />
                         <TextBlock x:Name="SocialTitle" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="SocialEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" TextWrapping="Wrap" Visibility="Collapsed" />
                         <DataGrid x:Name="Social" Margin="0,0,0,16" />
                         <TextBlock Text="{ui:T grades.decisions}" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="DecisionsEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" TextWrapping="Wrap" Visibility="Collapsed" />
                         <DataGrid x:Name="Decisions" />
                     </StackPanel>
                 </ScrollViewer>
