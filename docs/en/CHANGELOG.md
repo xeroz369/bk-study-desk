@@ -8,6 +8,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-10-03
+
 ### Added
 
 - The **Registration & records** tab has a **Lecturers and class times this term** table, grouped by lecturer: subject, code, class group, day, time, room ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)). The lecturer and time columns moved here from the **Registration results** table.
@@ -139,7 +141,8 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1

@@ -6,6 +6,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.4] - 2026-10-03
+
 ### Thêm
 
 - Tab **Đăng ký và học vụ** có bảng **Giảng viên và lịch dạy kỳ này**, nhóm theo giảng viên: môn, mã, nhóm lớp, thứ, giờ, phòng ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)). Cột giảng viên và giờ học chuyển từ bảng **Kết quả đăng ký** sang bảng này.
@@ -136,7 +138,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
