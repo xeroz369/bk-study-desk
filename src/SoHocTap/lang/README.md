@@ -1,6 +1,6 @@
 # Gói ngôn ngữ (language pack)
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](../../../docs/en/lang/README.md)
 
 Mọi chữ trên giao diện đều lấy từ các gói ngôn ngữ trong thư mục này.
 

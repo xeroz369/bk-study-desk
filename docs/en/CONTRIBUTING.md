@@ -1,6 +1,6 @@
 # Contributing
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CONTRIBUTING.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CONTRIBUTING.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CONTRIBUTING.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CONTRIBUTING.md)
 
 > Translated from CONTRIBUTING.md (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -22,8 +22,8 @@ If you change the Practice view (`src/ui`), also run `npm run check` and `npx pr
 - **No personal data** (names, student IDs, tokens, machine paths) in code, images, logs or issues.
 - **Simple code:** short functions that do one thing, clear names. Comments explain *why*; English, or Vietnamese with English technical terms, are both fine.
 - **UI text** lives in `src/SoHocTap/lang/*.json`: write `vi.json` first, then `en.json`, and keep every `{0}` placeholder.
-- **Style:** follow [docs/van-phong.md](docs/van-phong.md) (Vietnamese) and [docs/english-style.md](docs/english-style.md) (English) for terms, capitalization, punctuation, error messages and the changelog. Every rule there cites a source.
-- **Two languages:** when you change the Vietnamese part of a document, update its English counterpart (the `.en.md` file with the same name, the English Wiki page) in the same pull request.
+- **Style:** follow [docs/van-phong.md](../van-phong.md) (Vietnamese) and [docs/english-style.md](../english-style.md) (English) for terms, capitalization, punctuation, error messages and the changelog. Every rule there cites a source.
+- **Two languages:** when you change the Vietnamese part of a document, update its English counterpart (the file with the same name in `docs/en/`, the English Wiki page) in the same pull request.
 - **No guessing:** UI patterns, API limits, timeouts and similar numbers must come from primary sources (Microsoft Learn, source code, RFCs) or real measurements, cited in a comment. Anything the README or Wiki promises, the code must actually do.
 - **Commits** are short and follow [Conventional Commits](https://www.conventionalcommits.org/): `feat: ...`, `fix: ...`, `docs: ...`.
 
@@ -37,4 +37,4 @@ If you change the Practice view (`src/ui`), also run `npm run check` and `npx pr
 
 ## License
 
-By opening a pull request you agree to license your contribution under the project's license ([PolyForm Noncommercial 1.0.0](LICENSE.md)).
+By opening a pull request you agree to license your contribution under the project's license ([PolyForm Noncommercial 1.0.0](../../LICENSE.md)).

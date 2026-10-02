@@ -1,6 +1,6 @@
 # Đóng góp
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CONTRIBUTING.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CONTRIBUTING.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CONTRIBUTING.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](docs/en/CONTRIBUTING.md)
 
 Rất hoan nghênh issue và PR, nhất là khi trường đổi giao diện hay API. Issue cứ viết tiếng Việt; thuật ngữ kỹ thuật giữ tiếng Anh.
 
@@ -21,7 +21,7 @@ Sửa khung Luyện tập (`src/ui`) thì chạy thêm `npm run check` và `npx 
 - **Code đơn giản:** hàm ngắn, làm một việc, tên rõ nghĩa. Comment giải thích *vì sao*, tiếng Anh hoặc tiếng Việt kèm thuật ngữ đều được.
 - **Chữ trên giao diện** nằm trong `src/SoHocTap/lang/*.json`: viết `vi.json` trước, giữ đủ chỗ trống `{0}`.
 - **Văn phong** theo [docs/van-phong.md](docs/van-phong.md) (tiếng Việt) và [docs/english-style.md](docs/english-style.md) (tiếng Anh): thuật ngữ, viết hoa, dấu câu, thông báo lỗi, CHANGELOG. Mỗi quy tắc ở đó có nguồn.
-- **Tài liệu hai ngôn ngữ:** sửa phần tiếng Việt thì sửa luôn phần tiếng Anh (file `.en.md` cùng tên, trang Wiki tiếng Anh) trong cùng PR.
+- **Tài liệu hai ngôn ngữ:** sửa phần tiếng Việt thì sửa luôn phần tiếng Anh (file cùng tên trong `docs/en/`, trang Wiki tiếng Anh) trong cùng PR.
 - **Không đoán:** mẫu giao diện, giới hạn API, con số thời gian chờ... phải dựa trên tài liệu gốc (Microsoft Learn, mã nguồn, RFC) hoặc đo thật, và ghi nguồn trong comment. Câu nào trong README/Wiki hứa điều gì thì code phải làm đúng điều đó.
 - **Commit** ngắn gọn, theo [Conventional Commits](https://www.conventionalcommits.org/): `feat: ...`, `fix: ...`, `docs: ...`.
 

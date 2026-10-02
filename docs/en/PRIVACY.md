@@ -1,6 +1,6 @@
 # BK Study Desk Privacy Policy
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](PRIVACY.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](PRIVACY.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../PRIVACY.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](PRIVACY.md)
 
 > Translated from PRIVACY.md (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -72,4 +72,4 @@ Downloaded data may contain other people's information (lecturers' names, classm
 
 ## Contact
 
-Questions or bug reports: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issues are public: do not post names, student IDs, grades, tokens or screenshots with personal information. Report security issues privately per [SECURITY.en.md](SECURITY.en.md). Private privacy questions: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+Questions or bug reports: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issues are public: do not post names, student IDs, grades, tokens or screenshots with personal information. Report security issues privately per [SECURITY.md](SECURITY.md). Private privacy questions: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
