@@ -94,8 +94,7 @@ Theo MSG và Google, mỗi thông báo có: chuyện gì xảy ra, vì sao (nế
 Tiếng Việt là bản chính, cho sinh viên trường. Tiếng Anh là bản dịch **đầy đủ**, để ở file riêng, không viết tóm tắt cuối bài. Nghiên cứu và nguồn: `docs/research/2026-10-03-tai-lieu-da-ngon-ngu.md` (bản riêng); chuẩn viết tiếng Anh: [english-style.md](english-style.md).
 
 - **Tên file:** bản Việt giữ tên chuẩn mà GitHub nhận (`README.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`); bản Anh thêm `.en` trước đuôi: `PRIVACY.en.md`. `LICENSE.md` không dịch.
-- **Trên GitHub hiện chung một trang:** `export-public.ps1` ghép mỗi cặp `X.md` + `X.en.md` thành một file `X.md`: tiếng Việt trước, rồi tiêu đề **English** và bản tiếng Anh trong khối `<details>` thu gọn. Dòng chuyển ngôn ngữ trỏ tới `#english`, link `X.en.md` đổi thành `X.md#english`. Lý do: GitHub chỉ hiện một README ở trang chủ, một SECURITY ở tab Security, và link sang file `.en.md` mở trang xem file rời, khó dùng. Wiki thì giữ trang riêng cho từng thứ tiếng.
-- **Dòng chuyển ngôn ngữ** ngay dưới tiêu đề: bản Việt `**Tiếng Việt** · [English](PRIVACY.md#english)`, bản Anh `[Tiếng Việt](README.md) · **English**`.
+- **Badge chuyển ngôn ngữ** ngay dưới tiêu đề, giống nhau ở cả hai file, theo mẫu [multilanguage-readme-pattern](https://github.com/jonatasemidio/multilanguage-readme-pattern): `[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](X.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](X.en.md)`.
 - **CHANGELOG:** `CHANGELOG.md` và `CHANGELOG.en.md`, cùng số phiên bản và ngày.
 - **Release notes:** một bài, tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ.
 - **Wiki:** trang Việt giữ tên có dấu; trang Anh đặt tên tiếng Anh (`Home-en`, `Installation`, `Updating`, `Uninstalling`, `Practice`, `FAQ`, `How-the-app-works`, `Security-and-privacy`). Một `_Sidebar` chia hai khối Tiếng Việt / English.
