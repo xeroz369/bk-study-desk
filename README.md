@@ -156,7 +156,7 @@ Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet tro
 ## English
 
 <details>
-<summary><b>Show the English README</b></summary>
+<summary><b>BK Study Desk</b> (English version)</summary>
 
 ![BK Study Desk](docs/hero.png)
 
@@ -233,7 +233,7 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
 
 ## Security and privacy
 
-Full policy: [PRIVACY.en.md](PRIVACY.en.md).
+Full policy: [PRIVACY.md](PRIVACY.md#english).
 
 - Your password is typed only on the university SSO page. The app never reads it. If you choose **Save** when the sign-in window asks, the in-app browser (WebView2) stores the password encrypted on your PC, like Edge, to fill it in next time; otherwise nothing is saved.
 - Everything lives in the data folder `%LOCALAPPDATA%\BKStudyDesk.Data\data`, not in the install folder:
@@ -279,12 +279,12 @@ University URLs, API paths, folder names and sync intervals live in config (`Cor
 
 ## Contributing
 
-See [CONTRIBUTING.en.md](CONTRIBUTING.en.md) and the [code of conduct](CODE_OF_CONDUCT.en.md). Keep the **read-only** rule: no feature may submit work or change data on university systems.
+See [CONTRIBUTING.md](CONTRIBUTING.md#english) and the [code of conduct](CODE_OF_CONDUCT.md#english). Keep the **read-only** rule: no feature may submit work or change data on university systems.
 
 ## Contact
 
 - Bugs and ideas: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issues are public; do not paste student IDs, grades or tokens.
-- Security vulnerabilities: report privately per [SECURITY.en.md](SECURITY.en.md).
+- Security vulnerabilities: report privately per [SECURITY.md](SECURITY.md#english).
 - Official project contact (privacy, licensing, private matters): [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 
 ## License
