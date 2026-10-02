@@ -1,6 +1,6 @@
 # Quy tắc ứng xử
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CODE_OF_CONDUCT.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CODE_OF_CONDUCT.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CODE_OF_CONDUCT.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](docs/en/CODE_OF_CONDUCT.md)
 
 Dự án dành cho sinh viên giúp nhau học. Trong issue, PR và Wiki:
 

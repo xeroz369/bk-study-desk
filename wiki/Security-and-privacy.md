@@ -9,4 +9,4 @@
 - No server of its own, no analytics, no ads. GitHub is asked about new versions only if you allow it.
 - Update packages are verified with SHA-256; quizzes from other people have their HTML sanitized and run no scripts.
 
-Details: [PRIVACY.en.md](https://github.com/xeroz369/bk-study-desk/blob/main/PRIVACY.en.md) | Report a vulnerability: [SECURITY.en.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.en.md).
+Details: [PRIVACY.md](https://github.com/xeroz369/bk-study-desk/blob/main/docs/en/PRIVACY.md) | Report a vulnerability: [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/docs/en/SECURITY.md).

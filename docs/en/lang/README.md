@@ -1,6 +1,6 @@
 # Language packs
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../../src/SoHocTap/lang/README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md)
 
 > Translated from README.md (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -55,4 +55,4 @@ Each pack is a flat JSON object of `"key": "text"` pairs, saved as UTF-8 with 2-
 
 The choice is saved in `data\config.json` under the key `app.language`. Pull requests that add languages are very welcome.
 
-**When you add or change UI text:** edit `vi.json` first, then add the translation to the other packs. English text follows [docs/english-style.md](../../../docs/english-style.md).
+**When you add or change UI text:** edit `vi.json` first, then add the translation to the other packs. English text follows [docs/english-style.md](../../english-style.md).

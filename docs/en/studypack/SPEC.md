@@ -1,6 +1,6 @@
 # Study Pack v1: practice pack format
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](SPEC.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](SPEC.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../../studypack/SPEC.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](SPEC.md)
 
 > Translated from SPEC.md (Vietnamese) for BK Study Desk 1.1.3.
 

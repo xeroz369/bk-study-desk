@@ -1,6 +1,6 @@
 # Study Pack v1: định dạng gói luyện tập
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](SPEC.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](SPEC.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](SPEC.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](../docs/en/studypack/SPEC.md)
 
 Hướng dẫn cho người dùng: [Wiki: Luyện tập](https://github.com/xeroz369/bk-study-desk/wiki/Luy%E1%BB%87n-t%E1%BA%ADp). File này là đặc tả đầy đủ cho người viết công cụ và cho AI.
 

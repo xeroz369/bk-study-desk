@@ -1,6 +1,6 @@
 # Changelog
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
 > Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.3.
 
@@ -10,6 +10,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Changed
 
+- English documents moved to `docs/en/`; the repository root keeps only the Vietnamese versions. The **About** page opens `docs/en/PRIVACY.md` when the interface is in English.
 - Documents (README, PRIVACY, SECURITY, CONTRIBUTING, CHANGELOG, code of conduct, studypack) use a row of **Tiếng Việt** | **English** badges at the top to switch language, following the multilanguage-readme-pattern.
 
 ## [1.1.3] - 2026-10-03

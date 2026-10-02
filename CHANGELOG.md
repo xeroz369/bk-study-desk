@@ -1,6 +1,6 @@
 # Nhật ký thay đổi
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](docs/en/CHANGELOG.md)
 
 Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) (tên mục dịch sang tiếng Việt), số phiên bản theo [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
@@ -8,6 +8,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thay đổi
 
+- Bản tiếng Anh của tài liệu chuyển vào thư mục `docs/en/`; gốc repo chỉ còn bản tiếng Việt. Trang **Giới thiệu** mở `docs/en/PRIVACY.md` khi giao diện tiếng Anh.
 - Tài liệu (README, PRIVACY, SECURITY, CONTRIBUTING, CHANGELOG, quy tắc ứng xử, studypack) dùng hàng badge **Tiếng Việt** | **English** ở đầu để chuyển ngôn ngữ, theo mẫu multilanguage-readme-pattern.
 
 ## [1.1.3] - 2026-10-03

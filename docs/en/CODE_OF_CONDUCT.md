@@ -1,6 +1,6 @@
 # Code of conduct
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](CODE_OF_CONDUCT.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CODE_OF_CONDUCT.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CODE_OF_CONDUCT.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CODE_OF_CONDUCT.md)
 
 > Translated from CODE_OF_CONDUCT.md (Vietnamese) for BK Study Desk 1.1.3.
 

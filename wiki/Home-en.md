@@ -20,4 +20,4 @@ A Windows app that brings Ho Chi Minh City University of Technology's **BK-LMS**
 
 ## Support
 
-The app is free and will keep getting fixes and new features. If it helps you, you can buy the author a coffee on [Ko-fi](https://ko-fi.com/F1F3SN4UE) or scan the [MoMo/VietQR code](https://github.com/xeroz369/bk-study-desk/blob/main/README.en.md#support). Support is voluntary and unlocks nothing extra.
+The app is free and will keep getting fixes and new features. If it helps you, you can buy the author a coffee on [Ko-fi](https://ko-fi.com/F1F3SN4UE) or scan the [MoMo/VietQR code](https://github.com/xeroz369/bk-study-desk/blob/main/docs/en/README.md#support). Support is voluntary and unlocks nothing extra.

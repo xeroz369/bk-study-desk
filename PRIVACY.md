@@ -1,6 +1,6 @@
 # Chính sách quyền riêng tư của BK Study Desk
 
-[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](PRIVACY.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](PRIVACY.en.md)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](PRIVACY.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](docs/en/PRIVACY.md)
 
 Cập nhật: 03/10/2026
 

@@ -108,10 +108,10 @@ Theo MSG và Google, mỗi thông báo có: chuyện gì xảy ra, vì sao (nế
 
 Tiếng Việt là bản chính, cho sinh viên trường. Tiếng Anh là bản dịch **đầy đủ**, để ở file riêng, không viết tóm tắt cuối bài. Nghiên cứu và nguồn: `docs/research/2026-10-03-tai-lieu-da-ngon-ngu.md` (bản riêng); chuẩn viết tiếng Anh: [english-style.md](english-style.md).
 
-- **Tên file:** bản Việt giữ tên chuẩn mà GitHub nhận (`README.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`); bản Anh thêm `.en` trước đuôi: `PRIVACY.en.md`. `LICENSE.md` không dịch.
-- **Badge chuyển ngôn ngữ** ngay dưới tiêu đề, giống nhau ở cả hai file, theo mẫu [multilanguage-readme-pattern](https://github.com/jonatasemidio/multilanguage-readme-pattern): `[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](X.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](X.en.md)`.
-- **CHANGELOG:** `CHANGELOG.md` và `CHANGELOG.en.md`, cùng số phiên bản và ngày.
-- **Release notes:** GitHub chỉ cho một bài nên viết cả hai thứ tiếng trong cùng bài: tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ. Dòng đầu là hàng badge giống tài liệu, link tới mục phiên bản đó trong `CHANGELOG.md` và `CHANGELOG.en.md` (ví dụ `#113---2026-10-03`).
+- **Vị trí:** bản Việt nằm ở chỗ chuẩn mà GitHub nhận (`README.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md` ở gốc repo), là bản chính. Bản Anh để riêng trong `docs/en/`, cùng tên file (`docs/en/README.md`, `docs/en/studypack/SPEC.md`…), để gốc repo không bị lặp mỗi file hai lần. `LICENSE.md` không dịch.
+- **Badge chuyển ngôn ngữ** ngay dưới tiêu đề, giống nhau ở cả hai file, theo mẫu [multilanguage-readme-pattern](https://github.com/jonatasemidio/multilanguage-readme-pattern): `[![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](X.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](docs/en/X.md)` (trong bản Anh, link Tiếng Việt là `../../X.md`).
+- **CHANGELOG:** `CHANGELOG.md` và `docs/en/CHANGELOG.md`, cùng số phiên bản và ngày.
+- **Release notes:** GitHub chỉ cho một bài nên viết cả hai thứ tiếng trong cùng bài: tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ. Dòng đầu là hàng badge giống tài liệu, link tới mục phiên bản đó trong `CHANGELOG.md` và `docs/en/CHANGELOG.md` (ví dụ `#113---2026-10-03`).
 - **Wiki:** trang Việt giữ tên có dấu; trang Anh đặt tên tiếng Anh (`Home-en`, `Installation`, `Updating`, `Uninstalling`, `Practice`, `FAQ`, `How-the-app-works`, `Security-and-privacy`). Một `_Sidebar` chia hai khối Tiếng Việt / English.
 - **Issue template:** một file, ghi hai thứ tiếng: `Báo lỗi / Bug report`.
 - **Đồng bộ:** sửa bản Việt trước, bản Anh trong cùng PR. Bản Anh có dòng `> Translated from ... (Vietnamese) for BK Study Desk x.y.z.`
