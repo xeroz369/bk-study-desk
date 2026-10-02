@@ -23,7 +23,7 @@ Chọn **Luyện tập** trên thanh menu trên cùng.
 Trên trang này có:
 - **Ôn hôm nay**: những câu app nhắc bạn làm lại. Câu làm sai sẽ quay lại vào hôm sau; làm đúng thì lâu hơn mới gặp lại.
 - **Thi thử đề ngẫu nhiên**: app bốc câu thành một đề có đếm giờ.
-- **Các môn**: chọn tên môn để vào học.
+- **Môn học**: chọn tên môn để vào học.
 - **Quiz tự soạn và đã nhập**: các quiz bạn soạn hoặc nhận từ bạn bè. Muốn gỡ quiz nào thì bấm chuột phải vào quiz đó.
 
 ## 2. Làm quiz
@@ -77,7 +77,7 @@ Dùng được ChatGPT, Claude, Gemini hay bất kỳ AI chat nào.
 6. AI trả về một khung chữ. Chọn nút **Copy** ở góc khung đó.
 7. Quay lại app, chọn tab **Nhập**, dán vào ô lớn, rồi chọn **Nhập vào bài này**.
 
-![Tab Nhờ AI: copy prompt gửi cho AI](images/5-nho-ai.png)
+![Tab Nhờ AI: sao chép prompt gửi cho AI](images/5-nho-ai.png)
 
 ![Tab Nhập: dán kết quả AI rồi chọn Nhập](images/6-nhap.png)
 
@@ -87,7 +87,7 @@ Dùng được ChatGPT, Claude, Gemini hay bất kỳ AI chat nào.
 
 Bạn bè gửi cho bạn một file đuôi **`.md`** hoặc **`.zip`** (qua Zalo, Messenger, email…).
 
-1. Tải file về máy.
+1. Tải file xuống máy.
 2. Vào **Luyện tập**, chọn **Nhập file…** (góc phải ô *Quiz tự soạn và đã nhập*).
 3. Chọn file vừa tải. Xong.
 
@@ -109,21 +109,21 @@ App còn mở được file **Moodle XML**, **GIFT**, **Aiken** (dạng câu h�
 
 ## 7. Quiz LMS đã lưu
 
-Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** để bạn ôn lại khi LMS chậm hoặc đã đóng. Xem ở ô **Quiz LMS đã lưu** trên trang Luyện tập (trang *Kho quiz LMS*).
+Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** để bạn ôn lại khi LMS chậm hoặc đã đóng. Xem ở ô **Quiz LMS đã lưu** trên trang Luyện tập (trang **Kho quiz LMS**).
 
 - App **chỉ đọc** bản xem lại sau khi bạn nộp. App không đọc quiz đang làm, không làm hay nộp bài thay bạn.
 - Quiz không cho xem lại thì app chỉ lưu tên và điểm. Chọn **Ghi lại** để tự gõ những câu bạn còn nhớ; đáp án thì bạn tự kiểm.
 - Quiz LMS đã lưu **chỉ gửi cho người khác được khi quiz đã đóng**. App tự khóa nút xuất trước thời điểm đó.
-- Không muốn lưu thì tắt ở **Cài đặt → Tự lưu quiz LMS đã nộp để ôn lại**.
+- Không muốn lưu thì tắt ở **Cài đặt** → **Đồng bộ và nhắc hạn** → **Tự lưu quiz LMS đã nộp để ôn lại**.
 
 ## 8. Gặp lỗi thì làm gì
 
 | Gặp chuyện | Làm thế này |
 |---|---|
-| Chọn **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì copy nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
+| Chọn **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì sao chép nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
 | Công thức hiện ra toàn ký hiệu lạ | Bảo AI: "viết công thức trong `\(` và `\)`, không gấp đôi dấu `\`". |
 | Câu bị vào nhầm bài | Tên chương và tên bài trong file phải trùng với tên trong app. Nhờ AI ở đúng bài (mục 4) thì app tự điền tên sẵn. |
-| Muốn xóa một câu tự soạn | Vào **Soạn** → tab **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
+| Muốn xóa một câu tự soạn | Vào **Soạn**** → **tab**Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
 | Muốn gỡ cả quiz đã nhập | Trang Luyện tập, bấm chuột phải vào quiz, chọn **Gỡ quiz này**. |
 
 ---

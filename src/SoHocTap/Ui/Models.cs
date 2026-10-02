@@ -9,7 +9,7 @@ namespace SoHocTap.Ui;
 // Tên field theo JSON (camelCase). Field nào lúc là số lúc là chữ thì để JsonNode.
 
 public sealed record LmsCourse(long Id, string Name, string Subject, string Code, string? Part, string Term, string Teacher, string Url, string Folder);
-public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url);
+public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url, string? Phase = null);
 public sealed record LmsAttempt(long Id, long Finished, double? Grade);
 public sealed record LmsQuiz(long Id, long Course, string Subject, string Name, long? Open, long? Close, List<LmsAttempt> Attempts, string Url);
 public sealed record LmsNewFile(string Name, string Path, string Subject, long At, bool? Updated);

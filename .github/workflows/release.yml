@@ -1,9 +1,11 @@
 name: release
 
-# Build bộ cài Windows (x64, ARM64) và gói tự cập nhật.
-# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt; gói cập nhật để ở artifact.
+# Build bộ cài Windows (x64, ARM64), gói tự cập nhật và gói MSIX cho Microsoft Store.
+# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt; gói cập nhật và MSIX để ở artifact.
 # - Bấm Publish release: job publish-feed mới đưa gói cập nhật lên release cố định "updates",
 #   nên app của người dùng chỉ thấy bản mới sau khi người làm app đã duyệt bản nháp.
+# - Cùng lúc đó job publish-store nộp MSIX lên Microsoft Store (chờ người làm app duyệt ở environment "microsoft-store").
+#   Store còn kiểm duyệt thêm vài ngày nên bản Store thường ra sau bản GitHub.
 on:
   push:
     tags: ['v*.*.*']
@@ -31,7 +33,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write       # tạo bản nháp release
-      id-token: write       # chứng thực nguồn gốc bản build (artifact attestation)
+      id-token: write       # attestation cho bộ cài
       attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,12 +85,21 @@ jobs:
           }
           $sums = Get-ChildItem dist -File | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)" }
           [IO.File]::WriteAllText("$PWD/dist/SHA256SUMS.txt", ($sums -join "`n") + "`n")   # xuống dòng kiểu Unix: sha256sum -c đọc được
-      # Chứng thực bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
+      # Attestation: chứng minh bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
       # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         if: ${{ !github.event.repository.private }}
         with:
           subject-path: 'dist/*.exe'
+      # Gói MSIX cho Microsoft Store (x64, chưa ký: Store tự ký khi publish). Dùng chung script với máy dev.
+      - name: Store package
+        shell: pwsh
+        run: ./store/package-msix.ps1 -Version '${{ steps.v.outputs.version }}' -Out msix -SkipUi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: store-${{ steps.v.outputs.tag }}
+          path: msix/*.msix
+          retention-days: 90
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: feed-${{ steps.v.outputs.tag }}
@@ -126,3 +137,55 @@ jobs:
             gh release create updates -R "$REPO" --prerelease --title "Gói tự cập nhật (không cần tải)" \
               --notes "App tự tải các file ở đây khi bạn cho phép cập nhật. Muốn cài app thì tải bộ cài ở bản phát hành mới nhất."
           gh release upload updates -R "$REPO" --clobber $(find feed -type f)
+
+  # Nộp MSIX lên Microsoft Store bằng Microsoft Store Developer CLI (msstore), theo hướng dẫn chính thức:
+  # https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions
+  # - Chỉ chạy khi biến repo STORE_PUBLISH = 'true' (đặt sau khi đã cấu hình xong secret Partner Center).
+  # - Environment "microsoft-store" bắt người làm app bấm duyệt trước khi job chạy, secret chỉ job này đọc được.
+  # - msstore publish tạo submission mới từ bản đang có trên Store, thay package rồi commit; Store kiểm duyệt như nộp tay.
+  #   Đang có submission chờ duyệt thì job lỗi, không ghi đè: đợi Store duyệt xong rồi chạy lại job.
+  publish-store:
+    if: github.event_name == 'release' && !github.event.release.prerelease && vars.STORE_PUBLISH == 'true'
+    runs-on: windows-latest
+    environment: microsoft-store
+    permissions:
+      actions: read         # tải artifact MSIX của lần build
+    env:
+      STORE_PRODUCT_ID: 9NX0KRZRR850
+      MSSTORE_CLI_VERSION: v0.4.3
+    steps:
+      - name: Download MSIX
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $run = gh run list -R $env:REPO --workflow release.yml --json databaseId,headBranch,conclusion,event `
+            --jq "[.[] | select(.conclusion==\"success\" and .event!=\"release\" and .headBranch==\"$env:TAG\")][0].databaseId"
+          if (!$run) { throw "Không tìm thấy lần build của $env:TAG" }
+          gh run download $run -R $env:REPO -n "store-$env:TAG" -D msix
+          if ($LASTEXITCODE) { throw 'Không tải được artifact MSIX' }
+          Get-ChildItem msix -Filter *.msix | ForEach-Object { "$($_.Name) $([math]::Round($_.Length / 1MB, 1)) MB" }
+      - uses: microsoft/microsoft-store-apppublisher@cc9910a8d59f2eb55cbb83df0a3800cf3b5300e0 # v1.4
+        with:
+          version: ${{ env.MSSTORE_CLI_VERSION }}
+      - name: Configure msstore
+        shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          SELLER_ID: ${{ secrets.SELLER_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+        run: |
+          msstore settings --enableTelemetry false
+          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
+          if ($LASTEXITCODE) { throw 'Không đăng nhập được Partner Center. Kiểm tra 4 secret và hạn của client secret.' }
+      - name: Submit to Microsoft Store
+        shell: pwsh
+        run: |
+          $msix = (Get-ChildItem msix -Filter *.msix | Select-Object -First 1).FullName
+          msstore publish $msix -id $env:STORE_PRODUCT_ID
+          if ($LASTEXITCODE) { throw 'Nộp lên Store lỗi (xem log msstore ở trên).' }
+          msstore submission status $env:STORE_PRODUCT_ID

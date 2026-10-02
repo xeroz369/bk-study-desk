@@ -456,5 +456,14 @@
   "update.importPick": "Choose the folder of the BK Study Desk zip version you used before",
   "update.importNone": "No BK Study Desk data found in this folder. Choose the folder that contains a data subfolder.",
   "update.importConfirm": "Copy data (LMS sign-in, practice results, quizzes, settings) from:\n{0}\n\nThe installed version's current data will be replaced. The app will restart. Sign in to HCMUT once more afterwards.",
-  "update.importFailed": "Could not copy the data: {0}"
+  "update.importFailed": "Could not copy the data: {0}",
+  "grades.gradesEmpty": "No course grades yet.",
+  "grades.programEmpty": "No courses match this filter.",
+  "grades.lmsEmpty": "No grades on LMS yet.",
+  "grades.regEmpty": "No courses registered this term.",
+  "grades.socialEmpty": "No community service activities yet.",
+  "grades.decisionsEmpty": "No academic decisions.",
+  "kind.quizOpen": "Quiz opens",
+  "timeline.dueOn": "due {0:MMM d}",
+  "timeline.opens": "opens"
 }

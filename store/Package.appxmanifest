@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Manifest MSIX của BK Study Desk (bản Microsoft Store). package-store.ps1 thay các giá trị $...$:
+    $NAME$, $PUBLISHER$, $PUBLISHER_DISPLAY$: lấy ở Partner Center → app → Product identity
+      (Package/Identity/Name, Package/Identity/Publisher, Package/Properties/PublisherDisplayName).
+    $VERSION$: x.y.z.0 (Store bắt buộc số cuối là 0).
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap5 rescap">
+
+  <Identity Name="$NAME$" Publisher="$PUBLISHER$" Version="$VERSION$" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>BK Study Desk</DisplayName>
+    <PublisherDisplayName>$PUBLISHER_DISPLAY$</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>App không chính thức cho sinh viên HCMUT: deadline, lịch, tài liệu và điểm từ BK-LMS và MyBK trong một cửa sổ.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="vi-VN" />
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="BKStudyDesk.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="BK Study Desk"
+        Description="Deadline, lịch, tài liệu và điểm từ BK-LMS và MyBK"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png"
+                         Square310x310Logo="Assets\LargeTile.png" ShortName="BK Study Desk" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- Autostart của bản Store (registry Run không dùng được trong package). Mặc định tắt, user bật trong Cài đặt. -->
+        <uap5:Extension Category="windows.startupTask" Executable="BKStudyDesk.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap5:StartupTask TaskId="BKStudyDeskStartup" Enabled="false" DisplayName="BK Study Desk" />
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <!-- App desktop (WPF) chạy full trust. Partner Center sẽ hỏi lý do: "Desktop WPF app, needs full trust to run." -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

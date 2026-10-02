@@ -128,32 +128,55 @@ public partial class GradesPage : UserControl, IPage
         view.SortDescriptions.Add(new SortDescription(nameof(GradeLine.TermSort), ListSortDirection.Descending));
         view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(GradeLine.TermName)));
         Grades.ItemsSource = view;
+        Show(Grades, GradesEmpty, lines.Count, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.gradesEmpty"));
 
         RefreshProgram();
         Stale.Text = _view?.Stale == true ? L.F("grades.stale", m?.Curriculum?.Updated) : "";
 
-        LmsGrades.ItemsSource = Grids.Grouped((_host.State.Lms?.Grades ?? []).SelectMany(b => b.Items.Select(i =>
-            new LmsGradeLine(b.Subject + (b.Part is null ? "" : " · " + b.Part), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? ""))), nameof(LmsGradeLine.Book));
+        var lms = (_host.State.Lms?.Grades ?? []).SelectMany(b => b.Items.Select(i =>
+            new LmsGradeLine(b.Subject + (b.Part is null ? "" : " · " + b.Part), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? ""))).ToList();
+        LmsGrades.ItemsSource = Grids.Grouped(lms, nameof(LmsGradeLine.Book));
+        Show(LmsGrades, LmsEmpty, lms.Count, _host.State.NoDataReason("lms", "LMS") ?? L.T("grades.lmsEmpty"));
 
         RegTitle.Text = L.F("grades.regTitle", m?.Term.Name ?? L.T("grades.thisTerm"));
         Registered.ItemsSource = m?.Registered ?? [];
+        Show(Registered, RegisteredEmpty, m?.Registered?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.regEmpty"));
         Fees.ItemsSource = m?.Fees ?? [];
         FeesEmpty.Visibility = (m?.Fees?.Count ?? 0) == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         Fees.Visibility = FeesEmpty.Visibility == System.Windows.Visibility.Visible ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
         SocialTitle.Text = L.F("grades.socialTitle", Format.Score(m?.SocialWork?.Days));
         Social.ItemsSource = m?.SocialWork?.Activities ?? [];
+        Show(Social, SocialEmpty, m?.SocialWork?.Activities?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.socialEmpty"));
         Decisions.ItemsSource = m?.Decisions ?? [];
+        Show(Decisions, DecisionsEmpty, m?.Decisions?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.decisionsEmpty"));
+    }
+
+    /// <summary>
+    /// Bảng trống thì ẩn bảng, hiện câu nói rõ vì sao (đang đồng bộ, lỗi, hay thật sự không có gì).
+    /// DataGrid trống trong theme Fluent co cột về gần 0 và không có chữ ở header; hiện lại thì Grids.RestoreWidths đặt lại độ rộng.
+    /// </summary>
+    private static void Show(DataGrid grid, TextBlock empty, int count, string reason)
+    {
+        empty.Text = reason;
+        empty.Visibility = count == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        grid.Visibility = count == 0 ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
     }
 
     private void RefreshProgram()
     {
-        if (_view is null) { ProgramGrid.ItemsSource = null; return; }
+        if (_view is null)
+        {
+            ProgramGrid.ItemsSource = null;
+            Show(ProgramGrid, ProgramEmpty, 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.programEmpty"));
+            return;
+        }
         var f = Filter.SelectedItem as FilterItem ?? Filters[0];
         var rows = _view.Blocks.SelectMany(b => b.Courses.Where(c => f.Match.Length == 0 || f.Match.Contains(c.Status)).Select(c => (b, c))).ToList();
         var titles = _view.Blocks.DistinctBy(b => b.Block.Id ?? "").ToDictionary(b => b.Block.Id ?? "", b => b.Title);
         var v = new ListCollectionView(rows.Select(x => x.c).ToList());
         v.GroupDescriptions.Add(new PropertyGroupDescription(null, new BlockTitle(titles)));
         ProgramGrid.ItemsSource = v;
+        Show(ProgramGrid, ProgramEmpty, rows.Count, L.T("grades.programEmpty"));
     }
 
     /// <summary>Tên nhóm của một môn trong CTĐT = tiêu đề khối (tên · bắt buộc/tự chọn · tín chỉ).</summary>

@@ -122,7 +122,7 @@
 				{ label: 'Quiz LMS đã lưu', value: Study.quizInfo.length, note: 'kho quiz', href: '#kho-quiz' },
 			]}
 		/>
-		<Panel title="Các môn">
+		<Panel title="Môn học">
 			{#each Study.manifest.courses as c (c.id)}
 				{@const s = Progress.courseStats(c.id)}
 				<DataRow
@@ -160,7 +160,7 @@
 					menu={x.pack ? () => [{ label: 'Gỡ quiz này', run: () => removePack(x.pack!.id, x.pack!.title) }] : undefined}
 				/>
 			{:else}
-				<DataRow title="Chưa có" sub="Soạn quiz của bạn, hoặc Nhập file… (.md, .zip, .json)" dim />
+				<DataRow title="Chưa có" sub="Soạn quiz của bạn hoặc Nhập file… (.md, .zip, .json)" dim />
 			{/each}
 		</Panel>
 		<input bind:this={picker} type="file" accept=".md,.zip,.json" class="hidden" onchange={importFile} />
