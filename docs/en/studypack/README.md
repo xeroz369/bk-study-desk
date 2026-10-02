@@ -2,7 +2,7 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../../studypack/README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md)
 
-> Translated from README.md (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from README.md (Vietnamese) for BK Study Desk 1.1.4.
 
 Write quizzes to revise and share with friends: type them in the app, ask AI, or convert to and from Moodle (BK-LMS).
 

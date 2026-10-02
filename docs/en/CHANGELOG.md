@@ -2,16 +2,30 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.3.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.4.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- The **Registration & records** tab has a **Lecturers and class times this term** table, grouped by lecturer: subject, code, class group, day, time, room ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)). The lecturer and time columns moved here from the **Registration results** table.
+- After you sign in again through **Open MyBK** / **Open LMS** on the error bar, the app syncs that source again without pressing **Sync** ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- **Practice**: right-click menus on quiz packs, courses and lessons have every action: open, create a question, import into the course, export to share (**Xuất để chia sẻ**), remove.
+
 ### Changed
+
+- **Practice**: the **Soạn** (Write) button is renamed **Tạo** (Create); **Tạo**, **Nhập** and **Xuất** (Create, Import, Export) are three separate buttons.
+- Interface text drops decorative characters (middle dots, ellipses, arrows) in favour of commas and plain words.
 
 - English documents moved to `docs/en/`; the repository root keeps only the Vietnamese versions. The **About** page opens `docs/en/PRIVACY.md` when the interface is in English.
 - Documents (README, PRIVACY, SECURITY, CONTRIBUTING, CHANGELOG, code of conduct, studypack) use a row of **Tiếng Việt** | **English** badges at the top to switch language, following the multilanguage-readme-pattern.
+
+### Fixed
+
+- The **Download** dialog did not open in 1.1.3.
+- The registration rounds table was empty when MyBK redirected to its home page instead of the registration page. The app now opens the right page again, reports an error if the table is still missing, and does not save an empty result.
 
 ## [1.1.3] - 2026-10-03
 

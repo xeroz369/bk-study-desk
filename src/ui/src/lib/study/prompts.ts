@@ -17,7 +17,7 @@ export interface PromptInput {
 
 export const FORMAT = `---
 mon: <MÃ MÔN> <Tên môn>
-tac-gia: <tên người soạn>
+tac-gia: <tên người tạo>
 tao-boi: <tên AI và model của bạn>
 da-kiem: <bạn đã kiểm đáp án bằng cách nào>
 ---
@@ -58,9 +58,9 @@ da-kiem: <bạn đã kiểm đáp án bằng cách nào>
 = <đáp án> | <cách viết khác cũng đúng>
 > <Lời giải>`;
 
-const RULES = `1. Chỉ trả về MỘT khối \`\`\`markdown … \`\`\`, không viết gì ngoài khối đó.
-2. Công thức viết TeX: \\( … \\) trong dòng, \\[ … \\] riêng dòng. Viết TeX bình thường (\\frac, \\sqrt), KHÔNG gấp đôi dấu \\.
-3. Mỗi câu phải có: đề, đáp án (các dòng "- [x]/- [ ]" hoặc một dòng "= …"), và lời giải (dòng bắt đầu bằng ">").
+const RULES = `1. Chỉ trả về MỘT khối \`\`\`markdown ... \`\`\`, không viết gì ngoài khối đó.
+2. Công thức viết TeX: \\( ... \\) trong dòng, \\[ ... \\] riêng dòng. Viết TeX bình thường (\\frac, \\sqrt), KHÔNG gấp đôi dấu \\.
+3. Mỗi câu phải có: đề, đáp án (các dòng "- [x]/- [ ]" hoặc một dòng "= ..."), và lời giải (dòng bắt đầu bằng ">").
 4. Trắc nghiệm: 4 phương án; phương án nhiễu là lỗi sinh viên hay mắc (sai dấu, lệch một bước, quên đổi radian, nhầm công thức), không phải số ngẫu nhiên.
 5. Câu tính toán: TỰ TÍNH LẠI đáp án (chạy code nếu được) rồi mới ghi. Không chắc thì bỏ câu đó.
 6. Dùng đúng ký hiệu, tên phương pháp của tài liệu được gửi kèm. Không bịa kiến thức ngoài tài liệu.
@@ -89,8 +89,8 @@ function where(p: PromptInput) {
 
 export function buildPrompt(mode: PromptMode, p: PromptInput): string {
 	const task = {
-		soan: `Soạn khoảng ${p.count} câu luyện tập mới (kèm kiến thức ngắn nếu là bài mới) từ tài liệu tôi gửi kèm.`,
-		'tuong-tu': `Soạn ${p.count} câu TƯƠNG TỰ câu mẫu bên dưới: cùng dạng bài và mức khó, đổi số liệu/ngữ cảnh, tính lại đáp án.`,
+		soan: `Tạo khoảng ${p.count} câu luyện tập mới (kèm kiến thức ngắn nếu là bài mới) từ tài liệu tôi gửi kèm.`,
+		'tuong-tu': `Tạo ${p.count} câu TƯƠNG TỰ câu mẫu bên dưới: cùng dạng bài và mức khó, đổi số liệu/ngữ cảnh, tính lại đáp án.`,
 		soat: 'Soát lại gói câu hỏi bên dưới: tính lại từng đáp án, sửa câu sai, lời giải thiếu bước. Trả về TOÀN BỘ gói đã sửa; cuối mỗi câu đã sửa thêm dòng "> Đã sửa: <lý do>".',
 		'giai-thich':
 			'Giải thích câu bên dưới cho sinh viên chưa hiểu: nhắc lại kiến thức cần dùng, giải từng bước, chỉ ra vì sao các phương án sai là sai, và một mẹo nhớ. Trả lời bằng chữ thường (Markdown), KHÔNG cần theo ĐỊNH DẠNG gói.',
@@ -106,9 +106,9 @@ export function buildPrompt(mode: PromptMode, p: PromptInput): string {
 		.filter(Boolean)
 		.join('\n');
 	if (mode === 'giai-thich')
-		return `# VAI TRÒ\nBạn là trợ giảng đại học, giải thích rõ ràng, ngắn gọn bằng tiếng Việt.\n\n# NHIỆM VỤ\n${task}\n\n# ĐẦU VÀO\n${input}\n\n# LUẬT\nCông thức viết TeX \\( … \\). Dùng đúng ký hiệu trong câu. Không dài quá 300 chữ.`;
+		return `# VAI TRÒ\nBạn là trợ giảng đại học, giải thích rõ ràng, ngắn gọn bằng tiếng Việt.\n\n# NHIỆM VỤ\n${task}\n\n# ĐẦU VÀO\n${input}\n\n# LUẬT\nCông thức viết TeX \\( ... \\). Dùng đúng ký hiệu trong câu. Không dài quá 300 chữ.`;
 	return `# VAI TRÒ
-Bạn là trợ giảng đại học soạn câu luyện tập cho sinh viên.
+Bạn là trợ giảng đại học tạo câu luyện tập cho sinh viên.
 
 # NHIỆM VỤ
 ${task}

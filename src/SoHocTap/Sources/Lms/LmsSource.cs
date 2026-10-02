@@ -197,7 +197,7 @@ public sealed partial class LmsSource : ISource
         output["newFiles"] = new JsonArray(newFiles.Cast<JsonNode>().Concat(recent).Take(300).ToArray());
         output["lastRun"]!["files"] = newFiles.Count;
         JsonStore.Write(LmsFile, output);
-        log($"Xong: {nNew} lớp mới, {nChanged} lớp có thay đổi, {nChecked - Math.Min(nChecked, nChanged)} lớp không đổi, {nSkipped} lớp kỳ trước chưa tới hạn · {newFiles.Count} tài liệu mới · {Calls - callsBefore} request API");
+        log($"Xong: {nNew} lớp mới, {nChanged} lớp có thay đổi, {nChecked - Math.Min(nChecked, nChanged)} lớp không đổi, {nSkipped} lớp kỳ trước chưa tới hạn, {newFiles.Count} tài liệu mới, {Calls - callsBefore} request API");
         Log.Info($"Sync LMS: {Calls - callsBefore} request, check {nChecked} lớp, {nChanged} lớp có đổi");
     }
 

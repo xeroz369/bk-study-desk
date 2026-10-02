@@ -148,7 +148,7 @@ public partial class SubjectsPage : UserControl, IPage
         {
             var current = v.Courses.Any(c => c.Term == term);
             var codes = string.Join(", ", v.Courses.Select(c => c.Code.Split('_')[0]).Distinct());
-            return new SubjectRow(v.Name, string.Join(" · ", new[] { codes, L.F("subjects.docs", v.Files) }.Where(x => x.Length > 0)),
+            return new SubjectRow(v.Name, string.Join(", ", new[] { codes, L.F("subjects.docs", v.Files) }.Where(x => x.Length > 0)),
                 L.T(current ? "subjects.current" : "subjects.past"), current, v.Courses);
         }).OrderByDescending(r => r.Current).ThenBy(r => r.Name, StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true)).ToList();
         _rows = rows;
@@ -197,7 +197,7 @@ public partial class SubjectsPage : UserControl, IPage
         // Thông tin nhanh: mã môn · số tài liệu · mốc gần nhất · tổng điểm LMS.
         var next = st.Timeline.FirstOrDefault(x => x.Subject.StartsWith(s.Name, StringComparison.OrdinalIgnoreCase) && x.Time > Format.Now && !x.Done && x.Kind != "class");
         var total = books.SelectMany(b => b.Items).FirstOrDefault(i => i.Kind == "course" && i.Grade is not null);
-        SubjectMeta.Text = string.Join(" · ", new[]
+        SubjectMeta.Text = string.Join(", ", new[]
         {
             string.Join(", ", s.Courses.Select(c => c.Code.Split('_')[0]).Distinct()),
             L.F("subjects.docs", recent["total"]?.GetValue<int>() ?? 0),
@@ -214,7 +214,7 @@ public partial class SubjectsPage : UserControl, IPage
         if (_subject is null || _subject.Courses.Count == 0) return;
         var courses = _subject.Courses.OrderByDescending(c => c.Term).ToList();
         if (courses.Count == 1) { Download(courses[0]); return; }
-        var menu = Grids.Build(courses.Select(c => new MenuEntry($"{c.Term} · {c.Part ?? L.T("common.theory")} · {c.Teacher}", () => Download(c))));
+        var menu = Grids.Build(courses.Select(c => new MenuEntry($"{c.Term}, {c.Part ?? L.T("common.theory")}, {c.Teacher}", () => Download(c))));
         menu.PlacementTarget = DownloadButton;
         menu.IsOpen = true;
     }
@@ -274,7 +274,7 @@ public partial class SubjectsPage : UserControl, IPage
         if (_subject is null) return;
         var courses = _subject.Courses.OrderByDescending(c => c.Term).ToList();
         if (courses.Count == 1) { _host.OpenWeb(courses[0].Url, courses[0].Name); return; }
-        var menu = Grids.Build(courses.Select(c => new MenuEntry($"{c.Term} · {c.Part ?? L.T("common.theory")} · {c.Teacher}", () => _host.OpenWeb(c.Url, c.Name))));
+        var menu = Grids.Build(courses.Select(c => new MenuEntry($"{c.Term}, {c.Part ?? L.T("common.theory")}, {c.Teacher}", () => _host.OpenWeb(c.Url, c.Name))));
         menu.PlacementTarget = LmsButton;
         menu.IsOpen = true;
     }

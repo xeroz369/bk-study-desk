@@ -48,7 +48,7 @@ Các câu này được gom lại ở ô **Đánh dấu** trên trang Luyện t�
 
 ## 3. Tự soạn câu hỏi
 
-1. Vào môn, chọn **Soạn · Nhập · Xuất** ở góc phải. Hoặc ở trang Luyện tập, chọn **Soạn**.
+1. Vào môn, chọn **Tạo** ở góc phải (hoặc chuột phải vào môn, chọn **Tạo câu**). Ở trang Luyện tập cũng có nút **Tạo**.
 2. Chọn **chương**, rồi chọn **bài**. Chưa có thì gõ tên vào ô *Chương mới* hoặc *Bài mới*.
 3. Ở tab **Tạo**:
    - Chọn loại câu: **Một đáp án**, **Nhiều đáp án**, **Đúng / Sai**, **Điền số** hoặc **Điền chữ**.
@@ -97,7 +97,7 @@ App còn mở được file **Moodle XML**, **GIFT**, **Aiken** (dạng câu h�
 
 ## 6. Gửi quiz cho bạn bè
 
-1. Vào môn, chọn **Soạn · Nhập · Xuất**, rồi chọn tab **Xuất**.
+1. Vào môn, chọn **Xuất** (hoặc chuột phải vào môn hay gói quiz, chọn **Xuất để chia sẻ**).
 2. Gõ **tên bạn** để người nhận biết ai soạn.
 3. Chọn **Lưu Markdown (.md / .zip)** và chọn chỗ lưu.
 4. Gửi file đó cho bạn bè. Bạn ấy làm theo mục 5.
@@ -123,7 +123,7 @@ Sau mỗi lần đồng bộ, app tự lưu các quiz LMS **bạn đã nộp** �
 | Chọn **Nhập** mà app báo lỗi | App ghi rõ dòng nào sai. Quiz do AI soạn thì sao chép nguyên phần báo lỗi, dán cho AI kèm câu "sửa các lỗi này, trả lại toàn bộ khối markdown", rồi nhập lại. |
 | Công thức hiện ra toàn ký hiệu lạ | Bảo AI: "viết công thức trong `\(` và `\)`, không gấp đôi dấu `\`". |
 | Câu bị vào nhầm bài | Tên chương và tên bài trong file phải trùng với tên trong app. Nhờ AI ở đúng bài (mục 4) thì app tự điền tên sẵn. |
-| Muốn xóa một câu tự soạn | Vào **Soạn** > tab **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
+| Muốn xóa một câu tự soạn | Vào **Tạo** ở đúng bài, bấm chuột phải vào câu, chọn **Xóa câu**. |
 | Muốn gỡ cả quiz đã nhập | Trang Luyện tập, bấm chuột phải vào quiz, chọn **Gỡ quiz này**. |
 
 ---

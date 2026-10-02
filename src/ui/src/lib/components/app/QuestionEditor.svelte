@@ -102,7 +102,7 @@
 			const opts = options.filter((o) => o.text.trim());
 			if (opts.length < 2) return 'Cần ít nhất 2 phương án.';
 			const right = opts.map((o, i) => (o.right ? i : -1)).filter((i) => i >= 0);
-			if (!right.length) return 'Chưa chọn phương án đúng (chọn chữ cái A, B…).';
+			if (!right.length) return 'Chưa chọn phương án đúng (chọn chữ cái A, B...).';
 			const html = opts.map((o) => render(o.text).replace(/^<p>([\s\S]*)<\/p>$/, '$1'));
 			const keep = keepOrder ? { keepOrder: true } : {};
 			return type === 'single'
@@ -148,7 +148,9 @@
 			parts.push(
 				...options
 					.filter((o) => o.text.trim())
-					.map((o, i) => `<p>${o.right ? '<b>' : ''}${L[i]}. ${render(o.text).replace(/^<p>|<\/p>$/g, '')}${o.right ? ' ✓</b>' : ''}</p>`),
+					.map(
+						(o, i) => `<p>${o.right ? '<b>' : ''}${L[i]}. ${render(o.text).replace(/^<p>|<\/p>$/g, '')}${o.right ? ' (đúng)</b>' : ''}</p>`,
+					),
 			);
 		else if (type === 'truefalse') parts.push(`<p><b>Đáp án: ${truth ? 'Đúng' : 'Sai'}</b></p>`);
 		else if (type === 'numeric') parts.push(`<p><b>Đáp số: ${value}${tolerance ? ' ± ' + tolerance : ''} ${unit}</b></p>`);
@@ -174,7 +176,7 @@
 		{/each}
 	</div>
 	<label class="flex flex-col gap-1">
-		<span>Đề bài <span class="text-xs text-muted-foreground">Markdown; công thức \( … \); dán (Ctrl+V) hoặc kéo ảnh vào ô</span></span>
+		<span>Đề bài <span class="text-xs text-muted-foreground">Markdown; công thức \( ... \); dán (Ctrl+V) hoặc kéo ảnh vào ô</span></span>
 		<Textarea
 			id="qe-prompt"
 			bind:value={prompt}
@@ -242,12 +244,12 @@
 		<Textarea bind:value={solution} rows={3} {@attach imageField((v) => (solution = v))} />
 	</label>
 	<label class="flex flex-col gap-1"
-		>Nguồn (không bắt buộc)<Input bind:value={tag} placeholder="Slide tr.36, GK251 câu 8, Tự soạn…" /></label
+		>Nguồn (không bắt buộc)<Input bind:value={tag} placeholder="Slide tr.36, GK251 câu 8, Tự tạo..." /></label
 	>
 
 	<div class="flex flex-wrap items-center gap-2">
 		<Button size="sm" onclick={save} disabled={saving}>Lưu câu vào bài</Button>
-		<Button size="sm" variant="outline" onclick={() => filePick?.click()}>Chèn ảnh…</Button>
+		<Button size="sm" variant="outline" onclick={() => filePick?.click()}>Chèn ảnh...</Button>
 		<span class="text-xs text-muted-foreground">ảnh tự thu nhỏ, nén WebP</span>
 		<input bind:this={filePick} type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange={pickImage} />
 	</div>

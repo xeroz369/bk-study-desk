@@ -13,7 +13,9 @@ public partial class SchoolWindow : Window
     private readonly DispatcherTimer _slow = new() { Interval = TimeSpan.FromSeconds(10) };
     private readonly DispatcherTimer _showLoading = new() { Interval = TimeSpan.FromSeconds(1) };
 
-    public SchoolWindow(string url, string title)
+    /// <param name="onSignedIn">Gọi một lần khi người dùng vừa đăng nhập xong trong cửa sổ này: đã thấy trang đăng nhập SSO,
+    /// sau đó vào được trang của trường. Mở từ nút "Mở MyBK/LMS" khi đồng bộ lỗi thì app dùng nó để đồng bộ lại ngay.</param>
+    public SchoolWindow(string url, string title, Action? onSignedIn = null)
     {
         InitializeComponent();
         Title = string.IsNullOrWhiteSpace(title) ? WebHost.Host(url) : title;
@@ -21,6 +23,7 @@ public partial class SchoolWindow : Window
         {
             await Web.EnsureCoreWebView2Async(await WebHost.EnvironmentAsync());
             var core = Web.CoreWebView2;
+            var sawLogin = false;
             core.Settings.AreDevToolsEnabled = System.Diagnostics.Debugger.IsAttached;
             core.DocumentTitleChanged += (_, _) => Title = core.DocumentTitle is { Length: > 0 } t ? t : Title;
             core.NavigationStarting += (_, e) =>
@@ -46,6 +49,13 @@ public partial class SchoolWindow : Window
                 Log.Debug($"Cửa sổ trường: {Log.Where(core.Source)} {(e.IsSuccess ? "ok" : e.WebErrorStatus.ToString())} HTTP {e.HttpStatusCode}");
                 ShowStatus(core, e);
                 await SessionKeeper.PersistAsync(core);
+                if (WebHost.IsSsoLogin(core.Source)) sawLogin = true;
+                else if (sawLogin && e.IsSuccess && WebHost.IsSchoolHost(core.Source))
+                {
+                    sawLogin = false;
+                    Log.Info($"Cửa sổ trường: đã đăng nhập lại ({WebHost.Host(core.Source)})");
+                    onSignedIn?.Invoke();
+                }
             };
             // Phiên LMS/MyBK trên server hết hạn sớm hơn cookie (cookie giữ 30 ngày, phiên server vài giờ), nên trang trường
             // hiện "session timed out" / trang đăng nhập. Khi đó đi qua cổng SSO một lần: SSO còn phiên thì tự vào lại, không thì

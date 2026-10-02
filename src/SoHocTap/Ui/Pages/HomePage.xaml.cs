@@ -31,7 +31,7 @@ public partial class HomePage : UserControl, IPage
 
         Exams.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TimelineItem.Subject), star: true));
         Exams.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100));
-        Grids.Setup<TimelineItem>(Exams, _ => _main.Go("lich/thi"), e => [new(L.T("common.copy"), () => Grids.Copy($"{e.Name} · {e.When} · {e.Label}", _main))]);
+        Grids.Setup<TimelineItem>(Exams, _ => _main.Go("lich/thi"), e => [new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}", _main))]);
 
         News.Columns.Add(Grids.Text(L.T("col.title"), nameof(NewsRow.Title), star: true));
         News.Columns.Add(Grids.Right(L.T("col.at"), nameof(NewsRow.Meta), 90));
@@ -53,7 +53,7 @@ public partial class HomePage : UserControl, IPage
     {
         if (e.Url is { } u) yield return new(L.T("common.openWeb"), () => _host.OpenWeb(u, e.Name));
         if (e.Subject.Length > 0) yield return new(L.T("home.subjectPage"), () => _main.Go("mon/" + e.Subject));
-        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name} · {e.When}", _main), Separator: true);
+        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}", _main), Separator: true);
     }
 
     public void Refresh()
@@ -69,10 +69,10 @@ public partial class HomePage : UserControl, IPage
         var normal = TryFindResource("TextFillColorPrimaryBrush") as Brush;
         var examDays = exam is null ? 0 : Format.DayDiff(exam.Time);
         // Chưa có dữ liệu LMS thì ghi "—" thay vì 0: số 0 nghĩa là đã đọc và thật sự không có gì.
-        string Count(int n) => s.SyncedAt("lms") is null ? "—" : n.ToString(CultureInfo.InvariantCulture);
+        string Count(int n) => s.SyncedAt("lms") is null ? "-" : n.ToString(CultureInfo.InvariantCulture);
         Stats.ItemsSource = new List<Stat>
         {
-            new(exam is null ? L.T("home.nextExam") : L.F("home.nextExamOf", exam.Subject), exam is null ? "—" : examDays > 0 ? L.F("format.days", examDays) : L.T("format.group.today"),
+            new(exam is null ? L.T("home.nextExam") : L.F("home.nextExamOf", exam.Subject), exam is null ? "-" : examDays > 0 ? L.F("format.days", examDays) : L.T("format.group.today"),
                 exam is not null && examDays <= 3 ? bad : warn),
             new(L.T("home.due7"), Count(todo7), todo7 > 0 ? warn : normal),
             new(L.T("home.quiz14"), Count(quiz14), normal),

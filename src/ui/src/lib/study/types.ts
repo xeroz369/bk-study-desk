@@ -166,7 +166,7 @@ export interface ProgressState {
 
 export type LessonStatus = 'chua-soan' | 'chua-hoc' | 'dang-hoc' | 'xong';
 export const STATUS_TEXT: Record<LessonStatus, string> = {
-	'chua-soan': 'Chưa soạn',
+	'chua-soan': 'Chưa có câu',
 	'chua-hoc': 'Chưa học',
 	'dang-hoc': 'Đang học',
 	xong: 'Xong',

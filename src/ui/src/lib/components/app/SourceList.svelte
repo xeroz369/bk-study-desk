@@ -21,7 +21,7 @@
 	<span class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
 		<BookMarked class="size-3.5" />
 		{#each sources as s, k (k)}
-			{@const label = `${s.file}${s.pages ? ` · ${/^\d/.test(s.pages) ? 'tr.' : ''}${s.pages}` : ''}`}
+			{@const label = `${s.file}${s.pages ? `, ${/^\d/.test(s.pages) ? 'tr.' : ''}${s.pages}` : ''}`}
 			{#if subject}
 				<button
 					class="link inline-flex min-h-6 items-center"

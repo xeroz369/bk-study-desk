@@ -26,7 +26,7 @@
 	tab={arg}
 	base="on-hom-nay"
 	meta={questions.length
-		? `${done}/${questions.length} câu${total > questions.length ? ` (còn ${total - questions.length} câu ở lượt sau)` : ''} · câu hay sai lên trước`
+		? `${done}/${questions.length} câu${total > questions.length ? ` (còn ${total - questions.length} câu ở lượt sau)` : ''}, câu hay sai lên trước`
 		: 'không có câu tới hạn'}
 />
 
@@ -35,7 +35,7 @@
 		{@const e = Study.entry(q.lessonId ?? '')}
 		{@const r = q.fp ? Progress.state.srs[q.fp] : undefined}
 		{#if e}<a class="link mt-2 flex min-h-6 items-center text-xs text-muted-foreground" href={'#bai/' + e.id}
-				>{e.courseName} · {e.title}{r ? ` · hộp ${r.box}, sai ${r.wrong}/${r.seen} lần` : ''}</a
+				>{e.courseName}, {e.title}{r ? `, hộp ${r.box}, sai ${r.wrong}/${r.seen} lần` : ''}</a
 			>{/if}
 		<QuestionCard
 			question={q}

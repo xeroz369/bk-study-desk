@@ -53,6 +53,10 @@
                         <TextBlock x:Name="RegTitle" Style="{StaticResource SectionTitle}" />
                         <TextBlock x:Name="RegisteredEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" TextWrapping="Wrap" Visibility="Collapsed" />
                         <DataGrid x:Name="Registered" Margin="0,0,0,16" />
+                        <!-- Giảng viên và lịch dạy của các môn đã đăng ký (thời khóa biểu MyBK của kỳ), nhóm theo giảng viên. -->
+                        <TextBlock Text="{ui:T grades.teachers}" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="TeachersEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" TextWrapping="Wrap" Visibility="Collapsed" />
+                        <DataGrid x:Name="Teachers" Margin="0,0,0,16" />
                         <TextBlock Text="{ui:T grades.fees}" Style="{StaticResource SectionTitle}" />
                         <TextBlock x:Name="FeesEmpty" Style="{StaticResource Muted}" Margin="0,0,0,8" Text="{ui:T grades.feesEmpty}" />
                         <DataGrid x:Name="Fees" Margin="0,0,0,16" />

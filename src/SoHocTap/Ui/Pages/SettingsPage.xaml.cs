@@ -29,10 +29,10 @@ public partial class SettingsPage : UserControl, IPage
         Keys.Columns.Add(Grids.Text(L.T("col.what"), nameof(KeyRow.What), star: true));
         Keys.ItemsSource = new List<KeyRow>
         {
-            new($"Ctrl+1 … Ctrl+{MainWindow.PageKeys}", L.T("settings.keys.pages")),
+            new($"Ctrl+1–Ctrl+{MainWindow.PageKeys}", L.T("settings.keys.pages")),
             new("F5", L.T("settings.keys.sync")),
             new("Alt+←", L.T("settings.keys.back")),
-            new("↑ ↓ · Home · End", L.T("settings.keys.rows")),
+            new("↑ ↓, Home, End", L.T("settings.keys.rows")),
             new(L.T("settings.keys.enter"), L.T("settings.keys.open")),
             new(L.T("settings.keys.menu"), L.T("settings.keys.menuWhat")),
             new(L.T("settings.keys.click"), L.T("settings.keys.sort")),
@@ -78,7 +78,7 @@ public partial class SettingsPage : UserControl, IPage
         var u = _host.Updates;
         UpdateNote.Text = u.LastError is { } err ? L.F("update.error", err)
             : u.Offer is { } o ? L.F("update.available", o.Version)
-            : u.LastCheck is { } t ? L.F("update.latest", AppInfo.Version) + " · " + L.F("update.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
+            : u.LastCheck is { } t ? L.F("update.latest", AppInfo.Version) + ", " + L.F("update.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
             : !UpdateService.CanSelfUpdate ? L.T("update.zipNote") : "";
     }
 
