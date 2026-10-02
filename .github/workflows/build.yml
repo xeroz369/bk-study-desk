@@ -9,13 +9,40 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/ui/package-lock.json
+      - name: Practice UI (svelte-check, Prettier, build)
+        working-directory: src/ui
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+          npx prettier --check src
+          npm run build
+      - name: Study Pack tools (round-trip test)
+        run: node studypack/test-roundtrip.ts
+      - name: Unit tests
+        run: dotnet test tests/SoHocTap.Tests
       - name: Check code style (dotnet format)
         run: dotnet format src/SoHocTap --verify-no-changes --severity warn
       - name: Build
         run: dotnet build src/SoHocTap -c Release -warnaserror
       - name: Build (Microsoft Store)
         run: dotnet build src/SoHocTap -c Release -p:Store=true -warnaserror
+
+  # Bản đa nền tảng (Avalonia, thử nghiệm): lõi chung + app phải build được trên Linux.
+  cross-platform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Build core + Avalonia app (Linux)
+        run: dotnet build src/BKStudyDesk.Desktop -c Release

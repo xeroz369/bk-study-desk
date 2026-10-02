@@ -25,6 +25,7 @@ public static class AppPackage
 
     private static bool Detect()
     {
+        if (!OperatingSystem.IsWindows()) return false;
         try
         {
             var len = 0;

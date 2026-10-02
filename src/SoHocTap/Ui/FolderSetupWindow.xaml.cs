@@ -21,8 +21,8 @@ public partial class FolderSetupWindow : Window
         Closing += OnClosing;
     }
 
-    /// <summary>Bản Store chưa chọn folder lần nào thì cần hỏi.</summary>
-    public static bool Needed => AppPackage.IsPackaged && Config.Str("folders.root").Trim().Length == 0;
+    /// <summary>Bản Store hoặc bản cài chưa chọn folder lần nào thì cần hỏi.</summary>
+    public static bool Needed => Paths.Kind != InstallKind.Portable && Config.Str("folders.root").Trim().Length == 0;
 
     private void OnBrowse(object sender, RoutedEventArgs e)
     {

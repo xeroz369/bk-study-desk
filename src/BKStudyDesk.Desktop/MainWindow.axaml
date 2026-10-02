@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BKStudyDesk.Desktop.MainWindow"
+        Title="BK Study Desk" Width="1180" Height="760" MinWidth="760" MinHeight="480"
+        Icon="avares://BKStudyDesk/Assets/app.ico">
+    <!-- Khung app đa nền tảng (bước 2): thanh điều hướng, trang chỉ đọc, thanh trạng thái. Trang dựng trong code (Pages.cs). -->
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Padding="12,8" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="BK Study Desk" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0" />
+                <ListBox x:Name="Nav" SelectionMode="Single" Background="Transparent">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </DockPanel>
+        </Border>
+        <Border DockPanel.Dock="Bottom" Padding="12,4" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <DockPanel>
+                <TextBlock x:Name="StVersion" DockPanel.Dock="Right" Classes="muted" />
+                <TextBlock x:Name="StStatus" Classes="muted" />
+            </DockPanel>
+        </Border>
+        <ContentControl x:Name="Page" Margin="16" />
+    </DockPanel>
+</Window>

@@ -19,7 +19,8 @@ public partial class HomePage : UserControl, IPage
         InitializeComponent();
         _host = host;
         _main = main;
-        if (!AppInfo.Practice) PlanButton.Visibility = Visibility.Collapsed;
+        // Lộ trình ôn là một trang trong content\pages (bản riêng); bản public chưa có thì ẩn nút.
+        if (!File.Exists(Path.Combine(Core.Paths.Content, "pages", "lo-trinh.js"))) PlanButton.Visibility = Visibility.Collapsed;
         Agenda.Columns.Add(Grids.Text(L.T("col.time"), nameof(TimelineItem.Hour), 56, sortPath: nameof(TimelineItem.Time)));
         Agenda.Columns.Add(Grids.Text(L.T("col.name"), nameof(TimelineItem.Name), star: true));
         Agenda.Columns.Add(Grids.Text(L.T("col.kind"), nameof(TimelineItem.KindName), 80));

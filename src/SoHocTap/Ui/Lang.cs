@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using System.Windows.Markup;
 using SoHocTap.Core;
 
 namespace SoHocTap.Ui;
@@ -64,13 +63,4 @@ public static class L
             ? Directory.GetFiles(Dir, "*.json").Select(p => Path.GetFileNameWithoutExtension(p))
                 .Select(c => (c, Read(c).GetValueOrDefault("_meta.name", c))).OrderBy(x => x.c == Base ? "" : x.c).ToList()
             : [(Base, "Tiếng Việt")];
-}
-
-/// <summary>Dùng trong XAML: Text="{ui:T nav.today}". Chữ chỉ lấy một lần lúc dựng UI, nên đổi ngôn ngữ phải restart app.</summary>
-[MarkupExtensionReturnType(typeof(string))]
-public sealed class TExtension(string key) : MarkupExtension
-{
-    public string Key { get; set; } = key;
-
-    public override object ProvideValue(IServiceProvider serviceProvider) => L.T(Key);
 }

@@ -20,7 +20,7 @@ public partial class AboutPage : UserControl, IPage
     public string Subtitle => "";
     public void Refresh() { }
 
-    private static void OpenLink(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    private static void OpenLink(string url) => Links.Open(url);
     private void OnSource(object sender, RoutedEventArgs e) => OpenLink(AppInfo.Repo);
     private void OnIssues(object sender, RoutedEventArgs e) => OpenLink(AppInfo.Issues);
     private void OnPrivacy(object sender, RoutedEventArgs e) => OpenLink(AppInfo.Repo + "/blob/main/PRIVACY.md");

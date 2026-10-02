@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Bộ cài tiếng Việt: cho chọn thư mục cài rồi gọi Setup.exe của Velopack (nhúng sẵn) với tham số installto.
+       .NET Framework 4.8 có sẵn trên Windows 10/11 nên exe nhỏ, không kéo theo runtime. Build bằng tools-dev\build-all.ps1:
+       dotnet build -p:VelopackSetup=<đường dẫn Setup.exe> -p:Version=<x.y.z>. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>BKStudyDesk-Setup</AssemblyName>
+    <RootNamespace>BKStudyDesk.Setup</RootNamespace>
+    <Product>BK Study Desk</Product>
+    <Description>Bộ cài BK Study Desk</Description>
+    <Company>xeroz369</Company>
+    <Copyright>Copyright (c) 2026 xeroz369. PolyForm Noncommercial 1.0.0</Copyright>
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>none</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PackId" Value="$(PackId)" Condition="'$(PackId)' != ''" />
+  </ItemGroup>
+
+  <!-- Bộ gỡ: bản build không kèm gói cài của chính project này (tools-dev\build-all.ps1 build trước, truyền -p:UninstallerExe). -->
+  <ItemGroup Condition="'$(UninstallerExe)' != ''">
+    <EmbeddedResource Include="$(UninstallerExe)" LogicalName="uninstall.exe" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(VelopackSetup)' != ''">
+    <EmbeddedResource Include="$(VelopackSetup)" LogicalName="setup.exe" />
+  </ItemGroup>
+
+</Project>

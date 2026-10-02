@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Lõi chung của BK Study Desk, không phụ thuộc Windows (bước 1 của PLAN-DA-NEN-TANG.md).
+    Project này chỉ LINK tới file nguồn của src\SoHocTap (không di chuyển file), nên app WPF hiện tại vẫn build như cũ.
+    Gồm: config, log, đường dẫn, lưu JSON/secret, xếp file, đồng bộ LMS/MyBK, API nội bộ, mô hình dữ liệu, chuỗi ngôn ngữ.
+    Phần Windows (DPAPI, ACL, tên 8.3, MSIX) có nhánh OperatingSystem.IsWindows(); Linux/macOS có nhánh riêng.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SoHocTap</RootNamespace>
+    <AssemblyName>BKStudyDesk.Core</AssemblyName>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- Bản đa nền tảng là bản public. -->
+    <DefineConstants>$(DefineConstants);PUBLIC_EDITION</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Src>..\SoHocTap\</Src>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(Src)Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Files\**\*.cs" Link="Files\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Sources\**\*.cs" Link="Sources\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Api\**\*.cs" Link="Api\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Shell\AppInfo.cs" Link="Shell\AppInfo.cs" />
+    <Compile Include="$(Src)Ui\Lang.cs;$(Src)Ui\AppState.cs;$(Src)Ui\Models.cs;$(Src)Ui\Format.cs;$(Src)Ui\Curriculum.cs" Link="Ui\%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(Src)Core\DefaultConfig.json" LogicalName="SoHocTap.Core.DefaultConfig.json" />
+    <None Include="$(Src)lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- AppInfo, Startup… là internal trong app WPF; app Avalonia (assembly BKStudyDesk) cũng dùng. -->
+    <InternalsVisibleTo Include="BKStudyDesk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Net.Http" />
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using SoHocTap.Core;
 using SoHocTap.Shell;
 using SoHocTap.Ui.Pages;
+using SoHocTap.Updates;
 
 namespace SoHocTap.Ui;
 
@@ -60,12 +61,15 @@ public partial class MainWindow : Window, IDisposable
         }
         InputBindings.Add(new KeyBinding(NavigationCommands.GoToPage, Key.D1 + _nav.Count, ModifierKeys.Control) { CommandParameter = "cai-dat" });
         SettingsButton.ToolTip = $"{L.T("nav.settings.tip")} (Ctrl+{_nav.Count + 1})";
+        StVersion.Text = $"{AppInfo.Name} {AppInfo.Version}{(AppInfo.Channel.Length > 0 ? " · " + AppInfo.Channel : "")}";
+        StVersion.ToolTip = Core.Paths.AppRoot;
         _placement.Apply(this);
         _host = new AppHost(this);
         Nav.ItemsSource = _nav;
         _host.State.Changed += OnState;
         _host.LoginProgress += OnLogin;
         _host.Navigate += Go;
+        _host.Updates.Changed += () => Dispatcher.InvokeAsync(ShowUpdateState);
         Closing += OnClosing;
         Closed += (_, _) => Dispose();
     }
@@ -84,12 +88,45 @@ public partial class MainWindow : Window, IDisposable
             if (hidden) new FolderSetupWindow().Close();   // chạy ngầm: lưu luôn folder gợi ý, lần mở window sau không hỏi nữa
             else Dispatcher.BeginInvoke(() => new FolderSetupWindow { Owner = this }.ShowDialog(), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
+        // Bản public lần đầu: hỏi có kiểm tra bản mới không (chưa trả lời thì app không gọi mạng để kiểm tra). Mỗi lần mở chỉ một hộp thoại.
+        else if (!hidden) AskUpdateMode();
+        ShowUpdateState();
+    }
+
+    private bool _askedUpdate;
+
+    /// <summary>
+    /// Bản public chưa chọn chế độ cập nhật: hỏi một lần mỗi lần mở (chưa trả lời thì app không gọi mạng để kiểm tra).
+    /// Mở cùng Windows (chạy ngầm) thì hỏi lúc người dùng mở cửa sổ từ khay lần đầu.
+    /// </summary>
+    private void AskUpdateMode()
+    {
+        if (_askedUpdate || !UpdateService.Supported || UpdateService.Mode != UpdateMode.Ask) return;
+        _askedUpdate = true;
+        Dispatcher.BeginInvoke(() => new UpdateWindow { Owner = this }.ShowDialog(), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    /// <summary>Thanh trạng thái: "Có bản x.y.z" hoặc "Khởi động lại để cập nhật".</summary>
+    private void ShowUpdateState()
+    {
+        var u = _host.Updates;
+        var notice = u.Offer is null ? UpdateService.StartupNotice : null;
+        StUpdate.Visibility = u.Offer is null && notice is null ? Visibility.Collapsed : Visibility.Visible;
+        if (u.Offer is { } o) StUpdateText.Text = u.Downloaded ? L.T("update.restart") : L.F("update.available", o.Version);
+        else if (notice is not null) StUpdateText.Text = notice;
+    }
+
+    private void OnUpdateClick(object sender, RoutedEventArgs e)
+    {
+        if (_host.Updates.Offer is { } o) new UpdateWindow(_host.Updates, o) { Owner = this }.ShowDialog();
+        else Go("cai-dat");   // báo cài lỗi: mở Cài đặt → Cập nhật để thử lại
     }
 
     /// <summary>Hiện lại window (từ tray, hoặc khi mở app lần thứ hai).</summary>
     internal void ShowFromTray()
     {
         if (!IsVisible) Show();
+        if (!FolderSetupWindow.Needed) AskUpdateMode();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
     }
@@ -139,9 +176,7 @@ public partial class MainWindow : Window, IDisposable
             {
                 "lich" => new CalendarPage(_host),
                 "mon" => new SubjectsPage(_host, this),
-#if !PUBLIC_EDITION
                 "luyen-tap" => new PracticePage(_host, this),
-#endif
                 "diem" => new GradesPage(_host),
                 "cai-dat" => new SettingsPage(_host),
                 "gioi-thieu" => new AboutPage(),

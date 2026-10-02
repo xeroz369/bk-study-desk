@@ -29,9 +29,10 @@ public static class SecretStore
             if (bytes.Length > 0 && bytes[0] == (byte)'{')
             {
                 var plain = JsonNode.Parse(bytes) as JsonObject;
-                if (plain is not null) Write(path, plain);   // encrypt lại file cũ
+                if (plain is not null && OperatingSystem.IsWindows()) Write(path, plain);   // encrypt lại file cũ
                 return plain;
             }
+            if (!OperatingSystem.IsWindows()) return null;
             var data = ProtectedData.Unprotect(bytes, Entropy, DataProtectionScope.CurrentUser);
             return JsonNode.Parse(data) as JsonObject;
         }
@@ -46,9 +47,12 @@ public static class SecretStore
     {
         var dir = Path.GetDirectoryName(path)!;
         Directory.CreateDirectory(dir);
-        var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(value.ToJsonString()), Entropy, DataProtectionScope.CurrentUser);
+        var json = Encoding.UTF8.GetBytes(value.ToJsonString());
+        // Linux/macOS (bản đa nền tảng, đang làm): tạm lưu JSON với quyền 600; sẽ chuyển sang Keychain / libsecret (PLAN-DA-NEN-TANG.md).
+        var bytes = OperatingSystem.IsWindows() ? ProtectedData.Protect(json, Entropy, DataProtectionScope.CurrentUser) : json;
         var tmp = path + ".tmp";
         File.WriteAllBytes(tmp, bytes);
+        if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(tmp, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         File.Move(tmp, path, overwrite: true);
     }
 
@@ -61,6 +65,11 @@ public static class SecretStore
         try
         {
             Directory.CreateDirectory(dir);
+            if (!OperatingSystem.IsWindows())
+            {
+                File.SetUnixFileMode(dir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);   // chmod 700
+                return;
+            }
             var info = new DirectoryInfo(dir);
             var me = WindowsIdentity.GetCurrent().User!;
             var sec = info.GetAccessControl();
@@ -71,7 +80,7 @@ public static class SecretStore
                 fresh.AddAccessRule(new FileSystemAccessRule(sid, FileSystemRights.FullControl,
                     InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             info.SetAccessControl(fresh);
-            Log.Info($"Đã khóa ACL thư mục data cho tài khoản hiện tại: {dir}");
+            Log.Info($"Đã khóa ACL thư mục cho tài khoản hiện tại: {dir}");
         }
         catch (Exception e) when (e is UnauthorizedAccessException or IOException or PlatformNotSupportedException or InvalidOperationException
                                        or PrivilegeNotHeldException)
@@ -80,9 +89,11 @@ public static class SecretStore
         }
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static HashSet<SecurityIdentifier> Expected(SecurityIdentifier me) =>
         [me, new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null)];
 
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static HashSet<SecurityIdentifier> Allowed(DirectorySecurity sec) =>
         sec.GetAccessRules(true, false, typeof(SecurityIdentifier)).OfType<FileSystemAccessRule>()
             .Where(r => r.AccessControlType == AccessControlType.Allow).Select(r => (SecurityIdentifier)r.IdentityReference).ToHashSet();

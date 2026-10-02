@@ -191,7 +191,8 @@ public static partial class Organizer
     private static bool Run7z(string exe, string archive, string outDir)
     {
         var psi = new ProcessStartInfo(exe) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-        foreach (var a in new[] { "x", "-y", "-bso0", "-bsp0", "-o" + outDir, archive }) psi.ArgumentList.Add(a);
+        // -snz: file giải nén mang theo dấu "tải từ Internet" (Zone.Identifier) của file nén, để SmartScreen/Protected View vẫn chặn.
+        foreach (var a in new[] { "x", "-y", "-snz", "-bso0", "-bsp0", "-o" + outDir, archive }) psi.ArgumentList.Add(a);
         using var p = Process.Start(psi)!;
         p.StandardOutput.ReadToEnd();
         p.WaitForExit();

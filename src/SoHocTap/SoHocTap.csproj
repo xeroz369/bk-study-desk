@@ -11,14 +11,14 @@
     <RootNamespace>SoHocTap</RootNamespace>
     <!--
       Build ra 2 bản từ cùng source (-p:Edition=…):
-        Private: "Sổ học tập", có thêm tab Luyện tập (HTML trong ui\ và content\), chỉ dùng riêng.
-        Public:  "BK Study Desk", chỉ có LMS và MyBK, bản public (xem tools-dev\export-public.ps1).
+        Private: "BK Study Desk" bản local (icon xanh lá), dùng riêng: ui\ và content\ (bài học riêng) nằm ở gốc app.
+        Public:  "BK Study Desk" bản công khai (icon xanh dương, xem tools-dev\export-public.ps1): ui\ đã build và content\ trống đi kèm exe.
       Hai bản khác tên exe và app ID (mutex, taskbar, autostart) nên cài song song được.
     -->
     <Edition Condition="'$(Edition)' == ''">Public</Edition>
-    <Version Condition="'$(Version)' == ''">1.0.5</Version>
+    <Version Condition="'$(Version)' == ''">1.0.6</Version>
     <Authors>xeroz369</Authors>
-    <Copyright>MIT License</Copyright>
+    <Copyright>Copyright (c) 2026 xeroz369. PolyForm Noncommercial 1.0.0</Copyright>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <SatelliteResourceLanguages>vi</SatelliteResourceLanguages>
@@ -30,7 +30,7 @@
 
   <PropertyGroup Condition="'$(Edition)' == 'Private'">
     <AssemblyName>SoHocTap</AssemblyName>
-    <Product>Sổ học tập</Product>
+    <Product>BK Study Desk (local)</Product>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Edition)' == 'Public'">
     <AssemblyName>BKStudyDesk</AssemblyName>
@@ -49,10 +49,15 @@
     <DefineConstants>$(DefineConstants);STORE</DefineConstants>
   </PropertyGroup>
 
-  <!-- Tab Luyện tập (HTML + API nội bộ) chỉ có ở bản private. -->
+  <!-- Bản public: khung Luyện tập đã build (..\..\ui, từ src\ui: npm run build) và content\ trống đi kèm exe. -->
   <ItemGroup Condition="'$(Edition)' == 'Public'">
-    <Compile Remove="Ui\Pages\PracticePage.xaml.cs;Shell\WebUi.cs;Shell\StaticFiles.cs;Api\**" />
-    <Page Remove="Ui\Pages\PracticePage.xaml" />
+    <!-- Bộ cài và tự cập nhật (Setup.exe, gói delta). Chỉ bản public; bản local build từ source nên không cần. -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
+    <None Include="..\..\ui\**" Link="ui\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="PublicContent\**" Link="content\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Edition)' == 'Private'">
+    <None Remove="PublicContent\**" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="tools-dev\**;Branding\**" />

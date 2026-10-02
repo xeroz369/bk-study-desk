@@ -1,0 +1,37 @@
+name: Báo lỗi
+description: App chạy sai, bị treo, hiện sai dữ liệu…
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi. **Đừng dán mật khẩu, MSSV, token hay ảnh có thông tin cá nhân.**
+        Lỗ hổng bảo mật thì không báo ở đây, xem [SECURITY.md](../blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản
+      description: Xem ở góc phải thanh dưới cùng của app, vd. 1.0.6
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: Chuyện gì xảy ra
+      description: Bạn làm gì, app làm gì, bạn mong app làm gì.
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Cách làm lại lỗi
+      placeholder: "1. Mở Luyện tập\n2. Bấm …\n3. …"
+  - type: textarea
+    id: log
+    attributes:
+      label: Log (không bắt buộc)
+      description: Vài dòng cuối của %LOCALAPPDATA%\BKStudyDesk.Data\data\app.log. Xóa tên, MSSV trước khi dán.
+      render: text
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows
+      options: [Windows 11, Windows 10, Khác]

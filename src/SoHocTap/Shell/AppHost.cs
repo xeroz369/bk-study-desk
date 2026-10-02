@@ -1,15 +1,14 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
-#if !PUBLIC_EDITION
 using SoHocTap.Api;
-#endif
 using SoHocTap.Core;
 using SoHocTap.Sources;
 using SoHocTap.Sources.Lms;
 using SoHocTap.Sources.Mybk;
 using SoHocTap.Ui;
+using SoHocTap.Updates;
 
 namespace SoHocTap.Shell;
 
@@ -18,9 +17,7 @@ namespace SoHocTap.Shell;
 /// UI (MainWindow) chỉ đọc <see cref="State"/> và gọi các lệnh ở đây.
 /// </summary>
 internal sealed class AppHost : IDisposable
-#if !PUBLIC_EDITION
     , IShellActions
-#endif
 {
     private readonly Window _main;
     private readonly Dispatcher _ui;
@@ -31,9 +28,9 @@ internal sealed class AppHost : IDisposable
     private readonly LoginService _login;
 
     public SourceHub Hub { get; }
-#if !PUBLIC_EDITION
+    /// <summary>Cập nhật app (chỉ bản public; chỉ kiểm tra khi người dùng cho phép).</summary>
+    public UpdateService Updates { get; } = new();
     public ApiRouter Router { get; }
-#endif
     public AppState State { get; }
 
     /// <summary>Tiến độ login (stage, message), window chính hiện lên InfoBar.</summary>
@@ -47,9 +44,7 @@ internal sealed class AppHost : IDisposable
         _ui = main.Dispatcher;
         _mybk = new MybkRunner(_ui, () => new WindowInteropHelper(_main).Handle);
         Hub = new SourceHub([new LmsSource(), new MybkSource(() => _mybk)]);
-#if !PUBLIC_EDITION
         Router = new ApiRouter(this);
-#endif
         State = new AppState(Hub);
         _login = new LoginService(main, (stage, msg) => _ui.InvokeAsync(() => OnLogin(stage, msg)));
 
@@ -61,6 +56,8 @@ internal sealed class AppHost : IDisposable
         _notifier = new DeadlineNotifier((t, b, p) => _ui.InvokeAsync(() => _tray.Show(t, b, p)));
         _notifyTimer.Tick += (_, _) => _notifier.Check();
 
+        // Thoát để cài bản mới (Velopack thoát ngay, không qua Dispose): dọn icon khay để không còn icon "ma", dừng đồng bộ.
+        Updates.Restarting += () => _ui.Invoke(() => { _tray.Dispose(); Hub.Dispose(); });
         Hub.Changed += (name, stage) => _ui.InvokeAsync(() =>
         {
             if (stage == "done") State.Reload(); else State.RefreshStatus();
@@ -75,6 +72,43 @@ internal sealed class AppHost : IDisposable
         Hub.StartScheduler();
         _notifier.Check();
         _notifyTimer.Start();
+        StartUpdates();
+    }
+
+    /// <summary>
+    /// Kiểm tra bản mới theo chế độ người dùng chọn: 60 giây sau khi mở rồi mỗi giờ xem đã tới hạn chưa (UpdatePolicy).
+    /// Chế độ tự động thì tải ngay (trừ khi Tiết kiệm pin) và cài khi app thoát. "--update-now" chỉ dành cho bản test cập nhật.
+    /// </summary>
+    private void StartUpdates()
+    {
+        UpdateService.NoteVersion();
+        if (!UpdateService.Supported) return;
+        if (Environment.GetCommandLineArgs().Contains("--update-now") && UpdateService.IsTestInstall)
+        {
+            _ = Task.Run(async () =>
+            {
+                if (await Updates.CheckAsync(manual: true, default) is null) { Log.Info("update-now: không có bản mới"); return; }
+                if (await Updates.DownloadAsync(userAsked: true, null, default)) Updates.ApplyAndRestart();
+            });
+            return;
+        }
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(60));
+            using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
+            do
+            {
+                try
+                {
+                    if (!Updates.Due()) continue;
+                    var offer = await Updates.CheckAsync(manual: false, default);
+                    // Chế độ tự động: tải sẵn, cài lúc app thoát hẳn (Dispose → ApplyOnExit).
+                    if (offer is not null && UpdateService.Mode == UpdateMode.Auto && UpdateService.CanSelfUpdate)
+                        await Updates.DownloadAsync(userAsked: false, null, default);
+                }
+                catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Vòng kiểm tra cập nhật: {e.Message}"); }
+            } while (await timer.WaitForNextTickAsync());
+        });
     }
 
     public void SyncAll(bool force = false)
@@ -113,10 +147,11 @@ internal sealed class AppHost : IDisposable
 
     public bool OpenWeb(string url, string title)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out _)) return false;
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme is not ("http" or "https")) return false;
+        url = WebHost.Secure(url);
         if (!WebHost.IsSchoolHost(url))
         {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            Links.Open(url);
             return true;
         }
         _ui.InvokeAsync(() => new SchoolWindow(url, title).Show());
@@ -134,6 +169,7 @@ internal sealed class AppHost : IDisposable
 
     public void Dispose()
     {
+        Updates.ApplyOnExit();
         _notifyTimer.Stop();
         _tray.Dispose();
         Hub.Dispose();

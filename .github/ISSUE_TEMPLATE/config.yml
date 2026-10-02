@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Hướng dẫn sử dụng (Wiki)
+    url: https://github.com/xeroz369/bk-study-desk/wiki
+    about: Cài đặt, cập nhật, gỡ app, luyện tập, câu hỏi thường gặp.
+  - name: Báo lỗ hổng bảo mật (riêng tư)
+    url: https://github.com/xeroz369/bk-study-desk/security/advisories/new
+    about: Không báo lỗ hổng ở issue công khai.

@@ -37,6 +37,20 @@ public static class Config
         }
     }
 
+    /// <summary>Đổi một giá trị (path dạng chấm) rồi lưu ngay, cho các công tắc lưu liền không cần bấm Lưu.</summary>
+    public static void Set(string dotted, JsonNode? value)
+    {
+        lock (Gate)   // clone + sửa + lưu trong một khóa: hai lần Set cùng lúc không làm mất thay đổi của nhau
+        {
+            var c = (JsonObject)Current.DeepClone();
+            var parts = dotted.Split('.');
+            var o = c;
+            foreach (var p in parts[..^1]) o = o[p] as JsonObject ?? (JsonObject)(o[p] = new JsonObject());
+            o[parts[^1]] = value;
+            Save(c);
+        }
+    }
+
     /// <summary>Lấy value theo path dạng chấm, ví dụ "sources.lms.site".</summary>
     public static JsonNode? Node(string dotted)
     {

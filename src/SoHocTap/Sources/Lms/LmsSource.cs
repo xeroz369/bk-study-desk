@@ -123,13 +123,15 @@ public sealed partial class LmsSource : ISource
         var recent = (prev["newFiles"] as JsonArray ?? []).OfType<JsonObject>()
             .Where(x => (x["seenAt"]?.GetValue<long>() ?? 0) > Now() - 14 * 86400).Select(x => x.DeepClone());
         foreach (var x in newFiles) x["seenAt"] = Now();
+        var events = await CollectEventsAsync(current, uid, ct);
+        if (autoDownload) await SaveAssignmentsAsync(current, events, index, hashes, log, ct);
         var output = new JsonObject
         {
             ["syncedAt"] = Now(),
             ["user"] = info["fullname"]?.GetValue<string>(),
             ["term"] = term,
             ["courses"] = new JsonArray(metas.Select(m => (JsonNode)m.ToJson()).ToArray()),
-            ["events"] = await CollectEventsAsync(current, uid, ct),
+            ["events"] = events,
             ["quizzes"] = await CollectQuizzesAsync(current, prev["quizzes"] as JsonArray, prev["syncedAt"]?.GetValue<long>() ?? 0, log, ct),
             ["newFiles"] = new JsonArray(newFiles.Cast<JsonNode>().Concat(recent).Take(300).ToArray()),
             ["announcements"] = await CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct),
@@ -141,6 +143,53 @@ public sealed partial class LmsSource : ISource
         log($"Xong: {nNew} lớp mới, {nChanged} lớp có thay đổi, {nChecked - Math.Min(nChecked, nChanged)} lớp không đổi, {nSkipped} lớp kỳ trước chưa tới hạn · {newFiles.Count} tài liệu mới · {Calls - callsBefore} request API");
         Log.Info($"Sync LMS: {Calls - callsBefore} request, check {nChecked} lớp, {nChanged} lớp có đổi");
     }
+
+    /// <summary>
+    /// Bài tập (assignment): lưu đề (Đề bài.html) và file đính kèm vào Tài liệu LMS\Bài tập\&lt;tên bài&gt;, để xem được khi LMS lag.
+    /// Dữ liệu lấy từ mod_assign_get_assignments đã gọi sẵn; file nào đã có (cùng url, cùng timemodified) thì không tải lại.
+    /// Chỉ đọc: không mở trang nộp bài, không gọi API ghi.
+    /// </summary>
+    private async Task SaveAssignmentsAsync(List<CourseInfo> courses, JsonArray events, JsonObject index,
+        Dictionary<string, Dictionary<string, string>> hashes, Action<string> log, CancellationToken ct)
+    {
+        var byId = courses.ToDictionary(c => c.Id);
+        var max = Config.Int("sources.lms.maxFileMB", 200) * 1024L * 1024;
+        var sec = new JsonObject { ["name"] = "Bài tập" };
+        foreach (var e in events.OfType<JsonObject>().Where(e => e["kind"]?.GetValue<string>() == "assign"))
+        {
+            if (e["course"]?.GetValue<long>() is not { } cid || !byId.TryGetValue(cid, out var m)) continue;
+            var name = e["name"]?.GetValue<string>() ?? "Bài tập";
+            if (e["intro"]?.GetValue<string>() is { Length: > 0 } intro)
+            {
+                var dir = Path.Combine(m.LmsFolder, "Bài tập", SafeName(name));
+                var file = Path.Combine(dir, "Đề bài.html");
+                var due = DateTimeOffset.FromUnixTimeSeconds(e["time"]?.GetValue<long>() ?? 0).LocalDateTime;
+                // CSP: mở file trên máy thì không chạy script / event handler, không gửi form, không tải ảnh ngoài (theo dõi người mở).
+                // Bỏ thẻ <meta> trong nội dung LMS để không tự chuyển trang (refresh) hay đổi CSP.
+                var html = $"<!doctype html><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'\">" +
+                           $"<title>{WebUtility.HtmlEncode(name)}</title>" +
+                           $"<h1>{WebUtility.HtmlEncode(name)}</h1><p>Hạn nộp: {due:dd/MM/yyyy HH:mm}</p>" +
+                           MetaRx().Replace(ScriptRx().Replace(intro, ""), "");
+                if (!File.Exists(file) || File.ReadAllText(file) != html)
+                {
+                    Directory.CreateDirectory(dir);
+                    File.WriteAllText(file, html);
+                }
+            }
+            var mod = new JsonObject { ["modname"] = "folder", ["name"] = name };
+            foreach (var f in (e["files"] as JsonArray ?? []).OfType<JsonObject>())
+                if (f["fileurl"] is not null && (f["filesize"]?.GetValue<long>() ?? 0) <= max)
+                    await SyncFileAsync(m, sec, mod, f, index, hashes, log, ct);
+        }
+        JsonStore.Write(FilesIndex, index);
+        Organizer.SaveHashCache();
+    }
+
+    [GeneratedRegex(@"<script\b[\s\S]*?</script>", RegexOptions.IgnoreCase)]
+    private static partial Regex ScriptRx();
+
+    [GeneratedRegex(@"<meta\b[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex MetaRx();
 
     /// <summary>Các file tải được của một khóa: file trong module "resource" và "folder", bỏ folder nằm trong skipFolders và file lớn hơn maxFileMB.</summary>
     private static IEnumerable<(JsonObject Sec, JsonObject Mod, JsonObject File)> Downloadable(JsonArray contents)
@@ -245,6 +294,7 @@ public sealed partial class LmsSource : ISource
         }
         else dest = Organizer.UniquePath(dest);
         Organizer.MoveFile(tmp, dest);
+        MarkFromInternet(dest, url);
         hashes[h] = dest;
         var entry = IndexEntry(dest, modified, m.Id, h);
         index[url] = entry;
@@ -320,6 +370,18 @@ public sealed partial class LmsSource : ISource
                         ["time"] = due,
                         ["label"] = "Hạn nộp",
                         ["url"] = $"{Site}/mod/assign/view.php?id={a["cmid"]}",
+                        // Đề và file đính kèm có sẵn trong kết quả này (không tốn thêm request): để lưu về máy.
+                        ["intro"] = a["intro"]?.GetValue<string>(),
+                        ["files"] = new JsonArray((a["introattachments"] as JsonArray ?? []).OfType<JsonObject>()
+                            .Select(f => (JsonNode)new JsonObject
+                            {
+                                ["filename"] = f["filename"]?.DeepClone(),
+                                ["fileurl"] = f["fileurl"]?.DeepClone(),
+                                ["filesize"] = f["filesize"]?.DeepClone(),
+                                ["timemodified"] = f["timemodified"]?.DeepClone(),
+                                ["filepath"] = "/",
+                                ["type"] = "file",
+                            }).ToArray()),
                     });
                 }
         }
@@ -527,7 +589,8 @@ public sealed partial class LmsSource : ISource
             };
             bool opened = open is null || open <= t;
             bool active = opened && (close is null || close >= lastSync - 86400);
-            if (old.TryGetValue(id, out var prev) && !active) { item["attempts"] = prev["attempts"]?.DeepClone(); list.Add(item); continue; }
+            // Quiz cũ đã đóng: dùng lại data, trừ khi còn lượt đã nộp chưa lưu (vừa bật tự lưu, hoặc file bị xóa).
+            if (old.TryGetValue(id, out var prev) && !active && !Unsaved(id, prev)) { item["attempts"] = prev["attempts"]?.DeepClone(); list.Add(item); continue; }
             if (!opened) { list.Add(item); continue; }
             JsonArray attempts;
             try { attempts = (await CallAsync("mod_quiz_get_user_attempts", [Arg("quizid", id), Arg("status", "finished")], ct))["attempts"]!.AsArray(); }
@@ -536,6 +599,7 @@ public sealed partial class LmsSource : ISource
             {
                 var aid = a["id"]!.GetValue<long>();
                 item["attempts"]!.AsArray().Add(new JsonObject { ["id"] = aid, ["finished"] = a["timefinish"]?.GetValue<long>(), ["grade"] = a["sumgrades"]?.DeepClone() });
+                if (!SaveQuizzes) continue;
                 // Only finished attempts, read-only review API. Never touch an attempt that is in progress.
                 var path = Path.Combine(QuizDir, $"{id}-{aid}.json");
                 if (JsonStore.Read(path) is JsonObject saved && !NeedsRefetch(saved, close, t)) continue;
@@ -570,6 +634,11 @@ public sealed partial class LmsSource : ISource
                     JsonStore.Write(path, head);
                     log($"  lưu quiz: {item["name"]}{(head["answers"]!.GetValue<bool>() ? "" : " (chưa có đáp án, sẽ lấy lại sau khi quiz đóng)")}");
                 }
+                catch (LmsException e) when (e.Code is not ("noreview" or "noreviewattempt" or "noreviewavailable"))
+                {
+                    // Lỗi thoáng qua (mạng, hết phiên…): không ghi file, lần đồng bộ sau thử lại (một request).
+                    log($"  chưa lưu được quiz {item["name"]}: {e.Message}");
+                }
                 catch (LmsException e)
                 {
                     // Quiz does not allow review: keep a stub (name, grade) so the app can offer "ghi nhanh câu còn nhớ".
@@ -585,9 +654,26 @@ public sealed partial class LmsSource : ISource
         return list;
     }
 
+    /// <summary>Tự lưu bản xem lại quiz đã nộp (sources.lms.saveQuizzes, chỉnh trong Cài đặt hoặc Kho quiz).</summary>
+    private static bool SaveQuizzes => Config.Bool("sources.lms.saveQuizzes", true);
+
+    /// <summary>Quiz có lượt đã nộp mà chưa có file lưu, hoặc file kiểu cũ (chưa lọc sesskey, thiếu savedAt).</summary>
+    private static bool Unsaved(long quizId, JsonObject prev) =>
+        SaveQuizzes && (prev["attempts"] as JsonArray ?? []).OfType<JsonObject>()
+            .Any(a => JsonStore.Read(Path.Combine(QuizDir, $"{quizId}-{a["id"]}.json")) is not JsonObject f || f["savedAt"] is null);
+
+    /// <summary>Đánh dấu file tải từ mạng (Zone.Identifier), để Office mở ở Protected View và SmartScreen kiểm file chạy được. URL không kèm token.</summary>
+    private static void MarkFromInternet(string path, string url)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        try { File.WriteAllText(path + ":Zone.Identifier", $"[ZoneTransfer]\r\nZoneId=3\r\nHostUrl={url.Split('?')[0]}\r\n"); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException) { }   // ổ không phải NTFS
+    }
+
     /// <summary>Saved without answers (or without review) and the quiz has closed since: try once more.</summary>
     private static bool NeedsRefetch(JsonObject saved, long? close, long now)
     {
+        if (saved["savedAt"] is null) return true;   // file kiểu cũ: lưu lại bằng bản đã lọc
         var incomplete = saved["noReview"]?.GetValue<bool>() == true || saved["answers"]?.GetValue<bool>() == false;
         var savedAt = saved["savedAt"]?.GetValue<long>() ?? 0;
         return incomplete && close is { } c && c <= now && savedAt < c;

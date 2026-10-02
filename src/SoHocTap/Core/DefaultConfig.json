@@ -17,6 +17,7 @@
       ],
       "maxFileMB": 200,
       "autoDownload": true,
+      "saveQuizzes": true,
       "groupPattern": "(?<![A-Za-z0-9])L[0-9]{2,3}(?![A-Za-z0-9])",
       "announcementDays": 120,
       "announcementsPerForum": 10
@@ -67,7 +68,7 @@
         {
           "group": "Cổng MyBK",
           "name": "BKPay (học phí)",
-          "url": "http://bkpay.hcmut.edu.vn"
+          "url": "https://bkpay.hcmut.edu.vn"
         },
         {
           "group": "Cổng MyBK",
@@ -77,32 +78,32 @@
         {
           "group": "Cổng MyBK",
           "name": "Hoạt động ngoại khóa",
-          "url": "http://mybk.hcmut.edu.vn/hdsv/page/trang-chu-hd.aspx"
+          "url": "https://mybk.hcmut.edu.vn/hdsv/page/trang-chu-hd.aspx"
         },
         {
           "group": "Cổng MyBK",
           "name": "Hỗ trợ trực tuyến",
-          "url": "http://mybk.hcmut.edu.vn/bksi"
+          "url": "https://mybk.hcmut.edu.vn/bksi"
         },
         {
           "group": "Cổng MyBK",
           "name": "Mua sách, giáo trình",
-          "url": "http://mybk.hcmut.edu.vn/bookstore"
+          "url": "https://mybk.hcmut.edu.vn/bookstore"
         },
         {
           "group": "Cổng MyBK",
           "name": "Đăng ký in bảng điểm",
-          "url": "http://mybk.hcmut.edu.vn/apps/src/inbd/index.aspx"
+          "url": "https://mybk.hcmut.edu.vn/apps/src/inbd/index.aspx"
         },
         {
           "group": "Cổng MyBK",
           "name": "Nộp chứng chỉ ngoại ngữ",
-          "url": "http://mybk.hcmut.edu.vn/apps/src/nopccav/index.aspx"
+          "url": "https://mybk.hcmut.edu.vn/apps/src/nopccav/index.aspx"
         },
         {
           "group": "Cổng MyBK",
           "name": "BHYT, BHTN sinh viên",
-          "url": "http://mybk.hcmut.edu.vn/apps/src/bhsv/index.aspx"
+          "url": "https://mybk.hcmut.edu.vn/apps/src/bhsv/index.aspx"
         },
         {
           "group": "Dịch vụ sinh viên",
@@ -289,6 +290,12 @@
     "virtualHost": "sohoc.app",
     "schedulerMinutes": 10,
     "language": "vi",
-    "closeToTray": true
+    "closeToTray": true,
+    "update": {
+      "mode": "ask",
+      "checkHours": 24,
+      "source": "https://github.com/xeroz369/bk-study-desk",
+      "skip": ""
+    }
   }
 }

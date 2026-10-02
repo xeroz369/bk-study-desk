@@ -37,7 +37,7 @@ public partial class ServicesPage : UserControl, IPage
         List.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         Grids.Setup<ServiceRow>(List, s => _host.OpenWeb(s.Url, s.Name), s =>
         [
-            new(L.T("services.openBrowser"), () => Process.Start(new ProcessStartInfo(s.Url) { UseShellExecute = true }), Separator: true),
+            new(L.T("services.openBrowser"), () => Links.Open(s.Url), Separator: true),
         ]);
         // Ctrl+F: lọc; ↓ từ ô lọc xuống bảng.
         PreviewKeyDown += (_, e) =>

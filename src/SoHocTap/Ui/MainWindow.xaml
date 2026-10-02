@@ -26,7 +26,17 @@
             <StatusBarItem><TextBlock x:Name="StMybk" /></StatusBarItem>
             <Separator />
             <StatusBarItem><TextBlock x:Name="StMessage" TextTrimming="CharacterEllipsis" /></StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right"><TextBlock x:Name="StExam" /></StatusBarItem>
+            <!-- Tên bản + phiên bản: bản riêng và bản public chạy song song, nhìn là biết đang mở bản nào. Di chuột: thư mục app. -->
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal">
+                    <!-- Có bản mới (chỉ hiện khi người dùng cho phép kiểm tra): bấm để xem và cập nhật. -->
+                    <TextBlock x:Name="StUpdate" Margin="0,0,16,0" Visibility="Collapsed">
+                        <Hyperlink Click="OnUpdateClick"><Run x:Name="StUpdateText" /></Hyperlink>
+                    </TextBlock>
+                    <TextBlock x:Name="StExam" />
+                    <TextBlock x:Name="StVersion" Margin="16,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StatusBarItem>
         </StatusBar>
 
         <!-- Điều hướng + lệnh -->

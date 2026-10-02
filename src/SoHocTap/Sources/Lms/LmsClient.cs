@@ -7,7 +7,11 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Sources.Lms;
 
-public sealed class LmsException(string message) : Exception(message);
+public sealed class LmsException(string message, string? code = null) : Exception(message)
+{
+    /// <summary>errorcode của Moodle (vd. "noreviewattempt"), null nếu lỗi không đến từ web service.</summary>
+    public string? Code { get; } = code;
+}
 
 /// <summary>
 /// Gọi web service của Moodle mobile app (BK-LMS) bằng token đã lưu.
@@ -102,7 +106,7 @@ public static partial class LmsClient
             var code = o["errorcode"]?.GetValue<string>();
             throw new LmsException(code is "invalidtoken" or "accessexception"
                 ? "Phiên LMS hết hạn, cần đăng nhập lại."
-                : $"{function}: {o["message"]}");
+                : $"{function}: {o["message"]}", code);
         }
         return node;
     }
@@ -113,16 +117,25 @@ public static partial class LmsClient
 
     public static KeyValuePair<string, string> Arg(string name, object value) => new(name, value.ToString()!);
 
-    public static async Task DownloadAsync(string fileUrl, string dest, CancellationToken ct)
+    /// <summary>Chỉ URL https trên đúng host LMS mới được gắn token (link lạ trong nội dung LMS không được lấy token đi).</summary>
+    public static bool IsLmsUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps
+        && Uri.TryCreate(Site, UriKind.Absolute, out var site) && u.Host.Equals(site.Host, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Tải file LMS về <paramref name="dest"/>. Đếm byte khi tải: quá <paramref name="maxBytes"/> thì dừng (server trả sai kích thước).</summary>
+    public static async Task DownloadAsync(string fileUrl, string dest, CancellationToken ct, long maxBytes = 4L << 30)
     {
+        if (!IsLmsUrl(fileUrl)) throw new HttpRequestException("Link không thuộc LMS, không tải.");
         var url = fileUrl + (fileUrl.Contains('?') ? "&" : "?") + "token=" + Uri.EscapeDataString(Token ?? "");
         Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
         var part = dest + ".part";
         using (var resp = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct))
         {
             resp.EnsureSuccessStatusCode();
+            if (resp.Content.Headers.ContentLength > maxBytes) throw new HttpRequestException("File quá lớn, không tải.");
             await using var fs = File.Create(part);
-            await resp.Content.CopyToAsync(fs, ct);
+            await using var src = await resp.Content.ReadAsStreamAsync(ct);
+            if (!await CopyLimitedAsync(src, fs, maxBytes, ct)) { fs.Close(); File.Delete(part); throw new HttpRequestException("File quá lớn, không tải."); }
         }
         File.Move(part, dest, overwrite: true);
     }
@@ -134,6 +147,7 @@ public static partial class LmsClient
     /// </summary>
     public static async Task<string?> DataUriAsync(string fileUrl, CancellationToken ct, int maxBytes = 1_500_000)
     {
+        if (!IsLmsUrl(fileUrl)) return null;
         try
         {
             var url = fileUrl.Replace("/pluginfile.php/", "/webservice/pluginfile.php/").Replace("/webservice/webservice/", "/webservice/");
@@ -143,10 +157,25 @@ public static partial class LmsClient
             var type = resp.Content.Headers.ContentType?.MediaType ?? "";
             if (!resp.IsSuccessStatusCode || type is not ("image/png" or "image/jpeg" or "image/gif" or "image/webp")) return null;
             if (resp.Content.Headers.ContentLength > maxBytes) return null;
-            var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
-            return bytes.Length > maxBytes ? null : $"data:{type};base64,{Convert.ToBase64String(bytes)}";
+            using var ms = new MemoryStream();
+            await using var src = await resp.Content.ReadAsStreamAsync(ct);
+            return await CopyLimitedAsync(src, ms, maxBytes, ct) ? $"data:{type};base64,{Convert.ToBase64String(ms.GetBuffer(), 0, (int)ms.Length)}" : null;
         }
         catch (HttpRequestException) { return null; }
+    }
+
+    /// <summary>Chép tối đa <paramref name="max"/> byte; false nếu nguồn còn dài hơn (không tin Content-Length).</summary>
+    private static async Task<bool> CopyLimitedAsync(Stream src, Stream dst, long max, CancellationToken ct)
+    {
+        var buf = new byte[81920];
+        long total = 0;
+        int n;
+        while ((n = await src.ReadAsync(buf, ct)) > 0)
+        {
+            if ((total += n) > max) return false;
+            await dst.WriteAsync(buf.AsMemory(0, n), ct);
+        }
+        return true;
     }
 
     public static long Now() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();

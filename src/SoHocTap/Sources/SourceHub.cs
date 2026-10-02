@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using SoHocTap.Core;
 
 namespace SoHocTap.Sources;
@@ -13,6 +13,7 @@ public sealed class SourceHub : IDisposable
     {
         public bool Running;
         public DateTimeOffset FailedAt;
+        public DateTimeOffset StartedAt;
         public string? Error;
         public List<string> Log = [];
     }
@@ -26,6 +27,9 @@ public sealed class SourceHub : IDisposable
 
     /// <summary>Vừa sync thành công mà bấm Đồng bộ tiếp thì bỏ qua, tránh spam request lên server trường.</summary>
     private static readonly TimeSpan MinGap = TimeSpan.FromMinutes(2);
+
+    /// <summary>Khoảng tối thiểu giữa hai lần bắt đầu sync, kể cả khi lần trước lỗi hay bấm "Đồng bộ lại": bấm liên tục không bắn request liên tục.</summary>
+    private static readonly TimeSpan MinRestart = TimeSpan.FromSeconds(30);
 
     /// <summary>(nguồn, "start" | "done"), Shell chuyển thành event cho UI.</summary>
     public event Action<string, string>? Changed;
@@ -90,8 +94,8 @@ public sealed class SourceHub : IDisposable
         var st = _state[name];
         lock (st)
         {
-            if (st.Running) return false;
-            st.Running = true; st.Error = null; st.Log = [];
+            if (st.Running || DateTimeOffset.UtcNow - st.StartedAt < MinRestart) return false;
+            st.Running = true; st.Error = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
         }
         Changed?.Invoke(name, "start");
         _ = Task.Run(async () =>

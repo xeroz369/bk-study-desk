@@ -53,7 +53,9 @@ public static class Documents
     {
         var full = Paths.StudyPath(rel);
         if (full is null) return false;
-        if (Directory.Exists(full)) { Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { full } }); return true; }
+        if (Directory.Exists(full)) { Process.Start(new ProcessStartInfo(Explorer) { ArgumentList = { full } }); return true; }
+        // File chạy được (exe, lnk, hta, script…) trong tài liệu tải về: không chạy, chỉ chỉ ra trong Explorer cho người dùng tự quyết.
+        if (Runnable.Contains(Path.GetExtension(full))) return Reveal(rel);
         var pdfApp = Environment.ExpandEnvironmentVariables(Config.Str("viewer.pdfApp"));
         if (full.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && pdfApp.Length > 0 && File.Exists(pdfApp))
             Process.Start(new ProcessStartInfo(pdfApp) { ArgumentList = { full }, UseShellExecute = false });
@@ -73,10 +75,11 @@ public static class Documents
         if (!Directory.Exists(root)) return null;
         static string Norm(string s) => s.Normalize().Replace('\\', '/').Trim().ToLowerInvariant();
         var want = Norm(file);
-        var wantStem = Norm(Path.GetFileNameWithoutExtension(file));
-        var hasExt = Path.HasExtension(file);
+        var hasExt = DocExt.Contains(Path.GetExtension(file));   // "Chương 1. Sai số": dấu chấm trong tên, không phải đuôi file
+        var wantStem = hasExt ? Norm(Path.GetFileNameWithoutExtension(file)) : Norm(Path.GetFileName(file));
         static int Rank(string f) => Path.GetExtension(f).ToLowerInvariant() switch { ".pdf" => 0, ".pptx" or ".ppt" => 1, _ => 2 };
         var hits = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            .Where(f => DocExt.Contains(Path.GetExtension(f)))   // chỉ tài liệu: gói chia sẻ không được mở exe, bat, lnk…
             .Select(f => (full: f, rel: Norm(Path.GetRelativePath(root, f))))
             .Select(x => (x.full, score:
                 x.rel == want || (!hasExt && Path.ChangeExtension(x.rel, null) == want) ? 0
@@ -87,6 +90,12 @@ public static class Documents
         var best = hits.FirstOrDefault().full;
         return best is null ? null : Paths.RelativeToStudy(best);
     }
+
+    /// <summary>Đuôi file "Mở slide" được mở: tài liệu, không phải file chạy được.</summary>
+    private static readonly HashSet<string> DocExt = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf", ".ppt", ".pptx", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".md", ".png", ".jpg", ".jpeg", ".webp",
+    };
 
     /// <summary>Mở PDF ở trang <paramref name="page"/>: SumatraPDF (viewer.pdfApp) dùng -page, không có thì Edge với #page=.</summary>
     public static bool Open(string? rel, int page)
@@ -107,9 +116,20 @@ public static class Documents
     {
         var full = Paths.StudyPath(rel);
         if (full is null) return false;
-        Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { "/select,", full } });
+        Process.Start(new ProcessStartInfo(Explorer) { ArgumentList = { "/select,", full } });
         return true;
     }
+
+    /// <summary>Đường dẫn đầy đủ tới explorer.exe, để không bị một explorer.exe giả đặt cạnh app chạy thay.</summary>
+    private static string Explorer => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+
+    /// <summary>Đuôi file Windows chạy được hoặc tự thực thi khi mở: không mở trực tiếp từ app.</summary>
+    private static readonly HashSet<string> Runnable = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".exe", ".com", ".scr", ".pif", ".bat", ".cmd", ".ps1", ".psm1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh", ".hta",
+        ".lnk", ".url", ".msi", ".msp", ".cpl", ".msc", ".jar", ".reg", ".scf", ".chm", ".application", ".appref-ms",
+        ".settingcontent-ms", ".library-ms", ".iso", ".img", ".vhd", ".vhdx", ".xll", ".diagcab", ".appx", ".msix", ".appinstaller",
+    };
 
     /// <summary>Liệt kê đúng một tầng: folder con (kèm số mục bên trong) và file. Không quét cả cây.</summary>
     public static JsonObject ListDir(string rel)
