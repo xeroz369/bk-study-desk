@@ -2,7 +2,7 @@
 
 Dự án dành cho sinh viên giúp nhau học. Trong issue, PR và Wiki:
 
-- Lịch sự, góp ý vào vấn đề chứ không vào người.
+- Lịch sự, góp ý vào vấn đề chứ không chan nhau.
 - Không xúc phạm, quấy rối, phân biệt đối xử, không đăng thông tin cá nhân của người khác.
 - Không đăng đề thi, đáp án bài kiểm tra đang mở hay nội dung vi phạm quy chế của trường.
 
