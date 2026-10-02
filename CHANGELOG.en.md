@@ -18,7 +18,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 - **Download** lets you choose file types: PDF, slides (.ppt, .pptx), other; the file count and size follow your choice ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - The course registration table shows the lecturer and class times, taken from the MyBK timetable ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - English documents are separate, complete translations: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, and English Wiki pages. English style guide: `docs/english-style.md`.
-- A **Support** section in the README: Ko-fi and a MoMo/VietQR code.
+- A **Support** section in the README, the Wiki and the app's **About** page: Ko-fi and a MoMo/VietQR code.
+- The **About** page opens the English privacy policy when the interface is in English.
 
 ### Changed
 

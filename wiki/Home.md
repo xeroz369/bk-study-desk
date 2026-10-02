@@ -17,3 +17,7 @@ App Windows gom **BK-LMS** và **MyBK** của Bách Khoa TP.HCM vào một cửa
 - [[Câu hỏi thường gặp]]
 - [[Bảo mật và quyền riêng tư]]
 - [[Cách app hoạt động]]
+
+## Ủng hộ
+
+App miễn phí và sẽ tiếp tục được sửa lỗi, thêm tính năng. Nếu app giúp ích cho bạn, bạn có thể mời người làm app một ly cà phê qua [Ko-fi](https://ko-fi.com/F1F3SN4UE) hoặc quét [mã QR MoMo/VietQR](https://github.com/xeroz369/bk-study-desk#ủng-hộ). Ủng hộ là tự nguyện, không mở khóa gì thêm.

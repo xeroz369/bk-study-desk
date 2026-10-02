@@ -146,7 +146,7 @@ Third-party libraries keep their own licenses: NuGet packages in the `.csproj` f
 
 ## Support
 
-The app is free and will keep getting fixes and new features. If it helps you, you can buy the author a coffee. Support is voluntary and unlocks nothing extra in the app.
+The app is free and will keep getting fixes and new features. If it helps you, you can buy the author a coffee. Support is voluntary and unlocks nothing extra in the app. In the app: **About** > **Support**.
 
 - **Ko-fi:** [ko-fi.com/F1F3SN4UE](https://ko-fi.com/F1F3SN4UE) (international cards, PayPal).
 - **MoMo / Vietnamese banks (VietQR):** scan the code below with MoMo or a banking app.
