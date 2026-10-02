@@ -6,7 +6,7 @@
 
 Nên có:
 - phiên bản app, Windows;
-- các bước làm lại lỗi;
+- các bước repeat lỗi;
 - ảnh hưởng: lộ token/phiên đăng nhập, chạy mã lạ, ghi file ngoài thư mục app, gửi request làm thay đổi dữ liệu trên LMS/MyBK…
 
 Mình sẽ phản hồi trong vòng 7 ngày, sửa ở bản kế tiếp và ghi công người báo (nếu bạn muốn).
