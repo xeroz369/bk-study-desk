@@ -5,7 +5,7 @@
 App Windows nhỏ gọn cho sinh viên **Bách Khoa TP.HCM (HCMUT)**. App gom **BK-LMS** và **MyBK** vào một cửa sổ:
 - deadline, quiz;
 - thời khóa biểu, lịch thi;
-- tài liệu từng môn, tải sẵn về máy;
+- tài liệu từng môn, chọn mục nào thì tải xuống máy mục đó;
 - điểm (sổ điểm LMS lẫn điểm thành phần trên MyBK);
 - tiến độ chương trình đào tạo;
 - **luyện tập**: tự soạn quiz, ôn lại quiz LMS đã nộp, thi thử;
@@ -21,10 +21,12 @@ Giao diện mặc định tiếng Việt, có thêm tiếng Anh. *English summar
 
 **Cách 1: Microsoft Store (khuyên dùng).** Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Không có cảnh báo SmartScreen vì Microsoft ký gói; Store tự cập nhật app.
 
+**Kiểm tra số phiên bản trước khi cài.** Mỗi bản mới phải chờ Microsoft duyệt (thường vài giờ, có khi tới 3 ngày làm việc), nên bản trên Store có thể chậm hơn bản mới nhất trên GitHub. So số phiên bản ở trang Store với [Releases](../../releases/latest); cần bản mới ngay thì dùng bộ cài GitHub.
+
 **Cách 2: bộ cài trên GitHub.**
 
 1. Tải `BKStudyDesk-x.y.z-Setup-x64.exe` ở [Releases](../../releases) (máy chip ARM: bản `-Setup-arm64.exe`).
-2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm → Vẫn chạy** (chỉ một lần).
+2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm** → **Vẫn chạy** (chỉ một lần).
 3. Lần mở đầu, chọn cách cập nhật và thư mục lưu tài liệu, rồi **Đăng nhập HCMUT**.
 
 Hai cách cài dùng chung mã nguồn nhưng là hai bản riêng, dữ liệu không dùng chung. Chỉ nên cài một trong hai.
@@ -58,10 +60,10 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - bảng điểm theo học kỳ kèm điểm thành phần;
   - tiến độ CTĐT theo khối kiến thức;
   - sổ điểm LMS, kết quả đăng ký môn, ngày CTXH, quyết định học vụ.
-- **Luyện tập**: tự làm quiz để ôn bài, không ảnh hưởng gì tới điểm trên LMS. **Hướng dẫn từng bước có ảnh: [Wiki → Luyện tập](../../wiki/Luyện-tập).**
+- **Luyện tập**: tự làm quiz để ôn bài, không ảnh hưởng gì tới điểm trên LMS. **Hướng dẫn từng bước có ảnh: [Wiki** → **Luyện tập](../../wiki/Luyện-tập).**
   - **Tự soạn quiz** cho từng môn, chương, bài. Có đủ 5 dạng câu như quiz LMS (chọn một, chọn nhiều, đúng/sai, điền số, điền chữ), chèn được ảnh và công thức.
   - **Nhờ AI soạn**: app viết sẵn câu lệnh cho AI, bạn chỉ cần dán câu trả lời của AI vào app.
-  - **Nhập và xuất** quiz dạng Markdown (`.md`, hoặc `.zip` nếu có ảnh), Moodle XML, GIFT, Aiken. Định dạng file xem ở [`studypack/`](studypack/).
+  - **Nhập và xuất** quiz dạng Markdown (`.md` hoặc `.zip` nếu có ảnh), Moodle XML, GIFT, Aiken. Định dạng file xem ở [`studypack/`](studypack/).
   - **Lưu lại quiz LMS đã nộp** để xem lại sau, kể cả lúc LMS chậm (tắt được trong Cài đặt). App chỉ đọc trang xem lại sau khi bạn nộp, không đụng tới quiz đang làm. Quiz đã đóng thì chia sẻ được.
   - **Ôn tập**: mục "Ôn hôm nay" nhắc lại những câu bạn hay sai, nhớ rồi thì giãn lịch ra; có đề thi thử ngẫu nhiên, đánh dấu câu nghi sai và ghi chú riêng.
 - **Dịch vụ**: mở MyBK, LMS, BKPay, đăng ký môn… ngay trong app, dùng chung một lần đăng nhập.
@@ -80,7 +82,7 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
 
 Chính sách đầy đủ: [PRIVACY.md](PRIVACY.md).
 
-- Mật khẩu chỉ gõ trên trang SSO của trường. App không đọc mật khẩu. Nếu bạn chọn Lưu khi cửa sổ đăng nhập hỏi, trình duyệt nhúng WebView2 sẽ lưu mật khẩu (mã hóa trên máy, giống Edge) để tự điền lần sau; không chọn Lưu thì không lưu.
+- Mật khẩu chỉ gõ trên trang SSO của trường. App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, trình duyệt nhúng WebView2 sẽ lưu mật khẩu (mã hóa trên máy, giống Edge) để tự điền lần sau; không chọn **Lưu** thì không lưu.
 - Mọi thứ nằm trong thư mục dữ liệu `%LOCALAPPDATA%\BKStudyDesk.Data\data`, không nằm trong thư mục cài:
   - cookie trong `data\webview`, do WebView2 tự mã hóa;
   - token LMS trong `data\secrets\`, **mã hóa bằng Windows DPAPI**. Chép sang máy khác hay tài khoản Windows khác thì không dùng được.
@@ -126,7 +128,7 @@ URL của trường, API path, tên thư mục và chu kỳ đồng bộ nằm t
 
 Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUCT.md). Nhớ giữ quy tắc **chỉ đọc**: không tính năng nào được nộp bài hay sửa dữ liệu trên hệ thống của trường.
 
-## License
+## Giấy phép
 
 [PolyForm Noncommercial 1.0.0](LICENSE.md) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
 - **Được:** dùng, sửa, chia sẻ cho cá nhân, học tập, nghiên cứu, trường học, tổ chức phi lợi nhuận. Giữ dòng ghi tác giả (Required Notice) trong LICENSE.

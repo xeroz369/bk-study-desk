@@ -73,7 +73,7 @@ App **không** gọi hàm nào để nộp bài, bắt đầu hay lưu lượt l
 | Máy chủ báo quá tải (HTTP 429/503) | app chờ theo `Retry-After` (không có thì chờ ngẫu nhiên tăng dần) rồi thử lại; tổng cộng tối đa 3 lần, vẫn bị thì dừng và báo lỗi |
 | Chưa đăng nhập | không gửi gì |
 
-Bạn luôn bấm **Đồng bộ** được để chạy ngay; app bỏ qua nếu vừa đồng bộ xong dưới 2 phút.
+Bạn luôn chọn **Đồng bộ** được để chạy ngay; app bỏ qua nếu vừa đồng bộ xong dưới 2 phút.
 
 ## 5. Ngoài trường
 

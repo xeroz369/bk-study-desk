@@ -43,11 +43,11 @@ Mỗi gói là một JSON object phẳng gồm các cặp `"key": "chữ"`. File
 
 ## Thêm ngôn ngữ
 
-1. Copy `vi.json` thành `<mã>.json`, ví dụ `fr.json`.
+1. Sao chép `vi.json` thành `<mã>.json`, ví dụ `fr.json`.
 2. Sửa `_meta.name` (ví dụ `"Français"`) và `_meta.culture` (ví dụ `"fr-FR"`).
 3. Dịch các value. Giữ nguyên key và các chỗ trống `{0}`, `{1}`…
 4. Mở lại app.
-5. Vào **Cài đặt → Ngôn ngữ**, chọn ngôn ngữ mới, rồi bấm **Khởi động lại ngay**.
+5. Vào **Cài đặt → Ngôn ngữ**, chọn ngôn ngữ mới, rồi chọn **Khởi động lại ngay**.
 
 Lựa chọn được lưu trong `data\config.json`, ở key `app.language`. Rất hoan nghênh PR thêm ngôn ngữ mới.
 

@@ -328,7 +328,7 @@
 					bind:value={raw}
 					oninput={() => (rawImages = {})}
 					rows={8}
-					placeholder={'Dán khối Markdown AI trả về, hoặc nội dung file…\n\n### Câu 1\nĐề bài\n- [x] đúng\n- [ ] sai\n> lời giải'}
+					placeholder={'Dán khối Markdown AI trả về hoặc nội dung file…\n\n### Câu 1\nĐề bài\n- [x] đúng\n- [ ] sai\n> lời giải'}
 					class="font-mono text-xs"
 				/>
 				<div class="flex gap-2">
@@ -446,8 +446,8 @@
 				<ol class="list-decimal pl-5">
 					<li>Sao chép prompt, dán vào ChatGPT / Claude / Gemini{mode === 'soan' ? ', kèm slide hoặc đề (PDF, ảnh)' : ''}.</li>
 					{#if mode === 'giai-thich'}<li>Đọc lời giải thích của AI.</li>{:else}<li>
-							AI trả về một khối Markdown: copy hết, sang tab <a class="underline" href={`#soan/nhap/${scopePath(scope)}`}>Nhập</a>, dán vào
-							rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
+							AI trả về một khối Markdown: sao chép hết, sang tab <a class="underline" href={`#soan/nhap/${scopePath(scope)}`}>Nhập</a>, dán
+							vào rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
 						</li>{/if}
 				</ol>
 				{#if mode === 'soan' || mode === 'tuong-tu'}

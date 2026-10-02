@@ -1,7 +1,7 @@
 # Câu hỏi thường gặp
 
 **Windows báo "Windows đã bảo vệ máy tính của bạn".**
-Bộ cài trên GitHub chưa có chữ ký số (chứng chỉ tốn phí hằng năm). Cài từ [Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850) thì không có cảnh báo này. Dùng bộ cài GitHub thì chọn **Thông tin thêm → Vẫn chạy**. Chỉ hiện một lần lúc cài; cập nhật sau không bị hỏi lại. Muốn chắc file không bị sửa, so mã SHA-256 như ở [[Cài đặt]].
+Bộ cài trên GitHub chưa có chữ ký số (chứng chỉ tốn phí hằng năm). Cài từ [Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850) thì không có cảnh báo này. Dùng bộ cài GitHub thì chọn **Thông tin thêm** → **Vẫn chạy**. Chỉ hiện một lần lúc cài; cập nhật sau không bị hỏi lại. Muốn chắc file không bị sửa, so mã SHA-256 như ở [[Cài đặt]].
 
 **Mở LMS/MyBK trong app thấy "session timed out" hay bắt đăng nhập lại.**
 Phiên đăng nhập trên server trường hết hạn sau vài giờ, dù app vẫn nhớ. App tự đi qua trang đăng nhập SSO; nếu SSO cũng hết phiên thì bạn đăng nhập lại một lần.
@@ -13,7 +13,7 @@ Phiên đăng nhập trên server trường hết hạn sau vài giờ, dù app 
 Không. App chỉ gọi API **đọc**. Không nộp bài, không đăng ký/hủy môn, không thanh toán, không làm quiz thay bạn.
 
 **App có gửi dữ liệu của tôi đi đâu không?**
-Không có server riêng, không analytics. App chỉ nói chuyện với server của trường, và với GitHub để hỏi bản mới nếu bạn cho phép. Xem [[Bảo mật và quyền riêng tư]].
+Không có server riêng, không analytics. App chỉ nói chuyện với server của trường và với GitHub để hỏi bản mới nếu bạn cho phép. Xem [[Bảo mật và quyền riêng tư]].
 
 **Có bản cho macOS, Linux không?**
 Chưa. Bản đa nền tảng đang làm; khi ổn định sẽ có ở trang Releases.

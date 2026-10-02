@@ -28,7 +28,7 @@
 			? on
 				? 'Đã bật: quiz nộp xong sẽ được lưu ở lần đồng bộ LMS tới.'
 				: 'Đã tắt: app không lưu quiz mới. Quiz đã lưu vẫn giữ.'
-			: 'Không đổi được cài đặt.';
+			: 'Không đổi được cài đặt. Thử lại.';
 	}
 	const groups = $derived.by(() => {
 		const m = new Map<string, QuizInfo[]>();

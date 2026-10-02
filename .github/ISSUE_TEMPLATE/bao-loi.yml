@@ -23,7 +23,7 @@ body:
     id: steps
     attributes:
       label: Cách làm lại lỗi
-      placeholder: "1. Mở Luyện tập\n2. Bấm …\n3. …"
+      placeholder: "1. Mở Luyện tập\n2. Chọn …\n3. …"
   - type: textarea
     id: log
     attributes:
