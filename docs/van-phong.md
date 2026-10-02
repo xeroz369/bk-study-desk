@@ -1,5 +1,7 @@
 # Văn phong tiếng Việt
 
+**Tiếng Việt** · [English writing style](english-style.md)
+
 Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template, chú thích code, commit và chữ trong app (`src/SoHocTap/lang/vi.json`, khung Luyện tập). Mỗi quy tắc đều có nguồn; quy tắc nào là lựa chọn của dự án (không có nguồn) thì ghi rõ.
 
 ## Nguồn
@@ -86,6 +88,18 @@ Theo MSG và Google, mỗi thông báo có: chuyện gì xảy ra, vì sao (nế
 - Sai: "Lỗi: core_calendar_get_action_events_by_timesort thất bại!"
 - Mẫu câu: "Không tìm thấy…", "Không kết nối được…", "Không đủ…" (MSG).
 - Không dùng "Làm ơn", "Xin hãy"; cần lịch sự thì "Vui lòng", thường thì bỏ (Mozilla).
+
+## Tài liệu hai ngôn ngữ
+
+Tiếng Việt là bản chính, cho sinh viên trường. Tiếng Anh là bản dịch **đầy đủ**, để ở file riêng, không viết tóm tắt cuối bài. Nghiên cứu và nguồn: `docs/research/2026-10-03-tai-lieu-da-ngon-ngu.md` (bản riêng); chuẩn viết tiếng Anh: [english-style.md](english-style.md).
+
+- **Tên file:** bản Việt giữ tên chuẩn mà GitHub nhận (`README.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`); bản Anh thêm `.en` trước đuôi: `README.en.md`. `LICENSE.md` không dịch.
+- **Dòng chuyển ngôn ngữ** ngay dưới tiêu đề: bản Việt `**Tiếng Việt** · [English](README.en.md)`, bản Anh `[Tiếng Việt](README.md) · **English**`.
+- **CHANGELOG:** `CHANGELOG.md` và `CHANGELOG.en.md`, cùng số phiên bản và ngày.
+- **Release notes:** một bài, tiếng Việt trước, `---`, rồi tiếng Anh đầy đủ.
+- **Wiki:** trang Việt giữ tên có dấu; trang Anh đặt tên tiếng Anh (`Home-en`, `Installation`, `Updating`, `Uninstalling`, `Practice`, `FAQ`, `How-the-app-works`, `Security-and-privacy`). Một `_Sidebar` chia hai khối Tiếng Việt / English.
+- **Issue template:** một file, ghi hai thứ tiếng: `Báo lỗi / Bug report`.
+- **Đồng bộ:** sửa bản Việt trước, bản Anh trong cùng PR. Bản Anh có dòng `> Translated from … (Vietnamese) for BK Study Desk x.y.z.`
 
 ## Trang Wiki
 

@@ -1,5 +1,7 @@
+**Tiếng Việt** · [English](FAQ)
+
 **Windows báo "Windows đã bảo vệ máy tính của bạn".**
-Bộ cài trên GitHub chưa có chữ ký số (chứng chỉ tốn phí hằng năm). Cài từ [Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850) thì không có cảnh báo này. Dùng bộ cài GitHub thì chọn **Thông tin thêm** → **Vẫn chạy**. Chỉ hiện một lần lúc cài; cập nhật sau không bị hỏi lại. Muốn chắc file không bị sửa, so mã SHA-256 như ở [[Cài đặt]].
+Bộ cài trên GitHub chưa có chữ ký số (chứng chỉ tốn phí hằng năm). Chọn **Thông tin thêm** → **Vẫn chạy**. Chỉ hiện một lần lúc cài; cập nhật sau không bị hỏi lại. Muốn chắc file không bị sửa, so mã SHA-256 như ở [[Cài đặt]].
 
 **Mở LMS/MyBK trong app thấy "session timed out" hay bắt đăng nhập lại.**
 Phiên đăng nhập trên server trường hết hạn sau vài giờ, dù app vẫn nhớ. App tự đi qua trang đăng nhập SSO; nếu SSO cũng hết phiên thì bạn đăng nhập lại một lần.
@@ -18,6 +20,9 @@ Chưa. Bản đa nền tảng đang làm; khi ổn định sẽ có ở trang Re
 
 **Máy chip ARM (Snapdragon) dùng được không?**
 Được, tải bản `-Setup-arm64.exe`.
+
+**Dùng thời khóa biểu trên Google Calendar được không?**
+Được. Vào **Lịch** → **Thời khóa biểu** → **Xuất lịch (.ics)…**, lưu file, rồi trên Google Calendar mở **Cài đặt** → **Nhập và xuất** và chọn file đó. Nên nhập vào một lịch riêng để sang kỳ sau xóa cho dễ.
 
 **Báo lỗi ở đâu?**
 [Issues](https://github.com/xeroz369/bk-study-desk/issues/new/choose). Đừng dán mật khẩu, MSSV hay token. Lỗ hổng bảo mật thì báo riêng, xem [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/SECURITY.md). Việc cần trao đổi riêng: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

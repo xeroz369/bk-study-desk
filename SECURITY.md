@@ -1,5 +1,7 @@
 # Chính sách bảo mật
 
+**Tiếng Việt** · [English](SECURITY.en.md)
+
 ## Báo lỗ hổng
 
 **Đừng báo lỗ hổng bảo mật ở issue công khai.** Hãy báo riêng qua [Security → Report a vulnerability](https://github.com/xeroz369/bk-study-desk/security/advisories/new), hoặc gửi email tới [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
@@ -23,7 +25,3 @@ Chỉ bản mới nhất ở trang [Releases](https://github.com/xeroz369/bk-stu
 - Gói cập nhật được kiểm SHA-256 trước khi cài; nguồn cập nhật chỉ nhận repo GitHub qua https (thư mục trên máy chỉ dùng ở bản cài thử).
 - Gói quiz nhận từ người khác được kiểm tra và lọc HTML; không chạy script, không tải ảnh ngoài.
 - Mã nguồn được quét tự động bằng CodeQL; thư viện được theo dõi lỗ hổng bằng Dependabot.
-
----
-
-**English:** please report vulnerabilities privately via *Security → Report a vulnerability*, not in public issues. Only the latest release receives security fixes.

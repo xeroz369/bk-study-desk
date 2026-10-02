@@ -1,5 +1,7 @@
 # Quy tắc ứng xử
 
+**Tiếng Việt** · [English](CODE_OF_CONDUCT.en.md)
+
 Dự án dành cho sinh viên giúp nhau học. Trong issue, PR và Wiki:
 
 - Lịch sự, góp ý vào vấn đề chứ không chan nhau.

@@ -1,5 +1,5 @@
-name: Báo lỗi
-description: App chạy sai, bị treo, hiện sai dữ liệu…
+name: Báo lỗi / Bug report
+description: App chạy sai, bị treo, hiện sai dữ liệu… / The app misbehaves, freezes or shows wrong data…
 labels: [bug]
 body:
   - type: markdown
@@ -7,31 +7,34 @@ body:
       value: |
         Cảm ơn bạn đã báo lỗi. **Đừng dán mật khẩu, MSSV, token hay ảnh có thông tin cá nhân.**
         Lỗ hổng bảo mật thì không báo ở đây, xem [SECURITY.md](../blob/main/SECURITY.md).
+
+        Thanks for reporting. **Don't paste passwords, student IDs, tokens or screenshots with personal information.**
+        Don't report security vulnerabilities here; see [SECURITY.en.md](../blob/main/SECURITY.en.md).
   - type: input
     id: version
     attributes:
-      label: Phiên bản
-      description: Xem ở góc phải thanh dưới cùng của app, vd. 1.0.6
+      label: Phiên bản / Version
+      description: Góc phải thanh dưới cùng của app, vd. 1.1.2 / Bottom-right of the app's status bar, for example 1.1.2
     validations: { required: true }
   - type: textarea
     id: what
     attributes:
-      label: Chuyện gì xảy ra
-      description: Bạn làm gì, app làm gì, bạn mong app làm gì.
+      label: Chuyện gì xảy ra / What happened
+      description: Bạn làm gì, app làm gì, bạn mong app làm gì. / What you did, what the app did, what you expected.
     validations: { required: true }
   - type: textarea
     id: steps
     attributes:
-      label: Cách làm lại lỗi
-      placeholder: "1. Mở Luyện tập\n2. Chọn …\n3. …"
+      label: Cách làm lại lỗi / Steps to reproduce
+      placeholder: "1. Mở Luyện tập / Open Practice\n2. Chọn … / Select …\n3. …"
   - type: textarea
     id: log
     attributes:
-      label: Log (không bắt buộc)
-      description: Vài dòng cuối của %LOCALAPPDATA%\BKStudyDesk.Data\data\app.log. Xóa tên, MSSV trước khi dán.
+      label: Log (không bắt buộc / optional)
+      description: Vài dòng cuối của %LOCALAPPDATA%\BKStudyDesk.Data\data\app.log. Xóa tên, MSSV trước khi dán. / The last lines of app.log. Remove names and student IDs first.
       render: text
   - type: dropdown
     id: windows
     attributes:
       label: Windows
-      options: [Windows 11, Windows 10, Khác]
+      options: [Windows 11, Windows 10, Khác / Other]

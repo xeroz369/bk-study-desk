@@ -301,6 +301,7 @@
     "schedulerMinutes": 10,
     "language": "vi",
     "closeToTray": true,
+    "calendarView": "grid",
     "update": {
       "mode": "ask",
       "checkHours": 24,

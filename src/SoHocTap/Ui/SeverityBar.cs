@@ -86,6 +86,7 @@ public sealed class SeverityBar : Border
     };
     private readonly StackPanel _detailsPanel = new() { Visibility = Visibility.Collapsed };
     private readonly Button _action = new() { Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+    private readonly Button _action2 = new() { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
     private readonly Button _close = new()
     {
         Content = "",
@@ -93,7 +94,7 @@ public sealed class SeverityBar : Border
         Margin = new Thickness(8, 0, 0, 0),
         VerticalAlignment = VerticalAlignment.Center,
     };
-    private Action? _run;
+    private Action? _run, _run2;
 
     public SeverityBar()
     {
@@ -108,6 +109,7 @@ public sealed class SeverityBar : Border
         _close.ToolTip = L.T("common.close");
         _close.Click += (_, _) => { Visibility = Visibility.Collapsed; Closed?.Invoke(); };
         _action.Click += (_, _) => _run?.Invoke();
+        _action2.Click += (_, _) => _run2?.Invoke();
         _detailsToggle.Click += (_, _) => SetDetailsOpen(_detailsPanel.Visibility != Visibility.Visible);
         _copy.Content = L.T("common.copy");
         _copy.Click += (_, _) => { try { Clipboard.SetText(_details.Text); } catch (System.Runtime.InteropServices.COMException) { } };
@@ -120,10 +122,12 @@ public sealed class SeverityBar : Border
         var dock = new DockPanel();
         DockPanel.SetDock(_close, Dock.Right);
         DockPanel.SetDock(_action, Dock.Right);
+        DockPanel.SetDock(_action2, Dock.Right);
         DockPanel.SetDock(_detailsToggle, Dock.Right);
         DockPanel.SetDock(_icon, Dock.Left);
         dock.Children.Add(_close);
         dock.Children.Add(_action);
+        dock.Children.Add(_action2);
         dock.Children.Add(_detailsToggle);
         dock.Children.Add(_icon);
         dock.Children.Add(text);
@@ -142,12 +146,17 @@ public sealed class SeverityBar : Border
     /// <summary>
     /// Hiện thanh báo. <paramref name="details"/>: chữ kỹ thuật (mã lỗi, câu gốc của server) để sau nút Chi tiết, có nút Sao chép.
     /// Cùng nội dung thì không vẽ lại (tránh nhấp nháy, theo hướng dẫn của InfoBar).
+    /// <paramref name="action2"/>: nút phụ đứng trước nút chính (ví dụ "Mở MyBK" cạnh "Thử lại").
     /// </summary>
-    public void Show(Severity severity, string title, string message, string? action = null, Action? run = null, string? details = null)
+    public void Show(Severity severity, string title, string message, string? action = null, Action? run = null, string? details = null,
+        string? action2 = null, Action? run2 = null)
     {
         _run = run;
         _action.Content = action;
         _action.Visibility = action is null ? Visibility.Collapsed : Visibility.Visible;
+        _run2 = run2;
+        _action2.Content = action2;
+        _action2.Visibility = action2 is null ? Visibility.Collapsed : Visibility.Visible;
         _detailsToggle.Visibility = string.IsNullOrEmpty(details) ? Visibility.Collapsed : Visibility.Visible;
         if (_details.Text != (details ?? "")) { _details.Text = details ?? ""; SetDetailsOpen(false); }
         if (Visibility == Visibility.Visible && _icon.Severity == severity && _title.Text == title && _message.Text == message) return;

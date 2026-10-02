@@ -1,5 +1,7 @@
 # Gói ngôn ngữ (language pack)
 
+**Tiếng Việt** · [English](README.en.md)
+
 Mọi chữ trên giao diện đều lấy từ các gói ngôn ngữ trong thư mục này.
 
 - Mỗi ngôn ngữ là một file JSON, đặt tên theo mã ngôn ngữ:
@@ -47,18 +49,8 @@ Mỗi gói là một JSON object phẳng gồm các cặp `"key": "chữ"`. File
 2. Sửa `_meta.name` (ví dụ `"Français"`) và `_meta.culture` (ví dụ `"fr-FR"`).
 3. Dịch các value. Giữ nguyên key và các chỗ trống `{0}`, `{1}`…
 4. Mở lại app.
-5. Vào **Cài đặt → Ngôn ngữ**, chọn ngôn ngữ mới, rồi chọn **Khởi động lại ngay**.
+5. Vào **Cài đặt** → **Ngôn ngữ**, chọn ngôn ngữ mới, rồi chọn **Khởi động lại ngay**.
 
 Lựa chọn được lưu trong `data\config.json`, ở key `app.language`. Rất hoan nghênh PR thêm ngôn ngữ mới.
 
 **Khi thêm hay sửa chữ trên giao diện:** sửa `vi.json` trước, rồi mới thêm bản dịch vào các gói khác. Người đọc là sinh viên, nên viết tiếng Việt dễ hiểu, ít thuật ngữ.
-
----
-
-## English
-
-All UI text comes from flat JSON language packs, one per language (`vi.json` is the base, `en.json` is English).
-- **Keys:** never change keys, only translate values.
-- **Placeholders:** keep every `{0}`, `{1}`…
-- **Missing keys** fall back to Vietnamese.
-- **To add a language:** copy `vi.json` to `<code>.json`, set `_meta.name` and `_meta.culture`, translate the values, then pick the new language in *Cài đặt → Ngôn ngữ*.

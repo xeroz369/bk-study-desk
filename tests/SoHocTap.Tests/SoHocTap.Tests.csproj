@@ -22,6 +22,7 @@
     <Compile Include="$(Src)Core\DataImport.cs" Link="Linked\DataImport.cs" />
     <Compile Include="$(Src)Core\Pace.cs" Link="Linked\Pace.cs" />
     <Compile Include="$(Src)Core\LogRedactor.cs" Link="Linked\LogRedactor.cs" />
+    <Compile Include="$(Src)Core\Ics.cs" Link="Linked\Ics.cs" />
     <Compile Include="..\..\src\BKStudyDesk.Setup\InstallTarget.cs" Link="Linked\InstallTarget.cs" />
   </ItemGroup>
 

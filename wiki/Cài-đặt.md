@@ -1,19 +1,23 @@
+**Tiếng Việt** · [English](Installation)
+
 **Yêu cầu:** Windows 10 1809 trở lên hoặc Windows 11, x64 hoặc ARM64. Không cần cài .NET. Cần Microsoft Edge WebView2 Runtime (Windows 11 có sẵn).
 
-## Cách 1: Microsoft Store (khuyên dùng)
+## Cách 1: bộ cài trên GitHub (khuyên dùng)
 
-Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Gói do Microsoft ký nên không có cảnh báo SmartScreen; Store tự cập nhật app. Bản Store chỉ có gói x64 (máy ARM vẫn chạy được qua giả lập của Windows).
+Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản sau.
 
-**Kiểm tra số phiên bản trước khi cài.** Mỗi bản mới phải chờ Microsoft duyệt (thường vài giờ, có khi tới 3 ngày làm việc), nên bản trên Store có thể chậm hơn bản mới nhất trên GitHub. So số phiên bản ở trang Store với [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest); cần bản mới ngay thì dùng bộ cài GitHub.
-
-## Cách 2: bộ cài trên GitHub
-
-1. Vào [Releases](https://github.com/xeroz369/bk-study-desk/releases), tải `BKStudyDesk-x.y.z-Setup-x64.exe`. Máy chip ARM (Surface Pro X, Snapdragon) tải bản `-Setup-arm64.exe`.
-2. Mở file. Nếu Windows hiện **"Windows đã bảo vệ máy tính của bạn"**: chọn **Thông tin thêm**** → ****Vẫn chạy**. Cảnh báo này có vì bộ cài chưa có chữ ký số; chỉ hiện một lần lúc cài.
+1. Vào [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest), tải `BKStudyDesk-x.y.z-Setup-x64.exe`. Máy chip ARM (Surface Pro X, Snapdragon) tải bản `-Setup-arm64.exe`.
+2. Mở file. Nếu Windows hiện **"Windows đã bảo vệ máy tính của bạn"**: chọn **Thông tin thêm** → **Vẫn chạy**. Cảnh báo này có vì bộ cài chưa có chữ ký số; chỉ hiện một lần lúc cài.
 3. Chọn thư mục cài (mặc định trong tài khoản của bạn; đổi sang ổ D: được), chọn **Cài đặt**. Không cần quyền admin.
 4. Cài xong app tự mở. Lối tắt có ở Desktop và Start menu.
 
 ![Bộ cài](images/bo-cai.png)
+
+## Cách 2: Microsoft Store
+
+Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Gói do Microsoft ký nên không có cảnh báo SmartScreen. Bản Store chỉ có gói x64 (máy ARM vẫn chạy được qua giả lập của Windows).
+
+Mỗi bản mới phải chờ Microsoft duyệt (có khi vài ngày), nên bản Store thường chậm hơn bản trên GitHub. So số phiên bản ở trang Store với [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) trước khi cài.
 
 Hai cách cài là hai bản riêng, dữ liệu không dùng chung. Chỉ nên cài một trong hai.
 
