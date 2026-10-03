@@ -56,4 +56,26 @@ public static class UpdatePolicy
 
     /// <summary>Đang bật Tiết kiệm pin thì hoãn tải, chỉ báo có bản mới.</summary>
     public static bool CanDownload(bool batterySaver) => !batterySaver;
+
+    /// <summary>Các lựa chọn chu kỳ kiểm tra trong Cài đặt (giờ). Mặc định 6 (app.update.checkHours).</summary>
+    public static readonly IReadOnlyList<int> CheckHourChoices = [6, 12, 24];
+
+    /// <summary>Giá trị config lạ (tự sửa tay) thì chọn mục gần nhất trong Cài đặt.</summary>
+    public static int NearestChoice(int hours) => CheckHourChoices.MinBy(h => Math.Abs(h - hours));
+
+    /// <summary>Khoảng tối thiểu giữa hai lần kiểm tra do máy thức dậy hay có mạng lại (Wi-Fi chập chờn bắn sự kiện liên tục).</summary>
+    public static readonly TimeSpan WakeGap = TimeSpan.FromHours(1);
+
+    /// <summary>Máy thức dậy / có mạng lại: được kiểm tra thêm một lần không (tối đa mỗi giờ một lần; việc có tới hạn chưa vẫn do ShouldCheck).</summary>
+    public static bool WakeCheckAllowed(DateTimeOffset? lastWakeCheck, DateTimeOffset now) =>
+        lastWakeCheck is not { } last || last > now || now - last >= WakeGap;
+
+    /// <summary>
+    /// Mở app có cài luôn bản đã tải (Velopack SetAutoApplyOnStartup) không: chỉ chế độ Tự động ở bản cài. Không khi Velopack gọi exe
+    /// để chạy hook (--veloapp-*: cài, gỡ, cập nhật), và không khi đã có một bản app đang chạy (bản thứ hai chỉ đưa cửa sổ bản đầu lên,
+    /// cài lúc đó thì Update.exe phải tắt bản đang dùng). Velopack tự kiểm có gói đã tải mới hơn bản đang chạy hay không.
+    /// </summary>
+    public static bool ApplyOnStartup(UpdateMode mode, InstallKind kind, IEnumerable<string> args, bool otherInstanceRunning) =>
+        mode == UpdateMode.Auto && kind == InstallKind.Installed && !otherInstanceRunning
+        && !args.Any(a => a.StartsWith("--veloapp", StringComparison.OrdinalIgnoreCase));
 }

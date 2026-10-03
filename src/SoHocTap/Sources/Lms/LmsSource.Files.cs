@@ -103,7 +103,7 @@ public sealed partial class LmsSource
         var contents = (JsonArray)await CallAsync("core_course_get_contents", [Arg("courseid", courseId)], ct);
         var index = JsonStore.ReadObject(FilesIndex);
         bool Have(JsonObject f) => index[f["fileurl"]?.GetValue<string>() ?? ""] is JsonObject e
-                                   && e["path"]?.GetValue<string>() is { } p && (File.Exists(p) || Directory.Exists(e["extractedTo"]?.GetValue<string>() ?? ""));
+                                   && LocalCopy(e) is { } p && (File.Exists(p) || Directory.Exists(e["extractedTo"]?.GetValue<string>() ?? ""));
         var files = Downloadable(contents).ToList();
         var list = new List<SectionInfo>();
         var i = 0;
@@ -162,7 +162,7 @@ public sealed partial class LmsSource
         var url = f["fileurl"]!.GetValue<string>();
         var known = index[url] as JsonObject;
         var modified = f["timemodified"]?.GetValue<long>();
-        if (known is not null && known["timemodified"]?.GetValue<long>() == modified && File.Exists(known["path"]?.GetValue<string>())) return null;
+        if (known is not null && known["timemodified"]?.GetValue<long>() == modified && File.Exists(LocalCopy(known))) return null;
 
         var sub = new List<string> { SafeName(WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? "Chung")) };
         if (mod["modname"]!.GetValue<string>() == "folder")
@@ -178,24 +178,20 @@ public sealed partial class LmsSource
         var subjDir = Path.Combine(Organizer.SubjectsRoot, m.Subject);
         if (!hashesBySubject.TryGetValue(subjDir, out var hashes)) hashesBySubject[subjDir] = hashes = Organizer.HashesIn(subjDir);
         var h = Organizer.Sha256(tmp);
-        if (hashes.TryGetValue(h, out var existing) && File.Exists(existing))
-        {
-            File.Delete(tmp);                                       // nội dung này môn đã có rồi
-            index[url] = IndexEntry(existing, modified, m.Id, h);
-            return null;
-        }
-        var oldPath = known?["path"]?.GetValue<string>();
-        if (oldPath is not null && File.Exists(oldPath))
-        {
-            Organizer.MoveFile(oldPath, Organizer.UniquePath(Path.Combine(Config.Folder("archiveOldVersions"), Paths.RelativeToStudy(oldPath))));
-            dest = oldPath;                                         // LMS có bản mới thì đặt đúng chỗ bản cũ
-        }
-        else dest = Organizer.UniquePath(dest);
-        Organizer.MoveFile(tmp, dest);
+        var knownPath = known?["path"]?.GetValue<string>();
+        var lmsSub = Config.Str("folders.lmsSubfolder");
+        // Chỉ file trong cây Tài liệu LMS là của app; file trùng nội dung của người dùng (BKeL\, OnGK\...) không bao giờ bị chuyển hay thay.
+        var place = LmsPlacement.Decide(knownPath, hashes.GetValueOrDefault(h), dest, Organizer.SubjectsRoot, lmsSub, File.Exists);
+        var final = LmsPlacement.Apply(tmp, place, old => Path.Combine(Config.Folder("archiveOldVersions"), Paths.RelativeToStudy(old)));
+        var (path, dedupOf) = LmsPlacement.IndexFields(place, knownPath, final, Organizer.SubjectsRoot, lmsSub);
+        index[url] = IndexEntry(path, dedupOf, modified, m.Id, h);
+        if (final is null) return null;                             // nội dung này môn đã có rồi
+        if (knownPath is not null && place.Kind == PlacementKind.New && File.Exists(knownPath))
+            Log.Info($"LMS: bản mới của {f["filename"]} đặt vào Tài liệu LMS, không thay file ngoài cây của app");
+        dest = final;
         MarkFromInternet(dest, url);
         hashes[h] = dest;
-        var entry = IndexEntry(dest, modified, m.Id, h);
-        index[url] = entry;
+        var entry = (JsonObject)index[url]!;
         log($"  {(known is not null ? "cập nhật" : "mới")}: {Paths.RelativeToStudy(dest)}");
         if ((extract ?? Config.Bool("archives.extract", true)) && Organizer.IsArchive(dest) && Organizer.ExtractArchive(dest, hashes, log) is { } x)
         {
@@ -215,8 +211,23 @@ public sealed partial class LmsSource
         };
     }
 
-    private static JsonObject IndexEntry(string path, long? modified, long course, string sha) =>
-        new() { ["path"] = path, ["timemodified"] = modified, ["course"] = course, ["sha256"] = sha };
+    /// <summary>
+    /// Một dòng của lms-files.json. <c>path</c>: file app tải cho url này (trong Tài liệu LMS); <c>dedupOf</c>: file khác (thường của người
+    /// dùng) có cùng nội dung, nên không tải bản riêng. Chỉ path mới có thể bị thay khi LMS có bản mới.
+    /// </summary>
+    private static JsonObject IndexEntry(string? path, string? dedupOf, long? modified, long course, string sha)
+    {
+        var o = new JsonObject();
+        if (path is not null) o["path"] = path;
+        if (dedupOf is not null) o["dedupOf"] = dedupOf;
+        o["timemodified"] = modified;
+        o["course"] = course;
+        o["sha256"] = sha;
+        return o;
+    }
+
+    /// <summary>Bản trên máy của một dòng chỉ mục: file của app, không có thì file trùng nội dung.</summary>
+    private static string? LocalCopy(JsonNode? entry) => entry?["path"]?.GetValue<string>() ?? entry?["dedupOf"]?.GetValue<string>();
 
     /// <summary>Đánh dấu file tải từ mạng (Zone.Identifier), để Office mở ở Protected View và SmartScreen kiểm file chạy được. URL không kèm token.</summary>
     private static void MarkFromInternet(string path, string url)
@@ -232,7 +243,7 @@ public sealed partial class LmsSource
 
     private static void SaveStructure(CourseInfo m, JsonArray contents, JsonObject index)
     {
-        var local = index.ToDictionary(kv => kv.Key, kv => kv.Value?["path"]?.GetValue<string>());
+        var local = index.ToDictionary(kv => kv.Key, kv => LocalCopy(kv.Value));
         var sections = new JsonArray();
         foreach (var sec in contents.OfType<JsonObject>())
         {

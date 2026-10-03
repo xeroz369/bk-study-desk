@@ -6,6 +6,28 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.8] - 2026-10-03
+
+### Thêm
+
+- **Lịch** > **Thời khóa biểu** dạng lưới: vạch màu nhấn chỉ giờ hiện tại ở cột hôm nay ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)).
+- **Thêm sự kiện...** trên trang **Lịch**: tự nhập sự kiện hoặc lịch học bù ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)). Gõ nhanh một dòng như "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" là app tự điền. Sự kiện tự thêm hiện ở lưới tuần (viền nét đứt), **Sắp tới**, **Hôm nay**, có trong file .ics và được nhắc trước khoảng 1 giờ. Chuột phải để sửa, xóa, sao chép. Chỉ lưu trên máy.
+- **Cài đặt** > **Cập nhật**: chọn khoảng kiểm tra bản mới 6, 12 hoặc 24 giờ.
+
+### Thay đổi
+
+- Thanh tiến trình đồng bộ hiện đúng tiến độ theo từng bước (vd. "LMS: Đang tải tệp 2/5 (Giải tích 2)..."), không chạy lùi, không nháy với lượt đồng bộ ngắn.
+- Đồng bộ không có gì mới thì không ghi lại file, không vẽ lại trang, không thông báo. Nhắc hạn không lặp lại, kể cả sau khi mở lại app.
+- Trang **Môn học** mở nhanh hơn: quét thư mục chạy nền, chỉ nạp tab đang xem; bỏ qua file rác và thư mục ẩn (`.history`, `~$...`, `desktop.ini`...).
+- Nút **Giới thiệu** chỉ còn biểu tượng.
+- Kiểm tra bản mới 6 giờ một lần (trước là 24), và khi máy thức dậy hoặc có mạng lại. Chế độ **Tự động**: bản đã tải được cài ở lần mở app kế tiếp; mở lên thanh trạng thái báo "Đã cập nhật lên ...".
+
+### Sửa lỗi
+
+- Khi LMS cập nhật một file trùng nội dung với file bạn tự lưu ở chỗ khác trong thư mục môn, app có thể chuyển **file của bạn** vào `_Lưu trữ\Bản cũ`. Giờ app chỉ thay file trong thư mục `Tài liệu LMS`.
+- Tên môn có dấu viết theo hai kiểu mã hóa Unicode (thường gặp với thư mục tạo trên máy khác) không khớp được với môn trên LMS.
+- Tab **Sắp tới** của một môn có lúc hiện cả hạn nộp của môn khác có tên bắt đầu giống nhau.
+
 ## [1.1.7] - 2026-10-03
 
 Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thêm tính năng và sửa lỗi hơn. Nếu thấy lỗi lạ, hãy mở issue.
@@ -190,7 +212,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...HEAD
+[1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5

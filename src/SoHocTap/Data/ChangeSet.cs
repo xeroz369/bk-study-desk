@@ -36,7 +36,7 @@ public sealed record MybkGradeChange(MybkGrade Grade, MybkGrade? Before);
 /// <summary>
 /// Khác gì giữa dữ liệu trước và sau một lần đồng bộ: sự kiện mới/bị gỡ, đổi lịch học, đổi lịch thi, điểm mới.
 /// Lần đầu (chưa có bản trước) thì không có thay đổi nào: mọi thứ đều "mới", báo hết là spam.
-/// 1.1.7 mới dựng khung: hub tính sau mỗi lần sync thành công, chưa tính năng nào dùng (chỉ ghi log số lượng).
+/// Hub tính sau mỗi lần sync thành công có dữ liệu đổi; tới 1.1.8 vẫn chưa tính năng nào dùng (chỉ ghi log số lượng).
 /// </summary>
 public sealed record ChangeSet(
     IReadOnlyList<LmsEvent> NewEvents,

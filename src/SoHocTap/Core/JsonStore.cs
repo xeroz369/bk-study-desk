@@ -32,24 +32,12 @@ public static class JsonStore
 
     public static JsonObject ReadObject(string path) => Read(path) as JsonObject ?? new JsonObject();
 
-    public static void Write(string path, JsonNode? node)
+    /// <summary>Ghi JSON (file tạm rồi thay). Nội dung y như file đang có thì không ghi; trả true nếu đã ghi.</summary>
+    public static bool Write(string path, JsonNode? node)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var text = node?.ToJsonString(Options) ?? "null";
-        // Tên file tạm riêng cho mỗi lần ghi: hai thread cùng ghi một file (LMS và MyBK cùng ghi sync-state.json) mà dùng chung
-        // "x.tmp" thì lần này ghi đè file tạm của lần kia, hoặc Move mất file tạm của nhau.
-        var tmp = $"{path}.{Guid.NewGuid():N}.tmp";
-        try
-        {
-            // Ghi file tạm và thay file thật đều có thể gặp file đang bận (antivirus, OneDrive, trình soạn thảo đang mở): thử lại vài lần.
-            Retry(path, () => File.WriteAllText(tmp, text));
-            Retry(path, () => File.Move(tmp, path, overwrite: true));
-        }
-        finally
-        {
-            try { if (File.Exists(tmp)) File.Delete(tmp); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
-        }
+        // Ghi file tạm và thay file thật đều có thể gặp file đang bận (antivirus, OneDrive, trình soạn thảo đang mở): thử lại vài lần.
+        return AtomicFile.WriteIfChanged(path, text, a => Retry(path, a));
     }
 
     private static void Retry(string path, Action write)
@@ -65,7 +53,7 @@ public static class JsonStore
         }
     }
 
-    public static void Write<T>(string path, T value) => Write(path, JsonSerializer.SerializeToNode(value, Options));
+    public static bool Write<T>(string path, T value) => Write(path, JsonSerializer.SerializeToNode(value, Options));
 
     public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Compact);
 }

@@ -61,8 +61,12 @@ internal sealed class AppHost : IDisposable
         Updates.Restarting += () => _ui.Invoke(() => { _tray.Dispose(); Hub.Dispose(); });
         Hub.Changed += (name, stage) => _ui.InvokeAsync(() =>
         {
-            if (stage is "done" or "data") State.Reload();
+            // Lượt không có gì mới, hay vừa bắt đầu khi đã có dữ liệu: chỉ thanh trạng thái và InfoBar, không đọc lại, không vẽ lại trang.
+            // Chưa có dữ liệu thì bắt đầu đồng bộ phải vẽ lại trang để bảng trống nói "đang tải lần đầu".
+            if (stage == "done" && Hub.Quiet(name)) State.RefreshStatusOnly();
+            else if (stage is "done" or "data") State.Reload();
             else if (stage == "progress") State.RefreshProgress();   // chỉ cập nhật thanh trạng thái, không vẽ lại các trang
+            else if (stage == "start" && State.SyncedAt(name) is not null) State.RefreshStatusOnly();
             else State.RefreshStatus();
             if (name == "mybk" && stage == "done")
             {
@@ -95,6 +99,7 @@ internal sealed class AppHost : IDisposable
         if (!e.IsAvailable) return;
         Log.Debug("Có mạng lại, kiểm tra nguồn tới hạn");
         Hub.RunDueSoon(TimeSpan.FromSeconds(15));
+        CheckUpdatesSoon(TimeSpan.FromSeconds(20));
     }
 
     private void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
@@ -103,6 +108,7 @@ internal sealed class AppHost : IDisposable
         Log.Debug("Máy thức dậy, kiểm tra nguồn tới hạn");
         // Wi-Fi thường mất vài chục giây mới nối lại sau khi thức dậy; chưa có mạng thì RunDue tự bỏ lượt, NetworkChange gọi lại sau.
         Hub.RunDueSoon(TimeSpan.FromSeconds(30));
+        CheckUpdatesSoon(TimeSpan.FromSeconds(45));
     }
 
     private DateTime _ssoAliveAt = DateTime.MinValue;   // lần cuối biết chắc phiên SSO còn (đăng nhập, giữ phiên)
@@ -174,18 +180,45 @@ internal sealed class AppHost : IDisposable
         {
             await Task.Delay(TimeSpan.FromSeconds(60));
             using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
-            do
-            {
-                try
-                {
-                    if (!Updates.Due()) continue;
-                    var offer = await Updates.CheckAsync(manual: false, default);
-                    // Chế độ tự động: tải sẵn, cài lúc app thoát hẳn (Dispose → ApplyOnExit).
-                    if (offer is not null && UpdateService.Mode == UpdateMode.Auto && UpdateService.CanSelfUpdate)
-                        await Updates.DownloadAsync(userAsked: false, null, default);
-                }
-                catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Vòng kiểm tra cập nhật: {e.Message}"); }
-            } while (await timer.WaitForNextTickAsync());
+            do await UpdateTickAsync();
+            while (await timer.WaitForNextTickAsync());
+        });
+    }
+
+    /// <summary>Một lượt kiểm tra cập nhật: tới hạn (app.update.checkHours) thì hỏi nguồn; chế độ tự động thì tải sẵn.</summary>
+    private async Task UpdateTickAsync()
+    {
+        try
+        {
+            if (!Updates.Due()) return;
+            var offer = await Updates.CheckAsync(manual: false, default);
+            // Chế độ tự động: tải sẵn, cài lúc app thoát hẳn (Dispose, ApplyOnExit) hoặc lúc mở app lần sau (Program, ApplyOnStartup).
+            if (offer is not null && UpdateService.Mode == UpdateMode.Auto && UpdateService.CanSelfUpdate)
+                await Updates.DownloadAsync(userAsked: false, null, default);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Vòng kiểm tra cập nhật: {e.Message}"); }
+    }
+
+    private DateTimeOffset? _wakeUpdateCheck;
+    private readonly object _wakeGate = new();
+
+    /// <summary>
+    /// Máy thức dậy hay có mạng lại: vòng mỗi giờ có thể đã lỡ (máy ngủ cả đêm), nên kiểm tra luôn nếu đã tới hạn. Tối đa mỗi giờ một lần
+    /// (Wi-Fi chập chờn bắn sự kiện liên tục); chờ một chút cho mạng ổn định.
+    /// </summary>
+    private void CheckUpdatesSoon(TimeSpan delay)
+    {
+        if (!UpdateService.Supported) return;
+        // NetworkChange bắn trên thread pool, PowerModeChanged trên thread của SystemEvents: khóa để hai sự kiện liền nhau chỉ chạy một lượt.
+        lock (_wakeGate)
+        {
+            if (!UpdatePolicy.WakeCheckAllowed(_wakeUpdateCheck, DateTimeOffset.UtcNow)) return;
+            _wakeUpdateCheck = DateTimeOffset.UtcNow;
+        }
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(delay);
+            await UpdateTickAsync();
         });
     }
 

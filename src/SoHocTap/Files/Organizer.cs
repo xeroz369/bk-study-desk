@@ -26,10 +26,12 @@ public static partial class Organizer
     {
         var aliases = Config.Map("subjects.aliases");
         if (aliases.TryGetValue(name.ToLowerInvariant(), out var alias)) name = alias;
+        name = NameMatch.Nfc(name);
         if (Directory.Exists(SubjectsRoot))
         {
-            var existing = Directory.GetDirectories(SubjectsRoot).Select(Path.GetFileName)
-                .FirstOrDefault(d => string.Equals(d, name, StringComparison.OrdinalIgnoreCase));
+            // Thư mục trên đĩa có thể ở dạng NFD (giải nén từ zip tạo trên macOS): so theo NFC trước, rồi mới so bỏ dấu.
+            var dirs = Directory.GetDirectories(SubjectsRoot).Select(d => Path.GetFileName(d)!).ToList();
+            var existing = dirs.FirstOrDefault(d => NameMatch.Same(d, name)) ?? dirs.FirstOrDefault(d => NameMatch.SameFolded(d, name));
             if (existing is not null) return existing;
         }
         return name;
@@ -93,37 +95,19 @@ public static partial class Organizer
         lock (HashGate) { if (_hashCache is not null) JsonStore.Write(HashCachePath, _hashCache); }
     }
 
-    /// <summary>Map hash → path cho mọi file trong một thư mục môn.</summary>
+    /// <summary>Map hash → path cho mọi file trong một thư mục môn (bỏ file, thư mục rác: JunkFilter).</summary>
     public static Dictionary<string, string> HashesIn(string folder)
     {
         var map = new Dictionary<string, string>();
-        if (!Directory.Exists(folder)) return map;
-        foreach (var f in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
-        {
-            var name = Path.GetFileName(f);
-            if (name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".part", StringComparison.OrdinalIgnoreCase)) continue;
-            try { map.TryAdd(Sha256(f), f); } catch (IOException) { }
-        }
+        foreach (var f in JunkFilter.Files(folder))
+            try { map.TryAdd(Sha256(f.FullName), f.FullName); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         return map;
     }
 
-    public static string UniquePath(string dest)
-    {
-        if (!File.Exists(dest) && !Directory.Exists(dest)) return dest;
-        var dir = Path.GetDirectoryName(dest)!;
-        var stem = Path.GetFileNameWithoutExtension(dest);
-        var ext = Path.GetExtension(dest);
-        var stamp = DateTime.Now.ToString("dd-MM-yyyy");
-        var cand = Path.Combine(dir, $"{stem} (bản {stamp}){ext}");
-        for (int i = 2; File.Exists(cand); i++) cand = Path.Combine(dir, $"{stem} (bản {stamp} {i}){ext}");
-        return cand;
-    }
+    public static string UniquePath(string dest) => FileOps.UniquePath(dest);
 
-    public static void MoveFile(string src, string dest)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-        File.Move(src, dest);
-    }
+    public static void MoveFile(string src, string dest) => FileOps.MoveFile(src, dest);
 
     /// <summary>Đưa một file vào môn; trùng nội dung thì chuyển vào lưu trữ trùng lặp. Trả về path cuối cùng, hoặc null nếu là bản trùng.</summary>
     public static string? PlaceFile(string src, string dest, Dictionary<string, string> known, string archiveRelative)
@@ -180,7 +164,13 @@ public static partial class Organizer
             if (Directory.Exists(dest))
             {
                 var have = HashesIn(dest).Keys.ToHashSet();
-                if (inside.Count == 0 || !inside.All(f => have.Contains(Sha256(f)))) return null;
+                if (inside.Count == 0 || !inside.All(f => have.Contains(Sha256(f))))
+                {
+                    // Không giải đè lên thư mục người dùng có thể đã sửa: giữ nguyên cả hai, ghi lại để biết vì sao không thấy bản giải nén.
+                    Log.Info($"Bỏ qua giải nén {Path.GetFileName(path)}: đã có thư mục {Paths.RelativeToStudy(dest)} với nội dung khác");
+                    log($"  bỏ qua giải nén {Path.GetFileName(path)}: đã có thư mục cùng tên với nội dung khác");
+                    return null;
+                }
                 log($"  đã giải nén từ trước: {Paths.RelativeToStudy(dest)}");
                 return (dest, ArchiveOriginal(path));
             }
@@ -248,20 +238,23 @@ public static partial class Organizer
     /// <summary>Tên môn và mã môn đã biết (lấy từ data LMS và các thư mục môn).</summary>
     private static Dictionary<string, HashSet<string>> KnownSubjects()
     {
-        var map = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        // Khóa so theo NFC: tên thư mục trên đĩa (có thể NFD) và tên môn từ LMS là một môn. Thư mục trên đĩa thêm trước để giữ đúng
+        // tên trên đĩa (NTFS coi NFC và NFD là hai tên khác nhau, dùng tên LMS thì tạo thêm một thư mục trùng).
+        var map = new Dictionary<string, HashSet<string>>(NameMatch.NfcIgnoreCase);
+        if (Directory.Exists(SubjectsRoot))
+            foreach (var d in Directory.GetDirectories(SubjectsRoot)) map.TryAdd(Path.GetFileName(d), []);
         foreach (var c in LmsStore.Read()?.Courses ?? [])
             if (c.Subject is { } s)
             {
                 if (!map.TryGetValue(s, out var codes)) map[s] = codes = [];
                 if (c.Code is { Length: > 0 } code) codes.Add(code);
             }
-        if (Directory.Exists(SubjectsRoot))
-            foreach (var d in Directory.GetDirectories(SubjectsRoot)) map.TryAdd(Path.GetFileName(d), []);
         return map;
     }
 
-    private static string? MatchSubject(string name, Dictionary<string, HashSet<string>> subjects) =>
-        subjects.Where(kv => kv.Value.Any(c => name.Contains(c, StringComparison.OrdinalIgnoreCase)) || name.Contains(kv.Key, StringComparison.OrdinalIgnoreCase))
+    // Tên file tải về hay mất dấu hoặc ở dạng NFD: so bỏ dấu.
+    internal static string? MatchSubject(string name, Dictionary<string, HashSet<string>> subjects) =>
+        subjects.Where(kv => kv.Value.Any(c => name.Contains(c, StringComparison.OrdinalIgnoreCase)) || NameMatch.ContainsFolded(name, kv.Key))
                 .Select(kv => kv.Key).OrderByDescending(s => s.Length).FirstOrDefault();
 
     /// <summary>Xếp file trong thư mục Tải xuống vào môn (khớp theo tên hoặc mã môn). apply=false thì chỉ liệt kê, không chuyển.</summary>

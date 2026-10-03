@@ -7,90 +7,36 @@ namespace SoHocTap.Files;
 /// <summary>Đọc cây tài liệu trên máy cho UI (chỉ đọc đĩa, không gửi request nào ra mạng).</summary>
 public static class Documents
 {
-    /// <summary>Liệt kê các môn trong thư mục Môn học, kèm số file và lần sửa gần nhất.</summary>
-    public static JsonArray ListSubjects()
-    {
-        var list = new JsonArray();
-        if (!Directory.Exists(Organizer.SubjectsRoot)) return list;
-        foreach (var d in Directory.GetDirectories(Organizer.SubjectsRoot).Order())
-        {
-            var files = Directory.EnumerateFiles(d, "*", SearchOption.AllDirectories)
-                .Where(f => !Path.GetFileName(f).Equals("desktop.ini", StringComparison.OrdinalIgnoreCase)).Select(f => new FileInfo(f)).ToList();
-            list.Add(new JsonObject
-            {
-                ["name"] = Path.GetFileName(d),
-                ["files"] = files.Count,
-                ["modified"] = files.Count == 0 ? 0 : files.Max(f => new DateTimeOffset(f.LastWriteTimeUtc).ToUnixTimeSeconds()),
-            });
-        }
-        return list;
-    }
+    /// <summary>Liệt kê các môn trong thư mục Môn học, kèm số file và lần sửa gần nhất (không tính file, thư mục rác).</summary>
+    public static JsonArray ListSubjects() => DocumentScan.ListSubjects(Organizer.SubjectsRoot);
 
-    /// <summary>File của một môn, mới nhất lên đầu (tối đa <paramref name="limit"/>), kèm các folder cấp một.</summary>
-    public static JsonObject SubjectFiles(string name, int limit = 400)
-    {
-        var root = Path.Combine(Organizer.SubjectsRoot, Path.GetFileName(name));
-        var result = new JsonObject { ["name"] = name, ["folders"] = new JsonArray(), ["files"] = new JsonArray(), ["total"] = 0 };
-        if (!Directory.Exists(root)) return result;
-        var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-            .Where(f => !f.EndsWith(".part", StringComparison.OrdinalIgnoreCase) && !Path.GetFileName(f).Equals("desktop.ini", StringComparison.OrdinalIgnoreCase))
-            .Select(f => new FileInfo(f)).OrderByDescending(f => f.LastWriteTimeUtc).ToList();
-        result["total"] = files.Count;
-        result["folders"] = new JsonArray(Directory.GetDirectories(root).Select(Path.GetFileName).Order().Select(x => (JsonNode)x!).ToArray());
-        result["files"] = new JsonArray(files.Take(limit).Select(f => (JsonNode)new JsonObject
-        {
-            ["name"] = f.Name,
-            ["path"] = Paths.RelativeToStudy(f.FullName),
-            ["folder"] = Path.GetRelativePath(root, f.DirectoryName!),
-            ["size"] = f.Length,
-            ["modified"] = new DateTimeOffset(f.LastWriteTimeUtc).ToUnixTimeSeconds(),
-        }).ToArray());
-        return result;
-    }
+    /// <summary>File của một môn, mới nhất lên đầu (tối đa <paramref name="limit"/>), kèm các folder cấp một. Bỏ file, thư mục rác.</summary>
+    public static JsonObject SubjectFiles(string name, int limit = 400) => DocumentScan.SubjectFiles(Organizer.SubjectsRoot, name, Paths.RelativeToStudy, limit);
 
     // ------------------------------------------------------------------ bản async (không chặn UI thread), có cache
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Stamp, JsonNode Value)> Cache = new(StringComparer.OrdinalIgnoreCase);
-
     /// <summary>
-    /// <see cref="ListSubjects"/> chạy trên thread pool. Thư mục môn không đổi (mtime của mọi thư mục con như cũ) thì trả kết quả
+    /// <see cref="ListSubjects()"/> chạy trên thread pool. Thư mục môn không đổi (mtime của mọi thư mục con như cũ) thì trả kết quả
     /// đã quét, không đi lại cả cây. Trả bản sao: người gọi sửa thoải mái.
     /// </summary>
     public static Task<JsonArray> ListSubjectsAsync(CancellationToken ct = default) =>
-        Task.Run(() => (JsonArray)Cached("subjects", Organizer.SubjectsRoot, ListSubjects, ct), ct);
-
-    /// <summary><see cref="SubjectFiles"/> chạy trên thread pool, có cache theo mtime các thư mục của môn.</summary>
-    public static Task<JsonObject> SubjectFilesAsync(string name, int limit = 400, CancellationToken ct = default) =>
-        Task.Run(() => (JsonObject)Cached($"files|{limit}|{Path.GetFileName(name)}", Path.Combine(Organizer.SubjectsRoot, Path.GetFileName(name)),
-            () => SubjectFiles(name, limit), ct), ct);
-
-    private static JsonNode Cached(string key, string root, Func<JsonNode> scan, CancellationToken ct)
-    {
-        var stamp = TreeStamp(root, ct);
-        if (Cache.TryGetValue(key, out var hit) && hit.Stamp == stamp) return hit.Value.DeepClone();
-        var value = scan();
-        Cache[key] = (stamp, value.DeepClone());
-        return value;
-    }
-
-    /// <summary>
-    /// Dấu của một cây thư mục: số thư mục và mtime lớn nhất của chúng. Thêm, xóa, đổi tên file ở đâu trong cây cũng làm mtime
-    /// của thư mục chứa nó đổi; chỉ đi qua thư mục (ít hơn file rất nhiều) nên rẻ hơn quét lại.
-    /// </summary>
-    private static string TreeStamp(string root, CancellationToken ct)
-    {
-        if (!Directory.Exists(root)) return "none";
-        var max = Directory.GetLastWriteTimeUtc(root).Ticks;
-        var count = 0;
-        var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
-        foreach (var d in new DirectoryInfo(root).EnumerateDirectories("*", options))
+        Task.Run(() =>
         {
-            ct.ThrowIfCancellationRequested();
-            count++;
-            max = Math.Max(max, d.LastWriteTimeUtc.Ticks);
-        }
-        return $"{count}:{max}";
-    }
+            var sw = Stopwatch.StartNew();
+            var root = Organizer.SubjectsRoot;
+            var list = (JsonArray)DocumentScan.Cached("subjects|" + root, root, () => DocumentScan.ListSubjects(root, ct), ct, out var hit);
+            Log.Debug($"Quét danh sách môn: {list.Count} môn, {sw.ElapsedMilliseconds} ms{(hit ? " (cache)" : "")}");
+            return list;
+        }, ct);
+
+    /// <summary><see cref="SubjectFiles(string, int)"/> chạy trên thread pool, có cache theo mtime các thư mục của môn.</summary>
+    public static Task<JsonObject> SubjectFilesAsync(string name, int limit = 400, CancellationToken ct = default) =>
+        Task.Run(() =>
+        {
+            var root = Organizer.SubjectsRoot;
+            return (JsonObject)DocumentScan.Cached($"files|{limit}|{root}|{Path.GetFileName(name)}", Path.Combine(root, Path.GetFileName(name)),
+                () => DocumentScan.SubjectFiles(root, name, Paths.RelativeToStudy, limit, ct), ct, out _);
+        }, ct);
 
     /// <summary>Mở tài liệu (path trong Study) bằng app ngoài; PDF thì dùng viewer.pdfApp nếu có. Nếu là folder thì mở Explorer.</summary>
     public static bool Open(string? rel)
@@ -181,17 +127,6 @@ public static class Documents
     {
         var full = Paths.StudyPath(rel);
         if (full is null || !Directory.Exists(full)) return new JsonObject { ["path"] = rel, ["dirs"] = new JsonArray(), ["files"] = new JsonArray(), ["missing"] = true };
-        bool Visible(string n) => !n.StartsWith('.') && !n.EndsWith(".part", StringComparison.OrdinalIgnoreCase) && !n.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase);
-        var dirs = new DirectoryInfo(full).GetDirectories().Where(d => Visible(d.Name)).OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(d => (JsonNode)new JsonObject { ["name"] = d.Name, ["count"] = d.EnumerateFileSystemInfos().Count(x => Visible(x.Name)) });
-        var files = new DirectoryInfo(full).GetFiles().Where(f => Visible(f.Name)).OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(f => (JsonNode)new JsonObject
-            {
-                ["name"] = f.Name,
-                ["size"] = f.Length,
-                ["modified"] = new DateTimeOffset(f.LastWriteTimeUtc).ToUnixTimeSeconds(),
-                ["ext"] = f.Extension.ToLowerInvariant(),
-            });
-        return new JsonObject { ["path"] = Paths.RelativeToStudy(full).Replace('\\', '/'), ["dirs"] = new JsonArray(dirs.ToArray()), ["files"] = new JsonArray(files.ToArray()) };
+        return DocumentScan.ListDir(full, f => Paths.RelativeToStudy(f).Replace('\\', '/'));
     }
 }

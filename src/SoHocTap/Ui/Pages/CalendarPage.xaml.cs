@@ -1,11 +1,13 @@
 using System.Windows;
 using System.Windows.Controls;
+using SoHocTap.Data;
 using SoHocTap.Shell;
 using SoHocTap.Ui.Controls;
 
 namespace SoHocTap.Ui.Pages;
 
-internal sealed record ClassRow(int Day, string DayName, string Time, int StartMin, string Name, string Code, string Room, string Lessons, string Teacher, bool InWeek);
+/// <summary>Một dòng của Thời khóa biểu dạng danh sách. CustomId khác null: sự kiện tự thêm (cột Mã ghi Tự thêm / Học bù).</summary>
+internal sealed record ClassRow(int Day, string DayName, string Time, int StartMin, string Name, string Code, string Room, string Lessons, string Teacher, bool InWeek, string? CustomId = null);
 
 public partial class CalendarPage : UserControl, IPage
 {
@@ -29,7 +31,11 @@ public partial class CalendarPage : UserControl, IPage
         up.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
         up.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         Upcoming.KeyOf = o => ((TimelineItem)o).Id;
-        Grids.Setup<TimelineItem>(up, e => { if (e.Url is { } u) _host.OpenWeb(u, e.Name); }, Menu);
+        Grids.Setup<TimelineItem>(up, e =>
+        {
+            if (e.CustomId is { } id) EditEvent(id);
+            else if (e.Url is { } u) _host.OpenWeb(u, e.Name);
+        }, Menu, e => e.CustomId is not null);
 
         var week = Week.Grid;
         week.Columns.Add(Grids.Text(L.T("col.time"), nameof(ClassRow.Time), 110, sortPath: nameof(ClassRow.StartMin)));
@@ -40,8 +46,16 @@ public partial class CalendarPage : UserControl, IPage
         week.Columns.Add(Grids.Flex(L.T("col.teacher"), nameof(ClassRow.Teacher), 1, 100));
         week.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         week.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is ClassRow { InWeek: false } ? 0.5 : 1;
-        Grids.Setup<ClassRow>(week, null, c => [new(L.T("common.copy"), () => Grids.Copy($"{c.Name}, {c.DayName} {c.Time}, {c.Room}", _main))]);
+        Grids.Setup<ClassRow>(week, null,
+            c => c.CustomId is { } id ? CustomMenu(id) : [new(L.T("common.copy"), () => Grids.Copy($"{c.Name}, {c.DayName} {c.Time}, {c.Room}", _main))]);
+        // Buổi học MyBK không có gì để mở; chỉ dòng sự kiện tự thêm double-click thì mở form sửa (Enter giữ hành vi cũ của bảng).
+        week.MouseDoubleClick += (_, e) =>
+        {
+            if (e.OriginalSource is DependencyObject d && ItemsControl.ContainerFromElement(week, d) is DataGridRow { Item: ClassRow { CustomId: { } id } }) EditEvent(id);
+        };
         Grid.Copy = b => Grids.Copy(b.Tip, _main);
+        Grid.Menu = b => b.CustomId is { } id ? CustomMenu(id) : [new(L.T("common.copy"), () => Grids.Copy(b.Tip, _main))];
+        Grid.Open = b => { if (b.CustomId is { } id) EditEvent(id); };
         View.ItemsSource = new[] { L.T("calendar.viewGrid"), L.T("calendar.viewList") };
         View.SelectedIndex = Core.Config.Str("app.calendarView", "grid") == "list" ? 1 : 0;
         _ready = true;
@@ -63,9 +77,74 @@ public partial class CalendarPage : UserControl, IPage
 
     private IEnumerable<MenuEntry> Menu(TimelineItem e)
     {
+        if (e.CustomId is { } id) return CustomMenu(id);
         // "Mở" (mở trên web) đã có sẵn ở đầu menu do Grids.Setup thêm, không lặp lại.
-        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}", _main));
+        return [new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}", _main))];
     }
+
+    // ------------------------------------------------------------------ sự kiện tự thêm (issue #22)
+
+    private static CustomEventStore Store => CustomEventsData.Store;
+
+    /// <summary>Thứ hai của tuần đang xem ở tab Thời khóa biểu.</summary>
+    private DateTime ShownMonday => DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7) + _offset * 7.0);
+
+    /// <summary>Sửa, Xóa, Sao chép (dòng nhập nhanh, dán lại vào ô Nhập nhanh được) cho một sự kiện tự thêm.</summary>
+    private List<MenuEntry> CustomMenu(string id) => Store.Find(id) is not { } ev ? [] :
+    [
+        new(L.T("events.edit"), () => EditEvent(id), Primary: true),
+        new(L.T("events.delete"), () => DeleteEvent(id)),
+        new(L.T("common.copy"), () => Grids.Copy(QuickEntry.Format(ev), _main), Separator: true),
+    ];
+
+    private void OnAddEvent(object sender, RoutedEventArgs e)
+    {
+        // Ngày gợi ý: hôm nay nếu đang xem tuần này, không thì Thứ hai của tuần đang xem.
+        var monday = ShownMonday;
+        var today = Core.VnTime.Today;
+        SaveEvent(EventWindow.Ask(Window.GetWindow(this), null, today >= monday && today < monday.AddDays(7) ? today : monday));
+    }
+
+    private void EditEvent(string id)
+    {
+        if (Store.Find(id) is not { } ev) { Refresh(); return; }
+        SaveEvent(EventWindow.Ask(Window.GetWindow(this), ev));
+    }
+
+    private void SaveEvent(CustomEvent? ev)
+    {
+        if (ev is null) return;
+        try { Store.Save(ev); }
+        catch (Exception x) when (x is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            Core.Log.Warn($"Lưu sự kiện tự thêm: {x.Message}");
+            MessageBox.Show(Window.GetWindow(this), L.F("events.saveFailed", x.Message), L.T("events.titleNew"), MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        _main.Say(L.T("events.saved"));
+        _host.State.CustomEventsChanged();
+    }
+
+    private void DeleteEvent(string id)
+    {
+        if (Store.Find(id) is not { } ev) return;
+        if (MessageBox.Show(Window.GetWindow(this), L.F("events.confirmDelete", ev.Title), L.T("events.deleteTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+        try { Store.Remove(id); }
+        catch (Exception x) when (x is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            Core.Log.Warn($"Xóa sự kiện tự thêm: {x.Message}");
+            MessageBox.Show(Window.GetWindow(this), L.F("events.saveFailed", x.Message), L.T("events.deleteTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        _main.Say(L.T("events.deleted"));
+        _host.State.CustomEventsChanged();
+    }
+
+    /// <summary>Sự kiện tự thêm trong tuần bắt đầu từ <paramref name="monday"/> (ngày, giờ đọc được).</summary>
+    private static List<CustomEvent> CustomInWeek(DateTime monday) =>
+        [.. Store.All().Where(e => e.Day is { } d && d >= monday.Date && d < monday.Date.AddDays(7) && e.StartMin is not null)];
+
+    private static string CustomTag(CustomEvent e) => L.T(e.IsMakeup ? "kind.makeup" : "kind.custom");
 
     private void OnFilter(object sender, RoutedEventArgs e) => Refresh();
     private void OnPrevWeek(object sender, RoutedEventArgs e) { _offset--; RefreshWeek(); }
@@ -79,9 +158,11 @@ public partial class CalendarPage : UserControl, IPage
     private void OnExport(object sender, RoutedEventArgs e)
     {
         var m = _host.State.Mybk;
-        if (m is null) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportNoData"), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information); return; }
-        var events = new List<Core.IcsEvent>();
-        foreach (var c in m.Schedule.Where(c => c.Day is >= 2 and <= 8 && c.Weeks.Count > 0))
+        // Sự kiện tự thêm cũng được xuất (cả những sự kiện đã qua, như buổi học của cả kỳ), nên chưa có MyBK vẫn xuất được.
+        var custom = Store.All().Select(x => CustomEvents.ToIcs(x, L.T("kind.makeup"))).OfType<Core.IcsEvent>().ToList();
+        if (m is null && custom.Count == 0) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportNoData"), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information); return; }
+        var events = new List<Core.IcsEvent>(custom);
+        foreach (var c in (m?.Schedule ?? []).Where(c => c.Day is >= 2 and <= 8 && c.Weeks.Count > 0))
         {
             if (Core.Ics.Minutes(c.Start) is not { } s || Core.Ics.Minutes(c.End) is not { } en || en <= s) continue;
             // Kỳ vắt qua năm mới (tuần 52 rồi tuần 1): tuần đầu kỳ là tuần nhỏ nhất trong nửa sau của năm.
@@ -94,7 +175,7 @@ public partial class CalendarPage : UserControl, IPage
                     string.Join("\n", new[] { c.Code + (c.Group is { } g ? ", " + g : ""), c.Teacher ?? "" }.Where(x => x.Length > 0))));
             }
         }
-        foreach (var x in m.Exams)
+        foreach (var x in m?.Exams ?? [])
         {
             if (!DateTime.TryParseExact(x.Date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d)) continue;
             var t = System.Text.RegularExpressions.Regex.Match(x.Time ?? "", @"(\d+)g(\d+)");
@@ -110,13 +191,13 @@ public partial class CalendarPage : UserControl, IPage
         {
             Title = L.T("calendar.export").TrimEnd('.'),
             Filter = "iCalendar (*.ics)|*.ics",
-            FileName = $"BK Study Desk - {m.Term.Name}.ics",
+            FileName = m is null ? "BK Study Desk.ics" : $"BK Study Desk - {m.Term.Name}.ics",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
         };
         if (dlg.ShowDialog(Window.GetWindow(this)) != true) return;
         try
         {
-            File.WriteAllText(dlg.FileName, Core.Ics.Build($"BK Study Desk, {m.Term.Name}", events, DateTime.UtcNow), new System.Text.UTF8Encoding(false));
+            File.WriteAllText(dlg.FileName, Core.Ics.Build(m is null ? "BK Study Desk" : $"BK Study Desk, {m.Term.Name}", events, DateTime.UtcNow), new System.Text.UTF8Encoding(false));
             MessageBox.Show(Window.GetWindow(this), L.F("calendar.exportDone", events.Count, dlg.FileName), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception x) when (x is IOException or UnauthorizedAccessException)
@@ -147,7 +228,7 @@ public partial class CalendarPage : UserControl, IPage
 
     private void RefreshWeek()
     {
-        var monday = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7) + _offset * 7.0);
+        var monday = ShownMonday;
         var week = Format.IsoWeek(monday);
         WeekText.Text = L.F("calendar.week", week, monday, monday.AddDays(6));
         ThisWeek.IsEnabled = _offset != 0;
@@ -165,21 +246,39 @@ public partial class CalendarPage : UserControl, IPage
 
         var grid = View.SelectedIndex != 1;
         var thisWeek = slotted.Where(c => c.Weeks.Contains(week)).ToList();
+        var custom = CustomInWeek(monday);
         WeekEmpty.Text = _host.State.NoDataReason("mybk", "MyBK") ?? L.T("calendar.weekEmpty");
-        WeekEmpty.Visibility = grid && thisWeek.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        WeekEmpty.Visibility = grid && thisWeek.Count == 0 && custom.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         DimNote.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         Grid.Visibility = grid ? Visibility.Visible : Visibility.Collapsed;
         Week.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         if (grid)
         {
-            Grid.Show(monday, thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}-{c.End}, {c.Room}",
+            var courses = _host.State.Courses();
+            var blocks = thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}-{c.End}, {c.Room}",
                 string.Join("\n", new[] { c.Name, $"{Format.MybkDays.GetValueOrDefault(c.Day)} {c.Start}-{c.End}, {c.Room}", c.Teacher ?? "", c.Code + (c.Group is { } g ? ", " + g : "") }
-                    .Where(x => x.Length > 0)), c.Code)));
+                    .Where(x => x.Length > 0)), c.Code)).ToList();
+            foreach (var e in custom)
+            {
+                var day = Format.MybkDay(e.Day!.Value);
+                var time = AppState.CustomTime(e);
+                // Học bù có tên hoặc mã môn trong tiêu đề thì cùng màu với buổi học của môn đó (Key = mã môn).
+                var key = e.IsMakeup && CustomEvents.MatchCourse(e.Title, courses) is { } m ? m.Code : "custom:" + e.Title;
+                var tip = string.Join("\n", new[] { e.Title, $"{CustomTag(e)}, {Format.MybkDays.GetValueOrDefault(day)} {time}", e.Location, e.Note }.Where(x => x.Length > 0));
+                blocks.Add(new WeekBlock(day, e.StartMin ?? 0, e.EndMin ?? 0, e.Title, AppState.CustomLabel(e), tip, key, CustomTag(e), e.Id));
+            }
+            Grid.Show(monday, blocks);
             return;
         }
         var rows = slotted.Select(c => new ClassRow(c.Day,
             L.F("format.dateLong", Format.MybkDays.GetValueOrDefault(c.Day) ?? L.F("calendar.weekday", c.Day), monday.AddDays(c.Day - 2)),
             $"{c.Start}-{c.End}", Min(c.Start), c.Name, c.Code, c.Room, $"{c.Lesson}-{c.Lesson + c.Lessons - 1}", c.Teacher ?? "", c.Weeks.Contains(week))).ToList();
+        foreach (var e in custom)
+        {
+            var day = Format.MybkDay(e.Day!.Value);
+            rows.Add(new ClassRow(day, L.F("format.dateLong", Format.MybkDays.GetValueOrDefault(day) ?? L.F("calendar.weekday", day), e.Day.Value),
+                AppState.CustomTime(e), e.StartMin ?? 0, e.Title, CustomTag(e), e.Location, "", e.Note, true, e.Id));
+        }
         // Sắp theo phút bắt đầu (số), không theo chữ: "10:00" không được đứng trước "7:00".
         var v = Grids.Grouped(rows, nameof(ClassRow.DayName), nameof(ClassRow.Day));
         v.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(ClassRow.StartMin), System.ComponentModel.ListSortDirection.Ascending));

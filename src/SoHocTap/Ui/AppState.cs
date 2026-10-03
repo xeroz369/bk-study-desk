@@ -19,7 +19,15 @@ public sealed record TimelineItem(string Id, string Kind, string Name, string Su
         ["exam"] = "kind.exam",
         ["class"] = "kind.class",
         ["reg"] = "kind.reg",
+        ["custom"] = "kind.custom",
+        ["makeup"] = "kind.makeup",
     };
+
+    /// <summary>Id của mốc lấy từ sự kiện tự thêm (data/custom-events.json).</summary>
+    public const string CustomPrefix = "ce-";
+
+    /// <summary>Id trong data/custom-events.json nếu mốc là sự kiện tự thêm; null với mốc từ LMS, MyBK.</summary>
+    public string? CustomId => Source == "custom" && Id.StartsWith(CustomPrefix, StringComparison.Ordinal) ? Id[CustomPrefix.Length..] : null;
     public string KindName => Opens ? L.T("kind.quizOpen") : KindText.TryGetValue(Kind, out var k) ? L.T(k) : Kind;
     public string When => Format.DateTime(Time);
     /// <summary>Cột "Còn": mốc quiz mở thì ghi hạn đóng (mốc mở không phải hạn nộp, đếm ngược tới đó dễ hiểu nhầm).</summary>
@@ -66,6 +74,15 @@ public sealed partial class AppState(SourceHub hub)
     {
         Sources = hub.StatusJson();
         Progress?.Invoke();
+    }
+
+    /// <summary>Trạng thái nguồn đổi (bắt đầu, xong mà không có gì mới, lỗi được xóa) nhưng dữ liệu thì không: thanh trạng thái và InfoBar.</summary>
+    public event Action? StatusChanged;
+
+    public void RefreshStatusOnly()
+    {
+        Sources = hub.StatusJson();
+        StatusChanged?.Invoke();
     }
 
     /// <summary>Chỉ đọc lại trạng thái nguồn (đang sync, lỗi), khá nhẹ nên gọi lúc nguồn vừa bắt đầu chạy.</summary>
@@ -127,9 +144,11 @@ public sealed partial class AppState(SourceHub hub)
         return (L.F("error.generic", label), raw);
     }
 
-    /// <summary>Bước đang làm của lần đồng bộ (key ngôn ngữ, số đã xong, tổng); null nếu không đồng bộ.</summary>
-    public (string Key, int Done, int Total)? Step(string name) =>
-        Source(name) is { } o && o["step"]?.GetValue<string>() is { } k ? (k, o["done"]?.GetValue<int>() ?? 0, o["total"]?.GetValue<int>() ?? 0) : null;
+    /// <summary>Tiến độ của lần đồng bộ đang chạy (câu, đếm, tên, phần đã xong); null nếu không đồng bộ hay chưa báo bước nào.</summary>
+    public SyncProgress? Step(string name) =>
+        Source(name) is { } o && o["step"]?.GetValue<string>() is { } k
+            ? new SyncProgress(k, o["count"]?.GetValue<int>() ?? 0, o["of"]?.GetValue<int>() ?? 0, o["detail"]?.GetValue<string>(), o["permille"]?.GetValue<int?>())
+            : null;
 
     /// <summary>
     /// Câu nói thật về dữ liệu của một nguồn khi trang không có gì để hiện: file đã lưu không đọc được, đang lấy lần đầu, lấy lỗi,
@@ -233,7 +252,37 @@ public sealed partial class AppState(SourceHub hub)
                 output.Add(new TimelineItem("rg-c-" + r.Code, "reg", r.Name, "", r.End, L.F("timeline.regClose", r.Code), url, "mybk"));
             }
         }
+        AddCustomEvents(output);
         return [.. output.OrderBy(i => i.Time)];
+    }
+
+    /// <summary>Sự kiện tự thêm sau lần sửa: dựng lại timeline, báo các trang (không đọc lại LMS/MyBK).</summary>
+    public void CustomEventsChanged()
+    {
+        Timeline = BuildTimeline();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Mã và tên các môn trong thời khóa biểu, để tô màu buổi học bù theo môn có trong tiêu đề.</summary>
+    public List<(string Code, string Name)> Courses() =>
+        [.. (Mybk?.Schedule ?? []).Select(c => (c.Code, c.Name)).Where(c => c.Code.Length > 0 || c.Name.Length > 0).Distinct()];
+
+    /// <summary>"H1-201, 07:00-08:50": địa điểm và giờ của sự kiện tự thêm.</summary>
+    public static string CustomLabel(CustomEvent e) => string.Join(", ", new[] { e.Location, CustomTime(e) }.Where(x => x.Length > 0));
+
+    /// <summary>"07:00-08:50", hoặc "07:00" nếu không ghi giờ kết thúc.</summary>
+    public static string CustomTime(CustomEvent e) => e.End.Length > 0 ? $"{e.Start}-{e.End}" : e.Start;
+
+    private void AddCustomEvents(List<TimelineItem> output)
+    {
+        var courses = Courses();
+        foreach (var e in CustomEventsData.Store.All())
+        {
+            if (CustomEvents.StartTime(e) is not { } time) continue;
+            // Học bù có tên môn trong tiêu đề thì ghi môn đó (cột Môn, trang môn); sự kiện riêng không gắn môn.
+            var subject = e.IsMakeup && CustomEvents.MatchCourse(e.Title, courses) is { } c ? c.Name : "";
+            output.Add(new TimelineItem(TimelineItem.CustomPrefix + e.Id, e.IsMakeup ? "makeup" : "custom", e.Title, subject, time, CustomLabel(e), null, "custom"));
+        }
     }
 
     public IEnumerable<TimelineItem> Upcoming(double hours) => Timeline.Where(e => e.Time >= Format.Now && e.Time <= Format.Now + hours * 3600);

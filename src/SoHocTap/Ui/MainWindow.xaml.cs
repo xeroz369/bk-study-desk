@@ -93,6 +93,7 @@ public partial class MainWindow : Window, IDisposable
         Nav.ItemsSource = _nav;
         _host.State.Changed += OnState;
         _host.State.Progress += UpdateStatus;
+        _host.State.StatusChanged += () => { UpdateStatus(); UpdateInfoBar(); };
         _progressDelay.Tick += (_, _) => { _progressDelay.Stop(); UpdateStatus(); };
         InfoBar.Closed += OnInfoClose;
         _host.LoginProgress += OnLogin;
@@ -137,6 +138,8 @@ public partial class MainWindow : Window, IDisposable
         // Bản public lần đầu: hỏi có kiểm tra bản mới không (chưa trả lời thì app không gọi mạng để kiểm tra). Mỗi lần mở chỉ một hộp thoại.
         else if (!hidden) AskUpdateMode();
         ShowUpdateState();
+        // Vừa lên bản mới (cài lúc thoát hay lúc mở app): báo một lần ở thanh trạng thái, lần mở sau không còn.
+        if (UpdateService.UpdatedNotice is { } updated) Say(updated);
     }
 
     private bool _askedUpdate;
@@ -288,7 +291,7 @@ public partial class MainWindow : Window, IDisposable
     private (List<double> Full, List<double> Compact, List<double> Right, double More)? _widths;
 
     /// <summary>
-    /// Đo bề rộng từng mục ở hai chế độ (có chữ, chỉ icon), cụm nút bên phải ở ba mức và nút Thêm. Đổi chế độ rồi UpdateLayout cho chắc:
+    /// Đo bề rộng từng mục ở hai chế độ (có chữ, chỉ icon), cụm nút bên phải ở hai mức và nút Thêm. Đổi chế độ rồi UpdateLayout cho chắc:
     /// Measure trực tiếp trả kích thước cũ vì phần tử cha chưa bị đánh dấu cần đo lại. Chỉ đo khi chưa có số (số đếm hay DPI đổi thì xóa).
     /// </summary>
     private (List<double> Full, List<double> Compact, List<double> Right, double More)? MeasureTopBar()
@@ -305,7 +308,7 @@ public partial class MainWindow : Window, IDisposable
         var full = Items(false);
         var small = Items(true);
         var right = new List<double>();
-        for (var level = 0; level < 3; level++)
+        for (var level = 0; level < NavFit.RightLevels; level++)
         {
             SetRight(level);
             UpdateLayout();
@@ -347,13 +350,11 @@ public partial class MainWindow : Window, IDisposable
         ShowCurrent();
     }
 
-    /// <summary>Mức gọn của cụm nút bên phải: 1 = Giới thiệu chỉ icon, 2 = thêm Đồng bộ chỉ icon.</summary>
+    /// <summary>Mức gọn của cụm nút bên phải: 1 = Đồng bộ chỉ icon (Cài đặt, Giới thiệu luôn chỉ icon).</summary>
     private void SetRight(int level)
     {
-        AboutText.Visibility = level >= 1 ? Visibility.Collapsed : Visibility.Visible;
-        AboutGlyph.Margin = level >= 1 ? new Thickness(0) : new Thickness(0, 0, 6, 0);
-        SyncText.Visibility = level >= 2 ? Visibility.Collapsed : Visibility.Visible;
-        SyncGlyph.Margin = level >= 2 ? new Thickness(0) : new Thickness(0, 0, 6, 0);
+        SyncText.Visibility = level >= 1 ? Visibility.Collapsed : Visibility.Visible;
+        SyncGlyph.Margin = level >= 1 ? new Thickness(0) : new Thickness(0, 0, 6, 0);
     }
 
     /// <summary>Menu Thêm: các mục không đủ chỗ, cùng icon, tên và phím tắt như trên thanh.</summary>
@@ -407,9 +408,10 @@ public partial class MainWindow : Window, IDisposable
         var s = _host.State;
         string Src(string name, string label)
         {
+            // "LMS: Đang kiểm tra khóa học 3/12...", "LMS: Đang tải tệp 2/5 (Giải tích 2)...": không phần trăm, không ước thời gian.
             if (s.Syncing(name))
                 return s.Step(name) is { } st
-                    ? L.F("status.step", label, L.T(st.Key)) + (st.Total > 0 ? $" ({st.Done}/{st.Total})" : "")
+                    ? L.F("status.step", label, L.F(st.Key, st.Count, st.Of, st.Detail ?? ""))
                     : L.F("status.syncing", label);
             if (s.Error(name) is { } err) return L.F("status.syncError", label);
             return s.SyncedAt(name) is { } t ? L.F("status.syncedAt", label, Format.DayDiff(t) == 0 ? Format.Hm(t) : Format.DateTime(t)) : L.F("status.neverSynced", label);
@@ -441,12 +443,18 @@ public partial class MainWindow : Window, IDisposable
         // Hết đồng bộ: nói đúng kết quả, có nguồn lỗi thì không ghi "Đã đồng bộ".
         if (!syncing && StMessage.Text == L.T("status.syncStarted")) Say(L.T(SyncFailure() is null ? "status.synced" : "status.syncHadError"));
 
-        // Thanh tiến độ không xác định: các bước đếm riêng nên thanh xác định sẽ quay về 0 giữa chừng ("Don't restart progress").
-        // Chỉ hiện khi đồng bộ đã quá 1 giây (Fluent 2 wait UX: dưới 1 giây không hiện chỉ báo), số đếm nằm ở chữ bên cạnh.
-        if (!syncing) _syncSince = null;
-        else if (_syncSince is null) { _syncSince = DateTime.UtcNow; _progressDelay.Start(); }
-        StProgress.IsIndeterminate = true;
-        StProgressItem.Visibility = syncing && DateTime.UtcNow - _syncSince >= TimeSpan.FromSeconds(1) ? Visibility.Visible : Visibility.Collapsed;
+        // Một thanh có số cho cả LMS và MyBK (ProgressGate: hiện sau 1 giây, giữ ít nhất 800 ms, không lùi, vô định khi chưa biết tổng).
+        var running = SourceNames.Where(s.Syncing).Select(s.Step).ToList();
+        var bar = _bar.Update(syncing, Sources.SyncProgress.Overall(running), DateTime.UtcNow);
+        StProgress.IsIndeterminate = bar.Indeterminate;
+        if (!bar.Indeterminate) StProgress.Value = bar.Value;
+        StProgressItem.Visibility = bar.Visible ? Visibility.Visible : Visibility.Collapsed;
+        _progressDelay.Stop();
+        if (bar.Recheck is { } again)
+        {
+            _progressDelay.Interval = again < TimeSpan.FromMilliseconds(20) ? TimeSpan.FromMilliseconds(20) : again;
+            _progressDelay.Start();
+        }
     }
 
     private void OnState()
@@ -515,9 +523,11 @@ public partial class MainWindow : Window, IDisposable
         if (stage is "done" or "logout") { _loginStage = ""; _keepShown = true; }
     }
 
-    private bool _keepShown;
-    private DateTime? _syncSince;
-    private readonly System.Windows.Threading.DispatcherTimer _progressDelay = new() { Interval = TimeSpan.FromSeconds(1.05) };   // đang hiện "đăng nhập xong/đã đăng xuất": giữ tới khi người dùng đóng hoặc có lỗi mới
+    private bool _keepShown;   // đang hiện "đăng nhập xong/đã đăng xuất": giữ tới khi người dùng đóng hoặc có lỗi mới
+    private readonly ProgressGate _bar = new();
+    private static readonly string[] SourceNames = ["lms", "mybk"];
+    // Hẹn vẽ lại thanh tiến độ khi không có sự kiện mới: tới lúc hiện (1 giây), hết lúc giữ (800 ms), số đứng yên 5 giây.
+    private readonly System.Windows.Threading.DispatcherTimer _progressDelay = new() { Interval = ProgressGate.ShowDelay };
 
     private void UpdateInfoBar()
     {

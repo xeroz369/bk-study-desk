@@ -52,7 +52,7 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
   - **Export calendar (.ics)**: save the whole-term timetable and exams to a file you can import into Google Calendar, Outlook or Windows Calendar.
 - **Subjects**:
   - browse each subject's folder like File Explorer;
-  - see new files, deadlines, announcements, gradebook and classes on LMS;
+  - see recently updated files on your computer, deadlines, announcements, gradebook and classes on LMS;
   - **download documents section by section**, filter by file type (PDF, slides, other), optionally extract .zip/.rar/.7z;
   - optional auto-download: each sync fetches new files (including assignment attachments), so they open even when LMS is slow.
 - **Grades & records**:

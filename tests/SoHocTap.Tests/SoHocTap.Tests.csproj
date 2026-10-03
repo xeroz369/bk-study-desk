@@ -26,16 +26,32 @@
     <Compile Include="$(Src)Core\VnTime.cs" Link="Linked\VnTime.cs" />
     <Compile Include="$(Src)Ui\NavFit.cs" Link="Linked\NavFit.cs" />
     <Compile Include="$(Src)Ui\ScreenFit.cs" Link="Linked\ScreenFit.cs" />
+    <Compile Include="$(Src)Ui\WeekMath.cs" Link="Linked\WeekMath.cs" />
     <Compile Include="..\..\src\BKStudyDesk.Setup\InstallTarget.cs" Link="Linked\InstallTarget.cs" />
     <Compile Include="$(Src)Data\Models.cs" Link="Linked\Data\Models.cs" />
     <Compile Include="$(Src)Data\CachedFile.cs" Link="Linked\Data\CachedFile.cs" />
     <Compile Include="$(Src)Data\ChangeSet.cs" Link="Linked\Data\ChangeSet.cs" />
     <Compile Include="$(Src)Data\SyncError.cs" Link="Linked\Data\SyncError.cs" />
+    <Compile Include="$(Src)Data\DataDiff.cs" Link="Linked\Data\DataDiff.cs" />
+    <Compile Include="$(Src)Data\SyncedFile.cs" Link="Linked\Data\SyncedFile.cs" />
+    <Compile Include="$(Src)Core\AtomicFile.cs" Link="Linked\AtomicFile.cs" />
+    <Compile Include="$(Src)Shell\Reminders.cs" Link="Linked\Reminders.cs" />
+    <Compile Include="$(Src)Data\CustomEvents.cs" Link="Linked\Data\CustomEvents.cs" />
+    <Compile Include="$(Src)Data\QuickEntry.cs" Link="Linked\Data\QuickEntry.cs" />
     <Compile Include="$(Src)Sources\ISource.cs" Link="Linked\Sources\ISource.cs" />
+    <Compile Include="$(Src)Sources\SyncProgress.cs" Link="Linked\Sources\SyncProgress.cs" />
+    <Compile Include="$(Src)Ui\ProgressGate.cs" Link="Linked\ProgressGate.cs" />
     <Compile Include="$(Src)Sources\SyncErrors.cs" Link="Linked\Sources\SyncErrors.cs" />
     <Compile Include="$(Src)Sources\Lms\LmsException.cs" Link="Linked\Sources\LmsException.cs" />
     <Compile Include="$(Src)Sources\Lms\AssignPairing.cs" Link="Linked\Sources\AssignPairing.cs" />
     <Compile Include="$(Src)Sources\Mybk\MybkNormalize.cs" Link="Linked\Sources\MybkNormalize.cs" />
+    <!-- Phần Files không phụ thuộc config: test trên thư mục tạm. Không link Paths/Config: Paths.AppRoot đi ngược từ thư mục test
+         lên tới thư mục có data\, trong worktree dưới "Sổ học tập" đó là data thật của người dùng. -->
+    <Compile Include="$(Src)Files\FileOps.cs" Link="Linked\Files\FileOps.cs" />
+    <Compile Include="$(Src)Files\JunkFilter.cs" Link="Linked\Files\JunkFilter.cs" />
+    <Compile Include="$(Src)Files\NameMatch.cs" Link="Linked\Files\NameMatch.cs" />
+    <Compile Include="$(Src)Files\LmsPlacement.cs" Link="Linked\Files\LmsPlacement.cs" />
+    <Compile Include="$(Src)Files\DocumentScan.cs" Link="Linked\Files\DocumentScan.cs" />
   </ItemGroup>
 
   <ItemGroup>
