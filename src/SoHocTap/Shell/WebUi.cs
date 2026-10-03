@@ -49,8 +49,9 @@ internal static class WebUi
         s.IsSwipeNavigationEnabled = false;
         s.IsGeneralAutofillEnabled = false;
         s.IsPasswordAutosaveEnabled = false;
-        // Không dùng web message, host object, hộp thoại alert/confirm kiểu trình duyệt; không cấp quyền nào (camera, vị trí...).
-        s.IsWebMessageEnabled = false;
+        // Web message bật: khung Luyện tập gửi phím tắt của app (Ctrl+số, F5, Alt+Left) và lệnh mở trang WPF qua postMessage,
+        // PracticePage chỉ nhận tin từ host của app. Không dùng host object, hộp thoại kiểu trình duyệt; không cấp quyền nào.
+        s.IsWebMessageEnabled = true;
         s.AreHostObjectsAllowed = false;
         s.AreDefaultScriptDialogsEnabled = false;
         // Tắt hộp thoại mặc định thì confirm() luôn trả false (Gỡ quiz, Xóa câu không chạy được). Thay bằng hộp thoại Windows.

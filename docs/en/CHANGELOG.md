@@ -12,6 +12,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- In **Practice**, the app shortcuts (Ctrl+1 to Ctrl+7, F5, Alt+Left) did nothing, and links to other app pages did not open.
 - MyBK sync failed with "MyBK redirected to a page outside the university (mybk.hcmut.edu.vn/app/login)" when the MyBK session expired. MyBK sends you to its sign-in page over http and the app blocked it by mistake. The app now switches to https and signs in again through SSO.
 - **Calendar** > **Timetable** grid: weeks without Saturday or Sunday classes dropped those columns, although the week label runs to Sunday. The grid now always shows all 7 days, and the scrollbar no longer covers the last column.
 
