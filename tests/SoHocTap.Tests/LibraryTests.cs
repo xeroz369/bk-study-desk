@@ -96,6 +96,27 @@ public sealed class LibraryTests : IDisposable
         Assert.Empty(item.Files!);   // sha sai mẫu, không có url: không tải được nên bỏ
     }
 
+    [Fact]
+    public void ParsesBookRefAndMime()
+    {
+        // Bk-lib PR 2: files[].mime luôn có; loại "book-ref" chỉ có book, không file, không url.
+        var d = LibraryJson.ParseCourse("""
+            {"schemaVersion":1,"id":"MT1005","items":[
+             {"id":"sach-gt2","type":"book-ref","added":"2026-10-03","book":{"title":"Giải tích 2","authors":["A","",null],"year":2020,"publisher":"NXB ĐHQG","isbn":"978-604-0-00000-0"}},
+             {"id":"tom-tat","type":"summary","added":"2026-10-03","files":[{"name":"a.pdf","size":1,"sha256":"%%","urls":["https://a/a.pdf"],"mime":"application/pdf"}]}]}
+            """.Replace("%%", new string('a', 64), StringComparison.Ordinal));
+        var book = d.Items!.Single(i => i.Id == "sach-gt2");
+        Assert.True(book.IsBook);
+        Assert.Equal("Giải tích 2", book.Title);
+        Assert.Equal(["A"], book.Book!.Authors);
+        Assert.Equal(2020, book.Book.Year);
+        Assert.Empty(book.Files!);
+        Assert.Equal(LibraryAction.OpenWeb, LibraryActions.Primary(book, ItemLocal.None));
+        Assert.Equal("book-ref", LibraryTypes.GroupOf(book.Type));
+        var pdf = Assert.Single(d.Items!.Single(i => i.Id == "tom-tat").Files!);
+        Assert.Equal(LibraryFileKind.Pdf, pdf.Kind);
+    }
+
     [Theory]
     [InlineData("https://library.example/", "https://library.example/v1/")]
     [InlineData("https://library.example/v1", "https://library.example/v1/")]

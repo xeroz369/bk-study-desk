@@ -1,4 +1,4 @@
-namespace SoHocTap.Library;
+﻿namespace SoHocTap.Library;
 
 /// <summary>Lệnh chính (bấm đúp, Enter) của một mục thư viện.</summary>
 public enum LibraryAction { OpenWeb, Install, Open, Download }
@@ -7,12 +7,12 @@ public enum LibraryAction { OpenWeb, Install, Open, Download }
 public static class LibraryActions
 {
     /// <summary>
-    /// link: Mở trên web. quiz-pack là .md, .zip, .json: Cài vào Luyện tập. PDF, Markdown: Mở (chưa tải thì tải rồi mở).
+    /// link, book-ref: Mở trên web. quiz-pack là .md, .zip, .json: Cài vào Luyện tập. PDF, Markdown: Mở (chưa tải thì tải rồi mở).
     /// Còn lại, hay đã tải mà thư viện có bản mới: Tải về.
     /// </summary>
     public static LibraryAction Primary(LibraryItem item, ItemLocal local)
     {
-        if (item.IsLink) return LibraryAction.OpenWeb;
+        if (item.IsLink || item.IsBook) return LibraryAction.OpenWeb;   // sách tham khảo không có file để tải
         var kind = item.Files is [var first, ..] ? first.Kind : LibraryFileKind.Other;
         if (item.IsQuizPack && kind is LibraryFileKind.Markdown or LibraryFileKind.Zip or LibraryFileKind.Json) return LibraryAction.Install;
         if (local == ItemLocal.Outdated) return LibraryAction.Download;
