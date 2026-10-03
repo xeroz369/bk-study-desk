@@ -105,7 +105,7 @@ public sealed partial class MybkSource(Func<IBrowserRunner?> runner) : ISource
             try
             {
                 log(SyncSignal.Step("sync.mybk.registration", 3, 4));
-                var html = await browser.PageAsync(Config.Str("sources.mybk.registration"), ct);
+                var html = await browser.PageAsync(Config.Str("sources.mybk.registration"), ct, "Đợt Đăng ký");
                 var rounds = ParseRegistration(html);
                 // Trang không có bảng đợt đăng ký (cột "Đợt Đăng ký") là đã mở nhầm trang: báo, giữ bản cũ, không lưu danh sách rỗng.
                 if (rounds.Count == 0 && !html.Contains("Đợt Đăng ký", StringComparison.OrdinalIgnoreCase))

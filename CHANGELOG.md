@@ -6,6 +6,14 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.6] - 2026-10-03
+
+### Sửa lỗi
+
+- Đồng bộ MyBK báo "Trang đăng ký môn không có bảng đợt đăng ký". Lần đầu vào hệ thống đăng ký, MyBK trả một trang trung gian rồi mới chuyển sang trang có bảng; app đọc quá sớm. Giờ app chờ và mở lại trang khi chưa thấy bảng.
+- Mỗi bài tập LMS hiện hai lần ở **Hôm nay**, **Lịch** và trong thông báo nhắc hạn, nên số "hạn nộp trong 7 ngày" bị gấp đôi.
+- Bài tập đã nộp vẫn bị nhắc hạn. App giờ dựa vào lịch của Moodle: Moodle gỡ mốc của bài đã nộp, nên app cũng không đếm và không nhắc bài đó nữa. Đề và file đính kèm vẫn được lưu về máy như trước.
+
 ## [1.1.5] - 2026-10-03
 
 ### Sửa lỗi
@@ -147,7 +155,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...HEAD
+[1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3

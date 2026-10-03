@@ -405,6 +405,11 @@ public sealed partial class LmsSource : ISource
         var subj = courses.ToDictionary(c => c.Id, c => c.Subject + (c.Part is null ? "" : $" ({c.Part})"));
         var groups = await MyGroupsAsync(courses, uid, ct);   // CollectGradesAsync cũng dùng cái này để lọc mục điểm của nhóm khác
         var outMap = new Dictionary<string, JsonObject>();
+        // Bài tập có mốc trên lịch hành động: "instance" của mốc → mục "ev" tương ứng. Trên LMS trường, instance trùng cmid
+        // của bài (đo trên dữ liệu thật 03/10/2026), không phải id như tài liệu; ghép theo cmid, id để dự phòng. Lịch đọc đủ (không lỗi, không bị cắt
+        // ở 4 trang) thì biết chắc bài nào không còn mốc, tức là đã nộp (xem dưới).
+        var assignEvents = new Dictionary<long, JsonObject>();
+        var calendarComplete = false;
         try
         {
             // Moodle chỉ cho tối đa 50 mục mỗi lần (limitnum 1..50): đọc theo trang bằng aftereventid, tối đa 4 trang.
@@ -421,6 +426,7 @@ public sealed partial class LmsSource : ISource
                 after = batch[^1]["id"]?.GetValue<long>() ?? 0;
                 if (after == 0) break;
             }
+            calendarComplete = events.Count < 200;
             foreach (var e in events)
             {
                 var cid = e["course"]?["id"]?.GetValue<long>() ?? -1;
@@ -440,6 +446,11 @@ public sealed partial class LmsSource : ISource
                     ["phase"] = e["eventtype"]?.GetValue<string>(),
                     ["url"] = e["url"]?.GetValue<string>(),
                 };
+                if (mod == "assign")
+                {
+                    if (e["instance"]?.GetValue<long>() is { } inst) assignEvents[inst] = outMap["ev" + e["id"]];
+                    else calendarComplete = false;   // thiếu instance thì không ghép được, cũng không suy ra "đã nộp"
+                }
             }
         }
         catch (LmsException ex) { Warn("lịch LMS", ex); }
@@ -452,7 +463,20 @@ public sealed partial class LmsSource : ISource
                     var cid = c["id"]!.GetValue<long>();
                     var due = a["duedate"]?.GetValue<long>() ?? 0;
                     if (due == 0 || !ForMyGroup(a["name"]!.GetValue<string>(), cid, groups)) continue;
-                    outMap.TryAdd("as" + a["id"], new JsonObject
+                    var aid = a["id"]!.GetValue<long>();
+                    // Cùng một bài đã có mốc "ev" trên lịch: không thêm mục thứ hai (trước đây mỗi bài hiện và được nhắc 2 lần).
+                    // Chỉ chép đề và file đính kèm sang mục "ev" để vẫn lưu về máy.
+                    var cmid = a["cmid"]?.GetValue<long>() ?? -1;
+                    if (assignEvents.TryGetValue(cmid, out var ev) || assignEvents.TryGetValue(aid, out ev))
+                    {
+                        ev["intro"] = a["intro"]?.GetValue<string>();
+                        ev["files"] = AttachmentFiles(a);
+                        continue;
+                    }
+                    // Hạn nằm trong khung lịch đã đọc mà Moodle không có mốc: Moodle gỡ mốc khi bạn đã nộp (hoặc không phải nộp),
+                    // xem mod_assign_core_calendar_provide_event_action. Giữ để lưu đề, nhưng đánh dấu done: không đếm, không nhắc.
+                    var done = calendarComplete && due >= Now() - 7 * 86400 && due <= Now() + 120 * 86400;
+                    outMap.TryAdd("as" + aid, new JsonObject
                     {
                         ["id"] = "as" + a["id"],
                         ["course"] = cid,
@@ -464,22 +488,26 @@ public sealed partial class LmsSource : ISource
                         ["url"] = $"{Site}/mod/assign/view.php?id={a["cmid"]}",
                         // Đề và file đính kèm có sẵn trong kết quả này (không tốn thêm request): để lưu về máy.
                         ["intro"] = a["intro"]?.GetValue<string>(),
-                        ["files"] = new JsonArray((a["introattachments"] as JsonArray ?? []).OfType<JsonObject>()
-                            .Select(f => (JsonNode)new JsonObject
-                            {
-                                ["filename"] = f["filename"]?.DeepClone(),
-                                ["fileurl"] = f["fileurl"]?.DeepClone(),
-                                ["filesize"] = f["filesize"]?.DeepClone(),
-                                ["timemodified"] = f["timemodified"]?.DeepClone(),
-                                ["filepath"] = "/",
-                                ["type"] = "file",
-                            }).ToArray()),
+                        ["files"] = AttachmentFiles(a),
+                        ["done"] = done ? true : null,
                     });
                 }
         }
         catch (LmsException ex) { Warn("bài tập LMS", ex); }
+        foreach (var e in outMap.Values.Where(e => e["done"] is null).ToList()) e.Remove("done");
         return new JsonArray(outMap.Values.OrderBy(e => e["time"]?.GetValue<long>() ?? 0).Cast<JsonNode>().ToArray());
     }
+
+    private static JsonArray AttachmentFiles(JsonObject a) => new((a["introattachments"] as JsonArray ?? []).OfType<JsonObject>()
+        .Select(f => (JsonNode)new JsonObject
+        {
+            ["filename"] = f["filename"]?.DeepClone(),
+            ["fileurl"] = f["fileurl"]?.DeepClone(),
+            ["filesize"] = f["filesize"]?.DeepClone(),
+            ["timemodified"] = f["timemodified"]?.DeepClone(),
+            ["filepath"] = "/",
+            ["type"] = "file",
+        }).ToArray());
 
     /// <summary>
     /// Thông báo: bài đăng diễn đàn (Các thông báo, diễn đàn thường) của các môn kỳ này, kể cả khóa phụ cùng môn bị ẩn khỏi
