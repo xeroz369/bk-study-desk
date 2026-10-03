@@ -22,12 +22,13 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: src/ui/package-lock.json
-      - name: Practice UI (svelte-check, Prettier, build)
+      - name: Practice UI (svelte-check, Prettier, vitest, build)
         working-directory: src/ui
         run: |
           npm ci --no-audit --no-fund
           npm run check
           npx prettier --check src
+          npm test
           npm run build
       - name: Study Pack tools (round-trip test)
         run: node studypack/test-roundtrip.ts

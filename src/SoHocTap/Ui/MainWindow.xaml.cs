@@ -15,16 +15,50 @@ internal interface IPage
 {
     string Title { get; }
     string Subtitle { get; }
-    /// <summary>Dữ liệu vừa đổi (sync xong…) thì vẽ lại.</summary>
+    /// <summary>Dữ liệu vừa đổi (sync xong...) thì vẽ lại. Chỉ gọi khi page đang hiện; page ẩn được đánh dấu cũ và vẽ lại lúc mở.</summary>
     void Refresh();
-    /// <summary>Mở page tại một chỗ cụ thể (môn, tab…). Chuỗi rỗng thì giữ nguyên.</summary>
+    /// <summary>Mở page tại một chỗ cụ thể (môn, tab...). Chuỗi rỗng thì giữ nguyên.</summary>
     void Open(string arg) { }
+    /// <summary>Cửa sổ xuống khay: nhả tài nguyên nặng (WebView của Luyện tập), mở lại thì tự dựng lại.</summary>
+    void Sleep() { }
 }
 
-internal sealed record NavItem(string Id, string Label, string Glyph, string Tip)
+/// <summary>Một mục trên thanh điều hướng. Đổi số đếm, chế độ gọn qua property change để ListBox không phải dựng lại (mất focus).</summary>
+internal sealed class NavItem(PageEntry page, string tip) : INotifyPropertyChanged
 {
-    public string Badge { get; set; } = "";
+    private string _badge = "";
+    private bool _compact, _overflow;
 
+    public PageEntry Page { get; } = page;
+    public string Id => Page.Key;
+    public string Label { get; } = L.T(page.LabelKey);
+    public string Glyph => Page.Glyph;
+    public string Tip { get; } = tip;
+    public string AutomationId => "nav-" + Id;
+    /// <summary>Tên cho trình đọc màn hình: mục chỉ còn icon vẫn đọc được tên, kèm số việc nếu có.</summary>
+    public string AutomationName => _badge.Length > 0 ? L.F("nav.badgeName", Label, _badge) : Label;
+
+    public string Badge
+    {
+        get => _badge;
+        set { if (_badge != value) { _badge = value; Changed(nameof(Badge)); Changed(nameof(AutomationName)); } }
+    }
+
+    public bool Compact
+    {
+        get => _compact;
+        set { if (_compact != value) { _compact = value; Changed(nameof(Compact)); } }
+    }
+
+    /// <summary>Không đủ chỗ trên thanh: mục nằm trong menu Thêm.</summary>
+    public bool Overflow
+    {
+        get => _overflow;
+        set { if (_overflow != value) { _overflow = value; Changed(nameof(Overflow)); } }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void Changed(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     public override string ToString() => Label;
 }
 
@@ -33,16 +67,10 @@ public partial class MainWindow : Window, IDisposable
     private readonly AppHost _host;
     private readonly WindowPlacement _placement = WindowPlacement.Load();
     private readonly Dictionary<string, IPage> _pages = [];
+    /// <summary>Page đã dựng nhưng đang ẩn lúc dữ liệu đổi: vẽ lại khi mở (không vẽ lại mọi page sau mỗi lượt sync).</summary>
+    private readonly HashSet<string> _stale = [];
     private readonly Stack<string> _back = new();
-    private readonly List<NavItem> _nav =
-    [
-        new("hom-nay", L.T("nav.today"), "", L.T("nav.today.tip")),
-        new("lich", L.T("nav.calendar"), "", L.T("nav.calendar.tip")),
-        new("mon", L.T("nav.subjects"), "", L.T("nav.subjects.tip")),
-        new("luyen-tap", L.T("nav.practice"), "\uE73E", L.T("nav.practice.tip")),
-        new("diem", L.T("nav.grades"), "", L.T("nav.grades.tip")),
-        new("dich-vu", L.T("nav.services"), "", L.T("nav.services.tip")),
-    ];
+    private readonly List<NavItem> _nav;
     private string _current = "";
     private bool _exiting, _trayHintShown;
     private bool _infoClosedFor;
@@ -52,14 +80,12 @@ public partial class MainWindow : Window, IDisposable
     {
         InitializeComponent();
         Title = AppInfo.Name;
-        // Ctrl+1…N đi theo thứ tự trên thanh điều hướng, số tiếp theo là Cài đặt.
-        for (var i = 0; i < _nav.Count; i++)
-        {
-            _nav[i] = _nav[i] with { Tip = $"{_nav[i].Tip} (Ctrl+{i + 1})" };
-            InputBindings.Add(new KeyBinding(NavigationCommands.GoToPage, Key.D1 + i, ModifierKeys.Control) { CommandParameter = _nav[i].Id });
-        }
-        InputBindings.Add(new KeyBinding(NavigationCommands.GoToPage, Key.D1 + _nav.Count, ModifierKeys.Control) { CommandParameter = "cai-dat" });
-        SettingsButton.ToolTip = $"{L.T("nav.settings.tip")} (Ctrl+{_nav.Count + 1})";
+        Core.AppEvents.UnhandledError += ShowUnhandled;
+        // Ctrl+1 đến Ctrl+N theo thứ tự trong PageRegistry: các mục điều hướng, rồi Cài đặt.
+        _nav = [.. PageRegistry.Nav.Select(p => new NavItem(p, Hotkeyed(L.T(p.TipKey), p)))];
+        for (var i = 0; i < PageRegistry.Hotkeys.Count && i < 9; i++)
+            InputBindings.Add(new KeyBinding(NavigationCommands.GoToPage, Key.D1 + i, ModifierKeys.Control) { CommandParameter = PageRegistry.Hotkeys[i].Key });
+        SettingsButton.ToolTip = Hotkeyed(L.T("nav.settings.tip"), PageRegistry.Find("cai-dat"));
         StVersion.Text = $"{AppInfo.Name} {AppInfo.Version}";
         StVersion.ToolTip = Core.Paths.AppRoot;
         _placement.Apply(this);
@@ -74,6 +100,24 @@ public partial class MainWindow : Window, IDisposable
         _host.Updates.Changed += () => Dispatcher.InvokeAsync(ShowUpdateState);
         Closing += OnClosing;
         Closed += (_, _) => Dispose();
+        Loaded += (_, _) => FitTopBar();
+        Nav.ItemContainerGenerator.StatusChanged += (_, _) =>
+        {
+            if (Nav.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                Dispatcher.BeginInvoke(FitTopBar, System.Windows.Threading.DispatcherPriority.Loaded);
+        };
+    }
+
+    private static string Hotkeyed(string tip, PageEntry? page)
+    {
+        var i = page is null ? -1 : IndexOf(PageRegistry.Hotkeys, page);
+        return i >= 0 ? $"{tip} (Ctrl+{i + 1})" : tip;
+    }
+
+    private static int IndexOf(IReadOnlyList<PageEntry> list, PageEntry page)
+    {
+        for (var i = 0; i < list.Count; i++) if (list[i] == page) return i;
+        return -1;
     }
 
     /// <summary>Khởi động: sync, bật scheduler, mở lại page lần trước. hidden = chỉ chạy dưới tray (khi khởi động cùng Windows).</summary>
@@ -81,7 +125,7 @@ public partial class MainWindow : Window, IDisposable
     {
         new WindowInteropHelper(this).EnsureHandle();   // WebView2 ẩn (login, MyBK) cần có HWND dù window chưa hiện
         _host.Start();
-        Go(string.IsNullOrEmpty(_placement.Page) ? "hom-nay" : _placement.Page);
+        Go(string.IsNullOrEmpty(_placement.Page) ? PageRegistry.Home : _placement.Page);
         Startup.Refresh();
         if (!hidden) Show();
         // Bản Store lần đầu: cho user chọn folder lưu tài liệu (gợi ý ổ khác ổ C) thay vì ép vào Documents.
@@ -121,7 +165,7 @@ public partial class MainWindow : Window, IDisposable
     private void OnUpdateClick(object sender, RoutedEventArgs e)
     {
         if (_host.Updates.Offer is { } o) new UpdateWindow(_host.Updates, o) { Owner = this }.ShowDialog();
-        else Go("cai-dat");   // báo cài lỗi: mở Cài đặt → Cập nhật để thử lại
+        else Go("cai-dat");   // báo cài lỗi: mở Cài đặt, phần Cập nhật để thử lại
     }
 
     /// <summary>Hiện lại window (từ tray, hoặc khi mở app lần thứ hai).</summary>
@@ -150,6 +194,7 @@ public partial class MainWindow : Window, IDisposable
             _placement.Page = _current;
             _placement.Save();
             Hide();
+            foreach (var p in _pages.Values) p.Sleep();
             if (!_trayHintShown) { _host.TrayHint(); _trayHintShown = true; }
             return;
         }
@@ -168,35 +213,34 @@ public partial class MainWindow : Window, IDisposable
 
     internal void Go(string route)
     {
-        var parts = route.Split('/', 2);
-        var id = _nav.Any(n => n.Id == parts[0]) || parts[0] is "cai-dat" or "gioi-thieu" ? parts[0] : "hom-nay";
+        var (entry, arg) = PageRegistry.Resolve(route);
+        var id = entry.Key;
         if (_current.Length > 0 && _current != id) _back.Push(_current);
         _current = id;
         if (!_pages.TryGetValue(id, out var page))
         {
-            page = id switch
-            {
-                "lich" => new CalendarPage(_host),
-                "mon" => new SubjectsPage(_host, this),
-                "luyen-tap" => new PracticePage(_host, this),
-                "diem" => new GradesPage(_host),
-                "cai-dat" => new SettingsPage(_host),
-                "gioi-thieu" => new AboutPage(),
-                "dich-vu" => new ServicesPage(_host, this),
-                _ => new HomePage(_host, this),
-            };
+            page = entry.Create(_host, this);
             _pages[id] = page;
             page.Refresh();
         }
+        else if (_stale.Remove(id)) page.Refresh();
         Page.Content = page;
-        if (parts.Length > 1) page.Open(parts[1]);
+        if (arg.Length > 0) page.Open(arg);
         // Page Luyện tập đã có breadcrumb riêng bên trong nên không cần dòng mô tả.
         PageSubtitle.Text = page.Subtitle;
         PageSubtitle.Visibility = page.Subtitle.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
-        var item = _nav.FirstOrDefault(n => n.Id == id);
+        ShowCurrent();
+    }
+
+    /// <summary>Chỉ báo trang đang mở: mục điều hướng (hoặc menu Thêm), nút Cài đặt, Giới thiệu.</summary>
+    private void ShowCurrent()
+    {
+        var item = _nav.FirstOrDefault(n => n.Id == _current);
         if (!ReferenceEquals(Nav.SelectedItem, item)) Nav.SelectedItem = item;
-        SettingsButton.IsChecked = id == "cai-dat";
-        AboutButton.IsChecked = id == "gioi-thieu";
+        SettingsButton.IsChecked = _current == "cai-dat";
+        AboutButton.IsChecked = _current == "gioi-thieu";
+        NavMore.FontWeight = item is { Overflow: true } ? FontWeights.SemiBold : FontWeights.Normal;
+        foreach (var mi in NavMore.Items.OfType<MenuItem>()) mi.IsChecked = (string)mi.Tag == _current;
     }
 
     private void OnNav(object sender, SelectionChangedEventArgs e)
@@ -204,13 +248,16 @@ public partial class MainWindow : Window, IDisposable
         if (Nav.SelectedItem is NavItem n && n.Id != _current) Go(n.Id);
     }
 
+    /// <summary>Thanh điều hướng không cuộn: chặn BringIntoView để không đẩy cả hàng sang ngang khi chọn mục.</summary>
+    private void OnNavBringIntoView(object sender, RequestBringIntoViewEventArgs e) => e.Handled = true;
+
     private void OnGoTo(object sender, ExecutedRoutedEventArgs e) => Go((string)e.Parameter);
 
-    /// <summary>Ctrl+số từ khung Luyện tập: mục thứ n trên thanh điều hướng, n = số mục + 1 là Cài đặt.</summary>
-    internal void GoIndex(int n) => Go(n >= 1 && n <= _nav.Count ? _nav[n - 1].Id : n == _nav.Count + 1 ? "cai-dat" : _current);
+    /// <summary>Ctrl+số từ khung Luyện tập: trang thứ n trong PageRegistry.Hotkeys, ngoài khoảng thì đứng yên.</summary>
+    internal void GoIndex(int n) => Go(PageRegistry.ByHotkey(n)?.Key ?? _current);
 
     /// <summary>Số phím Ctrl+số đang dùng (các mục điều hướng và Cài đặt).</summary>
-    internal static int PageKeys => 7;
+    internal static int PageKeys => PageRegistry.Hotkeys.Count;
     // Nghe Checked thay vì Click: UI Automation (trình đọc màn hình, test) bấm ToggleButton qua TogglePattern, chỉ đổi IsChecked
     // chứ không bắn Click (ToggleButtonAutomationPeer trong dotnet/wpf).
     private void OnSettings(object sender, RoutedEventArgs e) { if (_current != "cai-dat") Go("cai-dat"); }
@@ -231,6 +278,105 @@ public partial class MainWindow : Window, IDisposable
         Go(to);
     }
 
+    // ------------------------------------------------------------------ thanh trên cùng co giãn
+
+    private void OnTopBarSize(object sender, SizeChangedEventArgs e)
+    {
+        if (e.WidthChanged) FitTopBar();
+    }
+
+    private (List<double> Full, List<double> Compact, List<double> Right, double More)? _widths;
+
+    /// <summary>
+    /// Đo bề rộng từng mục ở hai chế độ (có chữ, chỉ icon), cụm nút bên phải ở ba mức và nút Thêm. Đổi chế độ rồi UpdateLayout cho chắc:
+    /// Measure trực tiếp trả kích thước cũ vì phần tử cha chưa bị đánh dấu cần đo lại. Chỉ đo khi chưa có số (số đếm hay DPI đổi thì xóa).
+    /// </summary>
+    private (List<double> Full, List<double> Compact, List<double> Right, double More)? MeasureTopBar()
+    {
+        var containers = _nav.Select(n => Nav.ItemContainerGenerator.ContainerFromItem(n) as ListBoxItem).ToList();
+        if (containers.Any(c => c is null)) return null;
+        double Outer(FrameworkElement el) => el.DesiredSize.Width + el.Margin.Left + el.Margin.Right;
+        List<double> Items(bool compact)
+        {
+            foreach (var n in _nav) { n.Overflow = false; n.Compact = compact; }
+            UpdateLayout();
+            return [.. containers.Select(c => Outer(c!))];
+        }
+        var full = Items(false);
+        var small = Items(true);
+        var right = new List<double>();
+        for (var level = 0; level < 3; level++)
+        {
+            SetRight(level);
+            UpdateLayout();
+            right.Add(Outer(RightButtons));
+        }
+        NavMoreBar.Visibility = Visibility.Visible;
+        UpdateLayout();
+        return (full, small, right, Outer(NavMoreBar));
+    }
+
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        _widths = null;
+        FitTopBar();
+    }
+
+    private bool _fitting;
+
+    /// <summary>Chọn cách hiện thanh trên cùng cho bề rộng hiện tại (NavFit) và áp vào các mục.</summary>
+    private void FitTopBar()
+    {
+        var available = TopBar.ActualWidth - TopBar.Padding.Left - TopBar.Padding.Right;
+        if (_fitting || available <= 0 || Nav.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated) return;
+        _fitting = true;
+        try { _widths ??= MeasureTopBar(); }
+        finally { _fitting = false; }
+        if (_widths is not { } w) return;
+        // Chừa vài px: số đo lệch nhau vì làm tròn theo DPI (250%), sát quá thì mục cuối bị cắt mất một nửa.
+        var layout = NavFit.Choose(available - 8, w.Full, w.Compact, w.Right, w.More);
+        foreach (var (n, i) in _nav.Select((n, i) => (n, i)))
+        {
+            n.Compact = layout.NavCompact;
+            n.Overflow = i >= layout.Visible;
+        }
+        SetRight(layout.Right);
+        NavMoreBar.Visibility = layout.Visible < _nav.Count ? Visibility.Visible : Visibility.Collapsed;
+        BuildMore();
+        ShowCurrent();
+    }
+
+    /// <summary>Mức gọn của cụm nút bên phải: 1 = Giới thiệu chỉ icon, 2 = thêm Đồng bộ chỉ icon.</summary>
+    private void SetRight(int level)
+    {
+        AboutText.Visibility = level >= 1 ? Visibility.Collapsed : Visibility.Visible;
+        AboutGlyph.Margin = level >= 1 ? new Thickness(0) : new Thickness(0, 0, 6, 0);
+        SyncText.Visibility = level >= 2 ? Visibility.Collapsed : Visibility.Visible;
+        SyncGlyph.Margin = level >= 2 ? new Thickness(0) : new Thickness(0, 0, 6, 0);
+    }
+
+    /// <summary>Menu Thêm: các mục không đủ chỗ, cùng icon, tên và phím tắt như trên thanh.</summary>
+    private void BuildMore()
+    {
+        NavMore.Items.Clear();
+        foreach (var n in _nav.Where(n => n.Overflow))
+        {
+            var mi = new MenuItem
+            {
+                Header = n.Badge.Length > 0 ? $"{n.Label} ({n.Badge})" : n.Label,
+                Tag = n.Id,
+                IsCheckable = false,
+                ToolTip = n.Tip,
+                Icon = new TextBlock { Text = n.Glyph, FontFamily = (System.Windows.Media.FontFamily)FindResource("IconFont"), FontSize = 15 },
+            };
+            System.Windows.Automation.AutomationProperties.SetAutomationId(mi, "more-" + n.Id);
+            System.Windows.Automation.AutomationProperties.SetName(mi, n.AutomationName);
+            mi.Click += (_, _) => Go(n.Id);
+            NavMore.Items.Add(mi);
+        }
+    }
+
     // ------------------------------------------------------------------ sync, trạng thái
 
     private void OnSync(object sender, ExecutedRoutedEventArgs e) => Sync();
@@ -244,7 +390,16 @@ public partial class MainWindow : Window, IDisposable
     private void OnOpenLms(object sender, RoutedEventArgs e) => _host.OpenSource("lms");
     private void OnOpenMybk(object sender, RoutedEventArgs e) => _host.OpenSource("mybk");
 
-    internal void Say(string text) => StMessage.Text = text;
+    /// <summary>
+    /// Lỗi không bắt được (AppEvents.UnhandledError của nhánh core, có thể bắn từ thread nền): báo một câu ở thanh trạng thái.
+    /// </summary>
+    internal void ShowUnhandled(Exception e) => Dispatcher.BeginInvoke(() => Say(L.F("error.unhandled", e.Message)));
+
+    internal void Say(string text)
+    {
+        StMessage.Text = text;
+        StMessage.ToolTip = text.Length > 0 ? text : null;   // câu dài bị cắt "..." thì di chuột xem đủ
+    }
 
     /// <summary>Thanh trạng thái: từng nguồn đang làm bước nào (kèm số), lỗi gì, đồng bộ lúc nào; thanh tiến độ khi đang đồng bộ.</summary>
     private void UpdateStatus()
@@ -263,7 +418,7 @@ public partial class MainWindow : Window, IDisposable
         void Show(string name, string label, TextBlock text, SeverityIcon icon)
         {
             text.Text = Src(name, label);
-            List<string> problems = s.Syncing(name) ? [] : s.Error(name) is { } err ? [AppState.Explain(label, err).Text]
+            List<string> problems = s.Syncing(name) ? [] : s.ExplainError(name, label) is { } err ? [err.Text]
                 : s.Warnings(name).Select(x => x.What).Distinct().ToList();
             icon.Visibility = problems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             var tip = problems.Count > 0 ? string.Join("\n", problems) : null;
@@ -275,7 +430,14 @@ public partial class MainWindow : Window, IDisposable
         StAccount.Text = L.T(s.Account == AccountNeed.None ? "status.signedIn" : "status.signedOut");
         var syncing = s.Syncing("lms") || s.Syncing("mybk");
         SyncButton.IsEnabled = !syncing;
-        SyncText.Text = L.T(syncing ? "nav.syncing" : "nav.sync");
+        var syncText = L.T(syncing ? "nav.syncing" : "nav.sync");
+        if (SyncText.Text != syncText)
+        {
+            // "Đang đồng bộ..." dài hơn "Đồng bộ": đo lại thanh trên cùng, kẻo mục điều hướng cuối bị cắt mất.
+            SyncText.Text = syncText;
+            _widths = null;
+            Dispatcher.BeginInvoke(FitTopBar, System.Windows.Threading.DispatcherPriority.Loaded);
+        }
         // Hết đồng bộ: nói đúng kết quả, có nguồn lỗi thì không ghi "Đã đồng bộ".
         if (!syncing && StMessage.Text == L.T("status.syncStarted")) Say(L.T(SyncFailure() is null ? "status.synced" : "status.syncHadError"));
 
@@ -294,21 +456,41 @@ public partial class MainWindow : Window, IDisposable
 
         var exam = s.Timeline.FirstOrDefault(e => e.Kind == "exam" && e.Time > Format.Now);
         StExam.Text = exam is null ? "" : L.F("status.exam", exam.Subject, Format.DayDiff(exam.Time) is var d && d > 0 ? L.F("format.days", d) : L.T("status.examToday"));
+        StExam.ToolTip = StExam.Text.Length > 0 ? StExam.Text : null;
 
-        _nav[0].Badge = s.Upcoming(24).Count(e => !e.Done && e.Kind is not ("class" or "exam")) is var n && n > 0 ? n.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-        Nav.Items.Refresh();
-        Nav.SelectedItem = _nav.FirstOrDefault(x => x.Id == _current);
-        SettingsButton.IsChecked = _current == "cai-dat";
-        AboutButton.IsChecked = _current == "gioi-thieu";
+        // Số đếm đổi qua property change: không Items.Refresh() (dựng lại cả ListBox, mất focus bàn phím đang ở thanh điều hướng).
+        var badge = s.Upcoming(24).Count(e => !e.Done && e.Kind is not ("class" or "exam")) is var n && n > 0 ? n.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+        if (_nav.FirstOrDefault(x => x.Id == PageRegistry.Home) is { } home && home.Badge != badge)
+        {
+            home.Badge = badge;
+            _widths = null;   // số đếm đổi bề rộng mục Hôm nay
+            Dispatcher.BeginInvoke(FitTopBar, System.Windows.Threading.DispatcherPriority.Loaded);
+        }
 
         UpdateInfoBar();
-        foreach (var p in _pages.Values) p.Refresh();
+        // Chỉ vẽ lại page đang hiện; page khác vẽ lại khi người dùng mở (Go).
+        foreach (var (key, p) in _pages)
+        {
+            if (key == _current && IsVisible) p.Refresh();
+            else _stale.Add(key);
+        }
         if (_pages.TryGetValue(_current, out var cur)) PageSubtitle.Text = cur.Subtitle;
+    }
+
+    /// <summary>Mở lại từ khay: page đang hiện có thể đã cũ (sync chạy lúc cửa sổ ẩn).</summary>
+    protected override void OnActivated(EventArgs e)
+    {
+        base.OnActivated(e);
+        if (_stale.Remove(_current) && _pages.TryGetValue(_current, out var cur))
+        {
+            cur.Refresh();
+            PageSubtitle.Text = cur.Subtitle;
+        }
     }
 
     // ------------------------------------------------------------------ InfoBar: đăng nhập
 
-    /// <summary>Bước login → key thông báo trong file ngôn ngữ.</summary>
+    /// <summary>Bước login: key thông báo trong file ngôn ngữ.</summary>
     private static readonly Dictionary<string, string> LoginText = new()
     {
         ["check"] = "info.check",
@@ -378,9 +560,9 @@ public partial class MainWindow : Window, IDisposable
         foreach (var (name, label) in new[] { ("lms", "LMS"), ("mybk", "MyBK") })
         {
             if (s.Syncing(name)) continue;
-            if (s.Error(name) is { } err)
+            if (s.ExplainError(name, label) is { } err)
             {
-                var (text, detail) = AppState.Explain(label, err);
+                var (text, detail) = err;
                 return (L.F("info.syncFailed", label, text), detail, name, label);
             }
             if (s.Warnings(name) is { Count: > 0 } w)

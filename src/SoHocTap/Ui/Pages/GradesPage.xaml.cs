@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
 using SoHocTap.Shell;
+using SoHocTap.Ui.Controls;
 
 namespace SoHocTap.Ui.Pages;
 
@@ -24,6 +25,11 @@ internal sealed record LmsGradeLine(string Book, string Name, double? Grade, dou
     public string MaxText => Format.Score(Max);
     public double SortGrade => Grade ?? -1;
 }
+/// <summary>Một khoản học phí còn nợ: số tiền định dạng theo ngôn ngữ (Format.Money), sắp theo số.</summary>
+internal sealed record FeeLine(string Content, long Remaining, string Due)
+{
+    public string RemainingText => Format.Money(Remaining);
+}
 internal sealed record FilterItem(string Label, CourseStatus[] Match)
 {
     public override string ToString() => Label;
@@ -32,6 +38,7 @@ internal sealed record FilterItem(string Label, CourseStatus[] Match)
 public partial class GradesPage : UserControl, IPage
 {
     private readonly AppHost _host;
+    private readonly MainWindow _main;
     private CurriculumView? _view;
     private static readonly FilterItem[] Filters =
     [
@@ -39,73 +46,84 @@ public partial class GradesPage : UserControl, IPage
         new(L.T("grades.filter.notTaken"), [CourseStatus.ChuaHoc]), new(L.T("grades.filter.passed"), [CourseStatus.Dat, CourseStatus.Mien]),
     ];
 
-    internal GradesPage(AppHost host)
+    internal GradesPage(AppHost host, MainWindow main)
     {
         InitializeComponent();
         _host = host;
+        _main = main;
 
-        Grades.Columns.Add(Grids.Text(L.T("col.code"), nameof(GradeLine.Code), 80));
-        Grades.Columns.Add(Grids.Text(L.T("col.subject"), nameof(GradeLine.Name), 260));
-        Grades.Columns.Add(Grids.Text(L.T("col.parts"), nameof(GradeLine.Parts), star: true));
-        Grades.Columns.Add(Grids.Right(L.T("col.credits"), nameof(GradeLine.Credits), 50));
-        Grades.Columns.Add(Grids.Right(L.T("col.score"), nameof(GradeLine.Score), 60, nameof(GradeLine.SortScore)));
-        Grades.Columns.Add(Grids.Text(L.T("col.letter"), nameof(GradeLine.Letter), 84));
-        Grades.Columns.Add(Grids.Text(L.T("col.result"), nameof(GradeLine.Result), 100));
-        Grades.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        Grades.LoadingRow += (_, e) => e.Row.Foreground = e.Row.Item is GradeLine { Fail: true }
+        var grades = Grades.Grid;
+        grades.Columns.Add(Grids.Text(L.T("col.code"), nameof(GradeLine.Code), 80));
+        grades.Columns.Add(Grids.Flex(L.T("col.subject"), nameof(GradeLine.Name), 1.6, 160));
+        grades.Columns.Add(Grids.Flex(L.T("col.parts"), nameof(GradeLine.Parts), 1.4, 110));
+        grades.Columns.Add(Grids.Right(L.T("col.credits"), nameof(GradeLine.Credits), 50));
+        grades.Columns.Add(Grids.Right(L.T("col.score"), nameof(GradeLine.Score), 60, nameof(GradeLine.SortScore)));
+        grades.Columns.Add(Grids.Text(L.T("col.letter"), nameof(GradeLine.Letter), 84));
+        grades.Columns.Add(Grids.Text(L.T("col.result"), nameof(GradeLine.Result), 100));
+        grades.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        grades.LoadingRow += (_, e) => e.Row.Foreground = e.Row.Item is GradeLine { Fail: true }
             ? (System.Windows.Media.Brush)FindResource("SystemFillColorCriticalBrush") : (System.Windows.Media.Brush)FindResource("TextFillColorPrimaryBrush");
-        Grids.Setup<GradeLine>(Grades, null, g => [new(L.T("grades.copyRow"), () => Grids.Copy($"{g.Code}\t{g.Name}\t{g.Credits}\t{g.Score}\t{g.Letter}\t{g.Result}")),
-            new(L.T("common.copyCode"), () => Grids.Copy(g.Code))]);
+        Grades.KeyOf = o => o is GradeLine g ? (g.Term, g.Code) : null;
+        Grids.Setup<GradeLine>(grades, null, g => [new(L.T("grades.copyRow"), () => Grids.Copy($"{g.Code}\t{g.Name}\t{g.Credits}\t{g.Score}\t{g.Letter}\t{g.Result}", _main)),
+            new(L.T("common.copyCode"), () => Grids.Copy(g.Code, _main))]);
 
-        ProgramGrid.Columns.Add(Grids.Text(L.T("col.code"), nameof(CourseView.Code), 80));
-        ProgramGrid.Columns.Add(Grids.Text(L.T("col.subject"), nameof(CourseView.Name), star: true));
-        ProgramGrid.Columns.Add(Grids.Right(L.T("col.credits"), nameof(CourseView.Credits), 50));
-        ProgramGrid.Columns.Add(Grids.Right(L.T("col.score"), nameof(CourseView.Score), 60));
-        ProgramGrid.Columns.Add(Grids.Text(L.T("col.letter"), nameof(CourseView.Letter), 84));
-        ProgramGrid.Columns.Add(Grids.Text(L.T("col.status"), nameof(CourseView.StatusText), 220));
-        ProgramGrid.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        ProgramGrid.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is CourseView { Status: CourseStatus.ChuaHoc or CourseStatus.LuaChon } ? 0.6 : 1;
-        Grids.Setup<CourseView>(ProgramGrid, null, c => [new(L.T("common.copyCode"), () => Grids.Copy(c.Code))]);
+        var program = ProgramGrid.Grid;
+        program.Columns.Add(Grids.Text(L.T("col.code"), nameof(CourseView.Code), 80));
+        program.Columns.Add(Grids.Text(L.T("col.subject"), nameof(CourseView.Name), star: true));
+        program.Columns.Add(Grids.Right(L.T("col.credits"), nameof(CourseView.Credits), 50));
+        program.Columns.Add(Grids.Right(L.T("col.score"), nameof(CourseView.Score), 60));
+        program.Columns.Add(Grids.Text(L.T("col.letter"), nameof(CourseView.Letter), 84));
+        program.Columns.Add(Grids.Flex(L.T("col.status"), nameof(CourseView.StatusText), 1, 120));
+        program.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        program.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is CourseView { Status: CourseStatus.ChuaHoc or CourseStatus.LuaChon } ? 0.6 : 1;
+        ProgramGrid.KeyOf = o => o is CourseView v ? (v.Course.Block, v.Code) : null;
+        Grids.Setup<CourseView>(program, null, c => [new(L.T("common.copyCode"), () => Grids.Copy(c.Code, _main))]);
         Filter.ItemsSource = Filters;
         Filter.SelectedIndex = 0;
 
-        LmsGrades.Columns.Add(Grids.Text(L.T("col.item"), nameof(LmsGradeLine.Name), star: true));
-        LmsGrades.Columns.Add(Grids.Right(L.T("col.score"), nameof(LmsGradeLine.GradeText), 70, nameof(LmsGradeLine.SortGrade)));
-        LmsGrades.Columns.Add(Grids.Right(L.T("col.max"), nameof(LmsGradeLine.MaxText), 96));
-        LmsGrades.Columns.Add(Grids.Right("%", nameof(LmsGradeLine.Percent), 90));
-        LmsGrades.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        LmsGrades.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is LmsGradeLine { Grade: null } ? 0.55 : 1;
+        var lms = LmsGrades.Grid;
+        lms.Columns.Add(Grids.Text(L.T("col.item"), nameof(LmsGradeLine.Name), star: true));
+        lms.Columns.Add(Grids.Right(L.T("col.score"), nameof(LmsGradeLine.GradeText), 70, nameof(LmsGradeLine.SortGrade)));
+        lms.Columns.Add(Grids.Right(L.T("col.max"), nameof(LmsGradeLine.MaxText), 96));
+        lms.Columns.Add(Grids.Right("%", nameof(LmsGradeLine.Percent), 90));
+        lms.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        lms.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is LmsGradeLine { Grade: null } ? 0.55 : 1;
 
-        Registered.Columns.Add(Grids.Text(L.T("col.code"), nameof(RegisteredLine.Code), 80));
-        Registered.Columns.Add(Grids.Text(L.T("col.subject"), nameof(RegisteredLine.Name), star: true));
-        Registered.Columns.Add(Grids.Text(L.T("col.group"), nameof(RegisteredLine.ClassGroup), 140));
-        Registered.Columns.Add(Grids.Text(L.T("col.round"), nameof(RegisteredLine.Round), 110));
-        Registered.Columns.Add(Grids.Text(L.T("col.result"), nameof(RegisteredLine.Result), 140));
-        Grids.Setup<RegisteredLine>(Registered, null, r => [new(L.T("grades.copyClass"), () => Grids.Copy(r.ClassGroup)),
-            new(L.T("common.copy"), () => Grids.Copy($"{r.Code} {r.Name}, {r.ClassGroup}"))]);
+        var registered = Registered.Grid;
+        registered.Columns.Add(Grids.Text(L.T("col.code"), nameof(RegisteredLine.Code), 80));
+        registered.Columns.Add(Grids.Text(L.T("col.subject"), nameof(RegisteredLine.Name), star: true));
+        registered.Columns.Add(Grids.Flex(L.T("col.group"), nameof(RegisteredLine.ClassGroup), 1, 100));
+        registered.Columns.Add(Grids.Text(L.T("col.round"), nameof(RegisteredLine.Round), 110));
+        registered.Columns.Add(Grids.Flex(L.T("col.result"), nameof(RegisteredLine.Result), 1, 100));
+        Grids.Setup<RegisteredLine>(registered, null, r => [new(L.T("grades.copyClass"), () => Grids.Copy(r.ClassGroup, _main)),
+            new(L.T("common.copy"), () => Grids.Copy($"{r.Code} {r.Name}, {r.ClassGroup}", _main))]);
 
-        Teachers.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TeacherLine.Name), star: true));
-        Teachers.Columns.Add(Grids.Text(L.T("col.code"), nameof(TeacherLine.Code), 80));
-        Teachers.Columns.Add(Grids.Text(L.T("col.group"), nameof(TeacherLine.Group), 90));
-        Teachers.Columns.Add(Grids.Text(L.T("col.day"), nameof(TeacherLine.Day), 110, sortPath: nameof(TeacherLine.DaySort)));
-        Teachers.Columns.Add(Grids.Text(L.T("col.time"), nameof(TeacherLine.Time), 110));
-        Teachers.Columns.Add(Grids.Text(L.T("col.room"), nameof(TeacherLine.Room), 100));
-        Teachers.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        Grids.Setup<TeacherLine>(Teachers, null, t => [new(L.T("common.copy"), () => Grids.Copy($"{t.Teacher}: {t.Name} ({t.Code}, {t.Group}), {t.Day} {t.Time}, {t.Room}"))]);
+        var teachers = Teachers.Grid;
+        teachers.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TeacherLine.Name), star: true));
+        teachers.Columns.Add(Grids.Text(L.T("col.code"), nameof(TeacherLine.Code), 80));
+        teachers.Columns.Add(Grids.Text(L.T("col.group"), nameof(TeacherLine.Group), 90));
+        teachers.Columns.Add(Grids.Text(L.T("col.day"), nameof(TeacherLine.Day), 110, sortPath: nameof(TeacherLine.DaySort)));
+        teachers.Columns.Add(Grids.Text(L.T("col.time"), nameof(TeacherLine.Time), 110));
+        teachers.Columns.Add(Grids.Flex(L.T("col.room"), nameof(TeacherLine.Room), 1, 80));
+        teachers.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        Grids.Setup<TeacherLine>(teachers, null, t => [new(L.T("common.copy"), () => Grids.Copy($"{t.Teacher}: {t.Name} ({t.Code}, {t.Group}), {t.Day} {t.Time}, {t.Room}", _main))]);
 
-        Fees.Columns.Add(Grids.Text(L.T("col.content"), nameof(MybkFee.Content), star: true));
-        Fees.Columns.Add(Grids.Right(L.T("col.remaining"), nameof(MybkFee.Remaining), 120));
-        Fees.Columns.Add(Grids.Text(L.T("col.due"), nameof(MybkFee.Due), 150));
+        var fees = Fees.Grid;
+        fees.Columns.Add(Grids.Text(L.T("col.content"), nameof(FeeLine.Content), star: true));
+        fees.Columns.Add(Grids.Right(L.T("col.remaining"), nameof(FeeLine.RemainingText), 140, nameof(FeeLine.Remaining)));
+        fees.Columns.Add(Grids.Flex(L.T("col.due"), nameof(FeeLine.Due), 1, 110));
 
-        Social.Columns.Add(Grids.Text(L.T("col.activity"), nameof(MybkActivity.Name), star: true));
-        Social.Columns.Add(Grids.Text(L.T("col.start"), nameof(MybkActivity.DateText), 110));
-        Social.Columns.Add(Grids.Right(L.T("col.daysConverted"), nameof(MybkActivity.DaysText), 120));
+        var social = Social.Grid;
+        social.Columns.Add(Grids.Text(L.T("col.activity"), nameof(MybkActivity.Name), star: true));
+        social.Columns.Add(Grids.Text(L.T("col.start"), nameof(MybkActivity.DateText), 110));
+        social.Columns.Add(Grids.Right(L.T("col.daysConverted"), nameof(MybkActivity.DaysText), 120));
 
-        Decisions.Columns.Add(Grids.Text(L.T("col.date"), nameof(MybkDecision.Date), 100));
-        Decisions.Columns.Add(Grids.Text(L.T("col.kind"), nameof(MybkDecision.Type), 120));
-        Decisions.Columns.Add(Grids.Text(L.T("col.reason"), nameof(MybkDecision.Reason), star: true));
-        Decisions.Columns.Add(Grids.Text(L.T("col.term"), nameof(MybkDecision.Term), 180));
-        Decisions.Columns.Add(Grids.Text(L.T("col.state"), nameof(MybkDecision.Status), 130));
+        var decisions = Decisions.Grid;
+        decisions.Columns.Add(Grids.Text(L.T("col.date"), nameof(MybkDecision.Date), 100));
+        decisions.Columns.Add(Grids.Flex(L.T("col.kind"), nameof(MybkDecision.Type), 0.8, 90));
+        decisions.Columns.Add(Grids.Text(L.T("col.reason"), nameof(MybkDecision.Reason), star: true));
+        decisions.Columns.Add(Grids.Flex(L.T("col.term"), nameof(MybkDecision.Term), 1, 100));
+        decisions.Columns.Add(Grids.Flex(L.T("col.state"), nameof(MybkDecision.Status), 0.8, 90));
     }
 
     public string Title => L.T("nav.grades");
@@ -122,7 +140,8 @@ public partial class GradesPage : UserControl, IPage
         var real = (m?.GradeTerms ?? []).Where(t => t.Code != "BL").ToList();
         var latest = real.FirstOrDefault();
         var latestCredits = real.FirstOrDefault(t => double.TryParse(t.CreditsTerm.Text(), out var c) && c > 0);
-        static string Gpa(string? v) => double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d) && d > 0 ? v! : "-";
+        // MyBK trả GPA dạng chuỗi kiểu Mỹ ("8.12"): đọc ra số rồi in theo ngôn ngữ đang dùng (8,12 hay 8.12), giống mọi số khác trong app.
+        static string Gpa(string? v) => double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d) && d > 0 ? Format.Num(d) : "-";
         Stats.ItemsSource = new List<StatCard>
         {
             new(L.T("grades.gpaAll"), Gpa(latest?.GpaAll), latest?.Name),
@@ -143,34 +162,27 @@ public partial class GradesPage : UserControl, IPage
         var view = new ListCollectionView(lines);
         view.SortDescriptions.Add(new SortDescription(nameof(GradeLine.TermSort), ListSortDirection.Descending));
         view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(GradeLine.TermName)));
-        Grades.ItemsSource = view;
-        Show(Grades, GradesEmpty, lines.Count, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.gradesEmpty"));
+        var s = _host.State;
+        Grades.Show(view, L.T("grades.gradesEmpty"), s, Src.Mybk);
 
         RefreshProgram();
         Stale.Text = _view?.Stale == true ? L.F("grades.stale", m?.Curriculum?.Updated) : "";
 
         var lms = (_host.State.Lms?.Grades ?? []).SelectMany(b => b.Items.Select(i =>
             new LmsGradeLine(b.Subject + (b.Part is null ? "" : ", " + b.Part), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? ""))).ToList();
-        LmsGrades.ItemsSource = Grids.Grouped(lms, nameof(LmsGradeLine.Book));
-        Show(LmsGrades, LmsEmpty, lms.Count, _host.State.NoDataReason("lms", "LMS") ?? L.T("grades.lmsEmpty"));
+        LmsGrades.Show(Grids.Grouped(lms, nameof(LmsGradeLine.Book)), L.T("grades.lmsEmpty"), s, Src.Lms);
 
         RegTitle.Text = L.F("grades.regTitle", m?.Term.Name ?? L.T("grades.thisTerm"));
-        Registered.ItemsSource = (m?.Registered ?? []).Select(r => Registration(r, m!.Schedule)).ToList();
-        Show(Registered, RegisteredEmpty, m?.Registered?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.regEmpty"));
+        Registered.Show((m?.Registered ?? []).Select(r => Registration(r, m!.Schedule)).ToList(), L.T("grades.regEmpty"), s, Src.Mybk);
         var teachers = TeacherLines(m);
         var tv = Grids.Grouped(teachers, nameof(TeacherLine.Teacher));
         tv.SortDescriptions.Add(new SortDescription(nameof(TeacherLine.Teacher), ListSortDirection.Ascending));
         tv.SortDescriptions.Add(new SortDescription(nameof(TeacherLine.DaySort), ListSortDirection.Ascending));
-        Teachers.ItemsSource = tv;
-        Show(Teachers, TeachersEmpty, teachers.Count, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.teachersEmpty"));
-        Fees.ItemsSource = m?.Fees ?? [];
-        FeesEmpty.Visibility = (m?.Fees?.Count ?? 0) == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        Fees.Visibility = FeesEmpty.Visibility == System.Windows.Visibility.Visible ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+        Teachers.Show(tv, L.T("grades.teachersEmpty"), s, Src.Mybk);
+        Fees.Show((m?.Fees ?? []).Select(f => new FeeLine(f.Content, f.Remaining, f.Due)).ToList(), L.T("grades.feesEmpty"), s, Src.Mybk);
         SocialTitle.Text = L.F("grades.socialTitle", Format.Score(m?.SocialWork?.Days));
-        Social.ItemsSource = m?.SocialWork?.Activities ?? [];
-        Show(Social, SocialEmpty, m?.SocialWork?.Activities?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.socialEmpty"));
-        Decisions.ItemsSource = m?.Decisions ?? [];
-        Show(Decisions, DecisionsEmpty, m?.Decisions?.Count ?? 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.decisionsEmpty"));
+        Social.Show(m?.SocialWork?.Activities ?? [], L.T("grades.socialEmpty"), s, Src.Mybk);
+        Decisions.Show(m?.Decisions ?? [], L.T("grades.decisionsEmpty"), s, Src.Mybk);
     }
 
     /// <summary>
@@ -188,29 +200,17 @@ public partial class GradesPage : UserControl, IPage
                 string.IsNullOrWhiteSpace(c.Teacher) ? L.T("grades.noTeacher") : c.Teacher!,
                 c.Name, c.Code, GroupOf(c),
                 timed ? Format.MybkDays.GetValueOrDefault(c.Day) ?? "" : L.T("grades.noFixedTime"), timed ? c.Day : 99,
-                timed ? $"{c.Start}–{c.End}" : "", c.Room);
+                timed ? $"{c.Start}-{c.End}" : "", c.Room);
         }).DistinctBy(t => (t.Teacher, t.Code, t.Group, t.DaySort, t.Time, t.Room))];
     }
 
     private static RegisteredLine Registration(MybkRegistered r, List<MybkClass> schedule) => new(r.Code, r.Name, r.ClassGroup, r.Round, r.Result);
 
-    /// <summary>
-    /// Bảng trống thì ẩn bảng, hiện câu nói rõ vì sao (đang đồng bộ, lỗi, hay thật sự không có gì).
-    /// DataGrid trống trong theme Fluent co cột về gần 0 và không có chữ ở header; hiện lại thì Grids.RestoreWidths đặt lại độ rộng.
-    /// </summary>
-    private static void Show(DataGrid grid, TextBlock empty, int count, string reason)
-    {
-        empty.Text = reason;
-        empty.Visibility = count == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        grid.Visibility = count == 0 ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
-    }
-
     private void RefreshProgram()
     {
         if (_view is null)
         {
-            ProgramGrid.ItemsSource = null;
-            Show(ProgramGrid, ProgramEmpty, 0, _host.State.NoDataReason("mybk", "MyBK") ?? L.T("grades.programEmpty"));
+            ProgramGrid.Show(null, L.T("grades.programEmpty"), _host.State, Src.Mybk);
             return;
         }
         var f = Filter.SelectedItem as FilterItem ?? Filters[0];
@@ -218,8 +218,7 @@ public partial class GradesPage : UserControl, IPage
         var titles = _view.Blocks.DistinctBy(b => b.Block.Id ?? "").ToDictionary(b => b.Block.Id ?? "", b => b.Title);
         var v = new ListCollectionView(rows.Select(x => x.c).ToList());
         v.GroupDescriptions.Add(new PropertyGroupDescription(null, new BlockTitle(titles)));
-        ProgramGrid.ItemsSource = v;
-        Show(ProgramGrid, ProgramEmpty, rows.Count, L.T("grades.programEmpty"));
+        ProgramGrid.Show(v, L.T("grades.programEmpty"));
     }
 
     /// <summary>Tên nhóm của một môn trong CTĐT = tiêu đề khối (tên · bắt buộc/tự chọn · tín chỉ).</summary>

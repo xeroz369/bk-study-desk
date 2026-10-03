@@ -7,7 +7,7 @@
 	import InfoBar from '$lib/components/app/InfoBar.svelte';
 	import FindBar from '$lib/components/app/FindBar.svelte';
 	import AppMenu from '$lib/components/app/AppMenu.svelte';
-	import { api } from '$lib/api/client';
+	import { api, errorText } from '$lib/api/client';
 	import { Study } from '$lib/study/registry.svelte';
 	import { Progress } from '$lib/study/progress.svelte';
 	import { Desktop, onKey, onWheel, toApp } from '$lib/desktop.svelte';
@@ -44,13 +44,18 @@
 			const a = (e.target as HTMLElement).closest('a[href^="http"]') as HTMLAnchorElement | null;
 			if (!a) return;
 			e.preventDefault();
-			void api.openWeb(a.href, a.textContent?.trim() ?? '');
+			api.openWeb(a.href, a.textContent?.trim() ?? '').catch(() => Desktop.say('Không mở được liên kết'));
 		};
+		// Lỗi async không ai bắt (lệnh trong menu, nút bấm): hiện InfoBar thay vì im lặng. Không preventDefault để console vẫn có stack.
+		const onRejection = (e: PromiseRejectionEvent) =>
+			Desktop.inform({ id: 'unhandled', tone: 'bad', text: `Có lỗi chưa xử lý: ${errorText(e.reason)}. Thử lại thao tác vừa làm.` });
 		document.addEventListener('keydown', onKey);
 		document.addEventListener('click', onClick);
+		window.addEventListener('unhandledrejection', onRejection);
 		return () => {
 			document.removeEventListener('keydown', onKey);
 			document.removeEventListener('click', onClick);
+			window.removeEventListener('unhandledrejection', onRejection);
 		};
 	});
 </script>

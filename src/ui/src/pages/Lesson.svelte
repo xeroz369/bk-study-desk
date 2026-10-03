@@ -13,9 +13,11 @@
 	import { Study } from '$lib/study/registry.svelte';
 	import { Progress } from '$lib/study/progress.svelte';
 	import { STATUS_TEXT } from '$lib/study/types';
-	import { lessonActions, scopeOfLesson, scopePath } from '$lib/study/transfer';
+	import { lessonCan, scopeOfLesson, scopePath } from '$lib/study/transfer';
+	import SoanButtons from '$lib/components/app/SoanButtons.svelte';
 	import ShuffleToggles from '$lib/components/app/ShuffleToggles.svelte';
-	import { loadPrefs, optionOrder, rng, seedFor, shuffled } from '$lib/study/shuffle';
+	import { loadPrefs, optionOrder, rng, seedFor } from '$lib/study/shuffle';
+	import { shuffleGroups } from '$lib/study/exam';
 
 	let { arg }: { arg: string } = $props();
 	const entry = $derived(Study.entry(arg));
@@ -31,7 +33,7 @@
 	// Default from the pack settings until the learner picks their own (then remembered on this device).
 	const initial = untrack(() => Study.lessons[arg]?.shuffle); // page is rebuilt per lesson (keyArg)
 	let prefs = $state(loadPrefs({ questions: !!initial?.questions, options: !!initial?.options }));
-	const shown = $derived(prefs.questions ? shuffled(lesson?.questions ?? [], rng(seed)) : (lesson?.questions ?? []));
+	const shown = $derived(prefs.questions ? shuffleGroups(lesson?.questions ?? [], rng(seed)) : (lesson?.questions ?? []));
 	const orders = $derived(
 		Object.fromEntries(shown.map((q) => [q.id, prefs.options ? optionOrder(q, rng(seedFor(seed, q.id))) : undefined])),
 	);
@@ -47,15 +49,7 @@
 	<PageShell title={entry.title} crumbs={[{ label: entry.courseName, href: '#luyen-tap/' + entry.courseId }]} meta={entry.unitTitle}>
 		{#snippet actions()}
 			{@const sc = scopeOfLesson(arg)}
-			{@const can = lessonActions(arg)}
-			{#if sc}
-				{#if can.tao}<Button size="xs" variant="ghost" href={`#soan/tao/${scopePath(sc)}`} title="Tạo câu hỏi trong bài này">Tạo</Button
-					>{/if}
-				{#if can.nhap}<Button size="xs" variant="ghost" href={`#soan/nhap/${scopePath(sc)}`} title="Nhập quiz vào bài này">Nhập</Button
-					>{/if}
-				{#if can.xuat}<Button size="xs" variant="ghost" href={`#soan/xuat/${scopePath(sc)}`} title="Xuất bài này để chia sẻ">Xuất</Button
-					>{/if}
-			{/if}
+			{#if sc}<SoanButtons path={scopePath(sc)} where="bài này" can={lessonCan(arg)} />{/if}
 			<Tag tone={status === 'xong' ? 'ok' : status === 'dang-hoc' ? 'warn' : 'muted'} text={STATUS_TEXT[status]} />
 		{/snippet}
 	</PageShell>

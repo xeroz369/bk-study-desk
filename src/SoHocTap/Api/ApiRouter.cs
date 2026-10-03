@@ -1,7 +1,8 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using SoHocTap.Core;
+using SoHocTap.Data;
 using SoHocTap.Files;
 
 namespace SoHocTap.Api;
@@ -81,17 +82,13 @@ public sealed partial class ApiRouter(IShellActions shell)
     private static ApiResponse Subjects()
     {
         var seen = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // mã → tên
-        if (JsonStore.Read(Paths.DataFile("lms.json")) is JsonObject lms && lms["courses"] is JsonArray courses)
-        {
-            var term = lms["term"]?.GetValue<string>();
-            foreach (var c in courses.OfType<JsonObject>().Where(c => c["term"]?.GetValue<string>() == term && c["part"] is null))
-                if (c["code"]?.GetValue<string>()?.Split('_')[0] is { Length: > 0 } code && c["subject"]?.GetValue<string>() is { } name)
+        if (LmsStore.Read() is { } lms)
+            foreach (var c in lms.Courses.Where(c => c.Term == lms.Term && c.Part is null))
+                if (c.Code?.Split('_')[0] is { Length: > 0 } code && c.Subject is { } name)
                     seen.TryAdd(code, name);
-        }
-        if (JsonStore.Read(Paths.DataFile("mybk.json"))?["registered"] is JsonArray reg)
-            foreach (var r in reg.OfType<JsonObject>())
-                if (r["code"]?.GetValue<string>() is { Length: > 0 } code && r["name"]?.GetValue<string>() is { } name && !seen.Values.Contains(name, StringComparer.OrdinalIgnoreCase))
-                    seen.TryAdd(code, name);
+        foreach (var r in MybkStore.Read()?.Registered ?? [])
+            if (r.Code is { Length: > 0 } code && r.Name is { } name && !seen.Values.Contains(name, StringComparer.OrdinalIgnoreCase))
+                seen.TryAdd(code, name);
         return ApiResponse.Json(new JsonArray(seen.OrderBy(kv => kv.Value, StringComparer.Create(new System.Globalization.CultureInfo("vi-VN"), true))
             .Select(kv => (JsonNode)new JsonObject { ["code"] = kv.Key, ["name"] = kv.Value }).ToArray()));
     }
@@ -105,13 +102,11 @@ public sealed partial class ApiRouter(IShellActions shell)
     private static ApiResponse Quizzes()
     {
         var codes = new Dictionary<long, string>();
-        var lms = JsonStore.Read(Paths.DataFile("lms.json"));
-        if (lms?["courses"] is JsonArray courses)
-            foreach (var c in courses.OfType<JsonObject>())
-                if (c["id"]?.GetValue<long>() is { } id && c["code"]?.GetValue<string>()?.Split('_')[0] is { } code) codes[id] = code;
+        var lms = LmsStore.Read();
+        foreach (var c in lms?.Courses ?? [])
+            if (c.Code?.Split('_')[0] is { } code) codes[c.Id] = code;
         // Quiz info from the last sync (close time, attempt finish time): fills files saved by older versions.
-        var quizzes = (lms?["quizzes"] as JsonArray ?? []).OfType<JsonObject>()
-            .Where(q => q["id"] is not null).GroupBy(q => q["id"]!.GetValue<long>()).ToDictionary(g => g.Key, g => g.First());
+        var quizzes = (lms?.Quizzes ?? []).GroupBy(q => q.Id).ToDictionary(g => g.Key, g => g.First());
         var list = new JsonArray();
         var dir = Paths.DataFile("lms-quiz");
         if (Directory.Exists(dir))
@@ -122,10 +117,11 @@ public sealed partial class ApiRouter(IShellActions shell)
                 q["file"] = name;
                 if (long.TryParse(name.Split('-')[0], out var qid) && quizzes.TryGetValue(qid, out var meta))
                 {
-                    q["course"] ??= meta["course"]?.DeepClone();
-                    q["closesAt"] ??= meta["close"]?.DeepClone();
-                    q["finished"] ??= (meta["attempts"] as JsonArray ?? []).OfType<JsonObject>()
-                        .FirstOrDefault(a => a["id"]?.GetValue<long>().ToString() == name.Split('-').ElementAtOrDefault(1))?["finished"]?.DeepClone();
+                    q["course"] ??= meta.Course;
+                    q["closesAt"] ??= meta.Close;
+                    if (q["finished"] is null && long.TryParse(name.Split('-').ElementAtOrDefault(1), out var aid)
+                        && meta.Attempts.FirstOrDefault(a => a.Id == aid) is { } attempt)
+                        q["finished"] = attempt.Finished;
                 }
                 if (q["course"]?.GetValue<long>() is { } cid && codes.TryGetValue(cid, out var code)) q["code"] = code;
                 foreach (var x in (q["questions"] as JsonArray ?? []).OfType<JsonObject>())

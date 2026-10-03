@@ -258,7 +258,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 done.TrySetException(new HttpRequestException($"Không mở được MyBK ({e.WebErrorStatus}). Thử lại sau ít phút."));
             else if (failAt?.Invoke(u) == true) done.TrySetException(new SessionExpiredException("Phiên đăng nhập HCMUT đã hết hạn. Cần đăng nhập lại trong app."));
             else if (e.HttpStatusCode >= 500 || e.HttpStatusCode == 429)
-                done.TrySetException(new HttpRequestException($"Máy chủ {u.Host} đang lỗi (HTTP {e.HttpStatusCode}). Thử lại sau ít phút."));
+                done.TrySetException(new HttpRequestException($"Máy chủ {u.Host} đang lỗi (HTTP {e.HttpStatusCode}). Thử lại sau ít phút.", null, (System.Net.HttpStatusCode)e.HttpStatusCode));
             else if (arrived(u)) done.TrySetResult();
         }
         _blocked = null;
@@ -285,6 +285,15 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         var core = await CoreAsync();
         var args = JsonSerializer.Serialize(new { expression, awaitPromise = true, returnByValue = true });
         var res = JsonNode.Parse(await core.CallDevToolsProtocolMethodAsync("Runtime.evaluate", args));
+        // Script lỗi trong trang (trang đổi cấu trúc, CSP chặn…): DevTools trả exceptionDetails thay vì value. Ghi log loại lỗi và
+        // message của JS (không ghi nội dung trang), để biết vì sao MyBK "không trả gì" thay vì chỉ thấy rỗng.
+        if (res?["exceptionDetails"] is JsonObject ex)
+        {
+            var what = ex["exception"]?["description"]?.ToString() ?? ex["text"]?.ToString() ?? "?";
+            if (what.Length > 300) what = what[..300];
+            Log.Warn($"MyBK ẩn: script lỗi ở dòng {ex["lineNumber"]}:{ex["columnNumber"]}: {what.ReplaceLineEndings(" ")}");
+            return null;
+        }
         return res?["result"]?["value"]?.GetValue<string>();
     }
 }

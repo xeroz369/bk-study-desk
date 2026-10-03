@@ -10,6 +10,7 @@ import { detectFormat, parseAiken, parseGift, parseMoodleXml } from './formats';
 import { parseMarkdown, writeMarkdown } from './markdown';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { fingerprint } from './fingerprint';
+import { normText } from './text';
 import { Progress } from './progress.svelte';
 import { APP_NAME } from '$lib/app-name';
 import { isLmsQuizLesson, isRecallLesson, RECALL_PREFIX } from './lmsquiz';
@@ -21,7 +22,7 @@ export interface Scope {
 	lessonId?: string;
 }
 
-export const norm = (s: string) => s.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+const norm = normText;
 
 /** "Phương trình phi tuyến" → "phuong-trinh-phi-tuyen" (id gói/bài: chữ thường, số, gạch ngang). */
 export function slug(s: string, fallback = 'muc') {
@@ -41,8 +42,13 @@ export function parseScope(path: string): Scope | null {
 	const [cid, u, lid] = path.split('/');
 	const course = Study.course(cid ?? '');
 	if (!course) return null;
-	const unit = u !== undefined && u !== '' && course.units[+u] ? +u : undefined;
-	const lessonId = unit !== undefined && lid && course.units[unit].lessons.some((e) => e.id === lid) ? lid : undefined;
+	let unit = u !== undefined && u !== '' && course.units[+u] ? +u : undefined;
+	let lessonId = unit !== undefined && lid && course.units[unit].lessons.some((e) => e.id === lid) ? lid : undefined;
+	// Chỉ số chương lệch (thứ tự gói đổi sau khi lưu) nhưng bài vẫn có: tìm lại chương theo id bài.
+	if (lid && !lessonId) {
+		const i = course.units.findIndex((x) => x.lessons.some((e) => e.id === lid));
+		if (i >= 0) [unit, lessonId] = [i, lid];
+	}
 	return { course, unit, lessonId };
 }
 export const scopePath = (s: Scope) => [s.course.id, s.unit ?? '', s.lessonId ?? ''].join('/').replace(/\/+$/, '');
@@ -65,7 +71,13 @@ export function scopeOfLesson(lessonId: string): Scope | null {
 const OWN_ATTEMPT = /<p>\s*<small>\s*Lần làm trên LMS:[\s\S]*?<\/p>/g;
 
 const toPackQ = (q: Question, i: number): PackQuestion => {
-	const base = { id: `q${i + 1}`, ...(q.tag ? { tag: q.tag } : {}), prompt: q.prompt, solution: q.solution?.replace(OWN_ATTEMPT, '') };
+	const base = {
+		id: `q${i + 1}`,
+		...(q.tag ? { tag: q.tag } : {}),
+		...(q.group ? { group: q.group } : {}),
+		prompt: q.prompt,
+		solution: q.solution?.replace(OWN_ATTEMPT, ''),
+	};
 	switch (q.type ?? 'single') {
 		case 'multi':
 			return { ...base, type: 'multi', options: [...q.options], answers: [...(q.answers ?? [])] };
@@ -94,7 +106,7 @@ export const quizLocked = (lessonId: string) => {
 
 /** Tạo, Nhập, Xuất for one lesson: a saved LMS quiz takes no new questions (except one recalled from memory)
  *  and is shared only after it closes. */
-export function lessonActions(lessonId: string) {
+export function lessonCan(lessonId: string) {
 	const lms = isLmsQuizLesson(lessonId);
 	return { tao: !lms || isRecallLesson(lessonId), nhap: !lms, xuat: !quizLocked(lessonId) };
 }
@@ -429,7 +441,9 @@ function updateNotes(p: StudyPack): string[] {
 	return notes;
 }
 
-export async function install(p: StudyPack) {
+/** Lưu gói vào app rồi tải lại trang. Lỗi (server từ chối, mất kết nối) ném ra cho trang báo; chưa lưu xong thì không đổi địa chỉ.
+ *  hashAfter: địa chỉ mở sau khi tải lại (vd. bài vừa tạo). */
+export async function install(p: StudyPack, hashAfter?: string) {
 	// Updating a pack: question ids may change (renumbered, moved); carry results over by fingerprint.
 	const ids = newIds(p);
 	const old = [...Study.lessonQuestions(), ...Object.values(Study.exams).flatMap((x) => x.questions ?? [])].filter(
@@ -440,13 +454,14 @@ export async function install(p: StudyPack) {
 	// Ids the new version still has keep their results (e.g. a typo fix changes the fingerprint, not the id).
 	const still = new Set(ids.values());
 	const res = await api.importPack(p);
-	if (!res?.ok) throw new Error('App không lưu được gói');
+	if (!res.ok) throw new Error('App không lưu được gói');
 	Progress.migrateIds(
 		moves,
 		old.map((q) => q.id).filter((id) => !still.has(id)),
 	);
 	await Progress.flush(); // also any answer still waiting for the debounced save
 	sessionStorage.setItem('studypack.flash', `Đã lưu gói "${p.title}"`);
+	if (hashAfter) history.replaceState(null, '', hashAfter);
 	location.reload();
 }
 

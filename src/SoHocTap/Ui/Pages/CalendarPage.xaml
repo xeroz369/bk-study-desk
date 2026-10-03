@@ -1,8 +1,9 @@
-<!-- Lịch: Sắp tới (14 ngày, nhóm theo ngày) · Thời khóa biểu (theo tuần: lưới tuần hoặc danh sách) · Lịch thi. -->
+<!-- Lịch: Sắp tới (14 ngày, nhóm theo ngày), Thời khóa biểu (theo tuần: lưới tuần hoặc danh sách), Lịch thi. -->
 <UserControl x:Class="SoHocTap.Ui.Pages.CalendarPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="clr-namespace:SoHocTap.Ui">
+             xmlns:ui="clr-namespace:SoHocTap.Ui"
+             xmlns:c="clr-namespace:SoHocTap.Ui.Controls">
     <TabControl x:Name="Tabs">
         <TabItem Header="{ui:T calendar.tabUpcoming}">
             <DockPanel Margin="0,8,0,0">
@@ -10,33 +11,40 @@
                     <CheckBox x:Name="ShowClasses" Content="{ui:T calendar.showClasses}" IsChecked="True" Click="OnFilter" />
                     <CheckBox x:Name="ShowDone" Content="{ui:T calendar.showDone}" Margin="16,0,0,0" Click="OnFilter" />
                 </StackPanel>
-                <DataGrid x:Name="Upcoming" />
+                <c:DataView x:Name="Upcoming" />
             </DockPanel>
         </TabItem>
         <TabItem Header="{ui:T calendar.tabWeek}">
             <DockPanel Margin="0,8,0,0">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="&#xE76B;" FontFamily="{StaticResource IconFont}" Click="OnPrevWeek" ToolTip="{ui:T calendar.prevWeek}" />
-                    <TextBlock x:Name="WeekText" VerticalAlignment="Center" Margin="12,0" MinWidth="160" TextAlignment="Center" />
-                    <Button Content="&#xE76C;" FontFamily="{StaticResource IconFont}" Click="OnNextWeek" ToolTip="{ui:T calendar.nextWeek}" />
-                    <Button x:Name="ThisWeek" Content="{ui:T calendar.thisWeek}" Margin="12,0,0,0" Click="OnThisWeek" />
-                    <ComboBox x:Name="View" Width="150" Margin="16,0,0,0" SelectionChanged="OnView" AutomationProperties.Name="{ui:T calendar.view}" />
-                    <Button Content="{ui:T calendar.export}" Margin="16,0,0,0" Click="OnExport" ToolTip="{ui:T calendar.exportTip}" />
-                    <TextBlock x:Name="DimNote" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" Text="{ui:T calendar.dimNote}" />
-                </StackPanel>
+                <!-- WrapPanel: cửa sổ hẹp thì nút Xuất lịch và ghi chú xuống hàng, không bị cắt mất. -->
+                <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                        <Button Content="&#xE76B;" FontFamily="{StaticResource IconFont}" Click="OnPrevWeek" ToolTip="{ui:T calendar.prevWeek}"
+                                AutomationProperties.Name="{ui:T calendar.prevWeek}" />
+                        <TextBlock x:Name="WeekText" VerticalAlignment="Center" Margin="12,0" MinWidth="150" TextAlignment="Center" />
+                        <Button Content="&#xE76C;" FontFamily="{StaticResource IconFont}" Click="OnNextWeek" ToolTip="{ui:T calendar.nextWeek}"
+                                AutomationProperties.Name="{ui:T calendar.nextWeek}" />
+                        <Button x:Name="ThisWeek" Content="{ui:T calendar.thisWeek}" Margin="12,0,0,0" Click="OnThisWeek" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <ComboBox x:Name="View" Width="150" SelectionChanged="OnView" AutomationProperties.Name="{ui:T calendar.view}" />
+                        <Button Content="{ui:T calendar.export}" Margin="16,0,0,0" Click="OnExport" ToolTip="{ui:T calendar.exportTip}" />
+                        <TextBlock x:Name="DimNote" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" Text="{ui:T calendar.dimNote}" />
+                    </StackPanel>
+                </WrapPanel>
                 <!-- Môn không có giờ cố định (MyBK ghi thứ 0): không đặt lên lưới, ghi riêng ở đây. -->
                 <TextBlock x:Name="NoSlot" DockPanel.Dock="Bottom" Margin="0,8,0,0" Style="{StaticResource Muted}" TextWrapping="Wrap" Visibility="Collapsed" />
                 <TextBlock x:Name="WeekEmpty" DockPanel.Dock="Top" Style="{StaticResource Muted}" Visibility="Collapsed" />
                 <Grid>
                     <ui:WeekGrid x:Name="Grid" />
-                    <DataGrid x:Name="Week" Visibility="Collapsed" />
+                    <c:DataView x:Name="Week" Visibility="Collapsed" />
                 </Grid>
             </DockPanel>
         </TabItem>
         <TabItem Header="{ui:T calendar.tabExams}">
             <DockPanel Margin="0,8,0,0">
                 <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" Style="{StaticResource Muted}" Text="{ui:T calendar.examSource}" />
-                <DataGrid x:Name="Exams" />
+                <c:DataView x:Name="Exams" />
             </DockPanel>
         </TabItem>
     </TabControl>

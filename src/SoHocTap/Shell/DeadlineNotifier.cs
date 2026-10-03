@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using SoHocTap.Core;
+using SoHocTap.Data;
 using SoHocTap.Ui;
 
 namespace SoHocTap.Shell;
@@ -61,21 +61,19 @@ internal sealed class DeadlineNotifier(Action<string, string, string> show)
 
     private static List<Due> Collect(long now, long window)
     {
-        var lms = JsonStore.ReadObject(Paths.DataFile("lms.json"));
         var list = new List<Due>();
-        foreach (var e in lms["events"]?.AsArray() ?? [])
+        if (LmsStore.Read() is not { } lms) return list;
+        foreach (var e in lms.Events)
         {
-            if (e is not JsonObject o || o["kind"]?.GetValue<string>() == "quiz" || o["done"]?.GetValue<bool>() == true) continue;
-            var t = o["time"]?.GetValue<long>() ?? 0;
-            if (t > now && t - now <= window)
-                list.Add(new Due(o["id"]?.GetValue<string>() ?? "", L.F("notify.title", o["label"]?.GetValue<string>() ?? L.T("notify.due"), o["name"]?.GetValue<string>()), o["subject"]?.GetValue<string>() ?? "", t));
+            if (e.Kind == "quiz" || e.Done) continue;
+            if (e.Time > now && e.Time - now <= window)
+                list.Add(new Due(e.Id ?? "", L.F("notify.title", e.Label ?? L.T("notify.due"), e.Name), e.Subject ?? "", e.Time));
         }
-        foreach (var q in lms["quizzes"]?.AsArray() ?? [])
+        foreach (var q in lms.Quizzes)
         {
-            if (q is not JsonObject o || (o["attempts"]?.AsArray().Count ?? 0) > 0) continue;
-            var t = o["close"]?.GetValue<long?>() ?? 0;
+            if (q.Attempts.Count > 0 || q.Close is not { } t) continue;
             if (t > now && t - now <= window)
-                list.Add(new Due("qz" + o["id"], L.F("notify.quizClose", o["name"]?.GetValue<string>()), o["subject"]?.GetValue<string>() ?? "", t));
+                list.Add(new Due("qz" + q.Id, L.F("notify.quizClose", q.Name), q.Subject ?? "", t));
         }
         return list;
     }

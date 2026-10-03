@@ -1,6 +1,7 @@
 ﻿<!-- Main window kiểu app Windows. Có năm mục chính nên dùng thanh điều hướng ngang phía trên (guideline Windows: ≤ 5 mục
      ngang hàng thì để top nav), Cài đặt là nút bánh răng; nội dung chiếm hết bề ngang.
-     [điều hướng · · · Đồng bộ · LMS · MyBK · ⚙] / InfoBar / dòng mô tả page / page / status bar. Tên app chỉ nằm ở title bar. -->
+     [điều hướng, Thêm ... Đồng bộ, LMS, MyBK, Cài đặt, Giới thiệu] / InfoBar / dòng mô tả page / page / status bar. Tên app chỉ nằm ở title bar.
+     Cửa sổ hẹp thì thanh trên cùng gọn dần (NavFit): Giới thiệu chỉ icon, mục điều hướng chỉ icon, Đồng bộ chỉ icon, rồi mới dồn vào menu Thêm. -->
 <Window x:Class="SoHocTap.Ui.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -17,51 +18,70 @@
     </Window.CommandBindings>
 
     <DockPanel>
-        <!-- Status bar -->
+        <!-- Status bar. Panel là Grid: câu báo chiếm phần còn lại (cột *) và tự cắt "...", không đẩy kỳ thi, phiên bản ra ngoài. -->
         <StatusBar DockPanel.Dock="Bottom" Padding="8,0" Background="{DynamicResource LayerFillColorDefaultBrush}">
-            <StatusBarItem><TextBlock x:Name="StAccount" /></StatusBarItem>
-            <Separator />
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Column="0"><TextBlock x:Name="StAccount" /></StatusBarItem>
+            <Separator Grid.Column="1" />
             <!-- Có lỗi thì hiện biểu tượng lỗi chuẩn (như InfoBar Error) cạnh tên nguồn; di chuột xem chi tiết. -->
-            <StatusBarItem>
+            <StatusBarItem Grid.Column="2">
                 <StackPanel Orientation="Horizontal">
                     <ui:SeverityIcon x:Name="StLmsIcon" Severity="Error" Size="12" Margin="0,0,6,0" Visibility="Collapsed" />
                     <TextBlock x:Name="StLms" VerticalAlignment="Center" />
                 </StackPanel>
             </StatusBarItem>
-            <Separator />
-            <StatusBarItem>
+            <Separator Grid.Column="3" />
+            <StatusBarItem Grid.Column="4">
                 <StackPanel Orientation="Horizontal">
                     <ui:SeverityIcon x:Name="StMybkIcon" Severity="Error" Size="12" Margin="0,0,6,0" Visibility="Collapsed" />
                     <TextBlock x:Name="StMybk" VerticalAlignment="Center" />
                 </StackPanel>
             </StatusBarItem>
             <!-- Tiến độ đồng bộ: có tổng thì chạy theo số (3/5), không đếm được thì chạy vô định. -->
-            <StatusBarItem x:Name="StProgressItem" Visibility="Collapsed">
+            <StatusBarItem x:Name="StProgressItem" Grid.Column="5" Visibility="Collapsed">
                 <ProgressBar x:Name="StProgress" Width="120" Height="4" Minimum="0" Maximum="100" />
             </StatusBarItem>
-            <Separator />
-            <StatusBarItem><TextBlock x:Name="StMessage" TextTrimming="CharacterEllipsis" /></StatusBarItem>
-            <!-- Tên bản + phiên bản: bản riêng và bản public chạy song song, nhìn là biết đang mở bản nào. Di chuột: thư mục app. -->
-            <StatusBarItem HorizontalAlignment="Right">
+            <Separator Grid.Column="6" />
+            <StatusBarItem Grid.Column="7" HorizontalContentAlignment="Stretch">
+                <TextBlock x:Name="StMessage" TextTrimming="CharacterEllipsis" />
+            </StatusBarItem>
+            <!-- Tên bản + phiên bản; di chuột: thư mục app. -->
+            <StatusBarItem Grid.Column="8">
                 <StackPanel Orientation="Horizontal">
                     <!-- Có bản mới (chỉ hiện khi người dùng cho phép kiểm tra): bấm để xem và cập nhật. -->
                     <TextBlock x:Name="StUpdate" Margin="0,0,16,0" Visibility="Collapsed">
                         <Hyperlink Click="OnUpdateClick"><Run x:Name="StUpdateText" /></Hyperlink>
                     </TextBlock>
-                    <TextBlock x:Name="StExam" />
+                    <TextBlock x:Name="StExam" MaxWidth="280" TextTrimming="CharacterEllipsis" />
                     <TextBlock x:Name="StVersion" Margin="16,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
 
         <!-- Điều hướng + lệnh -->
-        <Border DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
-                Background="{DynamicResource LayerFillColorDefaultBrush}" Padding="12,4">
+        <Border x:Name="TopBar" DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                Background="{DynamicResource LayerFillColorDefaultBrush}" Padding="12,4" SizeChanged="OnTopBarSize">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel x:Name="RightButtons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="SyncButton" AutomationProperties.Name="{ui:T nav.sync}" Click="OnSyncClick" ToolTip="{ui:T nav.sync.tip}" Margin="0,0,6,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock x:Name="SyncGlyph" Text="&#xE72C;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,6,0" />
                             <TextBlock x:Name="SyncText" Text="{ui:T nav.sync}" />
                         </StackPanel>
                     </Button>
@@ -82,33 +102,73 @@
                     </ToggleButton>
                     <ToggleButton x:Name="AboutButton" AutomationProperties.Name="{ui:T about.title}" Checked="OnAbout" Unchecked="OnToggleOff" ToolTip="{ui:T about.tip}" Margin="6,0,0,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="{ui:T about.title}" />
+                            <TextBlock x:Name="AboutGlyph" Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock x:Name="AboutText" Text="{ui:T about.title}" />
                         </StackPanel>
                     </ToggleButton>
                 </StackPanel>
-                <ListBox x:Name="Nav" ItemContainerStyle="{StaticResource TopNavItem}" BorderThickness="0" Background="Transparent"
-                         SelectionChanged="OnNav" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Center">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Tip}">
-                                <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="15" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding Badge}" Margin="6,0,0,0" VerticalAlignment="Center" Style="{StaticResource Muted}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                <StackPanel x:Name="NavRow" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True">
+                    <!-- Không có ScrollViewer: ListBox mặc định cuộn ngang tới mục đang chọn khi chật (mất mục đầu). Chật thì NavFit gọn lại. -->
+                    <ListBox x:Name="Nav" BorderThickness="0" Background="Transparent" SelectionChanged="OnNav" VerticalAlignment="Center"
+                             AutomationProperties.Name="{ui:T nav.label}" RequestBringIntoView="OnNavBringIntoView">
+                        <ListBox.Template>
+                            <ControlTemplate TargetType="ListBox">
+                                <ItemsPresenter />
+                            </ControlTemplate>
+                        </ListBox.Template>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource TopNavItem}">
+                                <Setter Property="ToolTip" Value="{Binding Tip}" />
+                                <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}" />
+                                <Setter Property="AutomationProperties.AutomationId" Value="{Binding AutomationId}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Compact}" Value="True">
+                                        <Setter Property="Padding" Value="10,8" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Overflow}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="Glyph" Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="15" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock x:Name="Label" Text="{Binding Label}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Badge}" Margin="6,0,0,0" VerticalAlignment="Center" Style="{StaticResource Muted}" />
+                                </StackPanel>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Compact}" Value="True">
+                                        <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Glyph" Property="Margin" Value="0" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <!-- Mục không đủ chỗ: menu Thêm (chỉ hiện khi cần). IsMainMenu=False để phím Alt không nhảy vào menu này. -->
+                    <Menu x:Name="NavMoreBar" IsMainMenu="False" Background="Transparent" VerticalAlignment="Center" Visibility="Collapsed">
+                        <MenuItem x:Name="NavMore" AutomationProperties.AutomationId="NavMore" AutomationProperties.Name="{ui:T nav.more}" ToolTip="{ui:T nav.more.tip}">
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE712;" FontFamily="{StaticResource IconFont}" FontSize="15" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock x:Name="NavMoreText" Text="{ui:T nav.more}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </Menu>
+                </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- InfoBar (Ui/SeverityBar.cs, theo InfoBar của WinUI): nằm thành một dòng trong layout, không đè lên nội dung -->
         <ui:SeverityBar x:Name="InfoBar" DockPanel.Dock="Top" Margin="16,10,16,0" />
 
-        <!-- Dòng mô tả page (ngày, học kỳ, MSSV…); tên page thì đã hiện ở mục điều hướng đang chọn -->
+        <!-- Dòng mô tả page (ngày, học kỳ, MSSV...); tên page thì đã hiện ở mục điều hướng đang chọn -->
         <TextBlock x:Name="PageSubtitle" DockPanel.Dock="Top" Margin="18,10,16,0" Style="{StaticResource Muted}" FontSize="13" />
 
         <ContentControl x:Name="Page" Margin="16,8,16,12" Focusable="False" />

@@ -64,9 +64,17 @@ internal sealed class AppHost : IDisposable
             if (stage is "done" or "data") State.Reload();
             else if (stage == "progress") State.RefreshProgress();   // chỉ cập nhật thanh trạng thái, không vẽ lại các trang
             else State.RefreshStatus();
-            if (name == "mybk" && stage == "done") _mybk.Release();
+            if (name == "mybk" && stage == "done")
+            {
+                _mybk.Release();
+                // Sync MyBK vừa đi qua SSO: biết chắc phiên còn, khỏi chạy keep-alive ngay sau đó. Hết phiên thì thôi giữ phiên.
+                if (!Hub.Failed("mybk")) { _ssoAliveAt = DateTime.UtcNow; _ssoExpired = false; }
+                else if (Hub.ErrorKind("mybk") == Data.SyncErrorKind.SessionExpired) _ssoExpired = true;
+            }
             if (name == "lms" && stage == "done") _notifier.Check();
         });
+        // Tiết kiệm pin: scheduler giãn chu kỳ gấp đôi (cùng cách đọc trạng thái pin với UpdateService).
+        Hub.BatterySaver = () => Power.BatterySaverOn;
     }
 
     public void Start()
@@ -77,6 +85,24 @@ internal sealed class AppHost : IDisposable
         _notifyTimer.Start();
         StartUpdates();
         StartKeepAlive();
+        // Có mạng lại hay máy vừa thức dậy: chạy ngay một lượt scheduler (nguồn nào tới hạn thì sync), không đợi tới tick kế.
+        System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += OnNetworkChanged;
+        Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
+    }
+
+    private void OnNetworkChanged(object? sender, System.Net.NetworkInformation.NetworkAvailabilityEventArgs e)
+    {
+        if (!e.IsAvailable) return;
+        Log.Debug("Có mạng lại, kiểm tra nguồn tới hạn");
+        Hub.RunDueSoon(TimeSpan.FromSeconds(15));
+    }
+
+    private void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
+    {
+        if (e.Mode != Microsoft.Win32.PowerModes.Resume) return;
+        Log.Debug("Máy thức dậy, kiểm tra nguồn tới hạn");
+        // Wi-Fi thường mất vài chục giây mới nối lại sau khi thức dậy; chưa có mạng thì RunDue tự bỏ lượt, NetworkChange gọi lại sau.
+        Hub.RunDueSoon(TimeSpan.FromSeconds(30));
     }
 
     private DateTime _ssoAliveAt = DateTime.MinValue;   // lần cuối biết chắc phiên SSO còn (đăng nhập, giữ phiên)
@@ -106,6 +132,8 @@ internal sealed class AppHost : IDisposable
         var minutes = Config.Int("sso.keepAliveMinutes", 60);
         if (minutes <= 0 || _ssoExpired || !MybkSource.SignedIn) return;
         if (DateTime.UtcNow - _ssoAliveAt < TimeSpan.FromMinutes(minutes)) return;
+        // Tiết kiệm pin: bỏ giữ phiên (mỗi lần là một WebView ẩn chạy renderer). Phiên có hết thì lần sync sau báo đăng nhập lại.
+        if (Power.BatterySaverOn) return;
         if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) return;
         var since = _ssoAliveAt == DateTime.MinValue ? "chưa rõ" : $"{(DateTime.UtcNow - _ssoAliveAt).TotalMinutes:0} phút";
         var alive = await _mybk.KeepAliveAsync(CancellationToken.None);
@@ -184,16 +212,31 @@ internal sealed class AppHost : IDisposable
 
     // ------------------------------------------------------------------ các lệnh của app
 
-    public void Login() => _ui.InvokeAsync(async () => await _login.StartAsync());
+    // Lambda async trong InvokeAsync là async void với Dispatcher: lỗi không ai bắt sẽ rơi vào DispatcherUnhandledException,
+    // nên bắt ngay ở đây, ghi log và báo stage "error" như các lỗi đăng nhập khác.
+    public void Login() => _ui.InvokeAsync(async () =>
+    {
+        try { await _login.StartAsync(); }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            Log.Error("Đăng nhập HCMUT", e);
+            OnLogin("error", e.Message);
+        }
+    });
 
     /// <summary>Logout HCMUT khỏi app: xóa token LMS và toàn bộ cookie của profile WebView2 (session SSO, MyBK).</summary>
     public void Logout() => _ui.InvokeAsync(async () =>
     {
-        LmsClient.Logout();
-        var env = await WebHost.EnvironmentAsync();
-        var c = await env.CreateCoreWebView2ControllerAsync(new WindowInteropHelper(_main).Handle);
-        c.CoreWebView2.CookieManager.DeleteAllCookies();
-        c.Close();
+        try
+        {
+            LmsClient.Logout();
+            var env = await WebHost.EnvironmentAsync();
+            var c = await env.CreateCoreWebView2ControllerAsync(new WindowInteropHelper(_main).Handle);
+            c.CoreWebView2.CookieManager.DeleteAllCookies();
+            c.Close();
+        }
+        // Xóa cookie lỗi (WebView2 runtime hỏng…) thì vẫn ghi là đã đăng xuất: token LMS đã xóa, MyBK không chạy nữa.
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Đăng xuất: không xóa được cookie WebView2", e); }
         OnLogin("logout", "");
     });
 
@@ -225,6 +268,9 @@ internal sealed class AppHost : IDisposable
 
     public void Dispose()
     {
+        // SystemEvents giữ tham chiếu tới handler (static event): gỡ ra để không gọi vào AppHost đã dispose.
+        System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged -= OnNetworkChanged;
+        Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPowerModeChanged;
         Updates.ApplyOnExit();
         _notifyTimer.Stop();
         _tray.Dispose();

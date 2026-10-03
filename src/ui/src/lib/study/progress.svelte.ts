@@ -100,12 +100,18 @@ class ProgressStore {
 	/** Write now (before a reload); normally save() batches writes. */
 	async flush() {
 		clearTimeout(this.timer);
+		this.timer = undefined;
 		this.state.updatedAt = new Date().toISOString();
 		const snap = $state.snapshot(this.state) as ProgressState;
 		writeLocal(snap);
 		this.saveError = (await api.saveState(snap).catch(() => null))
 			? ''
 			: 'Không ghi được vào data\\ket-qua.json. Kết quả vẫn được giữ và sẽ ghi lại ở lần lưu sau.';
+	}
+
+	/** Chỉ ghi khi còn thay đổi chưa lưu (app gọi trước khi đóng khung Luyện tập để giải phóng bộ nhớ). */
+	async flushPending() {
+		if (this.timer !== undefined) await this.flush();
 	}
 
 	q(id: string): QuestionRecord | undefined {
@@ -298,3 +304,5 @@ function writeLocal(s: ProgressState) {
 }
 
 export const Progress = new ProgressStore();
+// App (PracticePage) gọi window.Progress.flushPending() trước khi đóng WebView.
+(window as unknown as { Progress: ProgressStore }).Progress = Progress;

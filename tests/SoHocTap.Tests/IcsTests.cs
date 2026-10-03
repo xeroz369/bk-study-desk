@@ -43,7 +43,8 @@ public class IcsTests
     public void Minutes_ParsesOrNull()
     {
         Assert.Equal(420, Ics.Minutes("07:00"));
-        Assert.Null(Ics.Minutes("0g00"));
+        Assert.Equal(450, Ics.Minutes("7g30"));
+        Assert.Null(Ics.Minutes("--"));
         Assert.Null(Ics.Minutes(null));
     }
 }

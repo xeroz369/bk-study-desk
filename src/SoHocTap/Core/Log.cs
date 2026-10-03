@@ -22,9 +22,11 @@ public static class Log
     public static void Info(string message) => Write("INFO", message);
     public static void Warn(string message) => Write("WARN", message);
 
-    /// <summary>Lỗi: bình thường ghi loại + message; khi bật log chi tiết thì ghi cả stack trace.</summary>
-    public static void Error(string message, Exception? e = null) =>
-        Write("ERROR", e is null ? message : Verbose ? $"{message}: {e}" : $"{message}: {e.GetType().Name}: {e.Message}");
+    /// <summary>
+    /// Lỗi: luôn ghi cả e.ToString() (loại, message, inner exception, stack trace) để đọc log là biết lỗi ở đâu, không phải
+    /// bật log chẩn đoán rồi chờ lỗi lặp lại. Redactor vẫn chạy trên cả dòng nên token, MSSV trong message vẫn bị che.
+    /// </summary>
+    public static void Error(string message, Exception? e = null) => Write("ERROR", e is null ? message : $"{message}: {e}");
 
     /// <summary>host + path của URL, bỏ query và fragment (có thể chứa ticket CAS, token LMS).</summary>
     public static string Where(string? url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host + u.AbsolutePath : "?";
@@ -44,7 +46,9 @@ public static class Log
                     File.Move(FilePath, FilePath + ".1", overwrite: true);
                 File.AppendAllText(FilePath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\t{level}\t{message}{Environment.NewLine}");
             }
-            catch (IOException) { /* lỗi ghi log thì bỏ qua, không được làm crash app */ }
+            // Lỗi ghi log thì bỏ qua, không được làm crash app: file bị khóa (IOException), data\ bị đổi ACL hay chỉ đọc
+            // (UnauthorizedAccessException), ổ bị rút (DirectoryNotFoundException là IOException).
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
         }
     }
 }

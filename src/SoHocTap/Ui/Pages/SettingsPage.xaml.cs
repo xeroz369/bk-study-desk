@@ -25,14 +25,16 @@ public partial class SettingsPage : UserControl, IPage
     {
         InitializeComponent();
         _host = host;
-        Keys.Columns.Add(Grids.Text(L.T("col.key"), nameof(KeyRow.Keys), 220));
+        Keys.Columns.Add(Grids.Flex(L.T("col.key"), nameof(KeyRow.Keys), 1, 160));
         Keys.Columns.Add(Grids.Text(L.T("col.what"), nameof(KeyRow.What), star: true));
+        Grids.NameRows(Keys);
+        // Tên phím viết bằng chữ (Ctrl+1 đến Ctrl+7, Alt+Mũi tên trái), không dùng gạch nối dài hay ký hiệu mũi tên.
         Keys.ItemsSource = new List<KeyRow>
         {
-            new($"Ctrl+1–Ctrl+{MainWindow.PageKeys}", L.T("settings.keys.pages")),
+            new(L.F("settings.keys.range", "Ctrl+1", $"Ctrl+{MainWindow.PageKeys}"), L.T("settings.keys.pages")),
             new("F5", L.T("settings.keys.sync")),
-            new("Alt+←", L.T("settings.keys.back")),
-            new("↑ ↓, Home, End", L.T("settings.keys.rows")),
+            new(L.T("settings.keys.backKey"), L.T("settings.keys.back")),
+            new(L.T("settings.keys.rowsKey"), L.T("settings.keys.rows")),
             new(L.T("settings.keys.enter"), L.T("settings.keys.open")),
             new(L.T("settings.keys.menu"), L.T("settings.keys.menuWhat")),
             new(L.T("settings.keys.click"), L.T("settings.keys.sort")),
@@ -266,9 +268,14 @@ public partial class SettingsPage : UserControl, IPage
         if (d.ShowDialog(Window.GetWindow(this)) == true) PdfApp.Text = d.FileName;
     }
 
+    /// <summary>MyBK đồng bộ cách nhau ít nhất 6 giờ: dữ liệu MyBK (lịch, điểm) đổi chậm, đọc dày hơn chỉ tốn request của trường.</summary>
+    private const int MybkMinHours = 6;
+
     private void OnSave(object sender, RoutedEventArgs e)
     {
         static int Pos(string s) => int.TryParse(s, out var v) && v > 0 ? v : 1;
+        // 0 = tắt lần nhắc đó (DeadlineNotifier bỏ các mốc <= 0); số âm hay chữ thì coi như 0.
+        static int NonNeg(string s) => int.TryParse(s, out var v) && v > 0 ? v : 0;
         var c = (JsonObject)Config.Current.DeepClone();
         void Set(string dotted, JsonNode value)
         {
@@ -280,9 +287,9 @@ public partial class SettingsPage : UserControl, IPage
         Set("viewer.pdfApp", PdfApp.Text.Trim().Trim('"'));
         Set("folders.root", Root.Text.Trim().Trim('"'));
         Set("sources.lms.syncHours", Pos(LmsHours.Text));
-        Set("sources.mybk.syncHours", Pos(MybkHours.Text));
-        Set("notify.hoursBefore", Pos(NotifyHours.Text));
-        Set("notify.lastHours", Pos(LastHours.Text));
+        Set("sources.mybk.syncHours", Math.Max(MybkMinHours, Pos(MybkHours.Text)));
+        Set("notify.hoursBefore", NonNeg(NotifyHours.Text));
+        Set("notify.lastHours", NonNeg(LastHours.Text));
         Set("sources.lms.maxFileMB", Pos(MaxMb.Text));
         Set("sources.lms.autoDownload", AutoDownload.IsChecked == true);
         Set("archives.extract", AutoExtract.IsChecked == true);
