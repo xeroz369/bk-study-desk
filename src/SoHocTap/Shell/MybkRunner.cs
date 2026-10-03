@@ -68,7 +68,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             finally { _gate.Release(); }
         });
 
-    public Task<string> PageAsync(string url, CancellationToken ct) =>
+    public Task<string> PageAsync(string url, CancellationToken ct, string? mustContain = null) =>
         UiThread.RunAsync(owner, async () =>
         {
             await _gate.WaitAsync(ct);
@@ -88,7 +88,18 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                     if (retries++ < 2) core.Navigate(url);
                     return false;
                 }, ct, failAt: u => u.AbsolutePath.Contains("/cas/login", StringComparison.Ordinal));
-                return await EvaluateAsync("document.documentElement.outerHTML") ?? "";
+                // Lần đầu vào /dkmh trong phiên, trang được hỏi chỉ là trang trung gian nhỏ, tự chuyển về home.action để khởi tạo
+                // phiên của hệ thống đăng ký (thấy trên máy thật ở 1.1.5). Chưa có chữ cần có thì chờ trang đó chuyển xong rồi mở lại.
+                var html = await EvaluateAsync("document.documentElement.outerHTML") ?? "";
+                for (var again = 0; mustContain is not null && !html.Contains(mustContain, StringComparison.OrdinalIgnoreCase) && again < 3; again++)
+                {
+                    Log.Info($"MyBK ẩn: {Log.Where(core.Source)} chưa có nội dung cần đọc ({html.Length} ký tự), mở lại lần {again + 1}");
+                    await Task.Delay(1500, ct);
+                    await NavigateUntilAsync(core, url, u => u.Host == target.Host && u.AbsolutePath == target.AbsolutePath, ct,
+                        failAt: u => u.AbsolutePath.Contains("/cas/login", StringComparison.Ordinal));
+                    html = await EvaluateAsync("document.documentElement.outerHTML") ?? "";
+                }
+                return html;
             }
             catch (Exception e) when (e is TimeoutException or HttpRequestException) { Reset(e); throw; }
             finally { _gate.Release(); }

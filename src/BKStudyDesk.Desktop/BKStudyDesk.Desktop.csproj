@@ -10,7 +10,7 @@
     <RootNamespace>BKStudyDesk.Desktop</RootNamespace>
     <AssemblyName>BKStudyDesk</AssemblyName>
     <Product>BK Study Desk</Product>
-    <Version Condition="'$(Version)' == ''">1.1.5</Version>
+    <Version Condition="'$(Version)' == ''">1.1.6</Version>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>

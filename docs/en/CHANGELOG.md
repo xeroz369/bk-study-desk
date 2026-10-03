@@ -2,11 +2,19 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.5.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.6.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.6] - 2026-10-03
+
+### Fixed
+
+- MyBK sync reported "the registration page has no registration rounds table". On the first visit to the registration system, MyBK returns an intermediate page before the page with the table, and the app read it too early. The app now waits and opens the page again when the table is missing.
+- Every LMS assignment showed up twice on **Today**, **Calendar** and in due-date reminders, so the "due in 7 days" count was doubled.
+- Submitted assignments still triggered reminders. The app now follows the Moodle calendar: Moodle removes the entry once you submit, so the app no longer counts or reminds you about it. The brief and attachments are still saved to your computer as before.
 
 ## [1.1.5] - 2026-10-03
 
@@ -152,7 +160,8 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...HEAD
+[1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
