@@ -71,8 +71,9 @@ public class UpdatePolicyTests
     public void IsNewer_Versions(string candidate, string current, bool expected) => Assert.Equal(expected, UpdatePolicy.IsNewer(candidate, current));
 
     [Theory]
+    [InlineData("https://github.com/bk-study-desk/bk-study-desk", true)]
     [InlineData("https://github.com/xeroz369/bk-study-desk", true)]
-    [InlineData("http://github.com/xeroz369/bk-study-desk", false)]
+    [InlineData("http://github.com/bk-study-desk/bk-study-desk", false)]
     [InlineData("https://evil.example/feed", false)]
     [InlineData("relative\\feed", false)]
     [InlineData("", false)]

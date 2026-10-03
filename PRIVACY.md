@@ -4,7 +4,7 @@
 
 Cập nhật: 03/10/2026
 
-BK Study Desk là app không chính thức, do cá nhân (xeroz369) phát triển cho sinh viên Trường Đại học Bách Khoa – ĐHQG TP.HCM (HCMUT). App không thuộc trường, không được trường hay Moodle HQ xác nhận. Mọi địa chỉ và API app gọi được liệt kê ở Wiki [Cách app hoạt động](https://github.com/xeroz369/bk-study-desk/wiki/C%C3%A1ch-app-ho%E1%BA%A1t-%C4%91%E1%BB%99ng).
+BK Study Desk là app không chính thức, do cá nhân (xeroz369) phát triển cho sinh viên Trường Đại học Bách Khoa – ĐHQG TP.HCM (HCMUT). App không thuộc trường, không được trường hay Moodle HQ xác nhận. Mọi địa chỉ và API app gọi được liệt kê ở Wiki [Cách app hoạt động](https://github.com/bk-study-desk/bk-study-desk/wiki/C%C3%A1ch-app-ho%E1%BA%A1t-%C4%91%E1%BB%99ng).
 
 ## App thu thập gì
 
@@ -70,4 +70,4 @@ Dữ liệu tải xuống có thể có thông tin của người khác (tên gi
 
 ## Liên hệ
 
-Câu hỏi hoặc báo lỗi: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issue là công khai: đừng dán tên, MSSV, điểm, token hay ảnh chụp có thông tin cá nhân. Vấn đề bảo mật thì báo riêng theo [SECURITY.md](SECURITY.md). Câu hỏi về quyền riêng tư cần trao đổi riêng: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+Câu hỏi hoặc báo lỗi: [GitHub Issues](https://github.com/bk-study-desk/bk-study-desk/issues). Issue là công khai: đừng dán tên, MSSV, điểm, token hay ảnh chụp có thông tin cá nhân. Vấn đề bảo mật thì báo riêng theo [SECURITY.md](SECURITY.md). Câu hỏi về quyền riêng tư cần trao đổi riêng: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

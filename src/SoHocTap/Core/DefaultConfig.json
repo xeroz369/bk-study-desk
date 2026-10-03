@@ -306,7 +306,7 @@
     "update": {
       "mode": "ask",
       "checkHours": 6,
-      "source": "https://github.com/xeroz369/bk-study-desk",
+      "source": "https://github.com/bk-study-desk/bk-study-desk",
       "skip": ""
     }
   }

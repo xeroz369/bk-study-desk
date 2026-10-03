@@ -6,7 +6,7 @@
 
 Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản sau.
 
-1. Vào [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest), tải `BKStudyDesk-x.y.z-Setup-x64.exe`. Máy chip ARM (Surface Pro X, Snapdragon) tải bản `-Setup-arm64.exe`.
+1. Vào [Releases](https://github.com/bk-study-desk/bk-study-desk/releases/latest), tải `BKStudyDesk-x.y.z-Setup-x64.exe`. Máy chip ARM (Surface Pro X, Snapdragon) tải bản `-Setup-arm64.exe`.
 2. Mở file. Nếu Windows hiện **"Windows đã bảo vệ máy tính của bạn"**: chọn **Thông tin thêm** > **Vẫn chạy**. Cảnh báo này có vì bộ cài chưa có chữ ký số; chỉ hiện một lần lúc cài.
 3. Chọn thư mục cài (mặc định trong tài khoản của bạn; đổi sang ổ D: được), chọn **Cài đặt**. Không cần quyền admin.
 4. Cài xong app tự mở. Lối tắt có ở Desktop và Start menu.
@@ -17,7 +17,7 @@ Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản 
 
 Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Gói do Microsoft ký nên không có cảnh báo SmartScreen. Bản Store chỉ có gói x64 (máy ARM vẫn chạy được qua giả lập của Windows).
 
-Mỗi bản mới phải chờ Microsoft duyệt (có khi vài ngày), nên bản Store thường chậm hơn bản trên GitHub. So số phiên bản ở trang Store với [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) trước khi cài.
+Mỗi bản mới phải chờ Microsoft duyệt (có khi vài ngày), nên bản Store thường chậm hơn bản trên GitHub. So số phiên bản ở trang Store với [Releases](https://github.com/bk-study-desk/bk-study-desk/releases/latest) trước khi cài.
 
 Hai cách cài là hai bản riêng, dữ liệu không dùng chung. Chỉ nên cài một trong hai.
 
@@ -41,5 +41,5 @@ So với dòng tương ứng trong `SHA256SUMS.txt` ở trang Releases.
 
 Kiểm kỹ hơn (cần cài [GitHub CLI](https://cli.github.com)): xác nhận bộ cài được build từ đúng mã nguồn trên GitHub, không ai sửa giữa chừng:
 ```powershell
-gh attestation verify .\BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
+gh attestation verify .\BKStudyDesk-x.y.z-Setup-x64.exe --repo bk-study-desk/bk-study-desk
 ```

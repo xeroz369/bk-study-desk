@@ -15,7 +15,7 @@ A small Windows app for students of **Ho Chi Minh City University of Technology 
 - **practice**: write your own quizzes, review LMS quizzes you have submitted, take mock exams;
 - shortcuts to about 30 university services.
 
-> **Unofficial.** This is a personal project, not affiliated with or endorsed by HCMUT or Moodle HQ. The app uses your own account and only reads what you can already see after signing in. Every address and API the app calls is listed on the Wiki page [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/How-the-app-works) (Vietnamese). If the university asks, the project will change or remove the feature concerned.
+> **Unofficial.** This is a personal project, not affiliated with or endorsed by HCMUT or Moodle HQ. The app uses your own account and only reads what you can already see after signing in. Every address and API the app calls is listed on the Wiki page [How the app works](https://github.com/bk-study-desk/bk-study-desk/wiki/How-the-app-works) (Vietnamese). If the university asks, the project will change or remove the feature concerned.
 
 The interface is Vietnamese by default; English is available in **Settings**. The Wiki is written in Vietnamese.
 
@@ -23,11 +23,11 @@ The interface is Vietnamese by default; English is available in **Settings**. Th
 
 **Option 1: installer from GitHub (recommended).** New versions appear here as soon as they are released, and the app tells you when the next one is out.
 
-1. Download `BKStudyDesk-x.y.z-Setup-x64.exe` from [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) (ARM laptops: `-Setup-arm64.exe`).
+1. Download `BKStudyDesk-x.y.z-Setup-x64.exe` from [Releases](https://github.com/bk-study-desk/bk-study-desk/releases/latest) (ARM laptops: `-Setup-arm64.exe`).
 2. Run it, choose an install folder and click **Install**. No admin rights needed. The installer is not code-signed yet, so Windows SmartScreen shows a warning once: click **More info** > **Run anyway**.
 3. On first launch, choose how updates are handled and where documents are saved, then **Sign in to HCMUT**.
 
-**Option 2: Microsoft Store.** [BK Study Desk on the Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850): no SmartScreen warning. Every new version waits for Microsoft review (sometimes a few days), so the Store version is usually behind GitHub. Compare the version number with [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) before installing.
+**Option 2: Microsoft Store.** [BK Study Desk on the Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850): no SmartScreen warning. Every new version waits for Microsoft review (sometimes a few days), so the Store version is usually behind GitHub. Compare the version number with [Releases](https://github.com/bk-study-desk/bk-study-desk/releases/latest) before installing.
 
 The two are built from the same source but are separate installs with separate data. Install only one.
 
@@ -87,7 +87,7 @@ Full policy: [PRIVACY.md](PRIVACY.md).
   - the LMS token in `data\secrets\`, **encrypted with Windows DPAPI**, so it does not work on another PC or Windows account.
 - The data folder sits in `%LOCALAPPDATA%`, readable only by your Windows account (plus SYSTEM and Administrators).
 - **Stay signed in after closing the app** keeps cookies for at most 8 hours, the SSO server's session limit; it can be turned off in Settings.
-- The LMS token comes from Moodle's built-in sign-in flow for the mobile app (`launch.php`, service `moodle_mobile_app`, URL scheme `moodlemobile` of the official Moodle app). Details on the Wiki page [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/How-the-app-works).
+- The LMS token comes from Moodle's built-in sign-in flow for the mobile app (`launch.php`, service `moodle_mobile_app`, URL scheme `moodlemobile` of the official Moodle app). Details on the Wiki page [How the app works](https://github.com/bk-study-desk/bk-study-desk/wiki/How-the-app-works).
 - Limit: malware running under your own Windows account can still read the session. This is true of any Windows app. If you suspect malware, choose **Sign out** and change your HCMUT password.
 - The app only calls **read** APIs and sends data nowhere except the university servers (GitHub is asked for new versions only if you allow it). It never submits work, registers, cancels, pays or takes quizzes for you.
 - The app does not store your ID card number, address, phone number, date of birth or personal email, even when MyBK returns them.
@@ -129,7 +129,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 
 ## Contact
 
-- Bugs and ideas: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issues are public; do not paste student IDs, grades or tokens.
+- Bugs and ideas: [GitHub Issues](https://github.com/bk-study-desk/bk-study-desk/issues). Issues are public; do not paste student IDs, grades or tokens.
 - Security vulnerabilities: report privately per [SECURITY.md](SECURITY.md).
 - Official project contact (privacy, licensing, private matters): [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 

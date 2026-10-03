@@ -10,8 +10,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thêm
 
-- **Lịch** > **Thời khóa biểu** dạng lưới: vạch màu nhấn chỉ giờ hiện tại ở cột hôm nay ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)).
-- **Thêm sự kiện...** trên trang **Lịch**: tự nhập sự kiện hoặc lịch học bù ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)). Gõ nhanh một dòng như "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" là app tự điền. Sự kiện tự thêm hiện ở lưới tuần (viền nét đứt), **Sắp tới**, **Hôm nay**, có trong file .ics và được nhắc trước khoảng 1 giờ. Chuột phải để sửa, xóa, sao chép. Chỉ lưu trên máy.
+- **Lịch** > **Thời khóa biểu** dạng lưới: vạch màu nhấn chỉ giờ hiện tại ở cột hôm nay ([#22](https://github.com/bk-study-desk/bk-study-desk/issues/22)).
+- **Thêm sự kiện...** trên trang **Lịch**: tự nhập sự kiện hoặc lịch học bù ([#22](https://github.com/bk-study-desk/bk-study-desk/issues/22)). Gõ nhanh một dòng như "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" là app tự điền. Sự kiện tự thêm hiện ở lưới tuần (viền nét đứt), **Sắp tới**, **Hôm nay**, có trong file .ics và được nhắc trước khoảng 1 giờ. Chuột phải để sửa, xóa, sao chép. Chỉ lưu trên máy.
 - **Cài đặt** > **Cập nhật**: chọn khoảng kiểm tra bản mới 6, 12 hoặc 24 giờ.
 
 ### Thay đổi
@@ -81,8 +81,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 ### Thêm
 
-- Tab **Đăng ký và học vụ** có bảng **Giảng viên và lịch dạy kỳ này**, nhóm theo giảng viên: môn, mã, nhóm lớp, thứ, giờ, phòng ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)). Cột giảng viên và giờ học chuyển từ bảng **Kết quả đăng ký** sang bảng này.
-- Đăng nhập lại qua nút **Mở MyBK** / **Mở LMS** trên thanh báo lỗi xong thì app tự đồng bộ lại nguồn đó, không cần bấm **Đồng bộ** ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- Tab **Đăng ký và học vụ** có bảng **Giảng viên và lịch dạy kỳ này**, nhóm theo giảng viên: môn, mã, nhóm lớp, thứ, giờ, phòng ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)). Cột giảng viên và giờ học chuyển từ bảng **Kết quả đăng ký** sang bảng này.
+- Đăng nhập lại qua nút **Mở MyBK** / **Mở LMS** trên thanh báo lỗi xong thì app tự đồng bộ lại nguồn đó, không cần bấm **Đồng bộ** ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
 - **Luyện tập**: menu chuột phải ở gói quiz, môn và bài có đủ thao tác: mở, tạo câu, nhập vào môn, **Xuất để chia sẻ**, gỡ.
 
 ### Thay đổi
@@ -105,11 +105,11 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 ### Thêm
 
-- **Lịch** > **Thời khóa biểu** có dạng **lưới tuần** giống Google Calendar ([#5](https://github.com/xeroz369/bk-study-desk/issues/5)). Lưới tự canh bố cục: Thứ 7, CN chỉ hiện khi có buổi học; khung giờ theo buổi sớm nhất và muộn nhất; buổi trùng giờ chia đôi cột. Dạng danh sách vẫn còn, chọn ở ô **Kiểu xem**.
+- **Lịch** > **Thời khóa biểu** có dạng **lưới tuần** giống Google Calendar ([#5](https://github.com/bk-study-desk/bk-study-desk/issues/5)). Lưới tự canh bố cục: Thứ 7, CN chỉ hiện khi có buổi học; khung giờ theo buổi sớm nhất và muộn nhất; buổi trùng giờ chia đôi cột. Dạng danh sách vẫn còn, chọn ở ô **Kiểu xem**.
 - **Xuất lịch (.ics)**: lưu thời khóa biểu cả kỳ và lịch thi ra file iCalendar để nhập vào Google Calendar, Outlook, Lịch của Windows.
-- Đồng bộ LMS/MyBK lỗi thì thanh báo có thêm nút **Mở MyBK** / **Mở LMS** để xem trang đang lỗi gì hoặc đăng nhập lại ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
-- **Tải tài liệu** chọn được loại file: PDF, slide (.ppt, .pptx), khác; số file và dung lượng tính theo lựa chọn ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
-- Bảng **Kết quả đăng ký** có thêm cột giảng viên và giờ học, lấy từ thời khóa biểu MyBK ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- Đồng bộ LMS/MyBK lỗi thì thanh báo có thêm nút **Mở MyBK** / **Mở LMS** để xem trang đang lỗi gì hoặc đăng nhập lại ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
+- **Tải tài liệu** chọn được loại file: PDF, slide (.ppt, .pptx), khác; số file và dung lượng tính theo lựa chọn ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
+- Bảng **Kết quả đăng ký** có thêm cột giảng viên và giờ học, lấy từ thời khóa biểu MyBK ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
 - Tài liệu tiếng Anh tách thành file riêng, dịch đầy đủ: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, tài liệu studypack, và các trang Wiki tiếng Anh. Chuẩn viết tiếng Anh: `docs/english-style.md`.
 - Mục **Ủng hộ** trong README và Wiki: Ko-fi và mã QR MoMo/VietQR.
 
@@ -210,16 +210,16 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 - Vá một số lỗi bảo mật nhỏ (giới hạn điều hướng của WebView ẩn, không chạy file tải xuống, giới hạn kích thước file).
 
-Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
+Các bản trước: xem [Releases](https://github.com/bk-study-desk/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...HEAD
-[1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
-[1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
-[1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
-[1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
-[1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
-[1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
-[1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
-[1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0
-[1.0.6]: https://github.com/xeroz369/bk-study-desk/releases/tag/v1.0.6
+[Chưa phát hành]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.8...HEAD
+[1.1.8]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.7...v1.1.8
+[1.1.7]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.6...v1.1.7
+[1.1.6]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.5...v1.1.6
+[1.1.5]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.1...v1.1.3
+[1.1.2]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.0.6...v1.1.0
+[1.0.6]: https://github.com/bk-study-desk/bk-study-desk/releases/tag/v1.0.6

@@ -12,8 +12,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Added
 
-- **Calendar** > **Timetable** grid: an accent-coloured line marks the current time in today's column ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)).
-- **Add event...** on the **Calendar** page: add your own events or makeup classes ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)). Type one line such as "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" and the form fills itself. Your events show in the week grid (dashed border), **Upcoming**, **Today**, the .ics export, and get a reminder about an hour before. Right-click to edit, delete or copy. Stored only on your computer.
+- **Calendar** > **Timetable** grid: an accent-coloured line marks the current time in today's column ([#22](https://github.com/bk-study-desk/bk-study-desk/issues/22)).
+- **Add event...** on the **Calendar** page: add your own events or makeup classes ([#22](https://github.com/bk-study-desk/bk-study-desk/issues/22)). Type one line such as "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" and the form fills itself. Your events show in the week grid (dashed border), **Upcoming**, **Today**, the .ics export, and get a reminder about an hour before. Right-click to edit, delete or copy. Stored only on your computer.
 - **Settings** > **Updates**: choose how often to check for a new version (6, 12 or 24 hours).
 
 ### Changed
@@ -83,8 +83,8 @@ An experimental release: most of the code has been reorganised to make features 
 
 ### Added
 
-- The **Registration & records** tab has a **Lecturers and class times this term** table, grouped by lecturer: subject, code, class group, day, time, room ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)). The lecturer and time columns moved here from the **Registration results** table.
-- After you sign in again through **Open MyBK** / **Open LMS** on the error bar, the app syncs that source again without pressing **Sync** ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- The **Registration & records** tab has a **Lecturers and class times this term** table, grouped by lecturer: subject, code, class group, day, time, room ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)). The lecturer and time columns moved here from the **Registration results** table.
+- After you sign in again through **Open MyBK** / **Open LMS** on the error bar, the app syncs that source again without pressing **Sync** ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
 - **Practice**: right-click menus on quiz packs, courses and lessons have every action: open, create a question, import into the course, export to share (**Xuất để chia sẻ**), remove.
 
 ### Changed
@@ -107,11 +107,11 @@ An experimental release: most of the code has been reorganised to make features 
 
 ### Added
 
-- **Calendar** > **Timetable** has a **week grid** view like Google Calendar ([#5](https://github.com/xeroz369/bk-study-desk/issues/5)). The grid lays itself out: Saturday and Sunday appear only when there are classes, the hours span the earliest to the latest class, and overlapping classes share the column. The list view is still there; pick it under **View**.
+- **Calendar** > **Timetable** has a **week grid** view like Google Calendar ([#5](https://github.com/bk-study-desk/bk-study-desk/issues/5)). The grid lays itself out: Saturday and Sunday appear only when there are classes, the hours span the earliest to the latest class, and overlapping classes share the column. The list view is still there; pick it under **View**.
 - **Export calendar (.ics)**: saves the whole-term timetable and exams as an iCalendar file to import into Google Calendar, Outlook or Windows Calendar.
-- When an LMS or MyBK sync fails, the error bar has an **Open MyBK** / **Open LMS** button to see what the page shows or to sign in again ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
-- **Download** lets you choose file types: PDF, slides (.ppt, .pptx), other; the file count and size follow your choice ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
-- The course registration table shows the lecturer and class times, taken from the MyBK timetable ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
+- When an LMS or MyBK sync fails, the error bar has an **Open MyBK** / **Open LMS** button to see what the page shows or to sign in again ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
+- **Download** lets you choose file types: PDF, slides (.ppt, .pptx), other; the file count and size follow your choice ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
+- The course registration table shows the lecturer and class times, taken from the MyBK timetable ([#6](https://github.com/bk-study-desk/bk-study-desk/issues/6)).
 - English documents are separate, complete translations: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, the studypack documents, and English Wiki pages. English style guide: `docs/english-style.md`.
 - A **Support** section in the README and the Wiki: Ko-fi and a MoMo/VietQR code.
 - The **About** page opens the English privacy policy when the interface is in English.
@@ -213,16 +213,16 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 - Fixed several minor security issues (navigation limits for the hidden WebView, downloaded files are never run, file size limits).
 
-Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
+Earlier versions: see [Releases](https://github.com/bk-study-desk/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...HEAD
-[1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
-[1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
-[1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
-[1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
-[1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
-[1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
-[1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2
-[1.1.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.0.6...v1.1.0
-[1.0.6]: https://github.com/xeroz369/bk-study-desk/releases/tag/v1.0.6
+[Unreleased]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.8...HEAD
+[1.1.8]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.7...v1.1.8
+[1.1.7]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.6...v1.1.7
+[1.1.6]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.5...v1.1.6
+[1.1.5]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.1...v1.1.3
+[1.1.2]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/bk-study-desk/bk-study-desk/compare/v1.0.6...v1.1.0
+[1.0.6]: https://github.com/bk-study-desk/bk-study-desk/releases/tag/v1.0.6

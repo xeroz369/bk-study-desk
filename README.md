@@ -133,7 +133,7 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 
 ## Liên hệ
 
-- Báo lỗi, góp ý: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issue là công khai, đừng dán MSSV, điểm hay token.
+- Báo lỗi, góp ý: [GitHub Issues](https://github.com/bk-study-desk/bk-study-desk/issues). Issue là công khai, đừng dán MSSV, điểm hay token.
 - Lỗ hổng bảo mật: báo riêng theo [SECURITY.md](SECURITY.md).
 - Liên hệ chính thức của dự án (quyền riêng tư, giấy phép, việc cần trao đổi riêng): [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 

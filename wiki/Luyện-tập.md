@@ -168,4 +168,4 @@ Trung điểm \(x_n=\frac{a_n+b_n}{2}\).
 - Thêm `xao-cau: co` và `xao-dap-an: co` vào phần đầu file để xáo câu và đáp án khi làm. Câu có phương án kiểu "Cả A và B" thì thêm `· giữ thứ tự` vào cuối dòng `###`.
 - Quiz có hình: soạn trong app (mục 3) rồi xuất (mục 6) cho đơn giản.
 
-Đặc tả đầy đủ: [SPEC.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/SPEC.md) | Prompt cho AI: [PROMPT.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/PROMPT.md).
+Đặc tả đầy đủ: [SPEC.md](https://github.com/bk-study-desk/bk-study-desk/blob/main/studypack/SPEC.md) | Prompt cho AI: [PROMPT.md](https://github.com/bk-study-desk/bk-study-desk/blob/main/studypack/PROMPT.md).

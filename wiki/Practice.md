@@ -172,4 +172,4 @@ Trung điểm \(x_n=\frac{a_n+b_n}{2}\).
 - Add `xao-cau: co` and `xao-dap-an: co` to the header to shuffle questions and answers. For a question with an option like "Both A and B", add `· giữ thứ tự` (keep order) at the end of its `###` line.
 - For quizzes with pictures, it's simpler to write them in the app (section 3) and export (section 6).
 
-Full specification: [SPEC.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/SPEC.md) | AI prompt: [PROMPT.md](https://github.com/xeroz369/bk-study-desk/blob/main/studypack/PROMPT.md) (both in Vietnamese).
+Full specification: [SPEC.md](https://github.com/bk-study-desk/bk-study-desk/blob/main/studypack/SPEC.md) | AI prompt: [PROMPT.md](https://github.com/bk-study-desk/bk-study-desk/blob/main/studypack/PROMPT.md) (both in Vietnamese).

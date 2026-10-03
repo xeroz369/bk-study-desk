@@ -6,7 +6,7 @@
 
 Updated: 3 October 2026
 
-BK Study Desk is an unofficial app developed by an individual (xeroz369) for students of Ho Chi Minh City University of Technology – VNU-HCM (HCMUT). It is not part of the university and is not endorsed by the university or Moodle HQ. Every address and API the app calls is listed on the Wiki page [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/C%C3%A1ch-app-ho%E1%BA%A1t-%C4%91%E1%BB%99ng) (Vietnamese).
+BK Study Desk is an unofficial app developed by an individual (xeroz369) for students of Ho Chi Minh City University of Technology – VNU-HCM (HCMUT). It is not part of the university and is not endorsed by the university or Moodle HQ. Every address and API the app calls is listed on the Wiki page [How the app works](https://github.com/bk-study-desk/bk-study-desk/wiki/C%C3%A1ch-app-ho%E1%BA%A1t-%C4%91%E1%BB%99ng) (Vietnamese).
 
 ## What the app collects
 
@@ -72,4 +72,4 @@ Downloaded data may contain other people's information (lecturers' names, classm
 
 ## Contact
 
-Questions or bug reports: [GitHub Issues](https://github.com/xeroz369/bk-study-desk/issues). Issues are public: do not post names, student IDs, grades, tokens or screenshots with personal information. Report security issues privately per [SECURITY.md](SECURITY.md). Private privacy questions: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+Questions or bug reports: [GitHub Issues](https://github.com/bk-study-desk/bk-study-desk/issues). Issues are public: do not post names, student IDs, grades, tokens or screenshots with personal information. Report security issues privately per [SECURITY.md](SECURITY.md). Private privacy questions: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

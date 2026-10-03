@@ -6,7 +6,7 @@
 
 ## Reporting a vulnerability
 
-**Do not report security vulnerabilities in public issues.** Report them privately via [**Security** > **Report a vulnerability**](https://github.com/xeroz369/bk-study-desk/security/advisories/new), or email [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+**Do not report security vulnerabilities in public issues.** Report them privately via [**Security** > **Report a vulnerability**](https://github.com/bk-study-desk/bk-study-desk/security/advisories/new), or email [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
 
 Please include:
 - the app version and Windows version;
@@ -17,7 +17,7 @@ You will get a reply within 7 days. The fix ships in the next release, with cred
 
 ## Supported versions
 
-Only the latest version on [Releases](https://github.com/xeroz369/bk-study-desk/releases) receives security fixes. Turn on updates in **Settings** > **Updates** to stay current.
+Only the latest version on [Releases](https://github.com/bk-study-desk/bk-study-desk/releases) receives security fixes. Turn on updates in **Settings** > **Updates** to stay current.
 
 ## How the app protects you
 

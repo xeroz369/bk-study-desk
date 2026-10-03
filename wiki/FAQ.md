@@ -27,4 +27,4 @@ Yes. Download `-Setup-arm64.exe`.
 Yes. Go to **Calendar** > **Timetable** > **Export calendar (.ics)**, save the file, then in Google Calendar open **Settings** > **Import & export** and choose that file. Importing into a separate calendar makes it easy to remove next term.
 
 **Where do I report a bug?**
-In [Issues](https://github.com/xeroz369/bk-study-desk/issues/new/choose). Don't paste passwords, student IDs or tokens. Report security vulnerabilities privately; see [SECURITY.md](https://github.com/xeroz369/bk-study-desk/blob/main/docs/en/SECURITY.md). For private matters: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).
+In [Issues](https://github.com/bk-study-desk/bk-study-desk/issues/new/choose). Don't paste passwords, student IDs or tokens. Report security vulnerabilities privately; see [SECURITY.md](https://github.com/bk-study-desk/bk-study-desk/blob/main/docs/en/SECURITY.md). For private matters: [bkstudydesk@xerozsoft.com](mailto:bkstudydesk@xerozsoft.com).

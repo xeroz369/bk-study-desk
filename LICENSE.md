@@ -1,4 +1,4 @@
-Required Notice: Copyright (c) 2026 xeroz369 (https://github.com/xeroz369/bk-study-desk)
+Required Notice: Copyright (c) 2026 xeroz369 (https://github.com/bk-study-desk/bk-study-desk)
 
 # PolyForm Noncommercial License 1.0.0
 

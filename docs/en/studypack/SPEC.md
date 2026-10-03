@@ -4,7 +4,7 @@
 
 > Translated from SPEC.md (Vietnamese) for BK Study Desk 1.1.4.
 
-User guide: [Wiki > Practice](https://github.com/xeroz369/bk-study-desk/wiki/Practice). This file is the full specification for tool authors and for AI.
+User guide: [Wiki > Practice](https://github.com/bk-study-desk/bk-study-desk/wiki/Practice). This file is the full specification for tool authors and for AI.
 
 The format's keywords are Vietnamese (for example `mon`, `### Câu`, `= Đúng`), because its users are Vietnamese students. English keys are accepted where noted.
 

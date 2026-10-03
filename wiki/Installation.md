@@ -8,7 +8,7 @@
 
 New versions appear here as soon as they're released, and the app tells you when the next one is out.
 
-1. Go to [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) and download `BKStudyDesk-x.y.z-Setup-x64.exe`. ARM laptops (Surface Pro X, Snapdragon): download `-Setup-arm64.exe`.
+1. Go to [Releases](https://github.com/bk-study-desk/bk-study-desk/releases/latest) and download `BKStudyDesk-x.y.z-Setup-x64.exe`. ARM laptops (Surface Pro X, Snapdragon): download `-Setup-arm64.exe`.
 2. Run it. If Windows shows **"Windows protected your PC"**, select **More info** > **Run anyway**. The warning appears because the installer isn't code-signed yet; it shows only once, when installing.
 3. Choose the install folder (by default inside your user account; drive D: works too) and select **Cài đặt** (Install). No admin rights needed. The installer is in Vietnamese.
 4. The app opens when installation finishes. Shortcuts are on the desktop and in the Start menu.
@@ -19,7 +19,7 @@ New versions appear here as soon as they're released, and the app tells you when
 
 Open [BK Study Desk on the Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850) and select **Get**. Microsoft signs the package, so there's no SmartScreen warning. The Store has only an x64 package (ARM laptops run it through Windows emulation).
 
-Every new version waits for Microsoft review (sometimes a few days), so the Store version usually lags behind GitHub. Compare the version number on the Store page with [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) before installing.
+Every new version waits for Microsoft review (sometimes a few days), so the Store version usually lags behind GitHub. Compare the version number on the Store page with [Releases](https://github.com/bk-study-desk/bk-study-desk/releases/latest) before installing.
 
 The two are separate installs with separate data. Install only one.
 
@@ -43,5 +43,5 @@ Compare it with the matching line in `SHA256SUMS.txt` on the Releases page.
 
 For a stronger check (requires [GitHub CLI](https://cli.github.com)), confirm the installer was built from this exact source on GitHub and not altered along the way:
 ```powershell
-gh attestation verify .\BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
+gh attestation verify .\BKStudyDesk-x.y.z-Setup-x64.exe --repo bk-study-desk/bk-study-desk
 ```

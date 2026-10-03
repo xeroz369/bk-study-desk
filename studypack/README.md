@@ -6,7 +6,7 @@ Soạn quiz để tự ôn và gửi cho bạn bè: gõ trong app, nhờ AI ho�
 
 | File | Dùng để |
 |---|---|
-| [Wiki: Luyện tập](https://github.com/xeroz369/bk-study-desk/wiki/Luyện-tập) | **Bắt đầu ở đây**: hướng dẫn từng bước, có ảnh, không cần biết lập trình |
+| [Wiki: Luyện tập](https://github.com/bk-study-desk/bk-study-desk/wiki/Luyện-tập) | **Bắt đầu ở đây**: hướng dẫn từng bước, có ảnh, không cần biết lập trình |
 | [SPEC.md](SPEC.md) | Đặc tả đầy đủ của Study Markdown (dạng chính) và JSON, cho người viết công cụ |
 | [PROMPT.md](PROMPT.md) | Prompt cho AI (app soạn sẵn ở tab **Nhờ AI**) |
 | `studypack-v1.schema.json` | JSON Schema của dạng JSON |

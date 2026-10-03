@@ -8,7 +8,7 @@ Write quizzes to revise and share with friends: type them in the app, ask AI, or
 
 | File | Used for |
 |---|---|
-| [Wiki: Practice](https://github.com/xeroz369/bk-study-desk/wiki/Practice) | **Start here**: step-by-step guide with screenshots, no programming needed |
+| [Wiki: Practice](https://github.com/bk-study-desk/bk-study-desk/wiki/Practice) | **Start here**: step-by-step guide with screenshots, no programming needed |
 | [SPEC.md](SPEC.md) | Full specification of Study Markdown (the main format) and JSON, for tool authors |
 | [PROMPT.md](../../../studypack/PROMPT.md) | AI prompt (Vietnamese; the app fills it in on the **Nhờ AI** (Ask AI) tab) |
 | `studypack-v1.schema.json` | JSON Schema of the JSON format |

@@ -101,7 +101,7 @@ jobs:
           $sums = Get-ChildItem dist -File | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)" }
           [IO.File]::WriteAllText("$PWD/dist/SHA256SUMS.txt", ($sums -join "`n") + "`n")   # xuống dòng kiểu Unix: sha256sum -c đọc được
       # Attestation: chứng minh bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
-      # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
+      # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo bk-study-desk/bk-study-desk
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         if: ${{ !github.event.repository.private }}
         with:
