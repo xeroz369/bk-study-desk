@@ -1,0 +1,27 @@
+{
+  "_note": "Fixture viết tay theo tên field trong MybkSource/MybkNormalize. Không có dữ liệu thật.",
+  "components": [
+    { "namHocHocKyId": 102, "monHocId": 9002, "tenTinhTrang": "Đã công bố",
+      "diemThanhPhanJson": "[{\"ma\":\"bt\",\"ten\":\"Bài tập\",\"tyle\":20,\"diem\":9},{\"ma\":\"gk\",\"ten\":\"Giữa kỳ\",\"tyle\":30,\"diem\":12},{\"ma\":\"tket\",\"ten\":\"Tổng kết\",\"tyle\":100,\"diem\":8}]" },
+    { "namHocHocKyId": 102, "monHocId": 9003, "tenTinhTrang": null, "diemThanhPhanJson": "không phải JSON" }
+  ],
+  "decisions": [
+    { "type": "Cảnh báo", "yearSemesterName": "HK1 2025-2026", "decisionReason": "Mẫu", "status": "Hiệu lực", "decisionDate": "2026-01-10", "personalField": "không được chép" }
+  ],
+  "socialWork": {
+    "numOfSocialWorkDays": 4.5,
+    "participationActivities": [
+      { "activityName": "Hoạt động mẫu", "activityStartDate": "2026-03-01", "numberOfConversionDays": "1.5", "isConfirmed": true, "isCanceled": false }
+    ]
+  },
+  "fees": [
+    { "shortContent": "Học phí mẫu", "amtToBePaid": 1000000, "amtRemaining": 500000, "expectedExpirationDate": "2026-11-01", "isCancelled": 0 },
+    { "shortContent": "Đã hủy", "amtToBePaid": 1000, "amtRemaining": 1000, "expectedExpirationDate": "2026-11-01", "isCancelled": "1" },
+    { "shortContent": "Đã đóng", "amtToBePaid": 1000, "amtRemaining": 0, "expectedExpirationDate": "2026-11-01", "isCancelled": 0 }
+  ],
+  "registered": [
+    { "semesterCode": "HK261_D1", "semesterId": 1, "subjectCode": "MT0001", "subjectName": "Môn Mẫu Một", "subjClassGrpCode": "L01", "theoryGrpCode": "L01", "exerciseGrpCode": null, "result": "<span>Chờ</span>", "isConfirmed": false },
+    { "semesterCode": "HK261_KQ", "semesterId": "3", "subjectCode": "MT0001", "subjectName": "Môn Mẫu Một", "subjClassGrpCode": "L02", "theoryGrpCode": "L02", "exerciseGrpCode": "L02_TN", "result": "Thành công", "isConfirmed": true },
+    { "semesterCode": "HK252_KQ", "semesterId": 9, "subjectCode": "MT0009", "subjectName": "Kỳ trước", "subjClassGrpCode": "L01", "theoryGrpCode": "L01", "exerciseGrpCode": null, "result": "Thành công", "isConfirmed": true }
+  ]
+}

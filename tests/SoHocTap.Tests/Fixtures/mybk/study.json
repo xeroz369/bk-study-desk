@@ -1,0 +1,54 @@
+{
+  "_note": "Fixture viết tay theo tên field trong MybkSource/MybkNormalize. Không có dữ liệu thật: tên, mã, phòng đều là giá trị mẫu.",
+  "schedule": [
+    {
+      "subject": { "code": "MT0001", "nameVi": "Môn Mẫu Một", "numOfCredits": 4 },
+      "dayOfWeek": "4",
+      "startTime": "09:00",
+      "endTime": "10:50",
+      "startLesson": 3,
+      "numOfLesson": "2",
+      "room": { "code": "H1-101", "building": { "campus": { "code": "CS2" } } },
+      "employee": { "lastName": "Giảng Viên", "firstName": "A" },
+      "calendarYear": 2026,
+      "weekSeriesDisplay": "--|40|41|--|43|x"
+    },
+    {
+      "subject": { "code": "MT0002", "nameVi": "Môn Mẫu Hai", "numOfCredits": 3 },
+      "dayOfWeek": 2,
+      "startTime": "07:00",
+      "endTime": "08:50",
+      "startLesson": 1,
+      "numOfLesson": 2,
+      "room": null,
+      "employee": null,
+      "calendarYear": 2026,
+      "weekSeriesDisplay": null
+    },
+    "dòng lạ không phải object"
+  ],
+  "exams": {
+    "data": [
+      { "MAMONHOC": "MT0002", "TENMONHOC": "Môn Mẫu Hai", "LOAITHI": "GK", "NGAYTHI": "2026-10-16", "GIOBD": "13g00", "GIO_SOPHUT": "90", "MAPHONG": "H6-201", "MACOSO": "CS2", "NHOMLOP": "L01" },
+      { "MAMONHOC": "MT0001", "TENMONHOC": "Môn Mẫu Một", "LOAITHI": "GK", "NGAYTHI": "2026-10-15", "GIOBD": "09g00", "GIO_SOPHUT": "không rõ", "MAPHONG": "H6-101", "MACOSO": "CS2", "NHOMLOP": "L02" }
+    ]
+  },
+  "gradesCourses": [
+    { "maHocKy": "20251", "maMonHoc": "MT0003", "tenMonHoc": "Môn Cũ", "soTinChi": 3, "diemSo": 8.5, "diemChu": "A", "diemDat": 1, "nhomTo": "L01", "ghiChu": "<b>Đạt</b> &amp; xong", "namHocHocKyId": 101, "monHocId": 9001 },
+    { "maHocKy": "20252", "maMonHoc": "MT0004", "tenMonHoc": "Môn Miễn", "soTinChi": 2, "diemSo": 13, "diemChu": "MT", "diemDat": "1", "nhomTo": null, "ghiChu": null, "namHocHocKyId": 102, "monHocId": 9002 },
+    { "maHocKy": "20252", "maMonHoc": "MT0005", "tenMonHoc": "Môn Mã Lạ", "soTinChi": 2, "diemSo": "11", "diemChu": "--", "diemDat": "-1", "nhomTo": "L03", "ghiChu": 5, "namHocHocKyId": 102, "monHocId": 9003 }
+  ],
+  "gradesTerms": [
+    { "maNamHocHocKy": "20251", "namHocHocKyTen": "Học kỳ 1 năm học 2025-2026", "diemTBTLHocKy": "7.50", "diemTBTLChung": "7.10", "soTCTLHocKy": 15, "soTCTLChung": "60", "capNhatCuoi": "2026-02-01" },
+    { "maNamHocHocKy": "20252", "namHocHocKyTen": "Học kỳ 2 năm học 2025-2026", "diemTBTLHocKy": "8.00", "diemTBTLChung": "7.30", "soTCTLHocKy": 14, "soTCTLChung": "74", "capNhatCuoi": "2026-07-01" }
+  ],
+  "curriculumInfo": { "tenctdt": "Chương trình mẫu", "tenkhoa": "Khoa Mẫu", "namapdung": "2023", "mactdt": "CT01", "sotctl": "50/132", "tbtlhe10": "7.30/10", "tbtlhe4": "--", "capnhatcuoi": "2026-07-01" },
+  "curriculum": [
+    { "stt": 2, "khoikienthucid": 11, "tenkhoikienthuc": "Khối <i>cơ sở</i>", "loainhomkhoikienthuc": "CS", "khoikienthucbatbuoc": "1", "tcyeucau": 30, "tcdat": 20, "mhdat": 5, "hoanthanh": "0",
+      "mamonhoc": "MT0003", "tenmonhoc": "Môn Cũ", "sotc": 3, "diemso": 8.5, "hieuluc": "1", "diemchu": "A", "diemdat": "1", "tamdat": "0", "ghichu": "" },
+    { "stt": "1", "khoikienthucid": 11, "tenkhoikienthuc": "Khối <i>cơ sở</i>", "loainhomkhoikienthuc": "CS", "khoikienthucbatbuoc": "1", "tcyeucau": 30, "tcdat": 20, "mhdat": 5, "hoanthanh": "0",
+      "mamonhoc": "MT0006", "tenmonhoc": "Môn Chưa Học", "sotc": 4, "diemso": null, "hieuluc": "0", "diemchu": "--", "diemdat": "0", "tamdat": "0", "ghichu": "Tương đương MT0007" },
+    { "stt": 3, "khoikienthucid": 12, "tenkhoikienthuc": "Khối tự chọn", "loainhomkhoikienthuc": "TC", "khoikienthucbatbuoc": "0", "tcyeucau": 6, "tcdat": 6, "mhdat": 2, "hoanthanh": "1",
+      "mamonhoc": "MT0004", "tenmonhoc": "Môn Miễn", "sotc": 2, "diemso": 13, "hieuluc": "1", "diemchu": "MT", "diemdat": "1", "tamdat": "1", "ghichu": null }
+  ]
+}

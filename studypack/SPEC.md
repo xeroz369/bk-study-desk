@@ -52,7 +52,7 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 ### 2.3 Câu hỏi
 
 ```
-### Câu <số> · <nguồn> · giữ thứ tự        (nguồn và "giữ thứ tự" không bắt buộc)
+### Câu <số> · <nguồn> · giữ thứ tự · nhóm: <tên>   (nguồn, "giữ thứ tự", "nhóm" không bắt buộc)
 <đề: Markdown + TeX, nhiều dòng, có thể có ảnh>
 <đáp án: một trong các dạng ở bảng dưới>
 > <lời giải, mỗi dòng bắt đầu bằng ">">
@@ -69,6 +69,7 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 - Phương án nằm trên **một dòng**, có thể kèm ảnh `![](img/a.webp)`.
 - Chỉ dòng `###` bắt đầu một câu mới; dòng trống bên trong câu không làm tách câu.
 - `· giữ thứ tự`: không xáo phương án của câu này. Các phương án kiểu "Tất cả...", "Các đáp án khác...", "Cả A và B..." vốn đã luôn đứng yên.
+- `· nhóm: <tên>` (không bắt buộc, JSON: `"group"`): các câu cùng tên nhóm trong một bài dùng chung đề hoặc số liệu, ví dụ "Câu 3 đến 5 dùng hàm f ở trên". Đề ngẫu nhiên rút cả nhóm hoặc bỏ cả nhóm, xáo câu thì nhóm vẫn đứng liền nhau và giữ thứ tự. Câu không có nhóm thì rút riêng; đề ngẫu nhiên luôn xếp câu theo thứ tự gốc (chương, bài, câu).
 
 ### 2.4 Nội dung
 

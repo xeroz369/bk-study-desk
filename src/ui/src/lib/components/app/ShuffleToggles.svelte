@@ -1,12 +1,13 @@
 <!-- "Xáo câu" / "Xáo đáp án" toggles. The choice is remembered on this device (shuffle.ts). -->
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { savePrefs, type ShufflePrefs } from '$lib/study/shuffle';
+	import { PRACTICE_SHUFFLE, savePrefs, type ShufflePrefs } from '$lib/study/shuffle';
 
-	let { prefs = $bindable() }: { prefs: ShufflePrefs } = $props();
+	/** storageKey: luyện tập và thi thử nhớ riêng (shuffle.ts). */
+	let { prefs = $bindable(), storageKey = PRACTICE_SHUFFLE }: { prefs: ShufflePrefs; storageKey?: string } = $props();
 	function flip(key: keyof ShufflePrefs) {
 		prefs = { ...prefs, [key]: !prefs[key] };
-		savePrefs(prefs);
+		savePrefs(prefs, storageKey);
 	}
 </script>
 

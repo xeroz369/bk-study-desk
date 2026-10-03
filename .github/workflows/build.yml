@@ -14,6 +14,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
@@ -22,12 +24,13 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: src/ui/package-lock.json
-      - name: Practice UI (svelte-check, Prettier, build)
+      - name: Practice UI (svelte-check, Prettier, vitest, build)
         working-directory: src/ui
         run: |
           npm ci --no-audit --no-fund
           npm run check
           npx prettier --check src
+          npm test
           npm run build
       - name: Study Pack tools (round-trip test)
         run: node studypack/test-roundtrip.ts
@@ -45,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x

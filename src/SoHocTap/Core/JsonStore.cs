@@ -35,12 +35,28 @@ public static class JsonStore
     public static void Write(string path, JsonNode? node)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var tmp = path + ".tmp";
-        File.WriteAllText(tmp, node?.ToJsonString(Options) ?? "null");
-        // Thay file thật: chương trình khác (antivirus, OneDrive, trình soạn thảo) đang mở file thì Windows từ chối; thử lại vài lần.
+        var text = node?.ToJsonString(Options) ?? "null";
+        // Tên file tạm riêng cho mỗi lần ghi: hai thread cùng ghi một file (LMS và MyBK cùng ghi sync-state.json) mà dùng chung
+        // "x.tmp" thì lần này ghi đè file tạm của lần kia, hoặc Move mất file tạm của nhau.
+        var tmp = $"{path}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            // Ghi file tạm và thay file thật đều có thể gặp file đang bận (antivirus, OneDrive, trình soạn thảo đang mở): thử lại vài lần.
+            Retry(path, () => File.WriteAllText(tmp, text));
+            Retry(path, () => File.Move(tmp, path, overwrite: true));
+        }
+        finally
+        {
+            try { if (File.Exists(tmp)) File.Delete(tmp); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
+    private static void Retry(string path, Action write)
+    {
         for (var attempt = 1; ; attempt++)
         {
-            try { File.Move(tmp, path, overwrite: true); return; }
+            try { write(); return; }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException && attempt < 5)
             {
                 Log.Debug($"Ghi {Path.GetFileName(path)}: file đang bận, thử lại ({attempt})");

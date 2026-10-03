@@ -6,6 +6,39 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.7] - 2026-10-03
+
+Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thêm tính năng và sửa lỗi hơn. Nếu thấy lỗi lạ, hãy mở issue.
+
+### Bảo mật
+
+- Thêm kiểm tra bảo mật tự động cho mỗi thay đổi và hằng tuần: OSV-Scanner, npm audit, NuGet advisory, gitleaks, zizmor, Semgrep, BinSkim, OpenSSF Scorecard (cùng CodeQL và Dependabot đã có). Quy trình và thời hạn xử lý: [docs/quy-trinh-bao-mat.md](docs/quy-trinh-bao-mat.md).
+
+### Thay đổi
+
+- Cửa sổ hẹp (từ 1024 px trở xuống): thanh điều hướng chỉ còn biểu tượng thay vì bị tràn, mọi trang vẫn mở được.
+- Bảng giữ cột chính đủ rộng khi cửa sổ hẹp; tên cột dài có dấu ba chấm và tooltip; các hàng tab không còn xuống hai dòng.
+- Đồng bộ xong không còn làm mất cách sắp xếp, vị trí cuộn và dòng đang chọn. Chỉ trang đang mở được làm mới.
+- **Luyện tập** giải phóng bộ nhớ khi rời trang 3 phút hoặc khi app thu xuống khay (khoảng 300 MB), mở lại thì tạo lại.
+- **Đề ngẫu nhiên** giữ thứ tự câu như trong đề gốc và giữ các câu liên quan đi cùng nhau (trường `group` mới trong Study Pack).
+- Menu chuột phải ở **Luyện tập** thống nhất tên lệnh; tiêu đề chương có menu chuột phải.
+- Đồng bộ bỏ qua lượt khi mất mạng thay vì báo lỗi, có mạng lại hoặc máy thức dậy thì đồng bộ sớm; chế độ Tiết kiệm pin thì giãn chu kỳ.
+- Thông báo lỗi đồng bộ dựa trên loại lỗi (hết phiên, mất mạng, máy chủ lỗi...), có thêm bản tiếng Anh.
+- Một phần dữ liệu MyBK lỗi thì giữ dữ liệu cũ của phần đó thay vì để trống. Dữ liệu đọc không được thì báo rõ thay vì để trang trống.
+- Cài đặt: ô nhắc hạn nhập 0 để tắt mốc nhắc thứ hai; chu kỳ đồng bộ MyBK tối thiểu 6 giờ.
+- File log ghi đủ chi tiết lỗi và thông tin môi trường để dễ gửi khi báo lỗi.
+
+### Sửa lỗi
+
+- Phiên MyBK hết hạn thì đồng bộ MyBK treo 45 giây rồi báo "MyBK không phản hồi" (lỗi ở 1.1.5, 1.1.6). App giờ tự đăng nhập lại qua SSO như trước.
+- Trang trống không có dòng giải thích: các tab ở **Môn học**, **Lịch** > **Sắp tới**, **Lịch thi**, ô **Môn học** ở **Luyện tập**.
+- Chữ bị cắt: ô "giữ đăng nhập" ở **Cài đặt**, dòng báo lỗi trong hộp **Tải tài liệu**; thanh trạng thái đẩy mất tên kỳ thi và số phiên bản.
+- GPA lẫn dấu chấm và dấu phẩy; cột học phí chưa định dạng tiền; chép ở **Lịch** không báo "Đã chép".
+- **Luyện tập**: lỗi khi nhập, lưu hay gỡ gói không còn bị im lặng; gợi ý trong ô nhập không còn ghi tên chương của môn khác.
+- Lưu một file đang mở trong ứng dụng khác (vd. PDF) không còn làm hỏng cả lượt đồng bộ LMS.
+- Cửa sổ nhớ vị trí theo đúng màn hình đang dùng khi có nhiều màn hình.
+- App tự gọi giữ phiên SSO ngay sau khi vừa đồng bộ MyBK xong (thừa).
+
 ## [1.1.6] - 2026-10-03
 
 ### Sửa lỗi
@@ -155,7 +188,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...HEAD
+[1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4

@@ -56,7 +56,7 @@ Between two `---` lines at the top of the file, one `key: value` per line.
 ### 2.3 Questions
 
 ```
-### Câu <number> · <source> · giữ thứ tự      (source and "giữ thứ tự" = keep order are optional)
+### Câu <number> · <source> · giữ thứ tự · nhóm: <name>   (source, "giữ thứ tự" = keep order and "nhóm" = group are optional)
 <question: Markdown + TeX, several lines, may include images>
 <answer: one of the forms in the table below>
 > <solution, every line starts with ">">
@@ -73,6 +73,7 @@ Between two `---` lines at the top of the file, one `key: value` per line.
 - Each option is on **one line** and may include an image `![](img/a.webp)`.
 - Only a `###` line starts a new question; blank lines inside a question don't split it.
 - `· giữ thứ tự` (keep order): don't shuffle this question's options. Options like "Tất cả..." (All...), "Các đáp án khác..." (None of the others...), "Cả A và B..." (Both A and B...) always stay in place anyway.
+- `· nhóm: <name>` (group, optional; JSON: `"group"`): questions with the same group name in one lesson share a prompt or data, for example "Questions 3 to 5 use the function f above". A random exam draws the whole group or none of it, and shuffling keeps the group together and in order. Questions without a group are drawn on their own; a random exam always lists questions in their original order (chapter, lesson, question).
 
 ### 2.4 Content
 

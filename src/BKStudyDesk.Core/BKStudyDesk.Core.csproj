@@ -25,6 +25,7 @@
   <ItemGroup>
     <Compile Include="$(Src)Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="$(Src)Files\**\*.cs" Link="Files\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Data\**\*.cs" Link="Data\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="$(Src)Sources\**\*.cs" Link="Sources\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="$(Src)Api\**\*.cs" Link="Api\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="$(Src)Shell\AppInfo.cs" Link="Shell\AppInfo.cs" />

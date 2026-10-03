@@ -11,3 +11,9 @@ export function plainText(html: string): string {
 	} while (s !== prev);
 	return s.replace(/[<>]/g, '');
 }
+
+/**
+ * Chuẩn hóa chữ để so sánh: NFC, chữ thường, gộp khoảng trắng. Giữ dấu tiếng Việt.
+ * Dùng chung cho câu điền (grade), tên chương/bài khi ghép gói (registry, transfer) và nhãn đáp án LMS (lmsquiz).
+ */
+export const normText = (s: string) => s.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();

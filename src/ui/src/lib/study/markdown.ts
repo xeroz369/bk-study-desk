@@ -18,6 +18,8 @@ export interface MdResult {
 
 const EXAM_UNIT = /^(đề thi thử|de thi thu|exams?)$/i;
 const KEEP_ORDER = /^(giữ thứ tự|giu thu tu|keep order)$/i;
+/** "nhóm: f1" trong dòng ###: các câu cùng nhóm trong bài dùng chung đề, luôn đi cùng nhau. */
+const GROUP = /^(?:nhóm|nhom|group)\s*:\s*(.+)$/i;
 
 const slug = (s: string, fallback: string) => {
 	const out = s
@@ -297,11 +299,12 @@ function parseQuestion(
 ): PackQuestion | null {
 	const parts = b.title.split(/\s+·\s+/).map((s) => s.trim());
 	const keepOrder = parts.some((s) => KEEP_ORDER.test(s));
+	const group = parts.map((s) => GROUP.exec(s)?.[1].trim()).find((g) => !!g);
 	const tag =
 		parts
 			.slice(1)
-			.filter((s) => !KEEP_ORDER.test(s))
-			.join(' · ') || (/^câu\s*\d+$/i.test(parts[0]) ? '' : parts[0]);
+			.filter((s) => !KEEP_ORDER.test(s) && !GROUP.test(s))
+			.join(' · ') || (/^câu\s*\d+$/i.test(parts[0]) || GROUP.test(parts[0]) ? '' : parts[0]);
 	const prompt: string[] = [],
 		options: { text: string; right: boolean }[] = [],
 		solution: string[] = [];
@@ -320,6 +323,7 @@ function parseQuestion(
 		prompt: html(prompt.join('\n')),
 		solution: solution.length ? html(solution.join('\n')) : '',
 		...(keepOrder ? { keepOrder: true } : {}),
+		...(group ? { group } : {}),
 	};
 	if (!prompt.join('').trim()) {
 		errors.push({ line: b.line, message: 'câu chưa có đề' });
@@ -413,7 +417,12 @@ export function writeMarkdown(p: StudyPack): { md: string; images: Record<string
 		'',
 	];
 	const question = (q: PackQuestion, i: number) => {
-		const head = [`Câu ${i + 1}`, ...(q.tag ? [q.tag] : []), ...(q.keepOrder ? ['giữ thứ tự'] : [])].join(' · ');
+		const head = [
+			`Câu ${i + 1}`,
+			...(q.tag ? [q.tag] : []),
+			...(q.keepOrder ? ['giữ thứ tự'] : []),
+			...(q.group ? [`nhóm: ${q.group}`] : []),
+		].join(' · ');
 		out.push(`### ${head}`, md(q.prompt));
 		const t = q.type ?? 'single';
 		if (t === 'single' || t === 'multi') {

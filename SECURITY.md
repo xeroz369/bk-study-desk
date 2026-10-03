@@ -24,4 +24,4 @@ Chỉ bản mới nhất ở trang [Releases](https://github.com/xeroz369/bk-stu
 - App chỉ gọi API **đọc**; không nộp bài, đăng ký, hủy hay thanh toán.
 - Gói cập nhật được kiểm SHA-256 trước khi cài; nguồn cập nhật chỉ nhận repo GitHub qua https (thư mục trên máy chỉ dùng ở bản cài thử).
 - Gói quiz nhận từ người khác được kiểm tra và lọc HTML; không chạy script, không tải ảnh ngoài.
-- Mã nguồn được quét tự động bằng CodeQL; thư viện được theo dõi lỗ hổng bằng Dependabot.
+- Mỗi thay đổi đều qua kiểm tra bảo mật tự động: CodeQL, Semgrep, OSV-Scanner, npm audit, NuGet advisory, gitleaks, zizmor, BinSkim, OpenSSF Scorecard; thư viện được Dependabot theo dõi. Chi tiết và cách xử lý kết quả: [Quy trình kiểm tra bảo mật](docs/quy-trinh-bao-mat.md).

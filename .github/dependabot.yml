@@ -1,14 +1,17 @@
 # Dependabot: báo và tự mở PR khi thư viện có lỗ hổng hoặc bản mới. Gom theo tuần cho đỡ nhiễu.
+# cooldown: bản mới phải ra ít nhất 7 ngày mới được đề xuất (tránh dính gói bị chiếm quyền vừa phát hành); bản vá lỗ hổng không phải chờ.
 version: 2
 updates:
   - package-ecosystem: nuget
     directories: ['/src/SoHocTap', '/src/BKStudyDesk.Core', '/src/BKStudyDesk.Desktop', '/src/BKStudyDesk.Setup', '/tests/SoHocTap.Tests']
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
     groups:
       nuget: { patterns: ['*'] }
   - package-ecosystem: npm
     directory: /src/ui
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
     ignore:
       # svelte-check chưa chạy được với TypeScript 7; prettier-plugin-svelte 4 đổi cách định dạng. Xem lại khi svelte-check hỗ trợ.
       - dependency-name: typescript
@@ -20,3 +23,4 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    cooldown: { default-days: 7 }

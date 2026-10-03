@@ -67,20 +67,33 @@ public partial class DownloadWindow : Window
 
     private async Task LoadAsync()
     {
-        Summary.Text = L.T("download.reading");
+        // Lần đầu (danh sách trống) thì báo đang đọc trong khung; đọc lại sau khi tải xong thì giữ danh sách cũ tới khi có cái mới.
+        if (_rows.Count == 0) ShowListState(L.T("download.reading"), error: false);
+        Summary.Text = "";
         try
         {
             var list = await Task.Run(() => LmsSource.SectionsAsync(_course.Id, CancellationToken.None));
             _rows = list.Select(s => new SectionRow(s, Kinds)).ToList();
             Sections.ItemsSource = _rows;
             Update();
-            if (_rows.Count == 0) Summary.Text = L.T("download.empty");
+            if (_rows.Count == 0) ShowListState(L.T("download.empty"), error: false);
+            else ListState.Visibility = Visibility.Collapsed;
         }
         catch (Exception e)
         {
             Log.Error("Lỗi đọc danh sách mục LMS", e);
-            Summary.Text = L.F("download.readError", e.Message);
+            _rows = [];
+            Sections.ItemsSource = null;
+            Update();
+            ShowListState(L.F("download.readError", e.Message), error: true);
         }
+    }
+
+    private void ShowListState(string text, bool error)
+    {
+        ListStateText.Text = text;
+        ListStateIcon.Visibility = error ? Visibility.Visible : Visibility.Collapsed;
+        ListState.Visibility = Visibility.Visible;
     }
 
     /// <summary>Các loại file đang chọn ở hàng "Loại file".</summary>
@@ -97,8 +110,9 @@ public partial class DownloadWindow : Window
     {
         var picked = _rows.Where(r => r.Selected).ToList();
         var files = picked.SelectMany(r => r.Files).ToList();
-        Summary.Text = L.F("download.summary", _rows.Count, picked.Count, files.Count, Format.Size(files.Sum(f => f.Bytes)));
+        Summary.Text = _rows.Count == 0 ? "" : L.F("download.summary", _rows.Count, picked.Count, files.Count, Format.Size(files.Sum(f => f.Bytes)));
         Start.IsEnabled = _run is null && files.Count > 0;
+        AllButton.IsEnabled = NoneButton.IsEnabled = _run is null && _rows.Count > 0;
     }
 
     private void OnPick(object sender, RoutedEventArgs e) => Update();
@@ -123,6 +137,8 @@ public partial class DownloadWindow : Window
         _run = new CancellationTokenSource();
         Start.IsEnabled = false;
         Sections.IsEnabled = false;
+        AllButton.IsEnabled = NoneButton.IsEnabled = false;
+        Output.Visibility = Visibility.Visible;
         Write(L.F("download.starting", picked.Count));
         try
         {

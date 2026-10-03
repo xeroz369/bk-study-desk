@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using SoHocTap.Core;
+using SoHocTap.Data;
 using SoHocTap.Sources;
 
 namespace SoHocTap.Ui;
@@ -52,8 +53,9 @@ public sealed partial class AppState(SourceHub hub)
 
     public void Reload()
     {
-        Lms = DataFiles.Read<LmsData>("lms.json");
-        Mybk = DataFiles.Read<MybkData>("mybk.json");
+        // Store có cache theo mtime: file không đổi thì không parse lại (Reload được gọi ở mỗi lần nguồn báo có dữ liệu).
+        Lms = LmsStore.Read();
+        Mybk = MybkStore.Read();
         RefreshStatus();
     }
 
@@ -79,14 +81,40 @@ public sealed partial class AppState(SourceHub hub)
     public string? Error(string name) => Source(name)?["error"]?.GetValue<string>();
     public long? SyncedAt(string name) => Source(name)?["syncedAt"]?.GetValue<long?>();
 
+    /// <summary>Loại lỗi đồng bộ gần nhất của nguồn; null nếu không lỗi hoặc lỗi ghi bởi bản cũ (chỉ có message).</summary>
+    public SyncErrorKind? ErrorKind(string name) => Error(name) is null ? null : SyncErrorText.Parse(Source(name)?["errorKind"]?.GetValue<string>());
+
+    /// <summary>
+    /// File dữ liệu đã lưu của nguồn có mà không đọc được (hỏng, khác định dạng): lý do kỹ thuật để hiện ở Chi tiết;
+    /// null = đọc được hoặc chưa có file. Trang nên báo <c>data.unreadable</c> thay vì để trống.
+    /// </summary>
+    public static string? Unreadable(string name) => name switch
+    {
+        "lms" => LmsStore.Problem,
+        "mybk" => MybkStore.Problem,
+        _ => null,
+    };
+
     /// <summary>Phần không đọc được ở lần đồng bộ gần nhất (đồng bộ vẫn xong): tên phần và chi tiết kỹ thuật.</summary>
     public IReadOnlyList<(string What, string Detail)> Warnings(string name) =>
         (Source(name)?["warnings"] as JsonArray ?? []).Select(w => w?.GetValue<string>() ?? "").Where(w => w.Length > 0)
             .Select(w => w.Split(SyncSignal.DetailMark, 2) is var p && p.Length == 2 ? (p[0], p[1]) : (w, "")).ToList();
 
     /// <summary>
+    /// Lỗi đồng bộ gần nhất của nguồn <paramref name="name"/>, viết lại cho người dùng theo loại lỗi (chữ kỹ thuật để ở Detail);
+    /// null nếu không lỗi. Dùng cái này thay cho <see cref="Explain(string, string)"/> để câu báo dựa trên loại lỗi.
+    /// </summary>
+    public (string Text, string? Detail)? ExplainError(string name, string label) =>
+        Error(name) is { } raw ? Explain(label, ErrorKind(name), raw) : null;
+
+    /// <summary>Câu báo theo loại lỗi; không có loại (sync-state.json của bản cũ) thì đoán theo chữ như trước.</summary>
+    public static (string Text, string? Detail) Explain(string label, SyncErrorKind? kind, string raw) =>
+        kind is { } k ? (L.F(SyncErrorText.LangKey(k), label), raw) : Explain(label, raw);
+
+    /// <summary>
     /// Lỗi của cả lượt đồng bộ, viết lại cho người dùng theo hướng dẫn thông báo lỗi của Windows (vấn đề, nguyên nhân, cách xử lý; chữ kỹ
     /// thuật để ở Chi tiết). Lỗi do app tự viết (mất mạng, server chậm, giới hạn, hết phiên) đã là câu dễ hiểu thì giữ nguyên.
+    /// Chỉ còn dùng cho lỗi không có loại (ghi bởi bản cũ); lỗi mới đi qua <see cref="ExplainError"/>.
     /// </summary>
     public static (string Text, string? Detail) Explain(string label, string raw)
     {
@@ -104,26 +132,31 @@ public sealed partial class AppState(SourceHub hub)
         Source(name) is { } o && o["step"]?.GetValue<string>() is { } k ? (k, o["done"]?.GetValue<int>() ?? 0, o["total"]?.GetValue<int>() ?? 0) : null;
 
     /// <summary>
-    /// Câu nói thật về dữ liệu của một nguồn khi trang không có gì để hiện: đang lấy lần đầu, lấy lỗi, hay chưa đăng nhập.
-    /// null = đã có dữ liệu (trang trống nghĩa là thật sự không có gì).
+    /// Câu nói thật về dữ liệu của một nguồn khi trang không có gì để hiện: file đã lưu không đọc được, đang lấy lần đầu, lấy lỗi,
+    /// hay chưa đăng nhập. null = đã có dữ liệu (trang trống nghĩa là thật sự không có gì).
     /// </summary>
     public string? NoDataReason(string name, string label)
     {
+        if (Unreadable(name) is not null) return L.F("data.unreadable", label);
         if (SyncedAt(name) is not null) return null;
         if (Syncing(name)) return L.F("data.loading", label);
-        if (Error(name) is { } err) return L.F("data.failed", label, err);
+        if (Error(name) is { } err) return L.F("data.failed", label, ErrorKind(name) is { } k ? L.F(SyncErrorText.LangKey(k), label) : err);
         return L.F("data.none", label);
     }
 
     [GeneratedRegex("hết hạn|chưa đăng nhập|cần đăng nhập|chưa sẵn sàng|invalidtoken", RegexOptions.IgnoreCase)] private static partial Regex LoginError();
+
+    /// <summary>Lỗi gần nhất của nguồn là do phiên đăng nhập: theo loại lỗi, lỗi của bản cũ (không có loại) thì dò chữ như trước.</summary>
+    private bool NeedsLogin(string name) =>
+        ErrorKind(name) is { } k ? k == SyncErrorKind.SessionExpired : Error(name) is { } e && LoginError().IsMatch(e);
 
     /// <summary>Một tài khoản HCMUT cho cả hai nguồn: nguồn nào đang cần đăng nhập lại.</summary>
     public AccountNeed Account
     {
         get
         {
-            var lms = Source("lms") is { } l && (l["connected"]?.GetValue<bool>() != true || (Error("lms") is { } e && LoginError().IsMatch(e)));
-            var mybk = Error("mybk") is { } m && LoginError().IsMatch(m);
+            var lms = Source("lms") is { } l && (l["connected"]?.GetValue<bool>() != true || NeedsLogin("lms"));
+            var mybk = NeedsLogin("mybk");
             return (lms, mybk) switch { (true, true) => AccountNeed.Both, (true, _) => AccountNeed.Lms, (_, true) => AccountNeed.Mybk, _ => AccountNeed.None };
         }
     }
@@ -180,17 +213,17 @@ public sealed partial class AppState(SourceHub hub)
                 output.Add(new TimelineItem($"mx-{e.Code}{e.Type}", "exam", Regex.Replace(title, @"\s+", " ").Trim(), e.Name,
                     Format.ExamTime(e.Date, e.Time), e.Minutes is { } m ? L.F("timeline.roomMinutes", e.Room, m) : L.F("timeline.room", e.Room), null, "mybk"));
             }
-            // Buổi học 14 ngày tới theo tuần học của từng môn.
+            // Buổi học 14 ngày tới theo tuần học của từng môn. Ngày và giờ học là giờ VN (giờ trường), không theo múi giờ máy.
             for (var k = 0; k < 14; k++)
             {
-                var d = DateTime.Today.AddDays(k);
+                var d = VnTime.Today.AddDays(k);
                 var dow = Format.MybkDay(d);
                 var wk = Format.IsoWeek(d);
-                foreach (var c in M.Schedule.Where(c => c.Day == dow && c.Weeks.Contains(wk)))
+                foreach (var c in M.Schedule.Where(c => c.Day == dow && (c.Weeks ?? []).Contains(wk)))
                 {
-                    var parts = (c.Start ?? "0:0").Split(':');
-                    var t = d.AddHours(int.Parse(parts[0])).AddMinutes(parts.Length > 1 ? int.Parse(parts[1]) : 0);
-                    output.Add(new TimelineItem($"cl-{c.Code}-{d:yyyyMMdd}-{c.Start}", "class", c.Name, c.Name, Format.Sec(t), L.F("timeline.classRoom", c.Room, c.Start, c.End), null, "mybk", Done: true));
+                    // Giờ lạ ("", "--", "7g30") không được làm hỏng cả timeline: không đọc được thì để 0 giờ.
+                    var t = d.AddMinutes(VnTime.ParseClock(c.Start) ?? 0);
+                    output.Add(new TimelineItem($"cl-{c.Code}-{d:yyyyMMdd}-{c.Start}", "class", c.Name, c.Name, VnTime.FromWall(t), L.F("timeline.classRoom", c.Room, c.Start, c.End), null, "mybk", Done: true));
                 }
             }
             var url = Config.Str("sources.mybk.registration");

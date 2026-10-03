@@ -48,6 +48,50 @@ public static class Documents
         return result;
     }
 
+    // ------------------------------------------------------------------ bản async (không chặn UI thread), có cache
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Stamp, JsonNode Value)> Cache = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// <see cref="ListSubjects"/> chạy trên thread pool. Thư mục môn không đổi (mtime của mọi thư mục con như cũ) thì trả kết quả
+    /// đã quét, không đi lại cả cây. Trả bản sao: người gọi sửa thoải mái.
+    /// </summary>
+    public static Task<JsonArray> ListSubjectsAsync(CancellationToken ct = default) =>
+        Task.Run(() => (JsonArray)Cached("subjects", Organizer.SubjectsRoot, ListSubjects, ct), ct);
+
+    /// <summary><see cref="SubjectFiles"/> chạy trên thread pool, có cache theo mtime các thư mục của môn.</summary>
+    public static Task<JsonObject> SubjectFilesAsync(string name, int limit = 400, CancellationToken ct = default) =>
+        Task.Run(() => (JsonObject)Cached($"files|{limit}|{Path.GetFileName(name)}", Path.Combine(Organizer.SubjectsRoot, Path.GetFileName(name)),
+            () => SubjectFiles(name, limit), ct), ct);
+
+    private static JsonNode Cached(string key, string root, Func<JsonNode> scan, CancellationToken ct)
+    {
+        var stamp = TreeStamp(root, ct);
+        if (Cache.TryGetValue(key, out var hit) && hit.Stamp == stamp) return hit.Value.DeepClone();
+        var value = scan();
+        Cache[key] = (stamp, value.DeepClone());
+        return value;
+    }
+
+    /// <summary>
+    /// Dấu của một cây thư mục: số thư mục và mtime lớn nhất của chúng. Thêm, xóa, đổi tên file ở đâu trong cây cũng làm mtime
+    /// của thư mục chứa nó đổi; chỉ đi qua thư mục (ít hơn file rất nhiều) nên rẻ hơn quét lại.
+    /// </summary>
+    private static string TreeStamp(string root, CancellationToken ct)
+    {
+        if (!Directory.Exists(root)) return "none";
+        var max = Directory.GetLastWriteTimeUtc(root).Ticks;
+        var count = 0;
+        var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
+        foreach (var d in new DirectoryInfo(root).EnumerateDirectories("*", options))
+        {
+            ct.ThrowIfCancellationRequested();
+            count++;
+            max = Math.Max(max, d.LastWriteTimeUtc.Ticks);
+        }
+        return $"{count}:{max}";
+    }
+
     /// <summary>Mở tài liệu (path trong Study) bằng app ngoài; PDF thì dùng viewer.pdfApp nếu có. Nếu là folder thì mở Explorer.</summary>
     public static bool Open(string? rel)
     {

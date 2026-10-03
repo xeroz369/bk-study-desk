@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using SoHocTap.Core;
 using SoHocTap.Shell;
+using SoHocTap.Ui.Controls;
 
 namespace SoHocTap.Ui.Pages;
 
@@ -32,10 +33,12 @@ public partial class ServicesPage : UserControl, IPage
     {
         InitializeComponent();
         _host = host;
-        List.Columns.Add(Grids.Text(L.T("col.service"), nameof(ServiceRow.Name), 320));
-        List.Columns.Add(Grids.Text(L.T("col.site"), nameof(ServiceRow.Site), star: true));
-        List.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        Grids.Setup<ServiceRow>(List, s => _host.OpenWeb(s.Url, s.Name), s =>
+        var list = List.Grid;
+        list.Columns.Add(Grids.Text(L.T("col.service"), nameof(ServiceRow.Name), star: true));
+        list.Columns.Add(Grids.Flex(L.T("col.site"), nameof(ServiceRow.Site), 1, 100));
+        list.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        List.KeyOf = o => ((ServiceRow)o).Url;
+        Grids.Setup<ServiceRow>(list, s => _host.OpenWeb(s.Url, s.Name), s =>
         [
             new(L.T("services.openBrowser"), () => Links.Open(s.Url), Separator: true),
         ]);
@@ -43,8 +46,8 @@ public partial class ServicesPage : UserControl, IPage
         PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) { Search.Focus(); Search.SelectAll(); e.Handled = true; }
-            else if (e.Key == Key.Down && Search.IsKeyboardFocused && List.Items.Count > 0) { List.SelectedIndex = 0; List.Focus(); e.Handled = true; }
-            else if (e.Key == Key.Enter && Search.IsKeyboardFocused && List.Items.Count > 0) { var s = (ServiceRow)List.Items[0]; _host.OpenWeb(s.Url, s.Name); e.Handled = true; }
+            else if (e.Key == Key.Down && Search.IsKeyboardFocused && list.Items.Count > 0) { list.SelectedIndex = 0; list.Focus(); e.Handled = true; }
+            else if (e.Key == Key.Enter && Search.IsKeyboardFocused && list.Items.Count > 0) { var s = (ServiceRow)list.Items[0]; _host.OpenWeb(s.Url, s.Name); e.Handled = true; }
         };
     }
 
@@ -65,6 +68,6 @@ public partial class ServicesPage : UserControl, IPage
     {
         var q = Search.Text.Trim();
         var rows = q.Length == 0 ? _all : _all.Where(s => s.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase) || s.Group.Contains(q, StringComparison.CurrentCultureIgnoreCase)).ToList();
-        List.ItemsSource = Grids.Grouped(rows, nameof(ServiceRow.Group));
+        List.Show(Grids.Grouped(rows, nameof(ServiceRow.Group)), L.T(q.Length == 0 ? "services.empty" : "services.noMatch"));
     }
 }

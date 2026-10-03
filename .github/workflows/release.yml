@@ -40,20 +40,30 @@ jobs:
       attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
+      # Không dùng cache npm ở workflow phát hành: cache dùng chung với nhánh khác có thể bị đầu độc (zizmor cache-poisoning).
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: src/ui/package-lock.json
+          package-manager-cache: false   # v7 tự bật cache khi package.json có packageManager
+      # Input chạy tay và tên tag đi qua biến môi trường rồi kiểm định dạng, không chèn thẳng vào script (zizmor template-injection).
       - name: Version
         id: v
         shell: pwsh
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_VERSION: ${{ inputs.version }}
+          IN_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          $v = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.version }}' } else { '${{ github.ref_name }}'.TrimStart('v') }
-          $tag = if ('${{ inputs.tag }}') { '${{ inputs.tag }}' } else { "v$v" }
+          $v = if ($env:EVENT -eq 'workflow_dispatch') { $env:IN_VERSION } else { $env:REF_NAME.TrimStart('v') }
+          $tag = if ($env:IN_TAG) { $env:IN_TAG } else { "v$v" }
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "Phiên bản không hợp lệ: $v" }
+          if ($tag -notmatch '^v\d+\.\d+\.\d+[-.\w]*$') { throw "Tag không hợp lệ: $tag" }
           "version=$v" >> $env:GITHUB_OUTPUT
           "tag=$tag" >> $env:GITHUB_OUTPUT
       - name: Unit tests
@@ -65,9 +75,11 @@ jobs:
           npm run build
       - name: Package
         shell: pwsh
+        env:
+          V: ${{ steps.v.outputs.version }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $v = '${{ steps.v.outputs.version }}'
+          $v = $env:V
           dotnet tool install -g vpk --version $env:VPK_VERSION
           $env:VPK_SKIP_UPDATES = 'true'
           New-Item -ItemType Directory -Force dist, feed | Out-Null
@@ -75,7 +87,7 @@ jobs:
           $common = "-p:Version=$v", '-p:DebugType=none', '-p:DebugSymbols=false', '-p:ContinuousIntegrationBuild=true', '-p:Deterministic=true', '-p:SatelliteResourceLanguages=en%3Bvi'
           foreach ($rid in 'win-x64', 'win-arm64') {
             # Lấy bản trước từ release "updates" (nếu có) để vpk tạo gói delta nhỏ cho người đang dùng bản cũ.
-            vpk download http --url "https://github.com/${{ github.repository }}/releases/download/updates" -c $rid -o "feed/$rid" --allowEmptyChannel
+            vpk download http --url "https://github.com/$env:GITHUB_REPOSITORY/releases/download/updates" -c $rid -o "feed/$rid" --allowEmptyChannel
             if ($LASTEXITCODE) { Write-Host "Chưa có bản trước cho $rid, chỉ tạo gói đầy đủ."; $global:LASTEXITCODE = 0 }
             dotnet publish src/SoHocTap -c Release -r $rid --self-contained true -o "stage/$rid" @common
             vpk pack -u $env:PACK_ID -v $v -r $rid -c $rid -p "stage/$rid" -e BKStudyDesk.exe --packTitle 'BK Study Desk' --packAuthors xeroz369 `
@@ -97,7 +109,9 @@ jobs:
       # Gói MSIX cho Microsoft Store (x64, chưa ký: Store tự ký khi publish). Dùng chung script với máy dev.
       - name: Store package
         shell: pwsh
-        run: ./store/package-msix.ps1 -Version '${{ steps.v.outputs.version }}' -Out msix -SkipUi
+        env:
+          V: ${{ steps.v.outputs.version }}
+        run: ./store/package-msix.ps1 -Version $env:V -Out msix -SkipUi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: store-${{ steps.v.outputs.tag }}
@@ -114,9 +128,11 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
+          V: ${{ steps.v.outputs.version }}
         run: |
-          $tag = '${{ steps.v.outputs.tag }}'
-          gh release create $tag --draft --target $env:GITHUB_SHA --title "BK Study Desk ${{ steps.v.outputs.version }}" --notes "Bản nháp do CI tạo. Kiểm tra bộ cài rồi bấm Publish." (Get-ChildItem dist -File | ForEach-Object FullName)
+          $tag = $env:TAG
+          gh release create $tag --draft --target $env:GITHUB_SHA --title "BK Study Desk $env:V" --notes "Bản nháp do CI tạo. Kiểm tra bộ cài rồi bấm Publish." (Get-ChildItem dist -File | ForEach-Object FullName)
 
   publish-feed:
     if: github.event_name == 'release' && !github.event.release.prerelease

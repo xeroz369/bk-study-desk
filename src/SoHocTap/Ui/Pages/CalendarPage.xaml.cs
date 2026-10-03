@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using SoHocTap.Shell;
+using SoHocTap.Ui.Controls;
 
 namespace SoHocTap.Ui.Pages;
 
@@ -9,43 +10,50 @@ internal sealed record ClassRow(int Day, string DayName, string Time, int StartM
 public partial class CalendarPage : UserControl, IPage
 {
     private readonly AppHost _host;
+    private readonly MainWindow _main;
     private int _offset;
     private bool _ready;
 
-    internal CalendarPage(AppHost host)
+    internal CalendarPage(AppHost host, MainWindow main)
     {
         InitializeComponent();
         _host = host;
+        _main = main;
 
-        Upcoming.Columns.Add(Grids.Text(L.T("col.time"), nameof(TimelineItem.Hour), 56, sortPath: nameof(TimelineItem.Time)));
-        Upcoming.Columns.Add(Grids.Text(L.T("col.name"), nameof(TimelineItem.Name), star: true));
-        Upcoming.Columns.Add(Grids.Text(L.T("col.kind"), nameof(TimelineItem.KindName), 90));
-        Upcoming.Columns.Add(Grids.Text(L.T("col.detail"), nameof(TimelineItem.Label), 200));
-        Upcoming.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TimelineItem.Subject), 200));
-        Upcoming.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
-        Upcoming.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        Grids.Setup<TimelineItem>(Upcoming, e => { if (e.Url is { } u) _host.OpenWeb(u, e.Name); }, Menu);
+        var up = Upcoming.Grid;
+        up.Columns.Add(Grids.Text(L.T("col.time"), nameof(TimelineItem.Hour), 56, sortPath: nameof(TimelineItem.Time)));
+        up.Columns.Add(Grids.Text(L.T("col.name"), nameof(TimelineItem.Name), star: true));
+        up.Columns.Add(Grids.Text(L.T("col.kind"), nameof(TimelineItem.KindName), 90));
+        up.Columns.Add(Grids.Flex(L.T("col.detail"), nameof(TimelineItem.Label), 1, 100));
+        up.Columns.Add(Grids.Flex(L.T("col.subject"), nameof(TimelineItem.Subject), 1, 100));
+        up.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
+        up.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        Upcoming.KeyOf = o => ((TimelineItem)o).Id;
+        Grids.Setup<TimelineItem>(up, e => { if (e.Url is { } u) _host.OpenWeb(u, e.Name); }, Menu);
 
-        Week.Columns.Add(Grids.Text(L.T("col.time"), nameof(ClassRow.Time), 110, sortPath: nameof(ClassRow.StartMin)));
-        Week.Columns.Add(Grids.Text(L.T("col.subject"), nameof(ClassRow.Name), star: true));
-        Week.Columns.Add(Grids.Text(L.T("col.code"), nameof(ClassRow.Code), 90));
-        Week.Columns.Add(Grids.Text(L.T("col.room"), nameof(ClassRow.Room), 90));
-        Week.Columns.Add(Grids.Text(L.T("col.lessons"), nameof(ClassRow.Lessons), 70));
-        Week.Columns.Add(Grids.Text(L.T("col.teacher"), nameof(ClassRow.Teacher), 200));
-        Week.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        Week.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is ClassRow { InWeek: false } ? 0.5 : 1;
-        Grids.Setup<ClassRow>(Week, null, c => [new(L.T("common.copy"), () => Grids.Copy($"{c.Name}, {c.DayName} {c.Time}, {c.Room}"))]);
-        Grid.Copy = b => Grids.Copy(b.Tip);
+        var week = Week.Grid;
+        week.Columns.Add(Grids.Text(L.T("col.time"), nameof(ClassRow.Time), 110, sortPath: nameof(ClassRow.StartMin)));
+        week.Columns.Add(Grids.Text(L.T("col.subject"), nameof(ClassRow.Name), star: true));
+        week.Columns.Add(Grids.Text(L.T("col.code"), nameof(ClassRow.Code), 90));
+        week.Columns.Add(Grids.Text(L.T("col.room"), nameof(ClassRow.Room), 90));
+        week.Columns.Add(Grids.Text(L.T("col.lessons"), nameof(ClassRow.Lessons), 70));
+        week.Columns.Add(Grids.Flex(L.T("col.teacher"), nameof(ClassRow.Teacher), 1, 100));
+        week.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
+        week.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is ClassRow { InWeek: false } ? 0.5 : 1;
+        Grids.Setup<ClassRow>(week, null, c => [new(L.T("common.copy"), () => Grids.Copy($"{c.Name}, {c.DayName} {c.Time}, {c.Room}", _main))]);
+        Grid.Copy = b => Grids.Copy(b.Tip, _main);
         View.ItemsSource = new[] { L.T("calendar.viewGrid"), L.T("calendar.viewList") };
         View.SelectedIndex = Core.Config.Str("app.calendarView", "grid") == "list" ? 1 : 0;
         _ready = true;
 
-        Exams.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TimelineItem.Subject), star: true));
-        Exams.Columns.Add(Grids.Text(L.T("col.when"), nameof(TimelineItem.When), 140, sortPath: nameof(TimelineItem.Time)));
-        Exams.Columns.Add(Grids.Text(L.T("col.roomDuration"), nameof(TimelineItem.Label), 220));
-        Exams.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
-        Exams.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is TimelineItem t && t.Time < Format.Now ? 0.5 : 1;
-        Grids.Setup<TimelineItem>(Exams, null, e => [new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}"))]);
+        var exams = Exams.Grid;
+        exams.Columns.Add(Grids.Text(L.T("col.subject"), nameof(TimelineItem.Subject), star: true));
+        exams.Columns.Add(Grids.Text(L.T("col.when"), nameof(TimelineItem.When), 140, sortPath: nameof(TimelineItem.Time)));
+        exams.Columns.Add(Grids.Flex(L.T("col.roomDuration"), nameof(TimelineItem.Label), 1, 120));
+        exams.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
+        exams.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is TimelineItem t && t.Time < Format.Now ? 0.5 : 1;
+        Exams.KeyOf = o => ((TimelineItem)o).Id;
+        Grids.Setup<TimelineItem>(exams, null, e => [new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}", _main))]);
     }
 
     public string Title => L.T("nav.calendar");
@@ -56,7 +64,7 @@ public partial class CalendarPage : UserControl, IPage
     private IEnumerable<MenuEntry> Menu(TimelineItem e)
     {
         // "Mở" (mở trên web) đã có sẵn ở đầu menu do Grids.Setup thêm, không lặp lại.
-        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}"));
+        yield return new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}", _main));
     }
 
     private void OnFilter(object sender, RoutedEventArgs e) => Refresh();
@@ -132,8 +140,8 @@ public partial class CalendarPage : UserControl, IPage
         var list = s.Timeline.Where(e => e.Time >= start && e.Time < start + 14 * 86400
                                          && (ShowClasses.IsChecked == true || e.Kind != "class")
                                          && (ShowDone.IsChecked == true || !e.Done || e.Kind == "class")).ToList();
-        Upcoming.ItemsSource = Grids.Grouped(list, nameof(TimelineItem.Day), nameof(TimelineItem.Time));
-        Exams.ItemsSource = s.Timeline.Where(e => e.Kind == "exam").ToList();
+        Upcoming.Show(Grids.Grouped(list, nameof(TimelineItem.Day), nameof(TimelineItem.Time)), L.T("calendar.upcomingEmpty"), s, Src.Lms, Src.Mybk);
+        Exams.Show(s.Timeline.Where(e => e.Kind == "exam").ToList(), L.T("calendar.examsEmpty"), s, Src.Mybk);
         RefreshWeek();
     }
 
@@ -158,23 +166,23 @@ public partial class CalendarPage : UserControl, IPage
         var grid = View.SelectedIndex != 1;
         var thisWeek = slotted.Where(c => c.Weeks.Contains(week)).ToList();
         WeekEmpty.Text = _host.State.NoDataReason("mybk", "MyBK") ?? L.T("calendar.weekEmpty");
-        WeekEmpty.Visibility = (grid ? thisWeek.Count : slotted.Count) == 0 ? Visibility.Visible : Visibility.Collapsed;
+        WeekEmpty.Visibility = grid && thisWeek.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         DimNote.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         Grid.Visibility = grid ? Visibility.Visible : Visibility.Collapsed;
         Week.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         if (grid)
         {
-            Grid.Show(monday, thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}–{c.End}, {c.Room}",
-                string.Join("\n", new[] { c.Name, $"{Format.MybkDays.GetValueOrDefault(c.Day)} {c.Start}–{c.End}, {c.Room}", c.Teacher ?? "", c.Code + (c.Group is { } g ? ", " + g : "") }
+            Grid.Show(monday, thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}-{c.End}, {c.Room}",
+                string.Join("\n", new[] { c.Name, $"{Format.MybkDays.GetValueOrDefault(c.Day)} {c.Start}-{c.End}, {c.Room}", c.Teacher ?? "", c.Code + (c.Group is { } g ? ", " + g : "") }
                     .Where(x => x.Length > 0)), c.Code)));
             return;
         }
         var rows = slotted.Select(c => new ClassRow(c.Day,
             L.F("format.dateLong", Format.MybkDays.GetValueOrDefault(c.Day) ?? L.F("calendar.weekday", c.Day), monday.AddDays(c.Day - 2)),
-            $"{c.Start}–{c.End}", Min(c.Start), c.Name, c.Code, c.Room, $"{c.Lesson}–{c.Lesson + c.Lessons - 1}", c.Teacher ?? "", c.Weeks.Contains(week))).ToList();
+            $"{c.Start}-{c.End}", Min(c.Start), c.Name, c.Code, c.Room, $"{c.Lesson}-{c.Lesson + c.Lessons - 1}", c.Teacher ?? "", c.Weeks.Contains(week))).ToList();
         // Sắp theo phút bắt đầu (số), không theo chữ: "10:00" không được đứng trước "7:00".
         var v = Grids.Grouped(rows, nameof(ClassRow.DayName), nameof(ClassRow.Day));
         v.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(ClassRow.StartMin), System.ComponentModel.ListSortDirection.Ascending));
-        Week.ItemsSource = v;
+        Week.Show(v, L.T("calendar.termEmpty"), _host.State, Src.Mybk);
     }
 }

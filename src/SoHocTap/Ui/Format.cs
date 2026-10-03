@@ -95,9 +95,6 @@ public static class Format
     /// <summary>"2026-10-15" + "09g00" → giây</summary>
     public static long ExamTime(string date, string time)
     {
-        if (!System.DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)) return 0;
-        var m = System.Text.RegularExpressions.Regex.Match(time ?? "", @"(\d+)g(\d+)");
-        if (m.Success) d = d.AddHours(int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).AddMinutes(int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture));
-        return Sec(d);
+        return Core.VnTime.ParseDateAndClock(date, time) ?? 0;
     }
 }
