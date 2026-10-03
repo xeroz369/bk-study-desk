@@ -10,6 +10,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thêm tính năng và sửa lỗi hơn. Nếu thấy lỗi lạ, hãy mở issue.
 
+### Bảo mật
+
+- Thêm kiểm tra bảo mật tự động cho mỗi thay đổi và hằng tuần: OSV-Scanner, npm audit, NuGet advisory, gitleaks, zizmor, Semgrep, BinSkim, OpenSSF Scorecard (cùng CodeQL và Dependabot đã có). Quy trình và thời hạn xử lý: [docs/quy-trinh-bao-mat.md](docs/quy-trinh-bao-mat.md).
+
 ### Thay đổi
 
 - Cửa sổ hẹp (từ 1024 px trở xuống): thanh điều hướng chỉ còn biểu tượng thay vì bị tràn, mọi trang vẫn mở được.

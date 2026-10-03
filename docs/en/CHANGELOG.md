@@ -12,6 +12,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 An experimental release: most of the code has been reorganised to make features and fixes easier. If something looks wrong, please open an issue.
 
+### Security
+
+- Automated security checks on every change and every week: OSV-Scanner, npm audit, NuGet advisories, gitleaks, zizmor, Semgrep, BinSkim, OpenSSF Scorecard (alongside the existing CodeQL and Dependabot). Process and response times: [security-process.md](security-process.md).
+
 ### Changed
 
 - Narrow windows (1024 px or less): the navigation bar shows icons only instead of overflowing, so every page stays reachable.

@@ -26,4 +26,4 @@ Only the latest version on [Releases](https://github.com/xeroz369/bk-study-desk/
 - The app only calls **read** APIs; it never submits, registers, cancels or pays.
 - Update packages are verified with SHA-256 before installing; the update source must be the GitHub repository over https (a local folder is accepted only in test installs).
 - Quiz packs from other people are validated and their HTML is sanitized; no scripts run and no external images load.
-- The source is scanned automatically with CodeQL; dependencies are monitored for vulnerabilities by Dependabot.
+- Every change goes through automated security checks: CodeQL, Semgrep, OSV-Scanner, npm audit, NuGet advisories, gitleaks, zizmor, BinSkim, OpenSSF Scorecard; Dependabot watches dependencies. Details and how results are handled: [Security testing process](security-process.md).
