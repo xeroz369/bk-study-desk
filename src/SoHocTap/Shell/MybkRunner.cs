@@ -35,7 +35,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         } catch (e) { return JSON.stringify({ status: -1, body: String(e), auth: false }); } })()
         """;
 
-    public Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct) =>
+    public Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct, Action<string>? onEach = null) =>
         UiThread.RunAsync(owner, async () =>
         {
             await _gate.WaitAsync(ct);
@@ -54,6 +54,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                     var res = new FetchResult(o?["status"]?.GetValue<int>() ?? 0, o?["body"]?.GetValue<string>() ?? "", o?["auth"]?.GetValue<bool>() ?? false);
                     results[r.Name] = res;
                     Log.Debug($"MyBK {r.Name}: HTTP {res.Status}, {res.Body.Length / 1024} KB, {sw.ElapsedMilliseconds} ms");
+                    onEach?.Invoke(r.Name);
                     if (Pace.IsThrottle(res.Status))
                     {
                         // MyBK đang giới hạn: nghỉ, bỏ các request còn lại của lần này (lần đồng bộ sau sẽ lấy).

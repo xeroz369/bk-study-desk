@@ -15,7 +15,8 @@ internal sealed record MenuEntry(string Label, Action Run, bool Primary = false,
 /// </summary>
 internal static class Grids
 {
-    public static void Setup<T>(DataGrid g, Action<T>? open = null, Func<T, IEnumerable<MenuEntry>>? menu = null) where T : class
+    /// <param name="hideOpen">Dòng không có lệnh "Mở" ở đầu menu (menu của dòng tự có lệnh chính khác, ví dụ "Sửa").</param>
+    public static void Setup<T>(DataGrid g, Action<T>? open = null, Func<T, IEnumerable<MenuEntry>>? menu = null, Func<T, bool>? hideOpen = null) where T : class
     {
         g.MouseDoubleClick += (_, e) =>
         {
@@ -35,7 +36,7 @@ internal static class Grids
             if (row is null) { e.Handled = true; return; }
             g.SelectedItem = row;
             var entries = new List<MenuEntry>();
-            if (open is not null) entries.Add(new(L.T("common.open"), () => open(row), Primary: true));
+            if (open is not null && hideOpen?.Invoke(row) != true) entries.Add(new(L.T("common.open"), () => open(row), Primary: true));
             if (menu is not null) entries.AddRange(menu(row).Where(m => !(m.Primary && open is not null && m.Label == L.T("common.open"))));
             if (entries.Count == 0) { e.Handled = true; return; }
             g.ContextMenu = Build(entries);

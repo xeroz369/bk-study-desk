@@ -56,7 +56,7 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - **Xuất lịch (.ics)**: lưu thời khóa biểu cả kỳ và lịch thi ra file để nhập vào Google Calendar, Outlook, Lịch của Windows.
 - **Môn học**:
   - duyệt thư mục từng môn kiểu File Explorer;
-  - xem file mới, deadline, thông báo, sổ điểm và các lớp trên LMS.
+  - xem file mới cập nhật trên máy, deadline, thông báo, sổ điểm và các lớp trên LMS.
   - **Tải tài liệu theo từng mục** của lớp trên LMS, chọn loại file (PDF, slide, khác), tùy chọn tự giải nén .zip/.rar/.7z.
   - Bật tự tải: mỗi lần đồng bộ, app tải file mới (cả đề và file đính kèm bài tập), LMS chậm vẫn mở được.
 - **Điểm và học vụ**:

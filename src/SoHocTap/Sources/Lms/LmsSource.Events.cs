@@ -13,10 +13,10 @@ public sealed partial class LmsSource
 {
     // ------------------------------------------------------------------ mốc thời gian, quiz
 
-    private async Task<JsonArray> CollectEventsAsync(List<CourseInfo> courses, long uid, CancellationToken ct)
+    /// <param name="groups">Nhóm của mình trong từng lớp (<see cref="MyGroupsAsync"/>, một bước riêng của lượt đồng bộ): mốc của nhóm khác thì bỏ.</param>
+    private async Task<JsonArray> CollectEventsAsync(List<CourseInfo> courses, Dictionary<long, HashSet<string>> groups, CancellationToken ct)
     {
         var subj = courses.ToDictionary(c => c.Id, c => c.Subject + (c.Part is null ? "" : $" ({c.Part})"));
-        var groups = await MyGroupsAsync(courses, uid, ct);   // CollectGradesAsync cũng dùng cái này để lọc mục điểm của nhóm khác
         var outMap = new Dictionary<string, JsonObject>();
         // Bài tập có mốc trên lịch hành động: "instance" của mốc → mục "ev" tương ứng. Trên LMS trường, instance trùng cmid
         // của bài (đo trên dữ liệu thật 03/10/2026), không phải id như tài liệu; ghép theo cmid, id để dự phòng. Lịch đọc đủ (không lỗi, không bị cắt
@@ -144,7 +144,8 @@ public sealed partial class LmsSource
             }
             catch (Exception e) when (Recoverable(e, ct)) { map[c.Id] = []; Warn($"nhóm lớp {c.Subject}", e); }
         }
-        if (asked) JsonStore.Write(GroupsFile, map);
+        // Cache 7 ngày tính theo mtime: hỏi lại mà nhóm không đổi (JsonStore không ghi) thì vẫn chạm mtime, kẻo lượt nào cũng hỏi lại hết.
+        if (asked && !JsonStore.Write(GroupsFile, map) && File.Exists(GroupsFile)) File.SetLastWriteTimeUtc(GroupsFile, DateTime.UtcNow);
         return map;
     }
 

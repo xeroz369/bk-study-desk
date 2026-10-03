@@ -59,7 +59,7 @@ public sealed class UpdateService
 
     /// <summary>Tới hạn kiểm tra tự động chưa (chế độ, kiểu bản, chu kỳ).</summary>
     public bool Due() => Supported && UpdatePolicy.ShouldCheck(Mode, Paths.Kind, DateTimeOffset.UtcNow, LastCheck,
-        Config.Int("app.update.checkHours", 24));
+        Config.Int("app.update.checkHours", 6));
 
     /// <summary>
     /// Bản cài có bộ gỡ tiếng Việt (Uninstall.exe cạnh Update.exe) thì mục gỡ cài đặt trong Windows trỏ tới nó.
@@ -82,6 +82,9 @@ public sealed class UpdateService
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) { Log.Warn($"Đăng ký bộ gỡ: {e.Message}"); }
     }
 
+    /// <summary>Vừa lên bản mới so với lần chạy trước: câu báo một lần ở thanh trạng thái ("Đã cập nhật lên x.y.z"), null nếu không.</summary>
+    public static string? UpdatedNotice { get; private set; }
+
     /// <summary>Ghi log khi vừa lên bản mới (so với lần chạy trước).</summary>
     public static void NoteVersion()
     {
@@ -94,14 +97,47 @@ public sealed class UpdateService
             {
                 StartupNotice = L.F("update.applyFailed", applying!, AppInfo.Version);
                 Log.Warn($"Cài bản {applying} không thành, đang dùng {AppInfo.Version}");
+                o["failedVersion"] = applying;   // lần mở sau không thử cài bản này lúc mở app nữa (vẫn thử khi thoát)
             }
             if (applying is not null) { o.Remove("applying"); JsonStore.Write(StateFile, o); }
             if (prev == AppInfo.Version) return;
-            if (prev is not null) Log.Info($"Đã cập nhật {prev} → {AppInfo.Version}");
+            if (prev is not null)
+            {
+                Log.Info($"Đã cập nhật {prev} lên {AppInfo.Version}");
+                UpdatedNotice = L.F("update.updatedTo", AppInfo.Version);
+            }
             o["version"] = AppInfo.Version;
+            o.Remove("failedVersion");
             JsonStore.Write(StateFile, o);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Ghi phiên bản: {e.Message}"); }
+    }
+
+    /// <summary>
+    /// Gọi đầu Main, trước VelopackApp.Run: có cài ngay bản đã tải lúc mở app không (UpdatePolicy.ApplyOnStartup). Chỉ bật khi thật sự
+    /// có gói đã tải mới hơn bản đang chạy, và bản đó chưa từng cài hỏng lúc mở app; ghi một dòng log và đánh dấu bản sắp cài để lần mở
+    /// sau biết cài thành hay không. Không bao giờ ném lỗi (lỗi thì mở app như thường).
+    /// </summary>
+    public static bool ApplyOnStartup(string[] args)
+    {
+        // Hook của Velopack (cài, gỡ, cập nhật): không đọc config, không chạm đĩa (lúc gỡ, thư mục data có thể vừa bị xóa).
+        if (args.Any(a => a.StartsWith("--veloapp", StringComparison.OrdinalIgnoreCase))) return false;
+        try
+        {
+            var other = Mutex.TryOpenExisting(AppInfo.InstanceKey, out var running);
+            running?.Dispose();
+            if (!UpdatePolicy.ApplyOnStartup(Mode, Paths.Kind, args, other)) return false;
+            var locator = Velopack.Locators.VelopackLocator.CreateDefaultForPlatform();
+            var pkg = locator.GetLatestLocalFullPackage();
+            var current = locator.CurrentlyInstalledVersion;
+            if (pkg is null || current is null || pkg.Version <= current) return false;
+            var state = JsonStore.ReadObject(StateFile);
+            if (state["failedVersion"]?.ToString() == pkg.Version.ToString()) return false;
+            Log.Info($"Chế độ tự động: cài bản {pkg.Version} đã tải lúc mở app (đang chạy {current})");
+            MarkApplying(pkg.Version.ToString());
+            return true;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Kiểm tra bản đã tải lúc mở app: {e.Message}"); return false; }
     }
 
     /// <summary>Hỏi nguồn có bản mới không. <paramref name="manual"/>: người dùng bấm "Kiểm tra cập nhật" (bỏ qua "bỏ qua bản này").</summary>

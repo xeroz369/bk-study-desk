@@ -71,8 +71,26 @@ public partial class SettingsPage : UserControl, IPage
         ImportZip.Visibility = Paths.Kind == InstallKind.Installed ? Visibility.Visible : Visibility.Collapsed;
         UpdateModeBox.ItemsSource = items;
         UpdateModeBox.SelectedItem = items.FirstOrDefault(x => x.Mode == UpdateService.Mode);
+        var hours = UpdatePolicy.CheckHourChoices.Select(h => new HoursItem(h, L.F("update.intervalHours", h))).ToList();
+        UpdateIntervalBox.ItemsSource = hours;
+        UpdateIntervalBox.SelectedItem = hours.First(x => x.Hours == UpdatePolicy.NearestChoice(Config.Int("app.update.checkHours", 6)));
+        ShowIntervalRow();
         _updateReady = true;
         ShowUpdateNote();
+    }
+
+    private sealed record HoursItem(int Hours, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    /// <summary>Chu kỳ chỉ có nghĩa khi app được phép kiểm tra (Báo, Tự động).</summary>
+    private void ShowIntervalRow() =>
+        UpdateIntervalRow.Visibility = UpdateService.Mode is UpdateMode.Notify or UpdateMode.Auto ? Visibility.Visible : Visibility.Collapsed;
+
+    private void OnUpdateInterval(object sender, SelectionChangedEventArgs e)
+    {
+        if (_updateReady && UpdateIntervalBox.SelectedItem is HoursItem h) Config.Set("app.update.checkHours", h.Hours);
     }
 
     private void ShowUpdateNote()
@@ -121,6 +139,7 @@ public partial class SettingsPage : UserControl, IPage
     private void OnUpdateMode(object sender, SelectionChangedEventArgs e)
     {
         if (_updateReady && UpdateModeBox.SelectedItem is ModeItem m) UpdateService.SetMode(m.Mode);
+        if (_updateReady) ShowIntervalRow();
     }
 
     private async void OnUpdateCheck(object sender, RoutedEventArgs e)
