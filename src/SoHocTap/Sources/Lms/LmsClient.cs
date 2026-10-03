@@ -8,12 +8,6 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Sources.Lms;
 
-public sealed class LmsException(string message, string? code = null) : Exception(message)
-{
-    /// <summary>errorcode của Moodle (vd. "noreviewattempt"), null nếu lỗi không đến từ web service.</summary>
-    public string? Code { get; } = code;
-}
-
 /// <summary>
 /// Gọi web service của Moodle mobile app (BK-LMS) bằng token đã lưu.
 /// Flow login: launch.php → &lt;scheme&gt;://token=base64(md5(site+passport):::token:::privatetoken).
@@ -31,8 +25,37 @@ public static partial class LmsClient
     public static string Site => Config.Str("sources.lms.site").TrimEnd('/');
     public static string Scheme => Config.Str("sources.lms.scheme");
 
-    /// <summary>Token LMS, lưu trong data\secrets và đã encrypt bằng DPAPI (xem <see cref="SecretStore"/>).</summary>
-    public static string? Token => SecretStore.Read(TokenFile)?["token"]?.GetValue<string>();
+    /// <summary>
+    /// Token LMS, lưu trong data\secrets và đã encrypt bằng DPAPI (xem <see cref="SecretStore"/>). Giữ bản đã giải mã trong RAM,
+    /// khóa theo mtime của file: Status() được hỏi ở mỗi bước đồng bộ, không giải mã DPAPI lại mỗi lần.
+    /// </summary>
+    public static string? Token
+    {
+        get
+        {
+            var stamp = File.Exists(TokenFile) ? File.GetLastWriteTimeUtc(TokenFile) : DateTime.MinValue;
+            lock (TokenGate)
+            {
+                if (stamp == _tokenStamp && _tokenRead) return _token;
+            }
+            var token = stamp == DateTime.MinValue ? null : SecretStore.Read(TokenFile)?["token"]?.GetValue<string>();
+            lock (TokenGate) { _token = token; _tokenStamp = stamp; _tokenRead = true; }
+            return token;
+        }
+    }
+
+    /// <summary>Đã có token LMS (không gửi request, không giải mã lại nếu file không đổi).</summary>
+    public static bool HasToken => Token is not null;
+
+    private static readonly object TokenGate = new();
+    private static string? _token;
+    private static DateTime _tokenStamp;
+    private static bool _tokenRead;
+
+    private static void ForgetToken()
+    {
+        lock (TokenGate) { _tokenRead = false; _token = null; }
+    }
 
     // ------------------------------------------------------------------ login
 
@@ -60,6 +83,7 @@ public static partial class LmsClient
         var expected = Convert.ToHexStringLower(MD5.HashData(Encoding.UTF8.GetBytes(Site + passport)));
         if (parts.Length < 2 || parts[0] != expected) throw new LmsException("Chữ ký không khớp, bỏ qua token này.");
         SecretStore.Write(TokenFile, new JsonObject { ["token"] = parts[1], ["at"] = Now() });
+        ForgetToken();
         File.Delete(PendingFile);
         var info = await CallAsync("core_webservice_get_site_info", [], ct);
         return info["fullname"]?.GetValue<string>() ?? "";
@@ -75,13 +99,18 @@ public static partial class LmsClient
             await CallAsync("core_webservice_get_site_info", [], cts.Token);
             return true;
         }
-        catch (LmsException) { return false; }
-        catch (Exception) { return true; }
+        catch (Exception e) when (e is LmsException or SessionExpiredException) { return false; }
+        catch (Exception e)
+        {
+            Log.Debug($"Kiểm token LMS: {e.GetType().Name}, coi như còn");
+            return true;
+        }
     }
 
     public static void Logout()
     {
         foreach (var f in new[] { TokenFile, PendingFile }) if (File.Exists(f)) File.Delete(f);
+        ForgetToken();
     }
 
     // ------------------------------------------------------------------ call API
@@ -100,7 +129,7 @@ public static partial class LmsClient
 
     public static async Task<JsonNode> CallAsync(string function, IEnumerable<KeyValuePair<string, string>> args, CancellationToken ct)
     {
-        var token = Token ?? throw new LmsException("Chưa đăng nhập LMS.");
+        var token = Token ?? throw new SessionExpiredException("Chưa đăng nhập LMS.");
         var form = new List<KeyValuePair<string, string>>
         {
             new("wstoken", token), new("wsfunction", function), new("moodlewsrestformat", "json"),
@@ -127,7 +156,7 @@ public static partial class LmsClient
                     ApiPace.PauseFor(wait);
                     Log.Warn($"LMS {function}: HTTP {status}, tạm dừng gọi LMS {wait.TotalSeconds:0} giây");
                     if (attempt < 2) continue;
-                    throw new HttpRequestException($"LMS đang giới hạn truy cập (HTTP {status}). App tạm dừng, lần đồng bộ sau sẽ thử lại.");
+                    throw new HttpRequestException($"LMS đang giới hạn truy cập (HTTP {status}). App tạm dừng, lần đồng bộ sau sẽ thử lại.", null, (HttpStatusCode)status);
                 }
                 body = await resp.Content.ReadAsStringAsync(timeout.Token);
             }
@@ -148,16 +177,17 @@ public static partial class LmsClient
             {
                 // Trang HTML (bảo trì, lỗi proxy...) thay vì JSON.
                 Log.Warn($"LMS {function}: HTTP {status}, trả về không phải JSON");
-                throw new HttpRequestException($"LMS trả về trang lỗi (HTTP {status}), có thể đang bảo trì. Thử lại sau.");
+                throw new HttpRequestException($"LMS trả về trang lỗi (HTTP {status}), có thể đang bảo trì. Thử lại sau.", null, (HttpStatusCode)status);
             }
             if (node is null) throw new LmsException($"{function}: trả về rỗng");
             if (node is JsonObject o && o["exception"] is not null)
             {
                 var code = o["errorcode"]?.GetValue<string>();
                 Log.Debug($"LMS {function}: lỗi {code}, {sw.ElapsedMilliseconds} ms");
-                throw new LmsException(code is "invalidtoken" or "accessexception"
-                    ? "Phiên LMS hết hạn, cần đăng nhập lại."
-                    : $"{function}: {o["message"]}", code);
+                // Token hết hạn là lỗi của cả lượt đồng bộ (cần đăng nhập lại), không phải lỗi một phần: ném kiểu riêng để
+                // các bước "đọc được phần nào hay phần đó" không nuốt nó thành cảnh báo.
+                if (code is "invalidtoken" or "accessexception") throw new SessionExpiredException("Phiên LMS hết hạn, cần đăng nhập lại.");
+                throw new LmsException($"{function}: {o["message"]}", code);
             }
             Log.Debug($"LMS {function}: {body.Length / 1024} KB, {sw.ElapsedMilliseconds} ms");
             return node;
@@ -192,7 +222,7 @@ public static partial class LmsClient
                 var wait = Pace.Backoff(Pace.RetryAfter(resp.Headers.RetryAfter, resp.Headers.Date, DateTimeOffset.UtcNow));
                 FilePace.PauseFor(wait);
                 Log.Warn($"Tải file LMS: HTTP {(int)resp.StatusCode}, tạm dừng tải {wait.TotalSeconds:0} giây");
-                throw new HttpRequestException($"LMS đang giới hạn tải file (HTTP {(int)resp.StatusCode}), app tạm dừng {wait.TotalSeconds:0} giây.");
+                throw new HttpRequestException($"LMS đang giới hạn tải file (HTTP {(int)resp.StatusCode}), app tạm dừng {wait.TotalSeconds:0} giây.", null, resp.StatusCode);
             }
             resp.EnsureSuccessStatusCode();
             if (resp.Content.Headers.ContentLength > maxBytes) throw new HttpRequestException("File quá lớn, không tải.");

@@ -3,6 +3,7 @@
 // we never guess answers.
 
 import { parseNumber } from './grade';
+import { normText } from './text';
 import { PACK_FORMAT, type PackQuestion, type StudyPack } from './pack';
 import { APP_NAME } from '$lib/app-name';
 
@@ -40,7 +41,6 @@ export const RECALL_PREFIX = 'quiz-lms-ghi-';
 export const isRecallLesson = (lessonId: string) => lessonId.startsWith(RECALL_PREFIX);
 
 export const UNIT_TITLE = 'Quiz LMS đã lưu';
-const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
 const slug = (s: string) =>
 	s
 		.normalize('NFD')
@@ -67,12 +67,12 @@ export function parseReview(html: string): PackQuestion | null {
 	if (rows.length) {
 		const label = (r: Element) =>
 			(r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r.querySelector('label') ?? r).innerHTML.trim();
-		const text = (r: Element) => norm((r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r).textContent ?? '');
+		const text = (r: Element) => normText((r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r).textContent ?? '');
 		const options = rows.map(label);
 		const multi = !!rows[0].querySelector('input[type="checkbox"]');
 		const picked = rows.map((r, i) => (r.querySelector('input')?.hasAttribute('checked') ? i : -1)).filter((i) => i >= 0);
 		const right = new Set(rows.map((r, i) => (r.classList.contains('correct') ? i : -1)).filter((i) => i >= 0));
-		const want = norm(rightText);
+		const want = normText(rightText);
 		if (want)
 			rows.forEach((r, i) => {
 				const t = text(r);

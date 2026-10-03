@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using SoHocTap.Core;
+using SoHocTap.Data;
 
 namespace SoHocTap.Files;
 
@@ -248,13 +249,12 @@ public static partial class Organizer
     private static Dictionary<string, HashSet<string>> KnownSubjects()
     {
         var map = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-        if (JsonStore.Read(Paths.DataFile("lms.json"))?["courses"] is JsonArray courses)
-            foreach (var c in courses)
-                if (c?["subject"]?.GetValue<string>() is { } s)
-                {
-                    if (!map.TryGetValue(s, out var codes)) map[s] = codes = [];
-                    if (c["code"]?.GetValue<string>() is { Length: > 0 } code) codes.Add(code);
-                }
+        foreach (var c in LmsStore.Read()?.Courses ?? [])
+            if (c.Subject is { } s)
+            {
+                if (!map.TryGetValue(s, out var codes)) map[s] = codes = [];
+                if (c.Code is { Length: > 0 } code) codes.Add(code);
+            }
         if (Directory.Exists(SubjectsRoot))
             foreach (var d in Directory.GetDirectories(SubjectsRoot)) map.TryAdd(Path.GetFileName(d), []);
         return map;

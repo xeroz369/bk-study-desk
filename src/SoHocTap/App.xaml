@@ -2,6 +2,7 @@
 <Application x:Class="SoHocTap.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui"
              ThemeMode="System"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
@@ -57,10 +58,66 @@
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                 <Setter Property="IsSynchronizedWithCurrentItem" Value="False" />
             </Style>
+            <!-- Tiêu đề cột: chật thì cắt bằng "..." (không tràn, không xuống dòng), di chuột xem đủ chữ. Gắn vào từng cột (Grids.Text)
+                 thay vì style DataGridColumnHeader để không đè style header của theme Fluent. -->
+            <DataTemplate x:Key="TrimHeader">
+                <TextBlock x:Name="T" Text="{Binding}" TextTrimming="CharacterEllipsis" ToolTip="{Binding}" />
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding}" Value="">
+                        <Setter TargetName="T" Property="ToolTip" Value="{x:Null}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+
+            <!-- Ô chọn có nhãn dài (Cài đặt): nhãn xuống dòng theo bề rộng thay vì bị cắt mất chữ. -->
+            <Style x:Key="WrapCheck" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                <Setter Property="ContentTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Tab một hàng. TabControl mặc định chật thì xuống hàng rồi đổi chỗ hàng có tab đang chọn, nên bấm tab là cả dãy tab nhảy chỗ.
+                 Ở đây tab luôn nằm trên một hàng; thiếu chỗ thì cuộn ngang (lăn chuột trên dãy tab, tab đang chọn tự cuộn vào khung). -->
+            <Style TargetType="TabControl" BasedOn="{StaticResource {x:Type TabControl}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabControl">
+                            <Grid KeyboardNavigation.TabNavigation="Local" SnapsToDevicePixels="True">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <ScrollViewer x:Name="HeaderScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False"
+                                              Padding="0,0,0,7" ui:TabScroll.Enabled="True">
+                                    <StackPanel x:Name="HeaderPanel" IsItemsHost="True" Orientation="Horizontal" KeyboardNavigation.TabIndex="1" />
+                                </ScrollViewer>
+                                <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="{TemplateBinding Padding}"
+                                                  KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Khung focus của ô trong bảng: chỉ hiện khi đi bằng bàn phím (Tab, mũi tên), bấm chuột thì không. Không có khung này thì
+                 dùng bàn phím không biết đang đứng ở dòng nào (dòng chọn chỉ có nền rất nhạt). -->
+            <Style x:Key="CellFocus">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Border BorderBrush="{DynamicResource FocusStrokeColorOuterBrush}" BorderThickness="2" CornerRadius="2" SnapsToDevicePixels="True" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <!-- Row đang chọn: nền nhạt (giống File Explorer), không đảo màu chữ -->
             <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
                 <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="FocusVisualStyle" Value="{StaticResource CellFocus}" />
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
                         <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />

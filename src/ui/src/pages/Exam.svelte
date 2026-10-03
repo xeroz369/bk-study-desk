@@ -15,7 +15,8 @@
 	import { isBlank, isCorrect } from '$lib/study/grade';
 	import type { Answer } from '$lib/study/types';
 	import ShuffleToggles from '$lib/components/app/ShuffleToggles.svelte';
-	import { loadPrefs, optionOrder, rng, seedFor, shuffled } from '$lib/study/shuffle';
+	import { EXAM_SHUFFLE, loadPrefs, optionOrder, rng, seedFor } from '$lib/study/shuffle';
+	import { shuffleGroups } from '$lib/study/exam';
 
 	let { arg }: { arg: string } = $props();
 	// Trang được dựng lại khi đổi địa chỉ ({#key} trong App), nên đọc đề một lần khi mở.
@@ -27,8 +28,9 @@
 	let picked = $state<Record<string, Answer>>({});
 	// Shuffle like a real exam; answers are keyed by question id and original option index, so grading is unchanged.
 	const seed = Date.now();
-	let prefs = $state(loadPrefs({ questions: !!exam?.shuffle?.questions, options: !!exam?.shuffle?.options }));
-	const shown = $derived(prefs.questions ? shuffled(qs, rng(seed)) : qs);
+	let prefs = $state(loadPrefs({ questions: !!exam?.shuffle?.questions, options: !!exam?.shuffle?.options }, EXAM_SHUFFLE));
+	// Câu cùng nhóm (dùng chung đề) vẫn đứng liền nhau khi xáo.
+	const shown = $derived(prefs.questions ? shuffleGroups(qs, rng(seed)) : qs);
 	const orders = $derived(
 		Object.fromEntries(shown.map((q) => [q.id, prefs.options ? optionOrder(q, rng(seedFor(seed, q.id))) : undefined])),
 	);
@@ -160,7 +162,7 @@
 		<div class="sticky -top-3 z-10 my-3 flex items-center gap-4 rounded-xl bg-popover px-4 py-2.5 shadow-md ring-1 ring-foreground/10">
 			<span class="font-mono text-xl font-semibold tabular-nums {left <= 300 ? 'text-bad' : ''}">{clock(left)}</span>
 			<span class="text-sm text-muted-foreground">{Object.keys(picked).length}/{qs.length} câu đã chọn</span>
-			<span class="flex gap-1"><ShuffleToggles bind:prefs /></span>
+			<span class="flex gap-1"><ShuffleToggles bind:prefs storageKey={EXAM_SHUFFLE} /></span>
 			<Button class="ml-auto" variant={armed ? 'destructive' : 'default'} onclick={submit}
 				>{armed ? 'Chọn lần nữa để nộp' : 'Nộp bài'}</Button
 			>

@@ -28,29 +28,71 @@ internal sealed class WindowPlacement
 
     public void Apply(Window w)
     {
-        // Không lớn hơn vùng làm việc của màn hình (đổi độ phân giải, rút màn hình phụ): cửa sổ tràn ra ngoài thì nút bị khuất.
-        var area = SystemParameters.WorkArea;
-        w.Width = Math.Max(Math.Min(Width, area.Width), w.MinWidth);
-        w.Height = Math.Max(Math.Min(Height, area.Height), w.MinHeight);
-        // Vị trí cũ nằm ngoài mọi màn hình (vd. đã rút màn hình phụ) thì bỏ.
-        bool visible = !double.IsNaN(X) && X >= SystemParameters.VirtualScreenLeft - 50 && Y >= SystemParameters.VirtualScreenTop - 50
-                       && X < SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - 100
-                       && Y < SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - 100;
-        if (visible)
+        if (double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Width) || double.IsNaN(Height))
         {
-            w.WindowStartupLocation = WindowStartupLocation.Manual;
-            w.Left = X;
-            w.Top = Y;
-            // Trên màn hình chính mà mép phải/dưới tràn ra ngoài thì kéo vào trong.
-            if (X >= area.Left && X < area.Right && Y >= area.Top && Y < area.Bottom)
-            {
-                w.Left = Math.Max(area.Left, Math.Min(X, area.Right - w.Width));
-                w.Top = Math.Max(area.Top, Math.Min(Y, area.Bottom - w.Height));
-            }
+            // Lần đầu: giữa màn hình chính, không lớn hơn vùng làm việc.
+            var area = SystemParameters.WorkArea;
+            w.Width = Math.Max(Math.Min(Width, area.Width), w.MinWidth);
+            w.Height = Math.Max(Math.Min(Height, area.Height), w.MinHeight);
+            w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
-        else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        else
+        {
+            // Kẹp theo màn hình đang chứa vị trí đã lưu (MonitorFromRect), không theo màn hình chính: mở trên màn hình phụ thì vẫn ở đó.
+            // Màn hình đó đã rút ra thì MONITOR_DEFAULTTONEAREST trả màn hình gần nhất, cửa sổ được kéo vào trong, không mất ngoài vùng nhìn.
+            var fit = ScreenFit.Clamp(new Box(X, Y, Width, Height), WorkAreaNear(new Box(X, Y, Width, Height)), w.MinWidth, w.MinHeight);
+            w.WindowStartupLocation = WindowStartupLocation.Manual;
+            (w.Left, w.Top, w.Width, w.Height) = (fit.X, fit.Y, fit.Width, fit.Height);
+        }
         if (Maximized) w.WindowState = WindowState.Maximized;
     }
+
+    /// <summary>
+    /// Vùng làm việc (trừ taskbar) của màn hình chứa phần lớn <paramref name="dip"/>, hoặc màn hình gần nhất. Left/Top của cửa sổ WPF là DIP
+    /// theo DPI hệ thống, còn Win32 dùng pixel: đổi qua lại bằng GetDpiForSystem.
+    /// </summary>
+    private static Box WorkAreaNear(Box dip)
+    {
+        var scale = GetDpiForSystem() / 96.0;
+        if (scale <= 0) scale = 1;
+        var px = new RECT((int)Math.Round(dip.X * scale), (int)Math.Round(dip.Y * scale), (int)Math.Round(dip.Right * scale), (int)Math.Round(dip.Bottom * scale));
+        var info = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+        var monitor = MonitorFromRect(ref px, MonitorDefaultToNearest);
+        if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info))
+        {
+            var a = SystemParameters.WorkArea;
+            return new Box(a.Left, a.Top, a.Width, a.Height);
+        }
+        var r = info.rcWork;
+        return new Box(r.Left / scale, r.Top / scale, (r.Right - r.Left) / scale, (r.Bottom - r.Top) / scale);
+    }
+
+    private const uint MonitorDefaultToNearest = 2;
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct RECT(int left, int top, int right, int bottom)
+    {
+        public int Left = left, Top = top, Right = right, Bottom = bottom;
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct MONITORINFO
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromRect(ref RECT rect, uint flags);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern uint GetDpiForSystem();
 
     public void Capture(Window w)
     {

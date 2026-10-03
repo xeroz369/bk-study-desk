@@ -11,7 +11,9 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Alert from '$lib/components/ui/alert';
 	import { copy } from '$lib/menu.svelte';
-	import { api } from '$lib/api/client';
+	import { api, errorText } from '$lib/api/client';
+	import { Desktop } from '$lib/desktop.svelte';
+	import { normText } from '$lib/study/text';
 	import { typeset } from '$lib/math';
 	import { Study } from '$lib/study/registry.svelte';
 	import QuestionEditor from '$lib/components/app/QuestionEditor.svelte';
@@ -72,9 +74,15 @@
 		flash = sessionStorage.getItem('studypack.flash') ?? '';
 		sessionStorage.removeItem('studypack.flash');
 		// From the quiz archive: "Ghi nhanh câu còn nhớ" pre-fills the chapter and lesson names.
-		const pre = JSON.parse(sessionStorage.getItem('soan.prefill') ?? 'null') as { unit: string; lesson: string } | null;
+		// Giá trị hỏng (sửa tay, bản cũ) thì bỏ qua, không làm hỏng cả trang.
+		let pre: { unit?: unknown; lesson?: unknown } | null = null;
+		try {
+			pre = JSON.parse(sessionStorage.getItem('soan.prefill') ?? 'null');
+		} catch {
+			pre = null;
+		}
 		sessionStorage.removeItem('soan.prefill');
-		if (pre) {
+		if (pre && typeof pre.unit === 'string' && typeof pre.lesson === 'string') {
 			newUnit = pre.unit;
 			newLesson = pre.lesson;
 		}
@@ -114,19 +122,31 @@
 	let body = $state('');
 	let createErrors = $state<string[]>([]);
 	const mine = $derived(scope && lesson ? (Study.lessons[lesson.id]?.questions ?? []).filter((q) => q.packId === authoredId()) : []);
+	// Gợi ý trong ô nhập tính theo môn đang chọn, không gắn với một môn cụ thể.
+	const unitHint = $derived(
+		`Chương ${(scope?.course.units.filter((u) => !u.pack?.id.startsWith('quiz-lms')).length ?? 0) + 1}: tên chương`,
+	);
+	const lessonHint = $derived(`Bài ${(unit?.lessons.length ?? 0) + 1}: tên bài`);
+	const BODY_HINT = 'Tóm tắt kiến thức. Công thức viết bằng TeX, ví dụ \\( x^2 \\) trong dòng hoặc \\[ \\frac{a}{b} \\] riêng dòng';
 	/** Writing into "Quiz LMS đã lưu" = recalling a quiz with no review: saved in the locked recall pack. */
 	const recall = $derived((unit?.title ?? newUnit.trim()) === UNIT_TITLE);
 	function authoredId() {
 		return scope ? slug(`${recall ? RECALL_PREFIX : 'tu-soan-'}${scope.course.code ?? scope.course.id.toUpperCase()}`) : '';
 	}
 
-	/** Validate then save the authored pack; returns errors (empty = saved, page reloads). */
+	/** Validate then save the authored pack; returns errors (empty = saved, page reloads).
+	 *  hashAfter chỉ được áp sau khi app đã lưu xong (install), lưu lỗi thì vẫn ở trang hiện tại. */
 	async function saveAuthored(p: StudyPack, hashAfter?: string): Promise<string[]> {
 		const r = validatePack(p);
 		if (!r.ok) return (createErrors = r.errors.map(issue));
 		bumpVersion(p);
-		if (hashAfter) history.replaceState(null, '', hashAfter);
-		await install(p);
+		try {
+			await install(p, hashAfter);
+		} catch (e) {
+			const text = `Chưa lưu được: ${errorText(e)}. Thử lại sau giây lát.`;
+			Desktop.inform({ id: 'soan-save', tone: 'bad', text });
+			return (createErrors = [text]);
+		}
 		return [];
 	}
 	async function saveQuestion(q: PackQuestion): Promise<string[]> {
@@ -146,7 +166,8 @@
 		const l = lessonIn(p, unit.title, lesson.title);
 		const local = qid.split('.').at(-1);
 		l.questions = (l.questions ?? []).filter((q) => q.id !== local);
-		await saveAuthored(p);
+		const errs = await saveAuthored(p);
+		if (errs.length) Desktop.inform({ id: 'soan-save', tone: 'bad', text: `Không xóa được câu: ${errs[0]}` });
 	}
 	async function addLesson() {
 		if (!scope) return;
@@ -159,8 +180,13 @@
 		const l = lessonIn(p, unitTitle, newLesson.trim());
 		if (body.trim()) l.sections = [...(l.sections ?? []), { title: 'Kiến thức', body: body.trim() }];
 		if (!l.sections?.length && !l.questions?.length) l.sections = [{ title: 'Ghi chú', body: '<p>Bài mới, chưa có nội dung.</p>' }];
-		const ui = unit ? scope.unit : scope.course.units.length;
-		await saveAuthored(p, `#soan/tao/${scope.course.id}/${ui}/${p.id}.${l.id}`);
+		// Chương, bài trùng tên (đã chuẩn hóa) thì gói được ghép vào đó lúc nạp (registry.addPack): mở đúng chỗ đó.
+		// Chỉ số chương có thể lệch sau khi tải lại (thứ tự gói); parseScope tự tìm lại chương theo id bài.
+		const same = (a: string, b: string) => normText(a) === normText(b);
+		const found = scope.course.units.findIndex((u) => same(u.title, unitTitle));
+		const ui = unit ? scope.unit! : found >= 0 ? found : scope.course.units.length;
+		const host = scope.course.units[ui]?.lessons.find((e) => same(e.title, l.title));
+		await saveAuthored(p, `#soan/tao/${scope.course.id}/${ui}/${host?.id ?? `${p.id}.${l.id}`}`);
 	}
 
 	// ------------------------------------------------------------------ Nhập
@@ -173,15 +199,24 @@
 		const f = input.files?.[0];
 		input.value = '';
 		if (!f) return;
-		const r = await readPackFile(f);
-		rawImages = r.images;
-		raw = r.text;
+		try {
+			const r = await readPackFile(f);
+			rawImages = r.images;
+			raw = r.text;
+			Desktop.dismiss('soan-import');
+		} catch (e) {
+			Desktop.inform({ id: 'soan-import', tone: 'bad', text: `Không đọc được ${f.name}: ${errorText(e)}` });
+		}
 	}
 	async function doImport() {
 		const p = prepared?.pack;
 		if (!p || !prepared?.report?.ok) return;
 		if (Study.packs.some((x) => x.pack?.id === p.id) && !confirm(`Đã có gói "${p.id}". Thay bằng gói này?`)) return;
-		await install(p);
+		try {
+			await install(p);
+		} catch (e) {
+			Desktop.inform({ id: 'soan-import', tone: 'bad', text: `Chưa nhập được: ${errorText(e)}. Thử lại sau giây lát.` });
+		}
 	}
 
 	// ------------------------------------------------------------------ Xuất
@@ -292,23 +327,17 @@
 			{/if}
 			<Panel title={unit ? 'Bài mới trong chương này' : 'Chương mới'} pad>
 				<div class="flex flex-col gap-3 text-sm">
-					{#if !unit}<label class="flex flex-col gap-1"
-							>Tên chương<Input bind:value={newUnit} placeholder="Chương 4: Đạo hàm và tích phân số" /></label
-						>{/if}
-					<label class="flex flex-col gap-1">Tên bài<Input bind:value={newLesson} placeholder="Công thức hình thang" /></label>
+					{#if !unit}<label class="flex flex-col gap-1">Tên chương<Input bind:value={newUnit} placeholder={unitHint} /></label>{/if}
+					<label class="flex flex-col gap-1">Tên bài<Input bind:value={newLesson} placeholder={lessonHint} /></label>
 					<label class="flex flex-col gap-1"
-						>Kiến thức (không bắt buộc, Markdown + TeX)<Textarea
-							bind:value={body}
-							rows={4}
-							placeholder={'Công thức: \\[\\int_a^b f\\,dx\\approx\\frac{h}{2}(f_0+f_1)\\]'}
-						/></label
+						>Kiến thức (không bắt buộc, Markdown + TeX)<Textarea bind:value={body} rows={4} placeholder={BODY_HINT} /></label
 					>
 					<label class="flex flex-col gap-1">Tên bạn (ghi vào gói)<Input bind:value={author} /></label>
 					{#if createErrors.length}
 						<Alert.Root variant="destructive"
 							><Alert.Title>Chưa lưu được</Alert.Title><Alert.Description
 								><ul class="list-disc pl-4">
-									{#each createErrors as e (e)}<li>{e}</li>{/each}
+									{#each createErrors as e, i (i)}<li>{e}</li>{/each}
 								</ul></Alert.Description
 							></Alert.Root
 						>
@@ -341,7 +370,7 @@
 						<Alert.Title>{prepared.error}</Alert.Title>
 						{#if prepared.notes.length}<Alert.Description
 								><ul class="list-disc pl-4">
-									{#each prepared.notes as n (n)}<li>{n}</li>{/each}
+									{#each prepared.notes as n, i (i)}<li>{n}</li>{/each}
 								</ul></Alert.Description
 							>{/if}
 					</Alert.Root>
@@ -356,9 +385,9 @@
 						>
 						<Alert.Description>
 							<ul class="list-disc pl-4">
-								{#each prepared.notes as n (n)}<li>{n}</li>{/each}
-								{#each r.errors.slice(0, 8) as e (issue(e))}<li>{issue(e)}</li>{/each}
-								{#each r.warnings.slice(0, 5) as w (issue(w))}<li class="text-muted-foreground">cảnh báo: {issue(w)}</li>{/each}
+								{#each prepared.notes as n, i (i)}<li>{n}</li>{/each}
+								{#each r.errors.slice(0, 8) as e, i (i)}<li>{issue(e)}</li>{/each}
+								{#each r.warnings.slice(0, 5) as w, i (i)}<li class="text-muted-foreground">cảnh báo: {issue(w)}</li>{/each}
 							</ul>
 						</Alert.Description>
 					</Alert.Root>
@@ -377,7 +406,7 @@
 					<Alert.Root variant="destructive"
 						><Alert.Title>Gói xuất ra còn lỗi</Alert.Title><Alert.Description
 							><ul class="list-disc pl-4">
-								{#each exportReport.errors.slice(0, 6) as e (issue(e))}<li>{issue(e)}</li>{/each}
+								{#each exportReport.errors.slice(0, 6) as e, i (i)}<li>{issue(e)}</li>{/each}
 							</ul></Alert.Description
 						></Alert.Root
 					>

@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
@@ -15,5 +16,12 @@ export default defineConfig({
     target: 'es2022',
     assetsDir: 'assets',
     chunkSizeWarningLimit: 600,
+  },
+  // Test đọc file mẫu trong studypack/examples (ngoài thư mục src/ui) bằng import ?raw.
+  server: { fs: { allow: ['.', '../../studypack'] } },
+  // Unit test cho lib/study (logic thuần). Mặc định chạy trong Node; file nào cần DOMParser thì tự khai báo jsdom.
+  test: {
+    include: ['src/**/*.test.ts'],
+    environment: 'node',
   },
 });

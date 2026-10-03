@@ -257,7 +257,7 @@
 		<Alert.Root variant="destructive"
 			><Alert.Title>Chưa lưu được</Alert.Title><Alert.Description
 				><ul class="list-disc pl-4">
-					{#each errors as e (e)}<li>{e}</li>{/each}
+					{#each errors as e, i (i)}<li>{e}</li>{/each}
 				</ul></Alert.Description
 			></Alert.Root
 		>

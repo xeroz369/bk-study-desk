@@ -2,11 +2,9 @@
 // Câu trả lời lưu trong kết quả luyện tập (ket-qua.json) và bài thi là giá trị JSON: số, mảng số hoặc chuỗi.
 
 import type { Answer, Question } from './types';
+import { normText } from './text';
 
 export const qType = (q: Question) => q.type ?? 'single';
-
-/** Chuẩn hóa chữ để so câu điền: bỏ khoảng trắng thừa, không phân biệt hoa thường; giữ dấu tiếng Việt. */
-export const normText = (s: string) => s.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
 
 /** "1,5" (kiểu Việt) hay "1.5" đều đọc được; "1.234,5" cũng được. */
 export function parseNumber(s: string): number | null {

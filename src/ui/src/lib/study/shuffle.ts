@@ -46,17 +46,20 @@ export interface ShufflePrefs {
 	questions: boolean;
 	options: boolean;
 }
-export function loadPrefs(fallback: ShufflePrefs): ShufflePrefs {
+/** Luyện tập và thi thử nhớ riêng: tắt xáo câu khi luyện không làm đề thi thử mất xáo. */
+export const PRACTICE_SHUFFLE = 'practice.shuffle';
+export const EXAM_SHUFFLE = 'exam.shuffle';
+export function loadPrefs(fallback: ShufflePrefs, key = PRACTICE_SHUFFLE): ShufflePrefs {
 	try {
-		const v = JSON.parse(localStorage.getItem('practice.shuffle') ?? 'null');
+		const v = JSON.parse(localStorage.getItem(key) ?? 'null');
 		return v && typeof v.questions === 'boolean' ? v : fallback;
 	} catch {
 		return fallback;
 	}
 }
-export function savePrefs(p: ShufflePrefs) {
+export function savePrefs(p: ShufflePrefs, key = PRACTICE_SHUFFLE) {
 	try {
-		localStorage.setItem('practice.shuffle', JSON.stringify(p));
+		localStorage.setItem(key, JSON.stringify(p));
 	} catch {
 		/* storage blocked: keep in memory only */
 	}

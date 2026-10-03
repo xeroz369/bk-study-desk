@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using SoHocTap.Core;
 using SoHocTap.Shell;
 
@@ -38,8 +38,15 @@ internal static class Program
         // Menu của tray icon (WinForms) theo theme sáng/tối của Windows.
         System.Windows.Forms.Application.EnableVisualStyles();
         System.Windows.Forms.Application.SetColorMode(System.Windows.Forms.SystemColorMode.System);
-        AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Error("Unhandled exception", e.ExceptionObject as Exception);
-        Log.Info("App khởi động");
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            Log.Error($"Unhandled exception{(e.IsTerminating ? " (app sẽ tắt)" : "")}", e.ExceptionObject as Exception);
+        // Task chạy nền bị lỗi mà không ai await (fire-and-forget): không ghi log thì lỗi biến mất im lặng khi GC dọn task.
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Log.Error("Task nền lỗi mà không ai bắt", e.Exception);
+            e.SetObserved();
+            AppEvents.RaiseUnhandled(e.Exception);
+        };
         // Khóa ACL data\ cho riêng tài khoản Windows hiện tại (ổ D: thường để Everyone full quyền).
         // Bản Store và bản cài nằm trong LocalAppData, vốn chỉ của user này; bản zip/local thì tự khóa.
         if (Paths.Kind == InstallKind.Portable)

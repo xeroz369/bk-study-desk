@@ -29,6 +29,8 @@ export interface Question {
 	examId?: string;
 	/** không xáo phương án (có phương án kiểu "Cả A và B") */
 	keepOrder?: boolean;
+	/** nhóm câu dùng chung đề, số liệu: đề ngẫu nhiên rút cả nhóm, xáo câu giữ nhóm liền nhau (exam.ts) */
+	group?: string;
 	/** Câu đến từ gói luyện tập nào (để hiện nguồn, xóa câu tự soạn). */
 	packId?: string;
 	/** fingerprint (fingerprint.ts): same question, same fp, wherever it comes from */

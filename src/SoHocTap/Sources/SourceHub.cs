@@ -1,11 +1,13 @@
-﻿using System.Text.Json.Nodes;
+using System.Net.NetworkInformation;
+using System.Text.Json.Nodes;
 using SoHocTap.Core;
+using SoHocTap.Data;
 
 namespace SoHocTap.Sources;
 
 /// <summary>
 /// Quản lý các nguồn: trạng thái sync, chạy sync (mỗi nguồn chỉ một lượt cùng lúc), scheduler, bắn event cho UI.
-/// Scheduler thức dậy theo app.schedulerMinutes; chỉ gửi request khi nguồn đã kết nối và đã quá chu kỳ.
+/// Scheduler thức dậy theo app.schedulerMinutes; chỉ gửi request khi nguồn đã kết nối, máy có mạng và đã quá chu kỳ.
 /// </summary>
 public sealed class SourceHub : IDisposable
 {
@@ -15,6 +17,8 @@ public sealed class SourceHub : IDisposable
         public DateTimeOffset FailedAt;
         public DateTimeOffset StartedAt;
         public string? Error;
+        public SyncErrorKind? Kind;          // loại lỗi; null = lỗi ghi bởi bản cũ (chỉ có message)
+        public int NetFails;                 // số lần lỗi mạng liên tiếp, để retry sớm 10, 30, 60 phút
         public List<string> Log = [];
         public string? Step;             // key ngôn ngữ của bước đang làm
         public int Done, Total;
@@ -35,8 +39,23 @@ public sealed class SourceHub : IDisposable
     /// <summary>Khoảng tối thiểu giữa hai lần bắt đầu sync, kể cả khi lần trước lỗi hay bấm "Đồng bộ lại": bấm liên tục không bắn request liên tục.</summary>
     private static readonly TimeSpan MinRestart = TimeSpan.FromSeconds(30);
 
-    /// <summary>(nguồn, "start" | "done"), Shell chuyển thành event cho UI.</summary>
+    /// <summary>Lỗi mạng thì retry sớm theo nấc này (phút) thay vì đợi hết một chu kỳ; quá nấc cuối thì giữ nấc cuối.</summary>
+    private static readonly int[] NetRetryMinutes = [10, 30, 60];
+
+    /// <summary>(nguồn, "start" | "progress" | "data" | "done"), Shell chuyển thành event cho UI.</summary>
     public event Action<string, string>? Changed;
+
+    /// <summary>
+    /// Sau mỗi lượt sync thành công: dữ liệu khác gì lần trước (nguồn, thay đổi). Bắn trên thread chạy sync.
+    /// 1.1.7 chưa có tính năng nào dùng, chỉ ghi log Debug số lượng.
+    /// </summary>
+    public event Action<string, ChangeSet>? ChangeSetReady;
+
+    /// <summary>Đang bật Tiết kiệm pin (Shell cài, Core không biết API của Windows): scheduler giãn chu kỳ gấp đôi.</summary>
+    public Func<bool>? BatterySaver { get; set; }
+
+    /// <summary>Máy đang có mạng; mặc định hỏi NetworkInterface, test thì thay được.</summary>
+    public Func<bool> Online { get; set; } = NetworkInterface.GetIsNetworkAvailable;
 
     public SourceHub(IEnumerable<ISource> sources)
     {
@@ -46,30 +65,50 @@ public sealed class SourceHub : IDisposable
         foreach (var (name, st) in _state)
             if (saved[name] is JsonObject o)
             {
-                if (o["failedAt"]?.GetValue<long>() is { } t)
+                if (o["failedAt"] is JsonValue f && f.TryGetValue<long>(out var t))
                 {
                     st.FailedAt = DateTimeOffset.FromUnixTimeSeconds(t);
-                    st.Error = o["error"]?.GetValue<string>();
+                    st.Error = o["error"]?.ToString();
+                    st.Kind = SyncErrorText.Parse(o["errorKind"]?.ToString());
                 }
-                st.Warnings = (o["warnings"] as JsonArray ?? []).Select(w => w?.GetValue<string>() ?? "").Where(w => w.Length > 0).ToList();
+                st.Warnings = (o["warnings"] as JsonArray ?? []).Select(w => w?.ToString() ?? "").Where(w => w.Length > 0).ToList();
             }
     }
+
+    // LMS và MyBK sync song song, cùng ghi một file sync-state.json: khóa cả lúc dựng lẫn lúc ghi để bản ghi sau không đè
+    // mất phần của nguồn kia, và hai lần ghi không giẫm lên nhau.
+    private static readonly object StateGate = new();
 
     private void SaveState()
     {
-        var o = new JsonObject();
-        foreach (var (name, st) in _state)
-            lock (st)
-            {
-                var s = new JsonObject();
-                if (st.Error is not null) { s["failedAt"] = st.FailedAt.ToUnixTimeSeconds(); s["error"] = st.Error; }
-                if (st.Warnings.Count > 0) s["warnings"] = new JsonArray(st.Warnings.Select(w => (JsonNode)w).ToArray());
-                if (s.Count > 0) o[name] = s;
-            }
-        JsonStore.Write(StateFile, o);
+        lock (StateGate)
+        {
+            var o = new JsonObject();
+            foreach (var (name, st) in _state)
+                lock (st)
+                {
+                    var s = new JsonObject();
+                    if (st.Error is not null)
+                    {
+                        s["failedAt"] = st.FailedAt.ToUnixTimeSeconds();
+                        s["error"] = st.Error;
+                        if (st.Kind is { } k) s["errorKind"] = k.ToString();
+                    }
+                    if (st.Warnings.Count > 0) s["warnings"] = new JsonArray(st.Warnings.Select(w => (JsonNode)w).ToArray());
+                    if (s.Count > 0) o[name] = s;
+                }
+            try { JsonStore.Write(StateFile, o); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Error("Không ghi được sync-state.json", e); }
+        }
     }
 
     public ISource? Get(string name) => _sources.GetValueOrDefault(name);
+
+    /// <summary>Lượt sync gần nhất của nguồn bị lỗi (chưa có lượt nào thành công sau đó).</summary>
+    public bool Failed(string name) => _state.TryGetValue(name, out var st) && st.Error is not null;
+
+    /// <summary>Loại lỗi của lượt sync gần nhất; null nếu không lỗi hay lỗi của bản cũ.</summary>
+    public SyncErrorKind? ErrorKind(string name) => _state.TryGetValue(name, out var st) && st.Error is not null ? st.Kind : null;
 
     public JsonObject StatusJson()
     {
@@ -89,6 +128,7 @@ public sealed class SourceHub : IDisposable
                     ["term"] = s.Term,
                     ["syncing"] = st.Running,
                     ["error"] = st.Error,
+                    ["errorKind"] = st.Error is null ? null : st.Kind?.ToString(),
                     ["warnings"] = new JsonArray(st.Warnings.Select(w => (JsonNode)w).ToArray()),
                     ["step"] = st.Running ? st.Step : null,
                     ["done"] = st.Done,
@@ -111,7 +151,7 @@ public sealed class SourceHub : IDisposable
         lock (st)
         {
             if (st.Running || DateTimeOffset.UtcNow - st.StartedAt < MinRestart) return false;
-            st.Running = true; st.Error = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
+            st.Running = true; st.Error = null; st.Kind = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
             st.Step = null; st.Done = st.Total = 0; st.Warnings = [];
         }
         Changed?.Invoke(name, "start");
@@ -119,40 +159,28 @@ public sealed class SourceHub : IDisposable
         _ = Task.Run(async () =>
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
+            var before = Snapshot(name);
             try
             {
-                await src.SyncAsync(line =>
-                {
-                    if (line == SyncSignal.DataReady) { Changed?.Invoke(name, "data"); return; }
-                    if (SyncSignal.TryParseWarn(line, out var warn))
-                    {
-                        lock (st) { if (st.Warnings.Count < 30) st.Warnings.Add(warn); st.Log.Add("  lỗi: " + warn); }
-                        return;
-                    }
-                    if (SyncSignal.TryParseStep(line, out var key, out var done, out var total))
-                    {
-                        bool show;
-                        lock (st)
-                        {
-                            // Đổi bước thì báo ngay; cùng bước chỉ tăng số thì tối đa 4 lần/giây (đỡ vẽ lại giao diện liên tục).
-                            show = key != st.Step || DateTimeOffset.UtcNow - st.StepShownAt > TimeSpan.FromMilliseconds(250) || done == total;
-                            st.Step = key; st.Done = done; st.Total = total;
-                            if (show) st.StepShownAt = DateTimeOffset.UtcNow;
-                        }
-                        if (show) Changed?.Invoke(name, "progress");
-                        return;
-                    }
-                    lock (st) st.Log.Add(line);
-                }, force, _stop.Token);
+                await src.SyncAsync(line => OnLine(name, st, line), force, _stop.Token);
+                lock (st) st.NetFails = 0;
                 SaveState();
                 Log.Debug($"Sync {name}: xong sau {sw.Elapsed.TotalSeconds:0.0} giây");
+                ReportChanges(name, before);
             }
-            catch (OperationCanceledException) { }
+            // Chỉ nuốt OperationCanceled khi app đang dừng. HttpClient hết Timeout cũng ném TaskCanceledException: đó là lỗi
+            // Timeout thật, phải báo và ghi lại, không được coi như "đã hủy".
+            catch (OperationCanceledException) when (_stop.IsCancellationRequested) { Log.Debug($"Sync {name}: dừng vì app thoát"); }
             catch (Exception e)
             {
-                lock (st) { st.Error = e.Message; st.FailedAt = DateTimeOffset.UtcNow; }
+                var kind = SyncErrors.Classify(e);
+                lock (st)
+                {
+                    st.Error = e.Message; st.Kind = kind; st.FailedAt = DateTimeOffset.UtcNow;
+                    st.NetFails = kind is SyncErrorKind.Network or SyncErrorKind.Timeout ? st.NetFails + 1 : 0;
+                }
                 SaveState();
-                Log.Error($"Sync {name} lỗi", e);
+                Log.Error($"Sync {name} lỗi ({kind})", e);
             }
             finally
             {
@@ -163,26 +191,149 @@ public sealed class SourceHub : IDisposable
         return true;
     }
 
+    private void OnLine(string name, State st, string line)
+    {
+        if (line == SyncSignal.DataReady) { Changed?.Invoke(name, "data"); return; }
+        if (SyncSignal.TryParseWarn(line, out var warn))
+        {
+            lock (st) { if (st.Warnings.Count < 30) st.Warnings.Add(warn); st.Log.Add("  lỗi: " + warn); }
+            return;
+        }
+        if (SyncSignal.TryParseStep(line, out var key, out var done, out var total))
+        {
+            bool show;
+            lock (st)
+            {
+                // Đổi bước thì báo ngay; cùng bước chỉ tăng số thì tối đa 4 lần/giây (đỡ vẽ lại giao diện liên tục).
+                show = key != st.Step || DateTimeOffset.UtcNow - st.StepShownAt > TimeSpan.FromMilliseconds(250) || done == total;
+                st.Step = key; st.Done = done; st.Total = total;
+                if (show) st.StepShownAt = DateTimeOffset.UtcNow;
+            }
+            if (show) Changed?.Invoke(name, "progress");
+            return;
+        }
+        lock (st) st.Log.Add(line);
+    }
+
+    // ------------------------------------------------------------------ ChangeSet
+
+    /// <summary>Dữ liệu đã lưu trước lượt sync (store có cache, không đọc lại file nếu không đổi).</summary>
+    private static object? Snapshot(string name) => name switch
+    {
+        "lms" => LmsStore.Read(),
+        "mybk" => MybkStore.Read(),
+        _ => null,
+    };
+
+    private void ReportChanges(string name, object? before)
+    {
+        try
+        {
+            var changes = (before, Snapshot(name)) switch
+            {
+                (LmsData b, LmsData a) => ChangeSet.Compare(b, a),
+                (MybkData b, MybkData a) => ChangeSet.Compare(b, a),
+                _ => ChangeSet.Empty,
+            };
+            Log.Debug($"ChangeSet {name}: {changes.Counts}");
+            ChangeSetReady?.Invoke(name, changes);
+        }
+        // So sánh lỗi không được làm hỏng lượt sync vừa xong.
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Error($"ChangeSet {name}", e); }
+    }
+
+    // ------------------------------------------------------------------ scheduler
+
+    /// <summary>Chu kỳ thực tế của nguồn: gấp đôi khi bật Tiết kiệm pin.</summary>
+    private TimeSpan IntervalOf(ISource src) => BatterySaverOn() ? src.Interval * 2 : src.Interval;
+
+    private bool BatterySaverOn()
+    {
+        try { return BatterySaver?.Invoke() == true; }
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Debug($"Không đọc được trạng thái pin: {e.Message}"); return false; }
+    }
+
+    /// <summary>
+    /// Lần trước lỗi thì bao lâu sau mới tự retry: lỗi mạng/timeout thì sớm (10, 30, 60 phút, không quá một chu kỳ), lỗi khác
+    /// (thường do session hết hạn, server giới hạn) thì đợi hết một chu kỳ, đỡ tốn pin và đỡ spam request.
+    /// </summary>
+    internal static TimeSpan RetryAfter(SyncErrorKind? kind, int netFails, TimeSpan interval)
+    {
+        if (kind is not (SyncErrorKind.Network or SyncErrorKind.Timeout) || netFails <= 0) return interval;
+        var minutes = NetRetryMinutes[Math.Min(netFails, NetRetryMinutes.Length) - 1];
+        var retry = TimeSpan.FromMinutes(minutes);
+        return retry < interval ? retry : interval;
+    }
+
+    /// <summary>
+    /// Một lượt của scheduler: nguồn nào tới hạn thì chạy. Không có mạng thì bỏ lượt, không ghi lỗi (lỗi "mất mạng" lúc máy
+    /// đang offline chỉ làm người dùng lo). Login lại hoặc bấm Đồng bộ thì vẫn chạy ngay (không qua đây).
+    /// </summary>
+    public void RunDue()
+    {
+        if (_stop.IsCancellationRequested) return;
+        if (!Online())
+        {
+            Log.Debug("Scheduler: máy đang offline, bỏ lượt");
+            return;
+        }
+        foreach (var src in _sources.Values)
+        {
+            var s = src.Status();
+            if (!s.Connected) continue;
+            var interval = IntervalOf(src);
+            var st = _state[src.Name];
+            TimeSpan wait;
+            DateTimeOffset failedAt;
+            lock (st) { wait = st.Error is null ? TimeSpan.Zero : RetryAfter(st.Kind, st.NetFails, interval); failedAt = st.FailedAt; }
+            if (wait > TimeSpan.Zero && DateTimeOffset.UtcNow - failedAt < wait) continue;
+            var last = s.SyncedAt is { } t ? DateTimeOffset.FromUnixTimeSeconds(t) : DateTimeOffset.MinValue;
+            // Lần trước lỗi mạng và đã tới lúc retry thì chạy luôn, dù chưa hết chu kỳ tính từ lần thành công.
+            var retryDue = wait > TimeSpan.Zero && wait < interval;
+            if (retryDue || DateTimeOffset.UtcNow - last > interval) Start(src.Name);
+        }
+    }
+
+    /// <summary>
+    /// Có mạng lại, máy vừa thức dậy: chờ một chút (mạng vừa lên thường chưa có DNS) rồi chạy một lượt scheduler.
+    /// Gọi nhiều lần liền nhau thì chỉ chạy một lượt.
+    /// </summary>
+    public void RunDueSoon(TimeSpan delay)
+    {
+        if (_stop.IsCancellationRequested || Interlocked.Exchange(ref _dueSoon, 1) == 1) return;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(delay, _stop.Token);
+                Interlocked.Exchange(ref _dueSoon, 0);
+                RunDue();
+            }
+            // App đang thoát (_stop đã hủy hoặc đã Dispose): bỏ lượt.
+            catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException) { }
+            catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Scheduler (sau khi có mạng lại)", e); }
+            finally { Interlocked.Exchange(ref _dueSoon, 0); }
+        });
+    }
+
+    private int _dueSoon;
+
     public void StartScheduler()
     {
         var minutes = Math.Max(1, Config.Int("app.schedulerMinutes", 10));
         _ = Task.Run(async () =>
         {
             using var timer = new PeriodicTimer(TimeSpan.FromMinutes(minutes));
-            await Task.Delay(TimeSpan.FromSeconds(10), _stop.Token).ContinueWith(_ => { });
-            do
+            try
             {
-                foreach (var src in _sources.Values)
+                await Task.Delay(TimeSpan.FromSeconds(10), _stop.Token);
+                do
                 {
-                    var s = src.Status();
-                    var last = s.SyncedAt is { } t ? DateTimeOffset.FromUnixTimeSeconds(t) : DateTimeOffset.MinValue;
-                    // Lần trước lỗi (thường do session hết hạn) thì đợi hết một chu kỳ mới retry, đỡ tốn pin và đỡ spam request.
-                    // Login lại hoặc bấm Đồng bộ thì vẫn chạy ngay.
-                    var st = _state[src.Name];
-                    if (st.Error is not null && DateTimeOffset.UtcNow - st.FailedAt < src.Interval) continue;
-                    if (s.Connected && DateTimeOffset.UtcNow - last > src.Interval) Start(src.Name);
-                }
-            } while (await timer.WaitForNextTickAsync(_stop.Token).AsTask().ContinueWith(t => !t.IsCanceled && t.Result));
+                    try { RunDue(); }
+                    catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Scheduler", e); }
+                } while (await timer.WaitForNextTickAsync(_stop.Token));
+            }
+            catch (OperationCanceledException) { }
         });
     }
 

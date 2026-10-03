@@ -302,6 +302,7 @@
     "language": "vi",
     "closeToTray": true,
     "calendarView": "grid",
+    "practiceReleaseMinutes": 3,
     "update": {
       "mode": "ask",
       "checkHours": 24,

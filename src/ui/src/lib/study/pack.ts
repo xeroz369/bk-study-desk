@@ -32,6 +32,8 @@ export interface PackQuestion {
 	accept?: string[];
 	/** không xáo phương án của câu này (vd. có "Cả A và B đều đúng") */
 	keepOrder?: boolean;
+	/** các câu cùng nhóm trong một bài (dùng chung đề, số liệu) luôn được rút cùng nhau và đứng liền nhau */
+	group?: string;
 	solution: string;
 	difficulty?: 1 | 2 | 3;
 	skills?: string[];
@@ -178,6 +180,7 @@ export function validatePack(input: unknown, rawSize = 0): PackReport {
 		text(q.prompt, `${path}.prompt`);
 		text(q.solution, `${path}.solution`);
 		if (q.tag !== undefined) str(q.tag, `${path}.tag`);
+		if (q.group !== undefined) str(q.group, `${path}.group`);
 		if (type === 'single' || type === 'multi') {
 			if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 8) err(`${path}.options`, 'cần 2–8 phương án');
 			else {

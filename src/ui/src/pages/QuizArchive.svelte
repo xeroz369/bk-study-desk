@@ -12,7 +12,7 @@
 	import { api } from '$lib/api/client';
 	import { Study } from '$lib/study/registry.svelte';
 	import { UNIT_TITLE, type QuizInfo } from '$lib/study/lmsquiz';
-	import { scopeOfLesson, scopePath } from '$lib/study/transfer';
+	import { LABELS, quizActions } from '$lib/study/actions';
 
 	let { arg: _arg }: { arg: string } = $props(); // every page gets arg from the router
 	let note = $state('');
@@ -67,17 +67,8 @@
 		sessionStorage.setItem('soan.prefill', JSON.stringify({ unit: UNIT_TITLE, lesson: `Ghi lại: ${i.quiz.quiz}` }));
 		location.hash = `#soan/tao/${course.id}${ui >= 0 ? '/' + ui : ''}`;
 	}
-	function menu(i: QuizInfo) {
-		const sc = i.lessonId ? scopeOfLesson(i.lessonId) : null;
-		if (!i.lessonId || !sc) return [{ label: 'Ghi lại câu còn nhớ', primary: true, run: () => recall(i) }];
-		return [
-			{ label: 'Ôn lại', primary: true, run: () => (location.hash = '#bai/' + i.lessonId) },
-			{ label: 'Câu tương tự (nhờ AI)', run: () => (location.hash = `#soan/ai/${scopePath(sc)}`) },
-			...(i.shareable ? [{ label: 'Xuất để chia sẻ', run: () => (location.hash = `#soan/xuat/${scopePath(sc)}`) }] : []),
-		];
-	}
 	async function saveNow() {
-		const r = await api.syncLms();
+		const r = await api.syncLms().catch(() => null);
 		note = r
 			? 'Đang đồng bộ LMS. Quiz vừa nộp sẽ vào kho sau khoảng một phút.'
 			: 'Chưa lưu được lúc này: app đang hoặc vừa đồng bộ, hoặc chưa đăng nhập.';
@@ -107,10 +98,10 @@
 		<Panel title={subject} meta={`${list.length} quiz`}>
 			{#each list as i (i.quiz.file)}
 				{@const st = status(i)}
-				<DataRow title={i.quiz.quiz} sub={sub(i)} menu={() => menu(i)}>
+				<DataRow title={i.quiz.quiz} sub={sub(i)} menu={() => quizActions(i, () => recall(i))}>
 					{#snippet trailing()}
 						<Tag tone={st.tone} text={st.text} />
-						{#if i.lessonId}<Button size="xs" variant="outline" href={'#bai/' + i.lessonId}>Ôn lại</Button>
+						{#if i.lessonId}<Button size="xs" variant="outline" href={'#bai/' + i.lessonId}>{LABELS.quiz.review}</Button>
 						{:else}<Button size="xs" variant="outline" title="Tự ghi lại câu còn nhớ để làm lại; đáp án tự kiểm" onclick={() => recall(i)}
 								>Ghi lại</Button
 							>{/if}

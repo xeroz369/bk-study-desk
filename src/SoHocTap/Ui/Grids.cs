@@ -75,14 +75,16 @@ internal static class Grids
         return c;
     }
 
-    public static void RestoreWidths(DataGrid g) =>
-        // Chạy sau lượt layout hiện tại; tạo DataGridLength mới (chưa có DisplayValue) để DataGrid tính lại từ đầu.
+    /// <summary>Chạy sau lượt layout hiện tại; tạo DataGridLength mới (chưa có DisplayValue) để DataGrid tính lại từ đầu.</summary>
+    public static void RestoreWidths(DataGrid g)
+    {
         g.Dispatcher.InvokeAsync(() =>
         {
             foreach (var c in g.Columns)
                 if (Design.TryGetValue(c, out var o) && o is DataGridLength w)
                     c.Width = new DataGridLength(w.Value, w.UnitType);
         }, System.Windows.Threading.DispatcherPriority.Background);
+    }
 
     public static DataGridTextColumn Text(string header, string path, double width = double.NaN, bool star = false, string? sortPath = null)
     {
@@ -91,11 +93,51 @@ internal static class Grids
             Header = header,
             Binding = new Binding(path),
             ElementStyle = (Style)Application.Current.FindResource("WrapCell"),
+            HeaderTemplate = (DataTemplate)Application.Current.FindResource("TrimHeader"),
             SortMemberPath = sortPath ?? path,
         };
-        c.Width = star ? new DataGridLength(1, DataGridLengthUnitType.Star) : double.IsNaN(width) ? DataGridLength.Auto : new DataGridLength(width);
+        c.Width = star ? new DataGridLength(2, DataGridLengthUnitType.Star) : double.IsNaN(width) ? DataGridLength.Auto : new DataGridLength(width);
+        // Cột chính (tên, tiêu đề) không co dưới ~160: hẹp hơn thì chữ chỉ còn vài ký tự, thà cuộn ngang.
+        if (star) c.MinWidth = 160;
         Design.AddOrUpdate(c, c.Width);
         return c;
+    }
+
+    /// <summary>
+    /// Cột phụ co giãn theo tỉ lệ (môn, giảng viên, chi tiết...): cửa sổ hẹp thì co về <paramref name="min"/> thay vì đẩy bảng tràn ngang.
+    /// Cột chính (star) có trọng số 2 nên vẫn rộng nhất.
+    /// </summary>
+    public static DataGridTextColumn Flex(string header, string path, double weight, double min, string? sortPath = null)
+    {
+        var c = Text(header, path, sortPath: sortPath);
+        c.Width = new DataGridLength(weight, DataGridLengthUnitType.Star);
+        c.MinWidth = min;
+        Design.AddOrUpdate(c, c.Width);
+        return c;
+    }
+
+    // ------------------------------------------------------------------ automation
+
+    private static readonly Dictionary<(Type, string), System.Reflection.PropertyInfo?> Props = [];
+
+    /// <summary>
+    /// Tên của từng dòng cho UI Automation (trình đọc màn hình, test): chữ của các cột theo thứ tự đang hiện, thay cho ToString() của record
+    /// (mặc định đọc ra cả "TimelineItem { Id = ..., Kind = ... }").
+    /// </summary>
+    public static void NameRows(DataGrid g) => g.LoadingRow += (_, e) => System.Windows.Automation.AutomationProperties.SetName(e.Row, RowName(g, e.Row.Item));
+
+    public static string RowName(DataGrid g, object? item)
+    {
+        if (item is null) return "";
+        var parts = new List<string>();
+        foreach (var c in g.Columns.OrderBy(c => c.DisplayIndex))
+        {
+            if (c.Visibility != Visibility.Visible || c is not DataGridBoundColumn { Binding: Binding { Path.Path: { Length: > 0 } path } }) continue;
+            var key = (item.GetType(), path);
+            if (!Props.TryGetValue(key, out var prop)) Props[key] = prop = item.GetType().GetProperty(path);
+            if (Convert.ToString(prop?.GetValue(item), L.Culture) is { Length: > 0 } text) parts.Add(text);
+        }
+        return string.Join(", ", parts);
     }
 
     public static DataGridTextColumn Right(string header, string path, double width, string? sortPath = null)

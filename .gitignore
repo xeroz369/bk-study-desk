@@ -13,6 +13,8 @@ node_modules/
 # Runtime data: sign-in cookies, tokens, synced school data, logs. Never commit.
 data/
 **/data/
+# Mã nguồn tầng dữ liệu (Windows không phân biệt hoa thường nên **/data/ cũng khớp thư mục này).
+!src/SoHocTap/Data/
 Môn học/
 _Lưu trữ/
 *.log

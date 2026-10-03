@@ -2,11 +2,44 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.6.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.7.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.7] - 2026-10-03
+
+An experimental release: most of the code has been reorganised to make features and fixes easier. If something looks wrong, please open an issue.
+
+### Security
+
+- Automated security checks on every change and every week: OSV-Scanner, npm audit, NuGet advisories, gitleaks, zizmor, Semgrep, BinSkim, OpenSSF Scorecard (alongside the existing CodeQL and Dependabot). Process and response times: [security-process.md](security-process.md).
+
+### Changed
+
+- Narrow windows (1024 px or less): the navigation bar shows icons only instead of overflowing, so every page stays reachable.
+- Tables keep their main column wide enough in narrow windows; long column names end with an ellipsis and a tooltip; tab rows no longer wrap onto two lines.
+- A finished sync no longer resets sorting, scroll position and the selected row. Only the page you are looking at is refreshed.
+- **Practice** frees its memory (about 300 MB) after you leave it for 3 minutes or when the app goes to the tray, and comes back when you open it again.
+- **Random exam** keeps the original question order and keeps related questions together (new `group` field in Study Pack).
+- **Practice** right-click menus use the same command names everywhere; chapter headers have a right-click menu.
+- Sync skips a run while offline instead of reporting an error, and syncs soon after the network returns or the PC wakes up; in battery saver mode the interval is longer.
+- Sync error messages follow the kind of error (session expired, offline, server error...), now also in English.
+- When one part of the MyBK data fails, the previous data for that part is kept instead of being emptied. Unreadable data is reported instead of showing an empty page.
+- Settings: enter 0 in a reminder box to turn that reminder off; the MyBK sync interval is at least 6 hours.
+- The log file records full error details and environment info, which helps when reporting bugs.
+
+### Fixed
+
+- When the MyBK session expired, MyBK sync hung for 45 seconds and then reported "MyBK did not respond" (a bug in 1.1.5 and 1.1.6). The app signs in again through SSO as before.
+- Empty pages without an explanation: the **Subjects** tabs, **Calendar** > **Upcoming**, **Exams**, and the **Subjects** card in **Practice**.
+- Cut-off text: the "stay signed in" box in **Settings** and the error line in the **Download** dialog; the status bar pushed out the exam name and version.
+- GPA mixed dots and commas; the tuition column wasn't formatted as money; copying in **Calendar** didn't say "Copied".
+- **Practice**: errors when importing, saving or removing a pack are no longer silent; hints in input boxes no longer mention another course's chapter.
+- Saving a file that is open in another program (for example a PDF) no longer breaks the whole LMS sync.
+- With several monitors, the window remembers its position on the right monitor.
+- The app no longer runs an extra SSO keep-alive right after a MyBK sync.
 
 ## [1.1.6] - 2026-10-03
 
@@ -160,7 +193,8 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...HEAD
+[1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4

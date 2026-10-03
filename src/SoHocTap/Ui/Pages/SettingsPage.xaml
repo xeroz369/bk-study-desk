@@ -1,10 +1,11 @@
-﻿<!-- Cài đặt: tài khoản HCMUT · mở tài liệu · sync và nhắc hạn · xếp file Tải xuống · shortcut. Lưu vào data/config.json. -->
+﻿<!-- Cài đặt: tài khoản HCMUT, mở tài liệu, sync và nhắc hạn, xếp file Tải xuống, shortcut. Lưu vào data/config.json. -->
 <UserControl x:Class="SoHocTap.Ui.Pages.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:SoHocTap.Ui">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel>
+    <!-- ScrollViewer không nhận focus (Tab đi thẳng vào ô đầu tiên); lề phải để thanh cuộn nổi của Fluent không đè lên card. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+        <StackPanel Margin="0,0,14,0">
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
@@ -17,8 +18,8 @@
                         <TextBlock x:Name="AccountDetail" Style="{StaticResource Muted}" Margin="0,2,0,0" />
                         <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0"
                                    Text="{ui:T settings.accountNote}" />
-                        <CheckBox x:Name="Remember" Margin="0,10,0,0" Click="OnRemember" />
-                        <CheckBox x:Name="KeepAlive" Margin="0,6,0,0" Content="{ui:T settings.keepAlive}" Click="OnKeepAlive" />
+                        <CheckBox x:Name="Remember" Margin="0,10,0,0" Click="OnRemember" Style="{StaticResource WrapCheck}" />
+                        <CheckBox x:Name="KeepAlive" Margin="0,6,0,0" Content="{ui:T settings.keepAlive}" Click="OnKeepAlive" Style="{StaticResource WrapCheck}" />
                         <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.keepAlive.note}" />
                     </StackPanel>
                 </DockPanel>
@@ -75,7 +76,7 @@
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="{ui:T settings.startup}" Style="{StaticResource SectionTitle}" />
-                    <CheckBox x:Name="AutoStart" Content="{ui:T settings.autoStart}" Click="OnAutoStart" />
+                    <CheckBox x:Name="AutoStart" Content="{ui:T settings.autoStart}" Click="OnAutoStart" Style="{StaticResource WrapCheck}" />
                     <TextBlock Text="{ui:T settings.closeButton}" Margin="0,12,0,4" />
                     <RadioButton x:Name="CloseToTray" GroupName="Close" Content="{ui:T settings.closeToTray}" Click="OnCloseMode" />
                     <RadioButton x:Name="CloseExit" GroupName="Close" Content="{ui:T settings.closeExit}" Click="OnCloseMode" Margin="0,4,0,0" />
@@ -105,12 +106,14 @@
                         <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" Text="{ui:T settings.notifyHoursNote}" />
                         <Label Grid.Row="3" Content="{ui:T settings.lastHours}" Target="{Binding ElementName=LastHours}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="3" Grid.Column="1" x:Name="LastHours" Margin="0,3" />
+                        <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" Text="{ui:T settings.lastHoursNote}" />
                         <Label Grid.Row="4" Content="{ui:T settings.maxMb}" Target="{Binding ElementName=MaxMb}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="4" Grid.Column="1" x:Name="MaxMb" Margin="0,3" />
                     </Grid>
-                    <CheckBox x:Name="AutoDownload" Margin="0,10,0,0" Content="{ui:T settings.autoDownload}" />
-                    <CheckBox x:Name="AutoExtract" Margin="0,6,0,0" Content="{ui:T settings.autoExtract}" />
-                    <CheckBox x:Name="SaveQuizzes" Margin="0,6,0,0" Content="{ui:T settings.saveQuizzes}" ToolTip="{ui:T settings.saveQuizzes.tip}" Click="OnSaveQuizzes" />
+                    <CheckBox x:Name="AutoDownload" Margin="0,10,0,0" Content="{ui:T settings.autoDownload}" Style="{StaticResource WrapCheck}" />
+                    <CheckBox x:Name="AutoExtract" Margin="0,6,0,0" Content="{ui:T settings.autoExtract}" Style="{StaticResource WrapCheck}" />
+                    <CheckBox x:Name="SaveQuizzes" Margin="0,6,0,0" Content="{ui:T settings.saveQuizzes}" ToolTip="{ui:T settings.saveQuizzes.tip}" Click="OnSaveQuizzes"
+                              Style="{StaticResource WrapCheck}" />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <Button Content="{ui:T settings.save}" Click="OnSave" IsDefault="False" Style="{DynamicResource AccentButtonStyle}" />
                         <Button Content="{ui:T settings.resync}" Margin="8,0,0,0" Click="OnResync" ToolTip="{ui:T settings.resync.tip}" />
@@ -135,7 +138,7 @@
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="{ui:T settings.debug}" Style="{StaticResource SectionTitle}" />
-                    <CheckBox x:Name="DebugLog" Content="{ui:T settings.debugLog}" Click="OnDebugLog" />
+                    <CheckBox x:Name="DebugLog" Content="{ui:T settings.debugLog}" Click="OnDebugLog" Style="{StaticResource WrapCheck}" />
                     <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.debugNote}" />
                     <Button Content="{ui:T settings.openLog}" Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnOpenLog" />
                 </StackPanel>

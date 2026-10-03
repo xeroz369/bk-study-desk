@@ -1,11 +1,13 @@
 <!-- Khối nội dung gọn: viền mảnh, đầu khối thấp (tiêu đề viết thường kiểu câu, đậm vừa), thân là các hàng chia vạch.
      collapsible: thu gọn được; open chỉ là trạng thái ban đầu (người dùng bấm thì giữ, không bị ghi đè khi dữ liệu làm mới).
-     pad: thân có đệm (cho văn bản, lưới) thay vì danh sách hàng. -->
+     pad: thân có đệm (cho văn bản, lưới) thay vì danh sách hàng.
+     menu: lệnh chuột phải trên đầu khối (vd. Tạo, Nhập, Xuất cho cả chương). -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { cn } from '$lib/utils';
+	import { menu as menuOf, type MenuItem } from '$lib/menu.svelte';
 
 	let {
 		title = '',
@@ -16,6 +18,7 @@
 		class: className = '',
 		head,
 		action,
+		menu,
 		children,
 	}: {
 		title?: string;
@@ -27,6 +30,8 @@
 		/** nội dung thêm trong đầu khối, sau tiêu đề (thanh tiến độ, nhãn…) */
 		head?: Snippet;
 		action?: Snippet;
+		/** lệnh chuột phải của đầu khối */
+		menu?: () => MenuItem[];
 		children: Snippet;
 	} = $props();
 
@@ -36,7 +41,7 @@
 </script>
 
 {#snippet header(trigger: boolean)}
-	<div class="flex h-panel-head items-center gap-2 px-3 {trigger ? '' : 'border-b'}">
+	<div class="flex h-panel-head items-center gap-2 px-3 {trigger ? '' : 'border-b'}" {@attach menu && menuOf(menu)}>
 		{#if trigger}<ChevronRight class="size-3.5 shrink-0 text-muted-foreground transition-transform {isOpen ? 'rotate-90' : ''}" />{/if}
 		<span class="shrink-0 text-sm font-semibold">{title}</span>
 		{@render head?.()}

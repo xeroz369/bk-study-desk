@@ -14,7 +14,7 @@ public sealed record IcsEvent(string Uid, DateTime Start, DateTime End, string S
 /// </summary>
 public static class Ics
 {
-    public static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
+    public static readonly TimeSpan VietnamOffset = VnTime.Offset;
 
     public static string Build(string calendarName, IEnumerable<IcsEvent> events, DateTime nowUtc)
     {
@@ -85,10 +85,6 @@ public static class Ics
         return ISOWeek.ToDateTime(year, week, dow);
     }
 
-    /// <summary>"07:00" → 420 phút; chuỗi lạ → null.</summary>
-    public static int? Minutes(string? hhmm)
-    {
-        var p = (hhmm ?? "").Split(':');
-        return p.Length == 2 && int.TryParse(p[0], CultureInfo.InvariantCulture, out var h) && int.TryParse(p[1], CultureInfo.InvariantCulture, out var m) ? h * 60 + m : null;
-    }
+    /// <summary>"07:00" hay "7g30" → số phút từ 0 giờ; chuỗi lạ → null (xem <see cref="VnTime.ParseClock"/>).</summary>
+    public static int? Minutes(string? hhmm) => VnTime.ParseClock(hhmm);
 }

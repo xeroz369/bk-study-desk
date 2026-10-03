@@ -287,6 +287,11 @@
         "keepOrder": {
           "type": "boolean",
           "description": "không xáo phương án của câu này"
+        },
+        "group": {
+          "type": "string",
+          "minLength": 1,
+          "description": "không bắt buộc: các câu cùng nhóm trong một bài (dùng chung đề, số liệu) luôn được rút cùng nhau và đứng liền nhau"
         }
       }
     },

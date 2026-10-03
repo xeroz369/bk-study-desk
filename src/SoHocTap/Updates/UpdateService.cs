@@ -28,9 +28,7 @@ public sealed class UpdateService
     public string? LastError { get; private set; }
     public event Action? Changed;
     /// <summary>Ngay trước khi thoát để cài bản mới: dọn icon khay, dừng đồng bộ.</summary>
-#pragma warning disable CS0067   // bản local không cập nhật nên không phát sự kiện này
     public event Action? Restarting;
-#pragma warning restore CS0067
 
     /// <summary>Lần trước cài bản mới không thành (Velopack giữ bản cũ): câu báo cho thanh trạng thái, null nếu không có.</summary>
     public static string? StartupNotice { get; private set; }

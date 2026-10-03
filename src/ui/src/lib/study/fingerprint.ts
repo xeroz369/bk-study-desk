@@ -12,8 +12,8 @@ interface Hashable {
 	accept?: string[];
 }
 
-/** Text only: no tags, entities, spacing differences; TeX kept but without spaces. */
-export function plainText(html: string): string {
+/** Text used for hashing only (not plainText in text.ts): no tags, entities, spacing; TeX kept but without spaces. */
+export function fpText(html: string): string {
 	return html
 		.replace(/<img\b[^>]*>/gi, ' [img] ')
 		.replace(/<[^>]+>/g, ' ')
@@ -41,8 +41,7 @@ function hash(s: string): string {
 
 /** Options are sorted so a shuffled copy of the same question still matches. */
 export function fingerprint(q: Hashable): string {
-	const opts = (q.options ?? []).map(plainText).sort();
-	const key =
-		q.type === 'numeric' ? String(q.value ?? q.answer) : q.type === 'short' ? (q.accept ?? []).map(plainText).sort().join('|') : '';
-	return hash([plainText(q.prompt), ...opts, key].join('\u0001'));
+	const opts = (q.options ?? []).map(fpText).sort();
+	const key = q.type === 'numeric' ? String(q.value ?? q.answer) : q.type === 'short' ? (q.accept ?? []).map(fpText).sort().join('|') : '';
+	return hash([fpText(q.prompt), ...opts, key].join('\u0001'));
 }

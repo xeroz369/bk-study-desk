@@ -1,0 +1,152 @@
+name: security
+
+# Kiểm tra bảo mật bằng công cụ có sẵn (không tự viết), bổ sung cho codeql.yml (phân tích mã C#, TypeScript, workflow).
+# Quy trình và cách xử lý kết quả: docs/quy-trinh-bao-mat.md.
+# - deps:     lỗ hổng đã công bố trong thư viện NuGet (advisory của NuGet/GitHub) và npm (npm audit).
+# - osv:      OSV-Scanner của Google, đối chiếu lockfile với cơ sở dữ liệu OSV.dev.
+# - secrets:  gitleaks quét toàn bộ lịch sử git tìm khóa, token, mật khẩu lỡ commit.
+# - zizmor:   lỗi bảo mật trong file workflow GitHub Actions (quyền token, chèn lệnh, cache độc).
+# - semgrep:  bộ luật cộng đồng cho C#, TypeScript/JavaScript, bí mật trong mã.
+# - binskim:  BinSkim của Microsoft kiểm file .exe/.dll đã build (ASLR, DEP, CFG, ký số...).
+# Kết quả dạng SARIF hiện ở tab Security > Code scanning.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '41 2 * * 1'   # thứ hai hằng tuần: lỗ hổng mới công bố cho thư viện đang dùng
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deps:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: NuGet (kể cả thư viện gián tiếp)
+        shell: pwsh
+        run: |
+          $bad = $false
+          foreach ($p in 'src/SoHocTap', 'src/BKStudyDesk.Setup', 'src/BKStudyDesk.Desktop', 'tests/SoHocTap.Tests') {
+            $out = dotnet list $p package --vulnerable --include-transitive 2>&1 | Out-String
+            Write-Host $out
+            if ($LASTEXITCODE -ne 0) { throw "dotnet list lỗi ở $p" }
+            if ($out -match 'has the following vulnerable packages') { $bad = $true }
+          }
+          if ($bad) { throw 'Có thư viện NuGet dính lỗ hổng đã công bố (xem danh sách ở trên).' }
+      - name: npm audit
+        working-directory: src/ui
+        run: |
+          npm ci --no-audit --no-fund
+          npm audit --audit-level=moderate
+
+  osv:
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+    with:
+      scan-args: |-
+        --recursive
+        ./
+      # Repo private (bản review) không có Code scanning: chỉ báo đỏ, không tải SARIF.
+      upload-sarif: ${{ !github.event.repository.private }}
+
+  secrets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0          # quét cả lịch sử, không chỉ commit mới
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+
+  zizmor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          advanced-security: ${{ !github.event.repository.private }}
+
+  semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # src/ui/scripts: công cụ dev (chụp màn hình, audit giao diện) gọi DevTools qua http://127.0.0.1, không đi vào bản phát hành.
+      - name: Semgrep (bộ luật cộng đồng)
+        run: |
+          python3 -m pip install --quiet semgrep==1.179.0
+          semgrep scan --metrics=off --error --severity ERROR \
+            --config p/csharp --config p/typescript --config p/javascript --config p/secrets \
+            --exclude 'src/ui/build' --exclude '**/node_modules' --exclude 'src/ui/scripts' \
+            --sarif --output semgrep.sarif .
+      - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        if: always() && !github.event.repository.private && hashFiles('semgrep.sarif') != ''
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  binskim:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      BINSKIM_VERSION: '4.4.9.11'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+      - name: Build (Release, win-x64)
+        run: dotnet publish src/SoHocTap -c Release -r win-x64 --self-contained false -o out -p:DebugType=pdbonly
+      - name: BinSkim
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # BinSkim phát hành trên NuGet (Microsoft.CodeAnalysis.BinSkim), không phải dotnet tool: tải gói, chạy file exe bên trong.
+          Invoke-WebRequest "https://www.nuget.org/api/v2/package/Microsoft.CodeAnalysis.BinSkim/$env:BINSKIM_VERSION" -OutFile binskim.zip
+          Expand-Archive binskim.zip binskim
+          $exe = Get-ChildItem binskim -Recurse -Filter BinSkim.exe | Where-Object FullName -match 'win-x64' | Select-Object -First 1
+          if (!$exe) { $exe = Get-ChildItem binskim -Recurse -Filter BinSkim.exe | Select-Object -First 1 }
+          & $exe.FullName analyze out/BKStudyDesk.exe out/BKStudyDesk.dll --output binskim.sarif --sarif-output-version Current --ignorePdbLoadError
+          # Exit code khác 0 khi có lỗi mức error: vẫn tải SARIF lên trước, bước sau mới quyết định đỏ.
+          "BINSKIM_EXIT=$LASTEXITCODE" >> $env:GITHUB_ENV
+      - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        if: always() && !github.event.repository.private && hashFiles('binskim.sarif') != ''
+        with:
+          sarif_file: binskim.sarif
+          category: binskim
+      - name: Kết quả BinSkim
+        shell: pwsh
+        run: if ($env:BINSKIM_EXIT -ne '0') { throw "BinSkim báo lỗi (exit $env:BINSKIM_EXIT), xem tab Security > Code scanning." }
