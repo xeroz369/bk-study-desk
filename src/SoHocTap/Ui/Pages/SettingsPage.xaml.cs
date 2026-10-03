@@ -41,6 +41,7 @@ public partial class SettingsPage : UserControl, IPage
             new("Backspace", L.T("settings.keys.up")),
         };
         Load();
+        _host.Library.Changed += () => Dispatcher.InvokeAsync(ShowLibraryStatus);
         var langs = L.Available().Select(x => new LanguageItem(x.Code, x.Name)).ToList();
         LanguageBox.ItemsSource = langs;
         LanguageBox.SelectedItem = langs.FirstOrDefault(x => x.Code == Config.Str("app.language", L.Base)) ?? langs.FirstOrDefault(x => x.Code == L.Code);
@@ -76,8 +77,18 @@ public partial class SettingsPage : UserControl, IPage
         UpdateIntervalBox.SelectedItem = hours.First(x => x.Hours == UpdatePolicy.NearestChoice(Config.Int("app.update.checkHours", 6)));
         ShowIntervalRow();
         _updateReady = true;
+        _updateView = new DownloadView(_host.Updates, UpdateBar);
+        // Chỉ nghe khi trang đang hiện (trang Cài đặt được giữ lại sau khi rời đi).
+        Loaded += (_, _) => { _host.Updates.Changed += OnUpdatesChanged; ShowUpdateNote(); };
+        Unloaded += (_, _) => { _host.Updates.Changed -= OnUpdatesChanged; _updateView.Stop(); };
         ShowUpdateNote();
     }
+
+    private DownloadView? _updateView;
+
+    private void OnUpdatesChanged() => Dispatcher.InvokeAsync(ShowUpdateNote);
+
+    private void OnUpdateCancel(object sender, RoutedEventArgs e) => _host.Updates.CancelDownload();
 
     private sealed record HoursItem(int Hours, string Name)
     {
@@ -96,10 +107,13 @@ public partial class SettingsPage : UserControl, IPage
     private void ShowUpdateNote()
     {
         var u = _host.Updates;
-        UpdateNote.Text = u.LastError is { } err ? L.F("update.error", err)
+        var progress = _updateView?.Render();
+        UpdateProgressRow.Visibility = u.Downloading ? Visibility.Visible : Visibility.Collapsed;
+        UpdateNote.Text = progress ?? (u.LastError is { } err ? L.F("update.error", err)
+            : u.Downloaded && u.Offer is not null ? L.T("update.restart")
             : u.Offer is { } o ? L.F("update.available", o.Version)
             : u.LastCheck is { } t ? L.F("update.latest", AppInfo.Version) + ", " + L.F("update.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
-            : !UpdateService.CanSelfUpdate ? L.T("update.zipNote") : "";
+            : !UpdateService.CanSelfUpdate ? L.T("update.zipNote") : "");
     }
 
     /// <summary>
@@ -177,6 +191,50 @@ public partial class SettingsPage : UserControl, IPage
         Remember.IsChecked = Config.Int("sso.rememberDays", RememberDays) > 0;
         KeepAlive.IsChecked = Config.Int("sso.keepAliveMinutes", KeepAliveMinutes) > 0;
         DebugLog.IsChecked = DiagnosticLog.Active();
+        LibraryEnabled.IsChecked = Library.LibraryService.Enabled;
+        LibraryUrl.Text = Library.LibraryService.BaseUrl;
+        // Địa chỉ thư viện chỉ đổi khi đang bật log chẩn đoán (dev, thử thư viện trên máy); bình thường là chữ chỉ đọc.
+        LibraryUrl.IsReadOnly = !DiagnosticLog.Active();
+        ShowLibraryStatus();
+    }
+
+    // ------------------------------------------------------------------ thư viện
+
+    private void ShowLibraryStatus()
+    {
+        var lib = _host.Library;
+        LibraryStatus.Text = Library.LibraryService.BaseUrl.Length == 0 ? L.T("settings.library.noUrl")
+            : lib.LastChecked is { } t ? L.F("settings.library.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
+            : L.T("settings.library.never");
+    }
+
+    private void OnLibraryEnabled(object sender, RoutedEventArgs e)
+    {
+        _host.Library.SetEnabled(LibraryEnabled.IsChecked == true);
+        ShowLibraryStatus();
+    }
+
+    private void OnLibraryUrl(object sender, RoutedEventArgs e)
+    {
+        if (LibraryUrl.IsReadOnly || LibraryUrl.Text.Trim() == Library.LibraryService.BaseUrl) return;
+        _host.Library.SetBaseUrl(LibraryUrl.Text);
+        ShowLibraryStatus();
+    }
+
+    private void OnLibraryUrlKey(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter) OnLibraryUrl(sender, e);
+    }
+
+    private void OnLibraryClear(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            _host.Library.ClearCache();
+            // Sau handler Changed (cũng xếp hàng trên Dispatcher), để câu "đã xóa" không bị ghi đè.
+            Dispatcher.InvokeAsync(() => LibraryStatus.Text = L.T("settings.library.cleared"));
+        }
+        catch (Exception x) when (x is IOException or UnauthorizedAccessException) { LibraryStatus.Text = L.F("settings.saveError", x.Message); }
     }
 
     private const int KeepAliveMinutes = 60;
@@ -185,7 +243,11 @@ public partial class SettingsPage : UserControl, IPage
     private void OnKeepAlive(object sender, RoutedEventArgs e) => Config.Set("sso.keepAliveMinutes", KeepAlive.IsChecked == true ? KeepAliveMinutes : 0);
 
     /// <summary>Log chẩn đoán: có hiệu lực ngay, tự tắt sau DiagnosticLog.Days ngày.</summary>
-    private void OnDebugLog(object sender, RoutedEventArgs e) => DiagnosticLog.Set(DebugLog.IsChecked == true);
+    private void OnDebugLog(object sender, RoutedEventArgs e)
+    {
+        DiagnosticLog.Set(DebugLog.IsChecked == true);
+        LibraryUrl.IsReadOnly = !DiagnosticLog.Active();
+    }
 
     /// <summary>Mở Explorer, chọn sẵn app.log để người dùng kéo vào issue/tin nhắn báo lỗi.</summary>
     private void OnOpenLog(object sender, RoutedEventArgs e)

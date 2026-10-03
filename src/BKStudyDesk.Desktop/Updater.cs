@@ -49,7 +49,8 @@ internal static class Updater
             install.IsEnabled = check.IsEnabled = false;
             try
             {
-                await mgr.DownloadUpdatesAsync(found, p => Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = L.F("update.downloading", p)));
+                var version = found.TargetFullRelease.Version.ToString();
+                await mgr.DownloadUpdatesAsync(found, p => Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = L.F("update.downloading", version, p)));
                 mgr.ApplyUpdatesAndRestart(found.TargetFullRelease);
             }
             catch (Exception e) when (e is not OutOfMemoryException)

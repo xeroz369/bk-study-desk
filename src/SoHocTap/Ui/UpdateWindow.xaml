@@ -27,7 +27,10 @@
             <TextBox x:Name="Notes" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="220" MinHeight="60" VerticalScrollBarVisibility="Auto"
                      AutomationProperties.Name="{ui:T update.notes}" />
             <TextBlock x:Name="Status" Style="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap" />
+            <!-- Tiến độ tải: số thật của Velopack (DownloadView, DESIGN.md "Thanh tiến trình"); chữ % và MB nằm ở Status, không trên thanh. -->
+            <ProgressBar x:Name="Bar" Minimum="0" Maximum="100" Margin="0,8,0,0" Visibility="Collapsed" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button x:Name="CancelButton" Content="{ui:T update.cancel}" Margin="0,0,8,0" Visibility="Collapsed" Click="OnCancel" />
                 <Button x:Name="SkipButton" Content="{ui:T update.skip}" Margin="0,0,8,0" Click="OnSkip" />
                 <Button x:Name="LaterButton" Content="{ui:T update.later}" Margin="0,0,8,0" IsCancel="True" Click="OnLater" />
                 <Button x:Name="InstallButton" Content="{ui:T update.install}" Style="{DynamicResource AccentButtonStyle}" MinWidth="120"

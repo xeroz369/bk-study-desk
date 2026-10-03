@@ -119,6 +119,8 @@ public partial class SubjectsPage : UserControl, IPage
             new(L.T("subjects.downloadBySection"), () => Download(c.Course)),
             new(L.T("subjects.copyCode"), () => Grids.Copy(c.Code, _main), Separator: true),
         ]);
+
+        SetupLibrary();
     }
 
     public string Title => L.T("nav.subjects");
@@ -244,6 +246,7 @@ public partial class SubjectsPage : UserControl, IPage
         if (changed) _dir = _root;
         _filled.Clear();   // môn khác, hay dữ liệu mới (danh sách dựng lại): tab nào mở thì dựng lại tab đó
         ShowMeta(s);
+        UpdateLibraryTab(s);
         FillTab();
     }
 
@@ -282,6 +285,7 @@ public partial class SubjectsPage : UserControl, IPage
                 Courses.Show(s.Courses.OrderByDescending(c => c.Term).Select(c => new CourseRow(c.Term, c.Part ?? L.T("common.theory"), c.Code, c.Teacher, c.Url, c.Id, c)).ToList(),
                     L.T("subjects.notOnLms"), st, Src.Lms);
                 break;
+            case LibraryTabIndex: _ = LoadLibraryAsync(s); break;
         }
     }
 

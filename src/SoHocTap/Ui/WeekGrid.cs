@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -14,8 +14,9 @@ internal sealed record WeekBlock(int Day, int StartMin, int EndMin, string Title
 /// Thời khóa biểu dạng lưới tuần (giống Google Calendar, Outlook): cột là ngày, trục dọc là giờ, mỗi buổi là một khối màu theo môn.
 /// Tự canh bố cục:
 /// - luôn đủ 7 cột Thứ hai tới Chủ nhật, khớp nhãn tuần (ẩn T7, CN theo từng tuần làm cột nhảy qua lại khi có buổi học bù);
-/// - khung giờ từ buổi sớm nhất tới buổi muộn nhất (làm tròn theo giờ);
-/// - chiều cao giãn cho vừa vùng hiển thị, không thấp hơn mức đọc được (thấp hơn thì cuộn);
+/// - luôn đủ 0:00 tới 24:00, không cắt theo giờ học (có lớp buổi tối, sự kiện khuya); mở tuần thì cuộn tới buổi sớm nhất,
+///   hoặc tới giờ hiện tại nếu giờ đó không lọt khung nhìn (<see cref="WeekMath.ScrollAnchor"/>);
+/// - tỉ lệ giãn để khoảng từ buổi sớm nhất tới buổi muộn nhất vừa vùng hiển thị, không thấp hơn mức đọc được;
 /// - buổi trùng giờ trong cùng ngày chia đôi chiều ngang;
 /// - vạch "bây giờ" (màu accent, chấm ở mép trái) ở cột hôm nay, dời mỗi phút bằng DispatcherTimer chỉ chạy khi lưới đang hiện (đỡ tốn pin).
 /// Giờ trên lưới là giờ VN (giờ trường, như MyBK), nên hôm nay và vạch bây giờ cũng tính theo giờ VN.
@@ -40,7 +41,9 @@ internal sealed class WeekGrid : Grid
     private readonly Grid _body = new();
     private List<WeekBlock> _blocks = [];
     private DateTime _monday;
-    private int _from, _to;
+    private const int From = 0, To = 24 * 60;   // trục dọc luôn đủ một ngày
+    private int _blockFrom, _blockTo;            // khoảng có buổi học: chỉ để chọn tỉ lệ và chỗ cuộn tới, không cắt lưới
+    private DateTime? _scrolledFor;              // tuần đã tự cuộn; refresh sau đồng bộ không kéo người dùng về lại
     private int[] _days = [];
     private double _px = MinPxPerMin;
     private DateTime _shownToday;
@@ -108,7 +111,7 @@ internal sealed class WeekGrid : Grid
     private void PlaceNowLine()
     {
         var now = WallNow;
-        if (_days.Length == 0 || WeekMath.NowLine(_monday, now, _from, _to, _px, Pad) is not { } at)
+        if (_days.Length == 0 || WeekMath.NowLine(_monday, now, From, To, _px, Pad) is not { } at)
         {
             _now.Visibility = Visibility.Collapsed;
             return;
@@ -126,8 +129,8 @@ internal sealed class WeekGrid : Grid
         _monday = monday;
         _blocks = blocks.Where(b => b.Day is >= 2 and <= 8 && b.EndMin > b.StartMin).ToList();
         _days = [.. Enumerable.Range(2, 7)];
-        _from = _blocks.Count == 0 ? 7 * 60 : _blocks.Min(b => b.StartMin) / 60 * 60;
-        _to = _blocks.Count == 0 ? 17 * 60 : (_blocks.Max(b => b.EndMin) + 59) / 60 * 60;
+        _blockFrom = _blocks.Count == 0 ? 7 * 60 : _blocks.Min(b => b.StartMin) / 60 * 60;
+        _blockTo = _blocks.Count == 0 ? 17 * 60 : (_blocks.Max(b => b.EndMin) + 59) / 60 * 60;
         BuildHeader();
         Layout();
     }
@@ -160,8 +163,8 @@ internal sealed class WeekGrid : Grid
         _body.Children.Clear();
         _body.ColumnDefinitions.Clear();
         if (_days.Length == 0) return;
-        var minutes = _to - _from;
-        var fit = (_scroll.ActualHeight - 2 * Pad) / minutes;
+        var minutes = To - From;
+        var fit = (_scroll.ActualHeight - 2 * Pad) / Math.Max(60, _blockTo - _blockFrom);
         var px = _px = double.IsNaN(fit) || fit <= 0 ? MinPxPerMin : Math.Clamp(fit, MinPxPerMin, MaxPxPerMin);
         _body.Height = minutes * px + 2 * Pad;
 
@@ -169,9 +172,9 @@ internal sealed class WeekGrid : Grid
         foreach (var _ in _days) _body.ColumnDefinitions.Add(new ColumnDefinition());
 
         // Đường kẻ giờ và nhãn giờ.
-        for (var m = _from; m <= _to; m += 60)
+        for (var m = From; m <= To; m += 60)
         {
-            var y = Pad + (m - _from) * px;
+            var y = Pad + (m - From) * px;
             var label = new TextBlock { Text = $"{m / 60}:00", FontSize = 11, Margin = new Thickness(0, y - 7, 8, 0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
             label.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorTertiaryBrush");
             _body.Children.Add(label);
@@ -205,11 +208,18 @@ internal sealed class WeekGrid : Grid
                     var w = (canvas.ActualWidth - 4) / count;
                     view.Width = Math.Max(0, w - 2);
                     Canvas.SetLeft(view, 2 + lane * w);
-                    Canvas.SetTop(view, Pad + (b.StartMin - _from) * px + 1);
+                    Canvas.SetTop(view, Pad + (b.StartMin - From) * px + 1);
                 }
             };
         }
         PlaceNowLine();
+        if (_scrolledFor != _monday && _scroll.ActualHeight > 0)
+        {
+            _scrolledFor = _monday;
+            var visible = (int)((_scroll.ActualHeight - 2 * Pad) / px);
+            var first = _blocks.Count == 0 ? (int?)null : _blocks.Min(b => b.StartMin);
+            _scroll.ScrollToVerticalOffset((WeekMath.ScrollAnchor(_monday, WallNow, first, visible) - From) * px);
+        }
     }
 
     /// <summary>Chia làn cho các buổi trùng giờ trong một ngày: mỗi cụm buổi chồng nhau dùng chung số làn.</summary>

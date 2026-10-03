@@ -8,7 +8,7 @@ BK Study Desk là app không chính thức, do cá nhân (xeroz369) phát triể
 
 ## App thu thập gì
 
-**App không gửi dữ liệu nào về cho người làm app.** App không có server riêng, không có analytics, không có quảng cáo. Ngoài server của trường, app chỉ hỏi GitHub khi bạn cho phép kiểm tra bản mới (xem bên dưới).
+**App không gửi dữ liệu nào về cho người làm app.** App không có server riêng, không có analytics, không có quảng cáo. Ngoài server của trường, app chỉ hỏi GitHub khi bạn cho phép kiểm tra bản mới, và trang thư viện tài liệu khi bạn bật **Thư viện** (xem bên dưới).
 
 App chỉ kết nối tới các trang của HCMUT mà bạn vốn dùng:
 - `sso.hcmut.edu.vn`: trang đăng nhập;
@@ -16,6 +16,7 @@ App chỉ kết nối tới các trang của HCMUT mà bạn vốn dùng:
 - `mybk.hcmut.edu.vn`: MyBK;
 - các dịch vụ khác của trường mà bạn tự mở;
 - `github.com` / `api.github.com`: **chỉ khi bạn cho phép** kiểm tra bản mới (**Cài đặt** > **Cập nhật**; mặc định chưa kiểm tra cho tới khi bạn chọn). App chỉ hỏi phiên bản mới nhất và tải gói cập nhật, không gửi thông tin tài khoản. Như mọi kết nối mạng, GitHub (máy chủ ở Mỹ) thấy địa chỉ IP của bạn, theo [chính sách của GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). Chọn **Không kiểm tra** thì app không gọi tới GitHub.
+- trang thư viện tài liệu chung (BK Study Library): **chỉ khi bạn bật** ở **Cài đặt** > **Thư viện** (mặc định tắt, tới khi thư viện mở). Khi bật, app tải danh sách tài liệu (`index.json`, khoảng mỗi ngày một lần và khi bạn mở tab **Thư viện**), danh sách tài liệu của môn đang xem, và file bạn bấm **Tải về** từ địa chỉ thư viện ghi kèm tài liệu (có thể là GitHub Pages hoặc `raw.githubusercontent.com`). App chỉ gửi yêu cầu tải thông thường (HTTP GET): không gửi MSSV, tên, mã môn của bạn, không cookie, không mã định danh nào. Như mọi kết nối mạng, máy chủ thấy địa chỉ IP của bạn. Tắt **Thư viện** thì app không gọi tới trang đó.
 
 ## Dữ liệu lưu trên máy bạn
 
@@ -25,7 +26,8 @@ Sau khi bạn đăng nhập, app tải xuống và lưu **trên máy của bạn
 - điểm, tiến độ chương trình đào tạo;
 - họ tên, MSSV, lớp (để hiển thị);
 - bản xem lại quiz LMS **bạn đã nộp** (để ôn lại, tắt được trong Cài đặt; không đọc quiz đang làm);
-- quiz bạn tự soạn hoặc nhập, kết quả luyện tập, ghi chú.
+- quiz bạn tự soạn hoặc nhập, kết quả luyện tập, ghi chú;
+- khi bật **Thư viện**: bản lưu danh sách tài liệu (`data\library-cache`), danh sách file đã tải từ thư viện (`data\library-downloads.json`), và các file bạn tải về trong thư mục `Thư viện` của từng môn. Tài liệu bị gỡ khỏi thư viện thì app xóa bản đã tải (chỉ khi bạn chưa sửa file đó). **Cài đặt** > **Thư viện** > **Xóa bộ nhớ đệm thư viện** xóa bản lưu danh sách.
 
 Những dữ liệu này nằm trong `%LOCALAPPDATA%\BKStudyDesk.Data`, dù bạn cài app vào thư mục nào. Lúc gỡ app bạn chọn xóa hay giữ.
 

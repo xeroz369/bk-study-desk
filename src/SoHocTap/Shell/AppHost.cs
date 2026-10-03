@@ -32,6 +32,8 @@ internal sealed class AppHost : IDisposable
     public UpdateService Updates { get; } = new();
     public ApiRouter Router { get; }
     public AppState State { get; }
+    /// <summary>Thư viện tài liệu chung (tắt mặc định; bật trong Cài đặt). Không gọi mạng khi tắt.</summary>
+    public SoHocTap.Library.LibraryService Library { get; } = new();
 
     /// <summary>Tiến độ login (stage, message), window chính hiện lên InfoBar.</summary>
     public event Action<string, string>? LoginProgress;
@@ -57,8 +59,8 @@ internal sealed class AppHost : IDisposable
         _notifier = new DeadlineNotifier((t, b, p) => _ui.InvokeAsync(() => _tray.Show(t, b, p)));
         _notifyTimer.Tick += (_, _) => _notifier.Check();
 
-        // Thoát để cài bản mới (Velopack thoát ngay, không qua Dispose): dọn icon khay để không còn icon "ma", dừng đồng bộ.
-        Updates.Restarting += () => _ui.Invoke(() => { _tray.Dispose(); Hub.Dispose(); });
+        // Update.exe đã chạy và đang đợi app thoát: báo tiếng Việt rồi thoát êm (qua Dispose: dọn icon khay, dừng đồng bộ, lưu cửa sổ).
+        Updates.Restarting += version => _ui.InvokeAsync(() => ExitForUpdateAsync(version));
         Hub.Changed += (name, stage) => _ui.InvokeAsync(() =>
         {
             // Lượt không có gì mới, hay vừa bắt đầu khi đã có dữ liệu: chỉ thanh trạng thái và InfoBar, không đọc lại, không vẽ lại trang.
@@ -89,6 +91,7 @@ internal sealed class AppHost : IDisposable
         _notifyTimer.Start();
         StartUpdates();
         StartKeepAlive();
+        StartLibrary();
         // Có mạng lại hay máy vừa thức dậy: chạy ngay một lượt scheduler (nguồn nào tới hạn thì sync), không đợi tới tick kế.
         System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += OnNetworkChanged;
         Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
@@ -172,7 +175,7 @@ internal sealed class AppHost : IDisposable
             _ = Task.Run(async () =>
             {
                 if (await Updates.CheckAsync(manual: true, default) is null) { Log.Info("update-now: không có bản mới"); return; }
-                if (await Updates.DownloadAsync(userAsked: true, null, default)) Updates.ApplyAndRestart();
+                if (await Updates.DownloadAsync(userAsked: true, default)) Updates.ApplyAndRestart();
             });
             return;
         }
@@ -194,9 +197,32 @@ internal sealed class AppHost : IDisposable
             var offer = await Updates.CheckAsync(manual: false, default);
             // Chế độ tự động: tải sẵn, cài lúc app thoát hẳn (Dispose, ApplyOnExit) hoặc lúc mở app lần sau (Program, ApplyOnStartup).
             if (offer is not null && UpdateService.Mode == UpdateMode.Auto && UpdateService.CanSelfUpdate)
-                await Updates.DownloadAsync(userAsked: false, null, default);
+                await Updates.DownloadAsync(userAsked: false, default);
         }
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Vòng kiểm tra cập nhật: {e.Message}"); }
+    }
+
+    /// <summary>
+    /// Sau khi Update.exe (silent) đã chạy: câu "Đang cài bản x.y.z, app sẽ tự mở lại sau vài giây" ở thanh trạng thái (MainWindow nghe
+    /// Restarting), thêm thông báo khay nếu cửa sổ đang ẩn; đợi một chút cho người dùng đọc rồi thoát hẳn. Update.exe chỉ đợi app thoát
+    /// 60 giây, nên nếu thoát êm bị kẹt thì 30 giây sau thoát cứng.
+    /// </summary>
+    private async Task ExitForUpdateAsync(string version)
+    {
+        if (!_main.IsVisible) _tray.Show(AppInfo.Name, L.F("update.installing", version), "");
+        _ = Task.Delay(TimeSpan.FromSeconds(30)).ContinueWith(_ =>
+        {
+            Log.Warn("Thoát để cài bản mới quá 30 giây, thoát cứng");
+            Environment.Exit(0);
+        }, TaskScheduler.Default);
+        await Task.Delay(UpdateService.ExitNoticeDelay);
+        // Cửa sổ khác (cửa sổ cập nhật đang mở dạng hộp thoại, cửa sổ trường...) đóng trước, rồi mới đóng cửa sổ chính.
+        foreach (var w in Application.Current.Windows.OfType<Window>().Where(w => w != _main).ToList())
+        {
+            try { w.Close(); }
+            catch (InvalidOperationException e) { Log.Warn($"Đóng cửa sổ trước khi cài bản mới: {e.Message}"); }   // cửa sổ đang tự đóng
+        }
+        ((MainWindow)_main).Exit();
     }
 
     private DateTimeOffset? _wakeUpdateCheck;
@@ -219,6 +245,24 @@ internal sealed class AppHost : IDisposable
         {
             await Task.Delay(delay);
             await UpdateTickAsync();
+        });
+    }
+
+    /// <summary>
+    /// Thư viện: đọc index (cache trước, tới hạn thì hỏi mạng) lúc mở app rồi mỗi giờ xem đã quá một ngày chưa.
+    /// Tắt thì RefreshAsync không làm gì. Mở tab Thư viện cũng làm mới (SubjectsPage).
+    /// </summary>
+    private void StartLibrary()
+    {
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
+            do
+            {
+                try { await Library.RefreshAsync(SoHocTap.Library.LibraryRefresh.IfDue); }
+                catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Thư viện: {e.Message}"); }
+            }
+            while (await timer.WaitForNextTickAsync());
         });
     }
 
@@ -309,5 +353,6 @@ internal sealed class AppHost : IDisposable
         _tray.Dispose();
         Hub.Dispose();
         _mybk.Dispose();
+        Library.Dispose();
     }
 }

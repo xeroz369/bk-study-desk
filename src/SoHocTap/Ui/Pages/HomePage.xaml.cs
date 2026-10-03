@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using SoHocTap.Shell;
@@ -96,6 +96,7 @@ public partial class HomePage : UserControl, IPage
         // Trống vì chưa lấy được dữ liệu thì nói rõ (đang tải lần đầu / lỗi / chưa đăng nhập), không ghi "không có hạn nộp".
         Agenda.Show(Grids.Grouped(week, nameof(TimelineItem.Day), nameof(TimelineItem.Time)), L.T("home.agendaEmpty"), s, Src.Lms, Src.Mybk);
         Exams.Show(s.Timeline.Where(e => e.Kind == "exam" && e.Time > now - 86400).ToList(), L.T("home.examsEmpty"), s, Src.Mybk);
-        News.Show(news.OrderByDescending(a => a.Time).Take(8).Select(a => new NewsRow(a.Title, Format.Ago(a.Time), a.Url ?? "")).ToList(), L.T("home.newsEmpty"), s, Src.Lms);
+        // Đủ mọi tin trong 7 ngày, khớp số ở ô "Tin 7 ngày" (trước đây cắt còn 8 tin mà không báo, DESIGN 6b-3).
+        News.Show(news.OrderByDescending(a => a.Time).Select(a => new NewsRow(a.Title, Format.Ago(a.Time), a.Url ?? "")).ToList(), L.T("home.newsEmpty"), s, Src.Lms);
     }
 }

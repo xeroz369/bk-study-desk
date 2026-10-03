@@ -6,6 +6,24 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.9] - 2026-10-03
+
+### Thêm
+
+- **Thư viện** tài liệu chung (BK Study Library), **tắt sẵn cho tới khi thư viện mở**. Bật ở **Cài đặt** > **Thư viện** thì trang **Môn học** có thêm tab **Thư viện** cho môn khớp mã: tài liệu nhóm theo loại, lọc theo giảng viên, học kỳ, loại kiểm tra. Mỗi tài liệu: **Mở trên web**, **Tải về** (vào thư mục `Thư viện` của môn, kiểm tra file trước khi lưu, không ghi đè file của bạn), **Cài vào Luyện tập** với gói quiz, **Sao chép link**. Có nút **Đóng góp tài liệu** mở trang đóng góp trên web. Tài liệu bị gỡ khỏi thư viện thì ẩn và xóa bản app đã tải.
+
+### Thay đổi
+
+- Tải bản cập nhật có thanh tiến trình với số phần trăm thật và dung lượng đã tải (vd. "Đang tải bản 1.2.0... 42% (12,3/29,1 MB)"), ở cửa sổ cập nhật, **Cài đặt** > **Cập nhật** và thanh trạng thái (cả khi chế độ **Tự động** tải ở nền). Thanh không chạy lùi, chỉ đầy khi đã tải xong và kiểm tra gói. Có nút **Hủy tải**.
+- Cài bản cập nhật không còn hiện cửa sổ tiếng Anh "Installing Update" với thanh chạy mãi. App báo "Đang cài bản ..., app sẽ tự mở lại sau vài giây" ở thanh trạng thái rồi tự mở lại.
+- Thanh tiến trình đồng bộ giữ số phần trăm đã đạt khi một bước chạy lâu, không chuyển sang thanh chạy qua lại.
+
+### Sửa lỗi
+
+- **Lịch** > **Thời khóa biểu**: mất vạch giờ hiện tại vào buổi tối hoặc sáng sớm, vì lưới chỉ kéo từ buổi học sớm nhất tới buổi muộn nhất ([#25](https://github.com/xeroz369/bk-study-desk/issues/25)). Lưới giờ luôn đủ 0:00 tới 24:00, mở tuần thì tự cuộn tới buổi học sớm nhất, hoặc tới giờ hiện tại nếu đang ngoài khung nhìn.
+- **Lịch** và **Hôm nay**: hạn nộp, quiz đặt xa hơn 120 ngày trên LMS nay cũng hiện (trước đây app chỉ đọc lịch LMS tới 120 ngày sau). **Hôm nay** hiện đủ mọi tin LMS trong 7 ngày, khớp số ở ô **Thông báo LMS trong 7 ngày** (trước đây chỉ 8 tin).
+- MyBK có lúc không đồng bộ được và báo "không phản hồi sau 45 giây (đang ở .../my/homeSSO.action)" dù máy chủ trường vẫn chạy bình thường. Lỗi xảy ra khi phiên MyBK hết hạn và app phải đăng nhập lại qua SSO.
+
 ## [1.1.8] - 2026-10-03
 
 ### Thêm
@@ -212,7 +230,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...HEAD
+[1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6

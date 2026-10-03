@@ -54,6 +54,11 @@
                         <ComboBox x:Name="UpdateIntervalBox" Width="160" SelectionChanged="OnUpdateInterval" AutomationProperties.Name="{ui:T update.interval}" />
                     </StackPanel>
                     <TextBlock x:Name="UpdateNote" Style="{StaticResource Muted}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                    <!-- Đang tải bản mới (từ cửa sổ cập nhật hay chế độ Tự động): thanh có số thật (DownloadView) và nút Hủy tải. -->
+                    <StackPanel x:Name="UpdateProgressRow" Orientation="Horizontal" Margin="0,8,0,0" Visibility="Collapsed">
+                        <ProgressBar x:Name="UpdateBar" Width="320" Minimum="0" Maximum="100" VerticalAlignment="Center" Visibility="Collapsed" />
+                        <Button x:Name="UpdateCancel" Content="{ui:T update.cancel}" Margin="12,0,0,0" Click="OnUpdateCancel" />
+                    </StackPanel>
                     <!-- Bản cài: chép dữ liệu từ bản zip đang dùng trước đây (đăng nhập LMS, kết quả, quiz, cài đặt). -->
                     <Button x:Name="ImportZip" Content="{ui:T update.import}" Margin="0,10,0,0" HorizontalAlignment="Left"
                             Visibility="Collapsed" Click="OnImportZip" />
@@ -136,6 +141,19 @@
                     </StackPanel>
                     <TextBox x:Name="PlanText" Margin="0,8,0,0" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" MaxHeight="200"
                              VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Visibility="Collapsed" />
+                </StackPanel>
+            </Border>
+
+            <!-- Thư viện tài liệu chung (library.*): tắt mặc định tới khi thư viện mở. Địa chỉ chỉ sửa được khi bật log chẩn đoán (dev). -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{ui:T settings.library}" Style="{StaticResource SectionTitle}" />
+                    <CheckBox x:Name="LibraryEnabled" Content="{ui:T settings.library.enable}" Click="OnLibraryEnabled" Style="{StaticResource WrapCheck}" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.library.note}" />
+                    <Label Content="{ui:T settings.library.baseUrl}" Target="{Binding ElementName=LibraryUrl}" Padding="0,12,0,4" />
+                    <TextBox x:Name="LibraryUrl" IsReadOnly="True" LostFocus="OnLibraryUrl" KeyDown="OnLibraryUrlKey" />
+                    <TextBlock x:Name="LibraryStatus" Style="{StaticResource Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    <Button Content="{ui:T settings.library.clear}" Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnLibraryClear" />
                 </StackPanel>
             </Border>
 
