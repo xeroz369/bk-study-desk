@@ -12,10 +12,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Phiên bản (vd. 1.0.7)'
-        required: true
+        description: 'Phiên bản (vd. 1.0.7). Để trống khi chỉ nộp Store.'
+        required: false
       tag:
         description: 'Tên tag cho release nháp (để trống = v<phiên bản>)'
+        required: false
+      store_tag:
+        description: 'Chỉ nộp lên Microsoft Store bản đã build của tag này (vd. v1.1.6), không build lại'
         required: false
   release:
     types: [published]
@@ -29,7 +32,7 @@ env:
 
 jobs:
   build:
-    if: github.event_name != 'release'
+    if: github.event_name != 'release' && inputs.store_tag == ''
     runs-on: windows-latest
     permissions:
       contents: write       # tạo bản nháp release
@@ -145,7 +148,8 @@ jobs:
   # - msstore publish tạo submission mới từ bản đang có trên Store, thay package rồi commit; Store kiểm duyệt như nộp tay.
   #   Đang có submission chờ duyệt thì job lỗi, không ghi đè: đợi Store duyệt xong rồi chạy lại job.
   publish-store:
-    if: github.event_name == 'release' && !github.event.release.prerelease && vars.STORE_PUBLISH == 'true'
+    # Bấm Publish release, hoặc chạy tay với store_tag để nộp lại một bản đã build (vd. khi lần nộp trước lỗi).
+    if: vars.STORE_PUBLISH == 'true' && ((github.event_name == 'release' && !github.event.release.prerelease) || inputs.store_tag != '')
     runs-on: windows-latest
     environment: microsoft-store
     permissions:
@@ -158,12 +162,13 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.event.release.tag_name || inputs.store_tag }}
           REPO: ${{ github.repository }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $run = gh run list -R $env:REPO --workflow release.yml --json databaseId,headBranch,conclusion,event `
-            --jq "[.[] | select(.conclusion==\"success\" and .event!=\"release\" and .headBranch==\"$env:TAG\")][0].databaseId"
+          # Lọc bằng PowerShell, không dùng --jq: dấu \" trong chuỗi pwsh không phải escape nên gh nhận sai tham số.
+          $runs = gh run list -R $env:REPO --workflow release.yml --branch $env:TAG --limit 20 --json databaseId,conclusion,event | ConvertFrom-Json
+          $run = ($runs | Where-Object { $_.conclusion -eq 'success' -and $_.event -ne 'release' } | Select-Object -First 1).databaseId
           if (!$run) { throw "Không tìm thấy lần build của $env:TAG" }
           gh run download $run -R $env:REPO -n "store-$env:TAG" -D msix
           if ($LASTEXITCODE) { throw 'Không tải được artifact MSIX' }
