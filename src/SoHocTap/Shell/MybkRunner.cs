@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Web.WebView2.Core;
@@ -18,6 +18,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
     private CoreWebView2Controller? _controller;
     private bool _onApp;                     // đang ở /app (có #hid_Token)
     private bool _upgrading;                 // vừa hủy một điều hướng http để mở lại bằng https: bỏ qua NavigationCompleted lỗi của nó
+    private string? _pendingHttps;           // bản https chờ mở sau khi bản http bị hủy xong
     private string? _blocked;                // URL ngoài trường vừa bị chặn (NavigationStarting), để báo lỗi rõ thay vì chờ hết giờ
     private readonly SemaphoreSlim _gate = new(1, 1);
     // Giãn cách các request API MyBK trong một lần đồng bộ (sources.mybk.gapMs); server báo 429/503 thì nghỉ hẳn một lúc.
@@ -154,6 +155,16 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         _onApp = false;
     }
 
+    /// <summary>Mở bản https đang chờ, một lần. So controller, không so CoreWebView2: mỗi lần đọc CoreWebView2 là một wrapper COM
+    /// mới nên == luôn sai (lỗi ở 1.1.5, 1.1.6).</summary>
+    private void OpenPendingHttps(CoreWebView2Controller ctl, string https)
+    {
+        if (!ReferenceEquals(_controller, ctl) || _pendingHttps != https) return;
+        _pendingHttps = null;
+        Log.Debug($"MyBK ẩn: mở bản https {Log.Where(https)}");
+        ctl.CoreWebView2.Navigate(https);
+    }
+
     private async Task<CoreWebView2> CoreAsync()
     {
         if (_controller is null)
@@ -167,6 +178,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             core.Settings.AreDevToolsEnabled = System.Diagnostics.Debugger.IsAttached;
             core.NavigationStarting += (_, e) =>
             {
+                Log.Debug($"MyBK ẩn: bắt đầu {e.NavigationId} {Log.Where(e.Uri)}{(e.IsRedirected ? " (redirect)" : "")}");
                 if (e.Uri == "about:blank" || WebHost.IsSchoolDomain(e.Uri)) return;
                 e.Cancel = true;
                 // MyBK hết phiên có lúc chuyển về http://mybk.../app/login. Cùng tên miền trường thì đổi sang https và đi tiếp
@@ -175,9 +187,11 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 {
                     Log.Info($"MyBK ẩn: đổi http sang https {Log.Where(e.Uri)}");
                     _upgrading = true;
-                    // So controller, không so CoreWebView2: mỗi lần đọc CoreWebView2 là một wrapper COM mới nên == luôn sai
-                    // (lỗi ở 1.1.5, 1.1.6: không mở bản https, kẹt ở trang trước tới hết 45 giây).
-                    owner.BeginInvoke(() => { if (ReferenceEquals(_controller, ctl)) core.Navigate(https); });
+                    _pendingHttps = https;
+                    // Mở bản https sau khi WebView2 báo đã hủy bản http (trong NavigationCompleted): gọi Navigate ngay lúc này có khi
+                    // bị chính việc hủy nuốt mất (đo 03/10/2026: redirect /app/login/cas sang http /app/, không có điều hướng mới,
+                    // kẹt ở homeSSO tới hết 45 giây). Dự phòng: 1,5 giây chưa thấy báo hủy thì tự mở.
+                    _ = Task.Delay(1500).ContinueWith(_ => owner.BeginInvoke(() => OpenPendingHttps(ctl, https)), TaskScheduler.Default);
                     return;
                 }
                 _blocked = e.Uri;
@@ -249,10 +263,12 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             last = core.Source;
             if (!e.IsSuccess && _upgrading && e.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled)
             {
-                _upgrading = false;   // điều hướng http bị hủy có chủ đích, bản https đang mở ngay sau
+                Log.Debug($"MyBK ẩn: bỏ qua {e.NavigationId} bị hủy để đổi sang https");
+                _upgrading = false;   // điều hướng http bị hủy có chủ đích, giờ mới mở bản https
+                if (_pendingHttps is { } next && _controller is { } ctl) owner.BeginInvoke(() => OpenPendingHttps(ctl, next));
                 return;
             }
-            Log.Debug($"MyBK ẩn: {Log.Where(core.Source)} {(e.IsSuccess ? "ok" : e.WebErrorStatus.ToString())} HTTP {e.HttpStatusCode}");
+            Log.Debug($"MyBK ẩn: xong {e.NavigationId} {Log.Where(core.Source)} {(e.IsSuccess ? "ok" : e.WebErrorStatus.ToString())} HTTP {e.HttpStatusCode}");
             if (!Uri.TryCreate(core.Source, UriKind.Absolute, out var u)) return;
             if (WebHost.NetworkError(e) is { } net) done.TrySetException(new HttpRequestException(net));
             else if (_blocked is { } b)
@@ -267,6 +283,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         }
         _blocked = null;
         _upgrading = false;
+        _pendingHttps = null;
         core.NavigationCompleted += OnCompleted;
         var seconds = Config.Int("sources.mybk.timeoutSeconds", 45);
         try

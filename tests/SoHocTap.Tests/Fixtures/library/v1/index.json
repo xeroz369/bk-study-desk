@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "generated": "2026-10-03",
+  "site": "https://library.example/",
+  "counts": {
+    "courses": 7,
+    "items": 10
+  },
+  "faculties": [
+    {
+      "key": "fas",
+      "name": {
+        "vi": "Khoa Khoa học Ứng dụng",
+        "en": "Faculty of Applied Science"
+      }
+    },
+    {
+      "key": "dee",
+      "name": {
+        "vi": "Khoa Điện - Điện tử",
+        "en": "Faculty of Electrical and Electronics Engineering"
+      }
+    },
+    {
+      "key": "geopet",
+      "name": {
+        "vi": "Khoa Kỹ thuật Địa chất và Dầu khí",
+        "en": "Faculty of Geology and Petroleum Engineering"
+      }
+    }
+  ],
+  "courses": [
+    {
+      "id": "MT1005",
+      "code": "MT1005",
+      "name": "Giải tích 2",
+      "nameEn": "Calculus 2",
+      "credits": 4,
+      "faculty": "fas",
+      "aliases": [
+        "MT1004"
+      ],
+      "oldNames": [],
+      "status": "active",
+      "items": 5,
+      "url": "https://library.example/course/MT1005/",
+      "detail": "courses/MT1005.json"
+    },
+    {
+      "id": "EE1009",
+      "code": "EE1009",
+      "name": "Kỹ thuật số",
+      "faculty": "dee",
+      "aliases": [],
+      "oldNames": [],
+      "status": "active",
+      "items": 3,
+      "url": "https://library.example/course/EE1009/",
+      "detail": "courses/EE1009.json"
+    },
+    {
+      "id": "PH1007",
+      "code": "PH1007",
+      "name": "Thí nghiệm Vật lý",
+      "faculty": "fas",
+      "aliases": [],
+      "oldNames": [],
+      "status": "active",
+      "items": 2,
+      "url": "https://library.example/course/PH1007/",
+      "detail": "courses/PH1007.json"
+    },
+    {
+      "id": "GE1007",
+      "code": "GE1007",
+      "name": "Môn cũ đã ngừng",
+      "replacedBy": "GE2033",
+      "faculty": "geopet",
+      "aliases": [],
+      "oldNames": [],
+      "status": "retired",
+      "items": 0,
+      "url": "https://library.example/course/GE1007/",
+      "detail": "courses/GE1007.json"
+    },
+    {
+      "id": "GE2033",
+      "code": "GE2033",
+      "name": "Môn thay thế",
+      "faculty": "geopet",
+      "aliases": [
+        "GE1007"
+      ],
+      "oldNames": [
+        "Môn cũ đã ngừng"
+      ],
+      "status": "active",
+      "items": 0,
+      "url": "https://library.example/course/GE2033/",
+      "detail": "courses/GE2033.json"
+    },
+    {
+      "id": "GE4169",
+      "code": "GE4169",
+      "name": "Môn dùng mã trước",
+      "faculty": "geopet",
+      "aliases": [],
+      "oldNames": [],
+      "status": "active",
+      "items": 0,
+      "url": "https://library.example/course/GE4169/",
+      "detail": "courses/GE4169.json"
+    },
+    {
+      "id": "GE4169-2024",
+      "code": "GE4169",
+      "name": "Môn mới dùng lại mã",
+      "faculty": "geopet",
+      "aliases": [],
+      "oldNames": [],
+      "status": "active",
+      "items": 0,
+      "url": "https://library.example/course/GE4169-2024/",
+      "detail": "courses/GE4169-2024.json",
+      "futureField": {
+        "x": 1
+      }
+    }
+  ]
+}

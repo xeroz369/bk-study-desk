@@ -26,9 +26,23 @@ public sealed class UpdateService
     /// <summary>Gói của <see cref="Offer"/> đã tải xong, chờ cài.</summary>
     public bool Downloaded { get; private set; }
     public string? LastError { get; private set; }
+    /// <summary>Có bản mới, tải xong, lỗi, và mỗi lần số % tải đổi (Velopack báo bước 2%, nên tối đa khoảng 50 lần một lượt tải).</summary>
     public event Action? Changed;
-    /// <summary>Ngay trước khi thoát để cài bản mới: dọn icon khay, dừng đồng bộ.</summary>
-    public event Action? Restarting;
+    /// <summary>
+    /// Update.exe đã chạy (silent, đợi app thoát rồi cài, mở lại app): báo bằng tiếng Việt rồi thoát app trong vòng 60 giây
+    /// (Update.exe chỉ đợi chừng đó). Tham số: phiên bản sắp cài.
+    /// </summary>
+    public event Action<string>? Restarting;
+
+    /// <summary>Đang tải (hoặc vừa tải xong) tới đâu; null khi không tải, hay lần tải vừa rồi bị hủy hoặc lỗi.</summary>
+    public DownloadState? Download { get; private set; }
+    public bool Downloading => Download is { Verified: false };
+    private CancellationTokenSource? _downloadCts;
+    // Đã gọi Update.exe trong lượt chạy này: lúc thoát (ApplyOnExit) không gọi thêm lần nữa.
+    private bool _applyLaunched;
+
+    /// <summary>Báo tiếng Việt "Đang cài bản..." trước khi thoát: đủ lâu để đọc, vẫn rất xa giới hạn 60 giây của Update.exe.</summary>
+    public static readonly TimeSpan ExitNoticeDelay = TimeSpan.FromSeconds(2);
 
     /// <summary>Lần trước cài bản mới không thành (Velopack giữ bản cũ): câu báo cho thanh trạng thái, null nếu không có.</summary>
     public static string? StartupNotice { get; private set; }
@@ -114,30 +128,55 @@ public sealed class UpdateService
     }
 
     /// <summary>
-    /// Gọi đầu Main, trước VelopackApp.Run: có cài ngay bản đã tải lúc mở app không (UpdatePolicy.ApplyOnStartup). Chỉ bật khi thật sự
-    /// có gói đã tải mới hơn bản đang chạy, và bản đó chưa từng cài hỏng lúc mở app; ghi một dòng log và đánh dấu bản sắp cài để lần mở
-    /// sau biết cài thành hay không. Không bao giờ ném lỗi (lỗi thì mở app như thường).
+    /// Gọi đầu Main, trước VelopackApp.Run (Run xóa biến VELOPACK_RESTART): bản đã tải cần cài ngay lúc mở app (UpdatePolicy.ApplyOnStartup),
+    /// null nếu không. Chỉ khi thật sự có gói đã tải mới hơn bản đang chạy, bản đó chưa từng cài hỏng lúc mở app, và app không phải vừa
+    /// được Update.exe mở lại. Không bao giờ ném lỗi (lỗi thì mở app như thường).
     /// </summary>
-    public static bool ApplyOnStartup(string[] args)
+    public static Velopack.VelopackAsset? StartupUpdate(string[] args)
     {
         // Hook của Velopack (cài, gỡ, cập nhật): không đọc config, không chạm đĩa (lúc gỡ, thư mục data có thể vừa bị xóa).
-        if (args.Any(a => a.StartsWith("--veloapp", StringComparison.OrdinalIgnoreCase))) return false;
+        if (args.Any(a => a.StartsWith("--veloapp", StringComparison.OrdinalIgnoreCase))) return null;
         try
         {
             var other = Mutex.TryOpenExisting(AppInfo.InstanceKey, out var running);
             running?.Dispose();
-            if (!UpdatePolicy.ApplyOnStartup(Mode, Paths.Kind, args, other)) return false;
+            var restarted = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("VELOPACK_RESTART"));
+            if (!UpdatePolicy.ApplyOnStartup(Mode, Paths.Kind, args, other, restarted)) return null;
             var locator = Velopack.Locators.VelopackLocator.CreateDefaultForPlatform();
             var pkg = locator.GetLatestLocalFullPackage();
             var current = locator.CurrentlyInstalledVersion;
-            if (pkg is null || current is null || pkg.Version <= current) return false;
+            if (pkg is null || current is null || pkg.Version <= current) return null;
             var state = JsonStore.ReadObject(StateFile);
-            if (state["failedVersion"]?.ToString() == pkg.Version.ToString()) return false;
+            if (state["failedVersion"]?.ToString() == pkg.Version.ToString()) return null;
             Log.Info($"Chế độ tự động: cài bản {pkg.Version} đã tải lúc mở app (đang chạy {current})");
-            MarkApplying(pkg.Version.ToString());
+            return pkg;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Kiểm tra bản đã tải lúc mở app: {e.Message}"); return null; }
+    }
+
+    /// <summary>
+    /// Gọi sau VelopackApp.Run khi <see cref="StartupUpdate"/> trả về một gói: chạy Update.exe silent (không cửa sổ tiếng Anh của Velopack),
+    /// đợi app thoát, cài, mở lại app với cùng tham số (mở cùng Windows thì vẫn --tray). Trả true thì Main thoát ngay, chưa mở cửa sổ nào.
+    /// Không dùng SetAutoApplyOnStartup của Velopack: VelopackApp.Run gọi UpdateExe.Apply với silent = false.
+    /// </summary>
+    public static bool ApplyAtStartup(Velopack.VelopackAsset pkg, string[] args)
+    {
+        if (UpdatePolicy.PlanApply(ApplyTrigger.Startup, Paths.Kind, Mode, downloaded: true, alreadyLaunched: false) is not { } plan) return false;
+        MarkApplying(pkg.Version.ToString());
+        try
+        {
+            // Chỉ cần locator (Update.exe, thư mục packages); nguồn của UpdateManager không được đọc khi cài.
+            var locator = Velopack.Locators.VelopackLocator.CreateDefaultForPlatform();
+            new Velopack.UpdateManager(locator.PackagesDir ?? AppContext.BaseDirectory, null, locator)
+                .WaitExitThenApplyUpdates(pkg, plan.Silent, plan.Restart, args);
             return true;
         }
-        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Kiểm tra bản đã tải lúc mở app: {e.Message}"); return false; }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            Log.Warn($"Cài bản đã tải lúc mở app: {e.Message}");
+            ClearApplying();
+            return false;
+        }
     }
 
     /// <summary>Hỏi nguồn có bản mới không. <paramref name="manual"/>: người dùng bấm "Kiểm tra cập nhật" (bỏ qua "bỏ qua bản này").</summary>
@@ -150,7 +189,7 @@ public sealed class UpdateService
             LastError = null;
             var offer = CanSelfUpdate ? await CheckInstalledAsync(ct) : await CheckLatestReleaseAsync(ct);
             if (offer is not null && !manual && offer.Version == Config.Str("app.update.skip")) offer = null;
-            if (offer?.Version != Offer?.Version) Downloaded = false;   // bản khác bản đã tải: phải tải lại
+            if (offer?.Version != Offer?.Version) { Downloaded = false; Download = null; }   // bản khác bản đã tải: phải tải lại
             Offer = offer;
             return offer;
         }
@@ -182,61 +221,122 @@ public sealed class UpdateService
 
     public static void Skip(UpdateOffer o) => Config.Set("app.update.skip", o.Version);
 
-    /// <summary>Tải gói (bản cài). Trả false nếu đang bật Tiết kiệm pin (chế độ tự động), bị hủy hoặc tải lỗi.</summary>
-    public async Task<bool> DownloadAsync(bool userAsked, Action<int>? progress, CancellationToken ct)
+    /// <summary>
+    /// Tải gói (bản cài). Tiến độ thật của Velopack nằm ở <see cref="Download"/> (bắn <see cref="Changed"/> mỗi lần đổi).
+    /// Trả false nếu đang bật Tiết kiệm pin (chế độ tự động), bị hủy (<paramref name="ct"/> hoặc <see cref="CancelDownload"/>; LastError
+    /// null) hoặc tải lỗi (LastError có lý do).
+    /// </summary>
+    public async Task<bool> DownloadAsync(bool userAsked, CancellationToken ct)
     {
         if (Offer is not { Native: not null } offer) return false;
         if (Downloaded) return true;
         if (!userAsked && !UpdatePolicy.CanDownload(Power.BatterySaverOn)) return false;
         try { await Gate.WaitAsync(ct); }
         catch (OperationCanceledException) { return false; }
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _downloadCts = cts;
+        var tracker = new DownloadTracker(offer.Version, offer.Bytes);
         try
         {
+            LastError = null;
+            Publish(tracker.State);   // chưa có callback: thanh vô định
             var mgr = Manager();
             var info = await mgr.CheckForUpdatesAsync();
+            cts.Token.ThrowIfCancellationRequested();
             if (info is null || info.TargetFullRelease.Version.ToString() != offer.Version)
             {
                 LastError = L.T("update.changed");
+                Download = null;
                 return false;
             }
-            await mgr.DownloadUpdatesAsync(info, progress, ct);
+            await mgr.DownloadUpdatesAsync(info, p => { if (tracker.Report(p)) Publish(tracker.State); }, cts.Token);
+            // DownloadUpdatesAsync trả về sau khi đã kiểm SHA của gói: giờ mới 100%.
+            tracker.Complete();
+            Download = tracker.State;
             Downloaded = true;
             Log.Info($"Đã tải bản {offer.Version}");
             return true;
         }
-        catch (Exception e) when (!ct.IsCancellationRequested)
+        catch (Exception e) when (cts.IsCancellationRequested)
+        {
+            // Hủy giữa chừng: Velopack có thể ném OperationCanceledException hay lỗi IO của stream đang đóng; đều là hủy, không báo lỗi.
+            Download = null;
+            Log.Info($"Đã hủy tải bản {offer.Version} ({e.GetType().Name})");
+            return false;
+        }
+        catch (Exception e)
         {
             LastError = e.Message;
+            Download = null;
             Log.Warn($"Tải bản cập nhật: {e.Message}");
             return false;
         }
-        catch (OperationCanceledException) { return false; }
         finally
         {
+            _downloadCts = null;
             Gate.Release();
             Changed?.Invoke();
         }
     }
 
-    /// <summary>Thoát, cài bản đã tải rồi mở lại app (người dùng bấm "Khởi động lại để cập nhật").</summary>
-    public void ApplyAndRestart()
+    private void Publish(DownloadState s)
     {
-        if (!Downloaded || Offer?.Native is not Velopack.VelopackAsset a) return;
-        MarkApplying(a.Version.ToString());
-        Restarting?.Invoke();
-        Manager().ApplyUpdatesAndRestart(a);
+        Download = s;
+        Changed?.Invoke();
+    }
+
+    /// <summary>Nút Hủy tải (cửa sổ cập nhật, Cài đặt): dừng lượt tải đang chạy, gói tải dở Velopack tự bỏ.</summary>
+    public void CancelDownload()
+    {
+        try { _downloadCts?.Cancel(); }
+        catch (ObjectDisposedException) { }   // vừa tải xong đúng lúc bấm
+    }
+
+    /// <summary>
+    /// Người dùng bấm "Khởi động lại để cập nhật": chạy Update.exe silent (không cửa sổ tiếng Anh của Velopack), Update.exe đợi app thoát,
+    /// cài rồi mở lại app. Trả true thì app phải thoát ngay (<see cref="Restarting"/> lo việc báo và thoát). Thay cho
+    /// ApplyUpdatesAndRestart của Velopack: hàm đó gọi WaitExitThenApplyUpdates(silent: false) rồi Environment.Exit.
+    /// </summary>
+    public bool ApplyAndRestart()
+    {
+        if (Offer?.Native is not Velopack.VelopackAsset a) return false;
+        if (UpdatePolicy.PlanApply(ApplyTrigger.UserRestart, Paths.Kind, Mode, Downloaded, _applyLaunched) is not { } plan) return false;
+        if (!Launch(a, plan)) return false;
+        Restarting?.Invoke(a.Version.ToString());
+        return true;
     }
 
     /// <summary>
     /// Gọi lúc app thoát hẳn: chế độ tự động và đã tải xong thì Update.exe đợi app thoát (tối đa 60 giây) rồi cài, không mở lại app.
-    /// Không gọi lúc vừa tải xong: app có thể chạy dưới khay nhiều giờ, quá 60 giây là Update.exe bỏ cuộc.
+    /// Không gọi lúc vừa tải xong: app có thể chạy dưới khay nhiều giờ, quá 60 giây là Update.exe bỏ cuộc. Đã bấm khởi động lại để
+    /// cập nhật (Update.exe đang đợi) thì không gọi thêm.
     /// </summary>
     public void ApplyOnExit()
     {
-        if (Mode != UpdateMode.Auto || !Downloaded || Offer?.Native is not Velopack.VelopackAsset a) return;
+        if (Offer?.Native is not Velopack.VelopackAsset a) return;
+        if (UpdatePolicy.PlanApply(ApplyTrigger.AppExit, Paths.Kind, Mode, Downloaded, _applyLaunched) is not { } plan) return;
+        Launch(a, plan);
+    }
+
+    /// <summary>Chạy Update.exe theo <paramref name="plan"/>; lỗi thì ghi log, bỏ dấu "đang cài" (không có lần cài nào để báo hỏng).</summary>
+    private bool Launch(Velopack.VelopackAsset a, ApplyPlan plan)
+    {
         MarkApplying(a.Version.ToString());
-        try { Manager().WaitExitThenApplyUpdates(a, silent: true, restart: false); }
-        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Cài bản cập nhật khi thoát: {e.Message}"); }
+        try
+        {
+            Manager().WaitExitThenApplyUpdates(a, plan.Silent, plan.Restart);
+            _applyLaunched = true;
+            Log.Info($"Đã gọi Update.exe cài bản {a.Version} (silent, {(plan.Restart ? "mở lại app" : "không mở lại app")})");
+            return true;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            LastError = e.Message;
+            Log.Warn($"Cài bản cập nhật: {e.Message}");
+            ClearApplying();
+            Changed?.Invoke();
+            return false;
+        }
     }
 
     /// <summary>Ghi lại bản sắp cài, để lần mở sau biết cài thành hay không (UpdatePolicy.ApplyResult).</summary>
@@ -249,6 +349,17 @@ public sealed class UpdateService
             JsonStore.Write(StateFile, o);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Ghi bản sắp cài: {e.Message}"); }
+    }
+
+    /// <summary>Không gọi được Update.exe: bỏ dấu bản sắp cài, kẻo lần mở sau báo nhầm "cài không thành" và không thử lại lúc mở app.</summary>
+    private static void ClearApplying()
+    {
+        try
+        {
+            var o = JsonStore.ReadObject(StateFile);
+            if (o.Remove("applying")) JsonStore.Write(StateFile, o);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Bỏ dấu bản sắp cài: {e.Message}"); }
     }
 
     /// <summary>Nguồn cập nhật: repo GitHub qua https. Thư mục trên máy chỉ nhận ở bản cài thử (tools-dev/test-update.ps1).</summary>

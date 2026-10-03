@@ -98,7 +98,13 @@ public partial class MainWindow : Window, IDisposable
         InfoBar.Closed += OnInfoClose;
         _host.LoginProgress += OnLogin;
         _host.Navigate += Go;
+        _updateView = new DownloadView(_host.Updates, StUpdateBar);
         _host.Updates.Changed += () => Dispatcher.InvokeAsync(ShowUpdateState);
+        _host.Updates.Restarting += version => Dispatcher.InvokeAsync(() =>
+        {
+            StUpdate.Visibility = Visibility.Collapsed;
+            Say(L.F("update.installing", version));
+        });
         Closing += OnClosing;
         Closed += (_, _) => Dispose();
         Loaded += (_, _) => FitTopBar();
@@ -155,10 +161,18 @@ public partial class MainWindow : Window, IDisposable
         Dispatcher.BeginInvoke(() => new UpdateWindow { Owner = this }.ShowDialog(), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
-    /// <summary>Thanh trạng thái: "Có bản x.y.z" hoặc "Khởi động lại để cập nhật".</summary>
+    private readonly DownloadView _updateView;
+
+    /// <summary>Thanh trạng thái: "Đang tải bản x.y.z... 42% (12,3/29,1 MB)", "Có bản x.y.z" hoặc "Khởi động lại để cập nhật".</summary>
     private void ShowUpdateState()
     {
         var u = _host.Updates;
+        if (_updateView.Render() is { } progress)
+        {
+            StUpdate.Visibility = Visibility.Visible;
+            StUpdateText.Text = progress;
+            return;
+        }
         var notice = u.Offer is null ? UpdateService.StartupNotice : null;
         StUpdate.Visibility = u.Offer is null && notice is null ? Visibility.Collapsed : Visibility.Visible;
         if (u.Offer is { } o) StUpdateText.Text = u.Downloaded ? L.T("update.restart") : L.F("update.available", o.Version);

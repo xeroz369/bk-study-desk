@@ -10,7 +10,7 @@ BK Study Desk is an unofficial app developed by an individual (xeroz369) for stu
 
 ## What the app collects
 
-**The app sends no data to the developer.** It has no server of its own, no analytics and no ads. Apart from the university's servers, it only contacts GitHub if you allow update checks (see below).
+**The app sends no data to the developer.** It has no server of its own, no analytics and no ads. Apart from the university's servers, it only contacts GitHub if you allow update checks, and the study library site if you turn on **Library** (see below).
 
 The app connects only to the HCMUT sites you already use:
 - `sso.hcmut.edu.vn`: sign-in page;
@@ -18,6 +18,7 @@ The app connects only to the HCMUT sites you already use:
 - `mybk.hcmut.edu.vn`: MyBK;
 - other university services you open yourself;
 - `github.com` / `api.github.com`: **only if you allow** update checks (**Settings** > **Updates**; nothing is checked until you choose). The app only asks for the latest version and downloads the update package; it sends no account information. As with any network connection, GitHub (servers in the US) sees your IP address, under [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). Choose **Don't check** and the app does not contact GitHub.
+- the shared study library site (BK Study Library): **only if you turn it on** in **Settings** > **Library** (off by default until the library opens). When on, the app downloads the library list (`index.json`, about once a day and when you open the **Library** tab), the material list of the course you are viewing, and the files you choose to **Download**, from the addresses the library lists for each item (possibly GitHub Pages or `raw.githubusercontent.com`). The app only sends ordinary download requests (HTTP GET): no student ID, name or course codes of yours, no cookies, no identifiers. As with any network connection, the server sees your IP address. Turn **Library** off and the app does not contact that site.
 
 ## Data stored on your PC
 
@@ -27,7 +28,8 @@ After you sign in, the app downloads and stores **on your PC**:
 - grades and curriculum progress;
 - your name, student ID and class (for display);
 - reviews of LMS quizzes **you have submitted** (for revision; can be turned off in Settings; quizzes in progress are never read);
-- quizzes you write or import, practice results, notes.
+- quizzes you write or import, practice results, notes;
+- with **Library** on: a saved copy of the library list (`data\library-cache`), the list of files downloaded from the library (`data\library-downloads.json`), and the files you download, in each course's `Thư viện` folder. When an item is removed from the library, the app deletes the copy it downloaded (only if you have not edited that file). **Settings** > **Library** > **Clear library cache** deletes the saved list.
 
 This data lives in `%LOCALAPPDATA%\BKStudyDesk.Data`, wherever you install the app. When uninstalling you choose whether to delete or keep it.
 

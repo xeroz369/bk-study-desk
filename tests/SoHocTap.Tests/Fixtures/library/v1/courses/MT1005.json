@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "id": "MT1005",
+  "code": "MT1005",
+  "name": "Giải tích 2",
+  "items": [
+    {
+      "id": "tom-tat-chuong-1",
+      "type": "summary",
+      "title": "Tóm tắt chương 1: Hàm nhiều biến",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "term": "HK251",
+      "chapter": "1",
+      "teacher": "GV mẫu A",
+      "files": [
+        {
+          "name": "tom-tat-c1.md",
+          "size": 57,
+          "sha256": "18095f899ebc4e831458b6dc74171d781abfc066aedf871237e11655be5b3e6b",
+          "urls": [
+            "https://library.example/files/MT1005/tom-tat-c1.md",
+            "https://mirror.library.example/MT1005/tom-tat-c1.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bang-cong-thuc-gk",
+      "type": "cheatsheet",
+      "title": "Bảng công thức giữa kỳ",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-02",
+      "term": "HK242",
+      "examKind": "gk",
+      "teacher": "GV mẫu B",
+      "files": [
+        {
+          "name": "bang-cong-thuc.md",
+          "size": 79,
+          "sha256": "a553cfe53b3e63705c2beaf1ac512990e3263913d090de43961132263e50cfa8",
+          "urls": [
+            "https://library.example/files/MT1005/bang-cong-thuc.md",
+            "https://mirror.library.example/MT1005/bang-cong-thuc.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quiz-tich-phan-kep",
+      "type": "quiz-pack",
+      "title": "Gói quiz tích phân kép",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "chapter": "3",
+      "files": [
+        {
+          "name": "quiz-tich-phan-kep.json",
+          "size": 836,
+          "sha256": "682894264579df3c42c8ea065bf8689a319f1fa03e101cfa6a366a593b5813a5",
+          "urls": [
+            "https://library.example/files/MT1005/quiz-tich-phan-kep.json",
+            "https://mirror.library.example/MT1005/quiz-tich-phan-kep.json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mit-ocw-1802",
+      "type": "link",
+      "title": "MIT OCW 18.02 Multivariable Calculus",
+      "lang": "en",
+      "license": "CC-BY-NC-SA-4.0",
+      "origin": "link",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "source": "MIT OpenCourseWare",
+      "url": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/"
+    },
+    {
+      "id": "meo-on-gk",
+      "type": "tips",
+      "title": "Mẹo ôn giữa kỳ",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "examKind": "gk",
+      "files": [
+        {
+          "name": "meo-on-gk.md",
+          "size": 80,
+          "sha256": "298eb676410bf0408b6acf1a903e17c602baa4e15504b4f9ccab76a14ee51503",
+          "urls": [
+            "https://library.example/files/MT1005/meo-on-gk-hong.md",
+            "https://mirror.library.example/MT1005/meo-on-gk.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ban-cu-da-go",
+      "type": "summary",
+      "removed": true,
+      "removedReason": "Trùng với tóm tắt chương 1.",
+      "added": "2026-09-20"
+    }
+  ]
+}

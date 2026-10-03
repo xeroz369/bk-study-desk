@@ -26,8 +26,8 @@ public class AssignPairingTests
 
     [Theory]
     [InlineData(0, false, true)]
-    [InlineData(199, false, true)]
-    [InlineData(200, false, false)]     // đọc đủ 4 trang × 50: có thể còn nữa, không biết chắc
+    [InlineData(499, false, true)]
+    [InlineData(500, false, false)]     // đọc đủ 10 trang × 50: có thể còn nữa, không biết chắc
     [InlineData(10, true, false)]       // có mốc bài tập thiếu instance: không ghép được
     public void CalendarComplete(int count, bool missingInstance, bool expected) =>
         Assert.Equal(expected, AssignPairing.CalendarComplete(count, missingInstance));
@@ -37,9 +37,8 @@ public class AssignPairingTests
     {
         Assert.True(AssignPairing.InferDone(Now + 86400, Now, calendarComplete: true));
         Assert.True(AssignPairing.InferDone(Now - AssignPairing.WindowBefore, Now, true));
-        Assert.True(AssignPairing.InferDone(Now + AssignPairing.WindowAfter, Now, true));
+        Assert.True(AssignPairing.InferDone(Now + 300 * 86400, Now, true));   // không còn trần 120 ngày
         Assert.False(AssignPairing.InferDone(Now + 86400, Now, calendarComplete: false));
         Assert.False(AssignPairing.InferDone(Now - AssignPairing.WindowBefore - 1, Now, true));   // hạn ngoài khung đã đọc: không biết
-        Assert.False(AssignPairing.InferDone(Now + AssignPairing.WindowAfter + 1, Now, true));
     }
 }

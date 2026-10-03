@@ -8,7 +8,8 @@ internal readonly record struct BarState(bool Visible, bool Indeterminate, doubl
 /// <list type="bullet">
 /// <item>Chỉ hiện khi đồng bộ chạy quá 1 giây; đã hiện thì giữ ít nhất 800 ms (số của VS Code progressService.ts), đỡ nhấp nháy.</item>
 /// <item>Một thanh, có số, không bao giờ lùi trong một lượt (Win32 UX guide, Progress bars: "don't restart progress").</item>
-/// <item>Vô định khi chưa biết tổng (đang mở trang, đăng nhập, chưa có phản hồi đầu), hoặc số đứng yên khoảng 5 giây.</item>
+/// <item>Vô định khi chưa biết tổng (đang mở trang, đăng nhập, chưa có phản hồi đầu), hoặc số đứng yên khoảng 5 giây
+/// (chỉ thanh đồng bộ; thanh tải bản cập nhật tắt mục này, xem DESIGN.md "Thanh tiến trình").</item>
 /// <item>Xong thì đầy thanh trong lúc còn giữ hiện.</item>
 /// </list>
 /// </summary>
@@ -20,6 +21,21 @@ internal sealed class ProgressGate
 
     private DateTime? _busySince, _shownAt, _movedAt;
     private double _max = -1;
+    private readonly TimeSpan? _stall;
+
+    // Mặc định không bao giờ chuyển vô định khi đứng yên: người dùng muốn số % thật (03/10/2026), số đứng yên vẫn đúng hơn thanh chạy mãi.
+    public ProgressGate() : this((TimeSpan?)null) { }
+
+    /// <param name="stallAfter">Đứng yên bao lâu thì chuyển vô định. null = không bao giờ (tải bản cập nhật: số % là số thật của
+    /// Velopack, đứng yên chỉ là mạng chậm, quay sang vô định là giấu mất số đã có).</param>
+    public ProgressGate(TimeSpan? stallAfter) => _stall = stallAfter;
+
+    /// <summary>Việc bị hủy hay lỗi: ẩn ngay, không đầy thanh (100% chỉ khi xong thật).</summary>
+    public void Reset()
+    {
+        _busySince = _shownAt = _movedAt = null;
+        _max = -1;
+    }
 
     /// <param name="busy">Còn nguồn đang đồng bộ.</param>
     /// <param name="value">Phần đã xong 0..1 (SyncProgress.Overall); null = chưa biết tổng.</param>
@@ -55,10 +71,10 @@ internal sealed class ProgressGate
             _shownAt = now;
         }
         var still = now - _movedAt!.Value;
-        var stalled = still >= Stall;
+        var stalled = _stall is { } limit && still >= limit;
         var indeterminate = value is null || _max < 0 || stalled;
         // Còn chạy có số: hẹn kiểm tra lại đúng lúc hết 5 giây đứng yên để chuyển sang vô định mà không cần sự kiện.
-        TimeSpan? recheck = indeterminate ? null : Stall - still;
+        TimeSpan? recheck = indeterminate || _stall is null ? null : _stall - still;
         return new(true, indeterminate, Math.Max(_max, 0) * 100, recheck);
     }
 }

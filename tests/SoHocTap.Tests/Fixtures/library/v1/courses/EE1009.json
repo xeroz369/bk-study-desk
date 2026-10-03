@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "EE1009",
+  "code": "EE1009",
+  "name": "Kỹ thuật số",
+  "items": [
+    {
+      "id": "ghi-chu-dai-so-bool",
+      "type": "notes",
+      "title": "Ghi chú đại số Boole",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "chapter": "2",
+      "term": "HK251",
+      "files": [
+        {
+          "name": "dai-so-bool.md",
+          "size": 44,
+          "sha256": "a9fd486ac52865a82156c966ff169f44399f0f600be085a309f04e2a576466f6",
+          "urls": [
+            "https://library.example/files/EE1009/dai-so-bool.md",
+            "https://mirror.library.example/EE1009/dai-so-bool.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quiz-ban-do-k",
+      "type": "quiz-pack",
+      "title": "Gói quiz bìa Karnaugh",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "chapter": "3",
+      "files": [
+        {
+          "name": "quiz-ban-do-k.md",
+          "size": 100,
+          "sha256": "ae98fa7dfe02de541bf57e27e2c3a887d6f003d2e333a7e58d7024082ccce3fa",
+          "urls": [
+            "https://library.example/files/EE1009/quiz-ban-do-k.md",
+            "https://mirror.library.example/EE1009/quiz-ban-do-k.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "danh-sach-video",
+      "type": "playlist",
+      "title": "Danh sách video (loại app chưa biết)",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "files": [
+        {
+          "name": "video.txt",
+          "size": 23,
+          "sha256": "f7a5661fd4b5e19f67a018190505eec526d02456af7bd6cb5ceaa30a5f190baf",
+          "urls": [
+            "https://library.example/files/EE1009/video.txt",
+            "https://mirror.library.example/EE1009/video.txt"
+          ]
+        }
+      ]
+    }
+  ]
+}
