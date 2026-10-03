@@ -150,7 +150,7 @@ public sealed partial class AppState(SourceHub hub)
         if (Lms is { } lms)
         {
             var seen = new HashSet<string>();
-            foreach (var e in lms.Events)
+            foreach (var e in lms.Events.Where(e => !e.Done))
             {
                 // Mốc mở của quiz: theo eventtype của Moodle; dữ liệu cũ chưa có eventtype thì so với giờ mở trong danh sách quiz.
                 var quiz = e.Kind == "quiz" ? lms.Quizzes.FirstOrDefault(q => q.Name == e.Name && q.Course == e.Course) : null;

@@ -65,7 +65,7 @@ internal sealed class DeadlineNotifier(Action<string, string, string> show)
         var list = new List<Due>();
         foreach (var e in lms["events"]?.AsArray() ?? [])
         {
-            if (e is not JsonObject o || o["kind"]?.GetValue<string>() == "quiz") continue;
+            if (e is not JsonObject o || o["kind"]?.GetValue<string>() == "quiz" || o["done"]?.GetValue<bool>() == true) continue;
             var t = o["time"]?.GetValue<long>() ?? 0;
             if (t > now && t - now <= window)
                 list.Add(new Due(o["id"]?.GetValue<string>() ?? "", L.F("notify.title", o["label"]?.GetValue<string>() ?? L.T("notify.due"), o["name"]?.GetValue<string>()), o["subject"]?.GetValue<string>() ?? "", t));
