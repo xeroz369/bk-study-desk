@@ -17,6 +17,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
 {
     private CoreWebView2Controller? _controller;
     private bool _onApp;                     // đang ở /app (có #hid_Token)
+    private bool _upgrading;                 // vừa hủy một điều hướng http để mở lại bằng https: bỏ qua NavigationCompleted lỗi của nó
     private string? _blocked;                // URL ngoài trường vừa bị chặn (NavigationStarting), để báo lỗi rõ thay vì chờ hết giờ
     private readonly SemaphoreSlim _gate = new(1, 1);
     // Giãn cách các request API MyBK trong một lần đồng bộ (sources.mybk.gapMs); server báo 429/503 thì nghỉ hẳn một lúc.
@@ -155,8 +156,17 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             {
                 if (e.Uri == "about:blank" || WebHost.IsSchoolDomain(e.Uri)) return;
                 e.Cancel = true;
+                // MyBK hết phiên có lúc chuyển về http://mybk.../app/login. Cùng tên miền trường thì đổi sang https và đi tiếp
+                // (trang login đó được nhận ra là hết phiên và đi lại qua SSO), không coi là trang ngoài trường.
+                if (WebHost.HttpsOfSchoolDomain(e.Uri) is { } https)
+                {
+                    Log.Info($"MyBK ẩn: đổi http sang https {Log.Where(e.Uri)}");
+                    _upgrading = true;
+                    owner.BeginInvoke(() => { if (_controller?.CoreWebView2 == core) core.Navigate(https); });
+                    return;
+                }
                 _blocked = e.Uri;
-                Log.Warn($"MyBK ẩn: chặn chuyển sang trang ngoài trường {Log.Where(e.Uri)}");
+                Log.Warn($"MyBK ẩn: chặn chuyển sang trang ngoài trường {Log.Where(e.Uri)} ({WebHost.Scheme(e.Uri)})");
             };
             // Process của WebView chết (hết RAM, bị diệt, cập nhật runtime): bỏ WebView này, lần sau tạo mới.
             core.ProcessFailed += (_, e) =>
@@ -222,6 +232,11 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         void OnCompleted(object? s, CoreWebView2NavigationCompletedEventArgs e)
         {
             last = core.Source;
+            if (!e.IsSuccess && _upgrading && e.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled)
+            {
+                _upgrading = false;   // điều hướng http bị hủy có chủ đích, bản https đang mở ngay sau
+                return;
+            }
             Log.Debug($"MyBK ẩn: {Log.Where(core.Source)} {(e.IsSuccess ? "ok" : e.WebErrorStatus.ToString())} HTTP {e.HttpStatusCode}");
             if (!Uri.TryCreate(core.Source, UriKind.Absolute, out var u)) return;
             if (WebHost.NetworkError(e) is { } net) done.TrySetException(new HttpRequestException(net));
@@ -236,6 +251,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             else if (arrived(u)) done.TrySetResult();
         }
         _blocked = null;
+        _upgrading = false;
         core.NavigationCompleted += OnCompleted;
         var seconds = Config.Int("sources.mybk.timeoutSeconds", 45);
         try
