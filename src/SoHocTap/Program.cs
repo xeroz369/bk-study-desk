@@ -13,10 +13,11 @@ internal static class Program
     private static void Main(string[] args)
     {
         // Velopack phải chạy đầu tiên: lúc cài/gỡ/cập nhật, Update.exe gọi exe với tham số riêng, xử lý xong là thoát luôn.
-        // Không tự cài bản đã tải khi mở app: chỉ cài khi người dùng bấm, hoặc lúc thoát ở chế độ tự động (UpdateService).
-        // Gỡ app: xóa mục tự chạy. Dữ liệu (…\BKStudyDesk.Data) do bộ gỡ tiếng Việt (Uninstall.exe) xóa nếu người dùng chọn.
+        // Chế độ Tự động: bản đã tải (lần trước app thoát chưa kịp cài) được cài ngay lúc mở app, Velopack mở lại app sau khi cài;
+        // vẫn giữ cài lúc thoát (UpdateService.ApplyOnExit). Chế độ khác thì chỉ cài khi người dùng bấm.
+        // Gỡ app: xóa mục tự chạy. Dữ liệu (...\BKStudyDesk.Data) do bộ gỡ tiếng Việt (Uninstall.exe) xóa nếu người dùng chọn.
         Velopack.VelopackApp.Build()
-            .SetAutoApplyOnStartup(false)
+            .SetAutoApplyOnStartup(Updates.UpdateService.ApplyOnStartup(args))
             .OnBeforeUninstallFastCallback(_ => Startup.Remove())
             .Run();
         Updates.UpdateService.EnsureUninstaller();

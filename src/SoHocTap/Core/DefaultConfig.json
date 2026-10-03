@@ -305,7 +305,7 @@
     "practiceReleaseMinutes": 3,
     "update": {
       "mode": "ask",
-      "checkHours": 24,
+      "checkHours": 6,
       "source": "https://github.com/xeroz369/bk-study-desk",
       "skip": ""
     }

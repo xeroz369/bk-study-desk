@@ -1,0 +1,82 @@
+<!-- Thêm / sửa sự kiện tự thêm (issue #22): ô nhập nhanh ở trên điền dần các ô bên dưới. Enter lưu, Esc hủy. -->
+<Window x:Class="SoHocTap.Ui.EventWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:SoHocTap.Ui"
+        Width="520" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+        <Style x:Key="FieldError" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+    </Window.Resources>
+    <StackPanel Margin="16">
+        <TextBlock x:Name="Heading" FontSize="16" FontWeight="SemiBold" />
+        <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,12" TextWrapping="Wrap" Text="{ui:T events.localNote}" />
+
+        <TextBlock Text="{ui:T events.quick}" Margin="0,0,0,4" />
+        <TextBox x:Name="Quick" TextChanged="OnQuick" AutomationProperties.Name="{ui:T events.quick}" AutomationProperties.HelpText="{ui:T events.quickHint}" />
+        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,0" TextWrapping="Wrap" Text="{ui:T events.quickHint}" />
+        <TextBlock x:Name="QuickError" Style="{StaticResource FieldError}" />
+
+        <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" x:Name="TitleLabel" Text="{ui:T events.fTitle}" Style="{StaticResource FieldLabel}" VerticalAlignment="Top" Margin="0,6,12,0" />
+            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
+                <TextBox x:Name="TitleBox" AutomationProperties.LabeledBy="{Binding ElementName=TitleLabel}" TextChanged="OnField" />
+                <TextBlock x:Name="TitleError" Style="{StaticResource FieldError}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="1" x:Name="DateLabel" Text="{ui:T events.fDate}" Style="{StaticResource FieldLabel}" VerticalAlignment="Top" Margin="0,6,12,0" />
+            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
+                <DatePicker x:Name="DateBox" HorizontalAlignment="Left" MinWidth="180" AutomationProperties.LabeledBy="{Binding ElementName=DateLabel}" SelectedDateChanged="OnField" />
+                <TextBlock x:Name="DateError" Style="{StaticResource FieldError}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="2" x:Name="StartLabel" Text="{ui:T events.fStart}" Style="{StaticResource FieldLabel}" VerticalAlignment="Top" Margin="0,6,12,0" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal">
+                    <TextBox x:Name="StartBox" Width="90" AutomationProperties.LabeledBy="{Binding ElementName=StartLabel}" TextChanged="OnField" />
+                    <TextBlock x:Name="EndLabel" Text="{ui:T events.fEnd}" Style="{StaticResource FieldLabel}" Margin="16,0,12,0" />
+                    <TextBox x:Name="EndBox" Width="90" AutomationProperties.LabeledBy="{Binding ElementName=EndLabel}" TextChanged="OnField" />
+                    <TextBlock Text="{ui:T events.fEndHint}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                </StackPanel>
+                <TextBlock x:Name="StartError" Style="{StaticResource FieldError}" />
+                <TextBlock x:Name="EndError" Style="{StaticResource FieldError}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="3" x:Name="LocationLabel" Text="{ui:T events.fLocation}" Style="{StaticResource FieldLabel}" />
+            <TextBox Grid.Row="3" Grid.Column="1" x:Name="LocationBox" Margin="0,0,0,8" AutomationProperties.LabeledBy="{Binding ElementName=LocationLabel}" />
+
+            <TextBlock Grid.Row="4" x:Name="KindLabel" Text="{ui:T events.fKind}" Style="{StaticResource FieldLabel}" />
+            <ComboBox Grid.Row="4" Grid.Column="1" x:Name="KindBox" HorizontalAlignment="Left" MinWidth="180" Margin="0,0,0,8" AutomationProperties.LabeledBy="{Binding ElementName=KindLabel}" />
+
+            <TextBlock Grid.Row="5" x:Name="NoteLabel" Text="{ui:T events.fNote}" Style="{StaticResource FieldLabel}" />
+            <TextBox Grid.Row="5" Grid.Column="1" x:Name="NoteBox" AutomationProperties.LabeledBy="{Binding ElementName=NoteLabel}" />
+        </Grid>
+
+        <!-- Lưu (Enter, nút default) và Hủy (Esc). -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="SaveButton" Content="{ui:T events.save}" IsDefault="True" MinWidth="90" Style="{DynamicResource AccentButtonStyle}" Click="OnSave" Margin="0,0,8,0" />
+            <Button Content="{ui:T events.cancel}" IsCancel="True" MinWidth="90" />
+        </StackPanel>
+    </StackPanel>
+</Window>

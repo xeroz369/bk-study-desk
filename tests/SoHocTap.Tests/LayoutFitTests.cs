@@ -7,7 +7,8 @@ public class LayoutFitTests
 {
     private static readonly double[] Full = [110, 90, 110, 110, 150, 100];   // 670
     private static readonly double[] Compact = [42, 42, 42, 42, 42, 42];      // 252
-    private static readonly double[] Right = [430, 370, 320];
+    // Cụm bên phải: mức 0 = Đồng bộ có chữ, mức 1 = Đồng bộ chỉ icon. Giới thiệu đã luôn chỉ icon nên không còn mức riêng.
+    private static readonly double[] Right = [370, 320];
     private const double More = 90;
 
     [Fact]
@@ -15,23 +16,30 @@ public class LayoutFitTests
         Assert.Equal(new NavLayout(false, 0, 6), NavFit.Choose(1200, Full, Compact, Right, More));
 
     [Fact]
-    public void AboutGoesIconOnlyFirst() =>
-        Assert.Equal(new NavLayout(false, 1, 6), NavFit.Choose(1050, Full, Compact, Right, More));
+    public void RightButtonsHaveTwoLevels() => Assert.Equal(2, NavFit.RightLevels);
 
     [Fact]
-    public void NavGoesIconOnlyBeforeOverflow() =>
-        Assert.Equal(new NavLayout(true, 1, 6), NavFit.Choose(728, Full, Compact, Right, More));
+    public void JustEnoughRoomKeepsLabels() =>
+        Assert.Equal(new NavLayout(false, 0, 6), NavFit.Choose(1040, Full, Compact, Right, More));
+
+    [Fact]
+    public void NavGoesIconOnlyFirst() =>
+        Assert.Equal(new NavLayout(true, 0, 6), NavFit.Choose(1039, Full, Compact, Right, More));
+
+    [Fact]
+    public void NavIconOnlyKeepsSyncLabelWhileItFits() =>
+        Assert.Equal(new NavLayout(true, 0, 6), NavFit.Choose(622, Full, Compact, Right, More));
 
     [Fact]
     public void SyncGoesIconOnlyBeforeOverflow() =>
-        Assert.Equal(new NavLayout(true, 2, 6), NavFit.Choose(580, Full, Compact, Right, More));
+        Assert.Equal(new NavLayout(true, 1, 6), NavFit.Choose(580, Full, Compact, Right, More));
 
     [Fact]
     public void OverflowKeepsLeadingItems()
     {
         var layout = NavFit.Choose(500, Full, Compact, Right, More);
         Assert.True(layout.NavCompact);
-        Assert.Equal(2, layout.Right);
+        Assert.Equal(1, layout.Right);
         Assert.Equal(2, layout.Visible);   // 500 - 320 - 90 = 90: hai mục 42 px
     }
 

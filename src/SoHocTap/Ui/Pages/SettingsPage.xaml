@@ -48,6 +48,11 @@
                         <ComboBox x:Name="UpdateModeBox" Width="320" SelectionChanged="OnUpdateMode" AutomationProperties.Name="{ui:T update.settings}" />
                         <Button x:Name="UpdateCheck" Content="{ui:T update.check}" Margin="12,0,0,0" Click="OnUpdateCheck" />
                     </StackPanel>
+                    <!-- Kiểm tra bao lâu một lần (app.update.checkHours): 6, 12, 24 giờ. Máy thức dậy, có mạng lại thì kiểm tra thêm nếu đã tới hạn. -->
+                    <StackPanel x:Name="UpdateIntervalRow" Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="{ui:T update.interval}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="UpdateIntervalBox" Width="160" SelectionChanged="OnUpdateInterval" AutomationProperties.Name="{ui:T update.interval}" />
+                    </StackPanel>
                     <TextBlock x:Name="UpdateNote" Style="{StaticResource Muted}" Margin="0,6,0,0" TextWrapping="Wrap" />
                     <!-- Bản cài: chép dữ liệu từ bản zip đang dùng trước đây (đăng nhập LMS, kết quả, quiz, cài đặt). -->
                     <Button x:Name="ImportZip" Content="{ui:T update.import}" Margin="0,10,0,0" HorizontalAlignment="Left"

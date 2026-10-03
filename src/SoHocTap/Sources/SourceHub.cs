@@ -20,10 +20,12 @@ public sealed class SourceHub : IDisposable
         public SyncErrorKind? Kind;          // loại lỗi; null = lỗi ghi bởi bản cũ (chỉ có message)
         public int NetFails;                 // số lần lỗi mạng liên tiếp, để retry sớm 10, 30, 60 phút
         public List<string> Log = [];
-        public string? Step;             // key ngôn ngữ của bước đang làm
-        public int Done, Total;
+        public SyncProgress? Progress;       // tiến độ gần nhất nguồn báo (SyncPlan)
         public DateTimeOffset StepShownAt;
         public List<string> Warnings = [];   // phần không đọc được ở lần đồng bộ gần nhất
+        public object? Seen;                 // dữ liệu (bản trong cache của store) UI đã được báo gần nhất
+        public bool DataChanged;             // lượt này đã có dữ liệu mới (đã bắn "data" hoặc bản cuối khác lúc đầu)
+        public bool Quiet;                   // lượt gần nhất xong mà không có gì mới: UI chỉ cập nhật thanh trạng thái
     }
 
     private readonly Dictionary<string, ISource> _sources;
@@ -47,7 +49,7 @@ public sealed class SourceHub : IDisposable
 
     /// <summary>
     /// Sau mỗi lượt sync thành công: dữ liệu khác gì lần trước (nguồn, thay đổi). Bắn trên thread chạy sync.
-    /// 1.1.7 chưa có tính năng nào dùng, chỉ ghi log Debug số lượng.
+    /// Lượt không có gì mới (Quiet) thì không bắn. Chưa có tính năng nào nghe (1.1.8), mới ghi log Debug số lượng.
     /// </summary>
     public event Action<string, ChangeSet>? ChangeSetReady;
 
@@ -107,6 +109,12 @@ public sealed class SourceHub : IDisposable
     /// <summary>Lượt sync gần nhất của nguồn bị lỗi (chưa có lượt nào thành công sau đó).</summary>
     public bool Failed(string name) => _state.TryGetValue(name, out var st) && st.Error is not null;
 
+    /// <summary>
+    /// Lượt sync gần nhất xong mà không có gì mới (dữ liệu y như cũ, không lỗi, không cảnh báo): UI chỉ cập nhật thanh trạng thái,
+    /// không đọc lại, không vẽ lại trang, không thông báo.
+    /// </summary>
+    public bool Quiet(string name) => _state.TryGetValue(name, out var st) && st.Quiet && st.Error is null;
+
     /// <summary>Loại lỗi của lượt sync gần nhất; null nếu không lỗi hay lỗi của bản cũ.</summary>
     public SyncErrorKind? ErrorKind(string name) => _state.TryGetValue(name, out var st) && st.Error is not null ? st.Kind : null;
 
@@ -130,9 +138,11 @@ public sealed class SourceHub : IDisposable
                     ["error"] = st.Error,
                     ["errorKind"] = st.Error is null ? null : st.Kind?.ToString(),
                     ["warnings"] = new JsonArray(st.Warnings.Select(w => (JsonNode)w).ToArray()),
-                    ["step"] = st.Running ? st.Step : null,
-                    ["done"] = st.Done,
-                    ["total"] = st.Total,
+                    ["step"] = st.Running ? st.Progress?.Key : null,
+                    ["count"] = st.Progress?.Count ?? 0,
+                    ["of"] = st.Progress?.Of ?? 0,
+                    ["detail"] = st.Progress?.Detail,
+                    ["permille"] = st.Progress?.Permille,
                     ["log"] = new JsonArray(st.Log.TakeLast(30).Select(x => (JsonNode)x).ToArray()),
                 };
             }
@@ -152,7 +162,7 @@ public sealed class SourceHub : IDisposable
         {
             if (st.Running || DateTimeOffset.UtcNow - st.StartedAt < MinRestart) return false;
             st.Running = true; st.Error = null; st.Kind = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
-            st.Step = null; st.Done = st.Total = 0; st.Warnings = [];
+            st.Progress = null; st.Warnings = []; st.DataChanged = false; st.Quiet = false;
         }
         Changed?.Invoke(name, "start");
         Log.Debug($"Sync {name}: bắt đầu{(force ? " (bấm tay)" : "")}");
@@ -160,13 +170,22 @@ public sealed class SourceHub : IDisposable
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var before = Snapshot(name);
+            lock (st) st.Seen = before;
             try
             {
                 await src.SyncAsync(line => OnLine(name, st, line), force, _stop.Token);
                 lock (st) st.NetFails = 0;
                 SaveState();
-                Log.Debug($"Sync {name}: xong sau {sw.Elapsed.TotalSeconds:0.0} giây");
-                ReportChanges(name, before);
+                // Store không ghi khi dữ liệu y như cũ, nên bản trong cache vẫn là đúng object lúc đầu: so tham chiếu là đủ.
+                var after = Snapshot(name);
+                bool quiet;
+                lock (st)
+                {
+                    quiet = st.Quiet = SyncedFile.IsQuiet(st.Seen, after, st.DataChanged, st.Warnings.Count);
+                    st.DataChanged |= !ReferenceEquals(after, st.Seen);
+                }
+                Log.Debug($"Sync {name}: xong sau {sw.Elapsed.TotalSeconds:0.0} giây{(quiet ? ", không có gì mới" : "")}");
+                if (!quiet) ReportChanges(name, before);
             }
             // Chỉ nuốt OperationCanceled khi app đang dừng. HttpClient hết Timeout cũng ném TaskCanceledException: đó là lỗi
             // Timeout thật, phải báo và ghi lại, không được coi như "đã hủy".
@@ -193,20 +212,31 @@ public sealed class SourceHub : IDisposable
 
     private void OnLine(string name, State st, string line)
     {
-        if (line == SyncSignal.DataReady) { Changed?.Invoke(name, "data"); return; }
+        if (line == SyncSignal.DataReady)
+        {
+            // Phần chính đã lưu mà y như cũ (store không ghi): không bắt UI đọc lại, vẽ lại.
+            var now = Snapshot(name);
+            bool fresh;
+            lock (st)
+            {
+                fresh = !ReferenceEquals(now, st.Seen);
+                if (fresh) { st.Seen = now; st.DataChanged = true; }
+            }
+            Changed?.Invoke(name, fresh ? "data" : "progress");
+            return;
+        }
         if (SyncSignal.TryParseWarn(line, out var warn))
         {
             lock (st) { if (st.Warnings.Count < 30) st.Warnings.Add(warn); st.Log.Add("  lỗi: " + warn); }
             return;
         }
-        if (SyncSignal.TryParseStep(line, out var key, out var done, out var total))
+        if (SyncSignal.TryParseProgress(line, out var p))
         {
             bool show;
             lock (st)
             {
-                // Đổi bước thì báo ngay; cùng bước chỉ tăng số thì tối đa 4 lần/giây (đỡ vẽ lại giao diện liên tục).
-                show = key != st.Step || DateTimeOffset.UtcNow - st.StepShownAt > TimeSpan.FromMilliseconds(250) || done == total;
-                st.Step = key; st.Done = done; st.Total = total;
+                show = ShowProgress(st.Progress, p, DateTimeOffset.UtcNow - st.StepShownAt);
+                st.Progress = p;
                 if (show) st.StepShownAt = DateTimeOffset.UtcNow;
             }
             if (show) Changed?.Invoke(name, "progress");
@@ -214,6 +244,13 @@ public sealed class SourceHub : IDisposable
         }
         lock (st) st.Log.Add(line);
     }
+
+    /// <summary>
+    /// Báo lên UI ngay khi đổi câu, đổi từ vô định sang có số, hay xong hẳn; cùng câu chỉ tăng số thì tối đa 4 lần/giây (đỡ vẽ lại liên tục).
+    /// </summary>
+    internal static bool ShowProgress(SyncProgress? last, SyncProgress now, TimeSpan sinceShown) =>
+        last is not { } l || l.Key != now.Key || (l.Permille is null) != (now.Permille is null) || now.Permille == 1000
+        || sinceShown > TimeSpan.FromMilliseconds(250);
 
     // ------------------------------------------------------------------ ChangeSet
 
@@ -339,6 +376,10 @@ public sealed class SourceHub : IDisposable
 
     public void Dispose()
     {
+        // Lượt không có gì mới chỉ giữ "lần kiểm tra cuối" trong RAM: ghi ra trước khi thoát.
+        foreach (var src in _sources.Values)
+            try { src.Flush(); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Ghi trạng thái {src.Name} khi thoát: {e.Message}"); }
         _stop.Cancel();
         _stop.Dispose();
     }

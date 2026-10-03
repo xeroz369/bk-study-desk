@@ -34,7 +34,7 @@ public sealed partial class LmsSource : ISource
     public SourceStatus Status()
     {
         var d = LmsStore.Read();
-        return new SourceStatus(HasToken, d is { SyncedAt: > 0 } ? d.SyncedAt : null, d?.User, d?.Term);
+        return new SourceStatus(HasToken, LmsStore.SyncedAt(), d?.User, d?.Term);
     }
 
     public JsonNode? Data() => JsonStore.Read(LmsFile);

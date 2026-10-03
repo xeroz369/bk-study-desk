@@ -1,7 +1,7 @@
 ﻿<!-- Main window kiểu app Windows. Có năm mục chính nên dùng thanh điều hướng ngang phía trên (guideline Windows: ≤ 5 mục
      ngang hàng thì để top nav), Cài đặt là nút bánh răng; nội dung chiếm hết bề ngang.
      [điều hướng, Thêm ... Đồng bộ, LMS, MyBK, Cài đặt, Giới thiệu] / InfoBar / dòng mô tả page / page / status bar. Tên app chỉ nằm ở title bar.
-     Cửa sổ hẹp thì thanh trên cùng gọn dần (NavFit): Giới thiệu chỉ icon, mục điều hướng chỉ icon, Đồng bộ chỉ icon, rồi mới dồn vào menu Thêm. -->
+     Cài đặt và Giới thiệu luôn chỉ icon. Cửa sổ hẹp thì thanh trên cùng gọn dần (NavFit): mục điều hướng chỉ icon, Đồng bộ chỉ icon, rồi mới dồn vào menu Thêm. -->
 <Window x:Class="SoHocTap.Ui.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -100,11 +100,10 @@
                     <ToggleButton x:Name="SettingsButton" AutomationProperties.Name="{ui:T nav.settings}" Checked="OnSettings" Unchecked="OnToggleOff" ToolTip="{ui:T nav.settings.tip}" Padding="8,5">
                         <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" FontSize="15" />
                     </ToggleButton>
-                    <ToggleButton x:Name="AboutButton" AutomationProperties.Name="{ui:T about.title}" Checked="OnAbout" Unchecked="OnToggleOff" ToolTip="{ui:T about.tip}" Margin="6,0,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="AboutGlyph" Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock x:Name="AboutText" Text="{ui:T about.title}" />
-                        </StackPanel>
+                    <!-- Giới thiệu ít dùng: lúc nào cũng chỉ icon như Cài đặt, tên nằm ở tooltip và tên cho UI Automation. -->
+                    <ToggleButton x:Name="AboutButton" AutomationProperties.Name="{ui:T about.title}" AutomationProperties.AutomationId="AboutButton"
+                                  Checked="OnAbout" Unchecked="OnToggleOff" ToolTip="{ui:T about.tip}" Margin="6,0,0,0" Padding="8,5">
+                        <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="15" />
                     </ToggleButton>
                 </StackPanel>
                 <StackPanel x:Name="NavRow" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True">
