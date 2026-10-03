@@ -161,7 +161,8 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             _controller = await env.CreateCoreWebView2ControllerAsync(hwnd());
             _controller.IsVisible = false;
             // WebView ẩn chạy script của trang trường: chỉ cho đi tới host trường qua https, không mở cửa sổ mới.
-            var core = _controller.CoreWebView2;
+            var ctl = _controller;
+            var core = ctl.CoreWebView2;
             core.Settings.AreDevToolsEnabled = System.Diagnostics.Debugger.IsAttached;
             core.NavigationStarting += (_, e) =>
             {
@@ -173,7 +174,9 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 {
                     Log.Info($"MyBK ẩn: đổi http sang https {Log.Where(e.Uri)}");
                     _upgrading = true;
-                    owner.BeginInvoke(() => { if (_controller?.CoreWebView2 == core) core.Navigate(https); });
+                    // So controller, không so CoreWebView2: mỗi lần đọc CoreWebView2 là một wrapper COM mới nên == luôn sai
+                    // (lỗi ở 1.1.5, 1.1.6: không mở bản https, kẹt ở trang trước tới hết 45 giây).
+                    owner.BeginInvoke(() => { if (ReferenceEquals(_controller, ctl)) core.Navigate(https); });
                     return;
                 }
                 _blocked = e.Uri;

@@ -30,6 +30,7 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 ### Sửa lỗi
 
+- Phiên MyBK hết hạn thì đồng bộ MyBK treo 45 giây rồi báo "MyBK không phản hồi" (lỗi ở 1.1.5, 1.1.6). App giờ tự đăng nhập lại qua SSO như trước.
 - Trang trống không có dòng giải thích: các tab ở **Môn học**, **Lịch** > **Sắp tới**, **Lịch thi**, ô **Môn học** ở **Luyện tập**.
 - Chữ bị cắt: ô "giữ đăng nhập" ở **Cài đặt**, dòng báo lỗi trong hộp **Tải tài liệu**; thanh trạng thái đẩy mất tên kỳ thi và số phiên bản.
 - GPA lẫn dấu chấm và dấu phẩy; cột học phí chưa định dạng tiền; chép ở **Lịch** không báo "Đã chép".

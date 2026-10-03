@@ -106,7 +106,7 @@ jobs:
           python3 -m pip install --quiet semgrep==1.179.0
           semgrep scan --metrics=off --error --severity ERROR \
             --config p/csharp --config p/typescript --config p/javascript --config p/secrets \
-            --exclude 'src/ui/build' --exclude '**/node_modules' \n            --exclude 'src/ui/scripts' \
+            --exclude 'src/ui/build' --exclude '**/node_modules' --exclude 'src/ui/scripts' \
             --sarif --output semgrep.sarif .
       - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         if: always() && !github.event.repository.private && hashFiles('semgrep.sarif') != ''

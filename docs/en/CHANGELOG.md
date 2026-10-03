@@ -32,6 +32,7 @@ An experimental release: most of the code has been reorganised to make features 
 
 ### Fixed
 
+- When the MyBK session expired, MyBK sync hung for 45 seconds and then reported "MyBK did not respond" (a bug in 1.1.5 and 1.1.6). The app signs in again through SSO as before.
 - Empty pages without an explanation: the **Subjects** tabs, **Calendar** > **Upcoming**, **Exams**, and the **Subjects** card in **Practice**.
 - Cut-off text: the "stay signed in" box in **Settings** and the error line in the **Download** dialog; the status bar pushed out the exam name and version.
 - GPA mixed dots and commas; the tuition column wasn't formatted as money; copying in **Calendar** didn't say "Copied".
