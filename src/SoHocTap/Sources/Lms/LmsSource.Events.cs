@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -20,19 +20,19 @@ public sealed partial class LmsSource
         var outMap = new Dictionary<string, JsonObject>();
         // Bài tập có mốc trên lịch hành động: "instance" của mốc → mục "ev" tương ứng. Trên LMS trường, instance trùng cmid
         // của bài (đo trên dữ liệu thật 03/10/2026), không phải id như tài liệu; ghép theo cmid, id để dự phòng. Lịch đọc đủ (không lỗi, không bị cắt
-        // ở 4 trang) thì biết chắc bài nào không còn mốc, tức là đã nộp (xem dưới).
+        // ở MaxPages trang) thì biết chắc bài nào không còn mốc, tức là đã nộp (xem dưới).
         var assignEvents = new Dictionary<long, JsonObject>();
         var calendarComplete = false;
         var assignWithoutInstance = false;
         try
         {
-            // Moodle chỉ cho tối đa 50 mục mỗi lần (limitnum 1..50): đọc theo trang bằng aftereventid, tối đa 4 trang.
+            // Moodle chỉ cho tối đa 50 mục mỗi lần (limitnum 1..50): đọc theo trang bằng aftereventid, tối đa MaxPages trang.
             var events = new List<JsonObject>();
             long after = 0;
             for (var page = 0; page < AssignPairing.MaxPages; page++)
             {
                 var res = await CallAsync("core_calendar_get_action_events_by_timesort",
-                    [Arg("timesortfrom", Now() - AssignPairing.WindowBefore), Arg("timesortto", Now() + AssignPairing.WindowAfter), Arg("limitnum", AssignPairing.PageSize),
+                    [Arg("timesortfrom", Now() - AssignPairing.WindowBefore), Arg("limitnum", AssignPairing.PageSize),
                      Arg("aftereventid", after), Arg("limittononsuspendedevents", 1)], ct);
                 var batch = (res["events"] as JsonArray ?? []).OfType<JsonObject>().ToList();
                 events.AddRange(batch);

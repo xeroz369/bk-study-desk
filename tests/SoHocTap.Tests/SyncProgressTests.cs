@@ -196,15 +196,16 @@ public class ProgressGateTests
     }
 
     [Fact]
-    public void StalledFiveSecondsTurnsIndeterminate()
+    public void StalledKeepsRealPercent()
     {
+        // Đứng yên bao lâu cũng giữ số đã đạt, không chuyển thanh chạy qua lại (yêu cầu người dùng 03/10/2026).
         var g = new ProgressGate();
         g.Update(true, 0.4, At(0));
-        var s = g.Update(true, 0.4, At(1000));
-        Assert.Equal(TimeSpan.FromSeconds(4), s.Recheck);           // hẹn kiểm tra lúc đủ 5 giây đứng yên
-        Assert.False(g.Update(true, 0.4, At(4900)).Indeterminate);
-        Assert.True(g.Update(true, 0.4, At(5000)).Indeterminate);
-        Assert.False(g.Update(true, 0.5, At(5100)).Indeterminate);  // chạy tiếp thì lại có số
+        Assert.False(g.Update(true, 0.4, At(1000)).Indeterminate);
+        var s = g.Update(true, 0.4, At(60000));
+        Assert.False(s.Indeterminate);
+        Assert.Equal(40, s.Value, 3);
+        Assert.Null(s.Recheck);
     }
 
     [Fact]

@@ -238,7 +238,17 @@
     "archiveOldVersions": "_Lưu trữ/Bản cũ",
     "lmsSubfolder": "Tài liệu LMS",
     "downloadsSubfolder": "Tải ngoài",
-    "archiveArchives": "_Lưu trữ/File nén đã giải nén"
+    "archiveArchives": "_Lưu trữ/File nén đã giải nén",
+    "librarySubfolder": "Thư viện"
+  },
+  "library": {
+    "enabled": false,
+    "baseUrl": "",
+    "refreshHours": 24,
+    "tabRefreshMinutes": 10,
+    "timeoutSeconds": 30,
+    "gapMs": 300,
+    "maxFileMB": 200
   },
   "subjects": {
     "parts": {

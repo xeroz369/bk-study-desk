@@ -1,0 +1,40 @@
+{
+  "format": "studypack/1",
+  "id": "thu-vien-mt1005-tich-phan-kep",
+  "title": "Tích phân kép (mẫu)",
+  "version": "1.0.0",
+  "course": {
+    "code": "MT1005",
+    "name": "Giải tích 2"
+  },
+  "authors": [
+    {
+      "name": "Nhóm soạn mẫu"
+    }
+  ],
+  "license": "CC-BY-SA-4.0",
+  "units": [
+    {
+      "title": "Chương 3",
+      "lessons": [
+        {
+          "id": "tp-kep",
+          "title": "Tích phân kép",
+          "questions": [
+            {
+              "prompt": "Tích phân của 1 trên hình vuông đơn vị bằng?",
+              "options": [
+                "0",
+                "1",
+                "2",
+                "4"
+              ],
+              "answer": 1,
+              "solution": "Bằng diện tích miền, là 1."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

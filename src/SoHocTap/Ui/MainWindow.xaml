@@ -64,6 +64,9 @@
             <!-- Tên bản + phiên bản; di chuột: thư mục app. -->
             <StatusBarItem Grid.Column="8">
                 <StackPanel Orientation="Horizontal">
+                    <!-- Đang tải bản mới (cả khi chế độ Tự động tải ở nền): thanh có số thật, chữ % và MB ở link bên cạnh. -->
+                    <ProgressBar x:Name="StUpdateBar" Width="80" Height="4" Minimum="0" Maximum="100" Margin="0,0,8,0"
+                                 VerticalAlignment="Center" Visibility="Collapsed" />
                     <!-- Có bản mới (chỉ hiện khi người dùng cho phép kiểm tra): bấm để xem và cập nhật. -->
                     <TextBlock x:Name="StUpdate" Margin="0,0,16,0" Visibility="Collapsed">
                         <Hyperlink Click="OnUpdateClick"><Run x:Name="StUpdateText" /></Hyperlink>

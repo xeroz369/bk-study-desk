@@ -54,4 +54,33 @@ public class WeekMathTests
     [InlineData(59, 999, 51)]
     public void UntilNextMinute(int sec, int ms, double expectedMs) =>
         Assert.Equal(expectedMs, WeekMath.UntilNextMinute(new DateTime(2026, 10, 3, 9, 41, sec, ms)).TotalMilliseconds);
+
+    [Fact]
+    public void FullDay_EveningLineShows()
+    {
+        // Issue #25: thứ bảy 03/10 lúc 19:38. Lưới đủ 0:00 tới 24:00 nên luôn có vạch, không phụ thuộc giờ học.
+        var at = WeekMath.NowLine(Monday, new DateTime(2026, 10, 3, 19, 38, 0), 0, 24 * 60, 1, 10);
+        Assert.Equal((5, 10 + 19 * 60 + 38.0), at);
+    }
+
+    [Fact]
+    public void Scroll_ToFirstClassWhenNowVisible() =>
+        Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 9, 30, 10, 0, 0), 7 * 60 + 30, 600));
+
+    [Fact]
+    public void Scroll_ToNowWhenOutsideView() =>
+        // 19:38, buổi sớm nhất 7:00, khung nhìn 4 giờ: cuộn tới 18:00 để vạch nằm trong khung.
+        Assert.Equal(18 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 3, 19, 38, 0), 7 * 60, 240));
+
+    [Fact]
+    public void Scroll_OtherWeekIgnoresNow() =>
+        Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 6, 21, 0, 0), 7 * 60, 600));
+
+    [Fact]
+    public void Scroll_ClampedSoBottomIsMidnight() =>
+        Assert.Equal(24 * 60 - 600, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 4, 23, 50, 0), 7 * 60, 600));
+
+    [Fact]
+    public void Scroll_EmptyWeekStartsAtSeven() =>
+        Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday.AddDays(14), new DateTime(2026, 10, 3, 19, 0, 0), null, 600));
 }

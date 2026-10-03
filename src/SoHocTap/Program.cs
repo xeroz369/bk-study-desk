@@ -13,13 +13,17 @@ internal static class Program
     private static void Main(string[] args)
     {
         // Velopack phải chạy đầu tiên: lúc cài/gỡ/cập nhật, Update.exe gọi exe với tham số riêng, xử lý xong là thoát luôn.
-        // Chế độ Tự động: bản đã tải (lần trước app thoát chưa kịp cài) được cài ngay lúc mở app, Velopack mở lại app sau khi cài;
+        // Chế độ Tự động: bản đã tải (lần trước app thoát chưa kịp cài) được cài ngay lúc mở app, Update.exe mở lại app sau khi cài;
         // vẫn giữ cài lúc thoát (UpdateService.ApplyOnExit). Chế độ khác thì chỉ cài khi người dùng bấm.
+        // Tắt auto-apply của Velopack: VelopackApp.Run gọi Update.exe không silent, hiện cửa sổ tiếng Anh "Installing Update" với thanh
+        // chạy vô định. App tự gọi Update.exe silent ngay sau Run. Hỏi trước Run vì Run xóa biến VELOPACK_RESTART (chặn vòng lặp cài).
         // Gỡ app: xóa mục tự chạy. Dữ liệu (...\BKStudyDesk.Data) do bộ gỡ tiếng Việt (Uninstall.exe) xóa nếu người dùng chọn.
+        var pending = Updates.UpdateService.StartupUpdate(args);
         Velopack.VelopackApp.Build()
-            .SetAutoApplyOnStartup(Updates.UpdateService.ApplyOnStartup(args))
+            .SetAutoApplyOnStartup(false)
             .OnBeforeUninstallFastCallback(_ => Startup.Remove())
             .Run();
+        if (pending is not null && Updates.UpdateService.ApplyAtStartup(pending, args)) return;   // Update.exe đợi app thoát rồi cài
         Updates.UpdateService.EnsureUninstaller();
         // Single instance: mở bản thứ hai thì nó chỉ đưa window đang mở lên trước rồi thoát.
         using var mutex = new Mutex(initiallyOwned: true, AppInfo.InstanceKey, out bool first);

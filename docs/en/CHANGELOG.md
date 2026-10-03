@@ -2,11 +2,29 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.8.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.9.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.9] - 2026-10-03
+
+### Added
+
+- Shared study **Library** (BK Study Library), **off by default until the library opens**. Turn it on in **Settings** > **Library** and the **Subjects** page gets a **Library** tab for courses whose code matches: material grouped by type, with filters for teacher, term and exam type. Each item offers **Open on the web**, **Download** (to the course's `Thư viện` folder, checked before saving, never overwriting your files), **Add to Practice** for quiz packs, and **Copy link**. A **Contribute material** button opens the contribution page on the web. Items removed from the library are hidden and the app deletes the copy it downloaded.
+
+### Changed
+
+- Downloading an update shows a progress bar with the real percentage and the amount downloaded (e.g. "Downloading version 1.2.0... 42% (12.3/29.1 MB)"), in the update window, **Settings** > **Updates** and the status bar (also when **Automatic** mode downloads in the background). The bar never moves backwards and only fills up once the package is downloaded and checked. There is a **Cancel download** button.
+- Installing an update no longer shows Velopack's English "Installing Update" window with its endless bar. The app says "Installing version ..., the app will reopen in a few seconds" in the status bar, then reopens by itself.
+- The sync progress bar keeps the percentage reached while a step takes long, instead of switching to a back-and-forth bar.
+
+### Fixed
+
+- **Calendar** > **Timetable**: the current time line disappeared in the evening or early morning, because the grid only spanned your earliest to latest class ([#25](https://github.com/xeroz369/bk-study-desk/issues/25)). The grid now always covers 0:00 to 24:00 and scrolls to your earliest class, or to the current time when it is out of view.
+- **Calendar** and **Today**: deadlines and quizzes set more than 120 days ahead on LMS now show too (the app used to read the LMS calendar only 120 days ahead). **Today** lists every LMS announcement from the last 7 days, matching the **LMS announcements (7 days)** count (it used to stop at 8).
+- MyBK sometimes failed to sync with "no response after 45 seconds (at .../my/homeSSO.action)" while the school server was fine. It happened when the MyBK session had expired and the app had to sign in again through SSO.
 
 ## [1.1.8] - 2026-10-03
 
@@ -214,7 +232,8 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...HEAD
+[1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6

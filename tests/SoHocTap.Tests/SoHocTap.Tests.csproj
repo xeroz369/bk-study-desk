@@ -19,6 +19,7 @@
     <Using Include="Xunit" />
     <Compile Include="$(Src)Core\AppDirs.cs" Link="Linked\AppDirs.cs" />
     <Compile Include="$(Src)Core\UpdatePolicy.cs" Link="Linked\UpdatePolicy.cs" />
+    <Compile Include="$(Src)Updates\DownloadProgress.cs" Link="Linked\DownloadProgress.cs" />
     <Compile Include="$(Src)Core\DataImport.cs" Link="Linked\DataImport.cs" />
     <Compile Include="$(Src)Core\Pace.cs" Link="Linked\Pace.cs" />
     <Compile Include="$(Src)Core\LogRedactor.cs" Link="Linked\LogRedactor.cs" />
@@ -52,6 +53,13 @@
     <Compile Include="$(Src)Files\NameMatch.cs" Link="Linked\Files\NameMatch.cs" />
     <Compile Include="$(Src)Files\LmsPlacement.cs" Link="Linked\Files\LmsPlacement.cs" />
     <Compile Include="$(Src)Files\DocumentScan.cs" Link="Linked\Files\DocumentScan.cs" />
+    <!-- Thư viện: adapter /v1 và ghép môn không phụ thuộc Config/Paths; test với HttpMessageHandler giả, không gọi mạng. -->
+    <Compile Include="$(Src)Library\LibraryContract.cs" Link="Linked\Library\LibraryContract.cs" />
+    <Compile Include="$(Src)Library\LibraryClient.cs" Link="Linked\Library\LibraryClient.cs" />
+    <Compile Include="$(Src)Library\LibraryMatch.cs" Link="Linked\Library\LibraryMatch.cs" />
+    <Compile Include="$(Src)Library\QuizPackHandOff.cs" Link="Linked\Library\QuizPackHandOff.cs" />
+    <Compile Include="$(Src)Library\LibraryActions.cs" Link="Linked\Library\LibraryActions.cs" />
+    <Compile Include="$(Src)Api\PackImport.cs" Link="Linked\Api\PackImport.cs" />
   </ItemGroup>
 
   <ItemGroup>
