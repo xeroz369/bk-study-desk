@@ -6,6 +6,14 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.5] - 2026-10-03
+
+### Sửa lỗi
+
+- Đang ở **Luyện tập** thì phím tắt của app (Ctrl+1 tới Ctrl+7, F5, Alt+Left) không chạy, và link sang trang khác của app không mở.
+- Đồng bộ MyBK báo lỗi "MyBK chuyển sang trang ngoài trường (mybk.hcmut.edu.vn/app/login)" khi phiên MyBK hết hạn. MyBK chuyển về trang đăng nhập qua http, app chặn nhầm. Giờ app đổi sang https và tự đăng nhập lại qua SSO.
+- **Lịch** > **Thời khóa biểu** dạng lưới: tuần không có buổi học Thứ 7, CN thì mất hai cột này, dù nhãn tuần vẫn tính tới CN. Giờ lưới luôn đủ 7 ngày. Thanh cuộn không còn che cột cuối.
+
 ## [1.1.4] - 2026-10-03
 
 ### Thêm
@@ -139,7 +147,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...HEAD
+[1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.3
 [1.1.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.1...v1.1.2

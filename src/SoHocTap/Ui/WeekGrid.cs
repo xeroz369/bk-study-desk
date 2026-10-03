@@ -10,7 +10,7 @@ internal sealed record WeekBlock(int Day, int StartMin, int EndMin, string Title
 /// <summary>
 /// Thời khóa biểu dạng lưới tuần (giống Google Calendar, Outlook): cột là ngày, trục dọc là giờ, mỗi buổi là một khối màu theo môn.
 /// Tự canh bố cục:
-/// - chỉ hiện Thứ 7, CN khi tuần đó có buổi học;
+/// - luôn đủ 7 cột Thứ hai tới Chủ nhật, khớp nhãn tuần (ẩn T7, CN theo từng tuần làm cột nhảy qua lại khi có buổi học bù);
 /// - khung giờ từ buổi sớm nhất tới buổi muộn nhất (làm tròn theo giờ);
 /// - chiều cao giãn cho vừa vùng hiển thị, không thấp hơn mức đọc được (thấp hơn thì cuộn);
 /// - buổi trùng giờ trong cùng ngày chia đôi chiều ngang.
@@ -22,6 +22,8 @@ internal sealed class WeekGrid : Grid
     private const double MinPxPerMin = 0.7;     // 1 giờ ≥ 42 px: buổi 50 phút cao 35 px, vừa hai dòng chữ
     private const double Pad = 10;              // lề trên/dưới để nhãn giờ đầu, cuối không bị cắt
     private const double MaxPxPerMin = 2.0;
+    // Thanh cuộn Fluent nổi đè lên nội dung: chừa lề phải bằng bề rộng thanh cuộn để không che cột Chủ nhật.
+    private static readonly Thickness ScrollGap = new(0, 0, SystemParameters.VerticalScrollBarWidth, 0);
     private static readonly Color[] Palette =
     [
         Color.FromRgb(0x00, 0x78, 0xD4), Color.FromRgb(0x10, 0x7C, 0x10), Color.FromRgb(0xC2, 0x39, 0xB3), Color.FromRgb(0xCA, 0x50, 0x10),
@@ -44,6 +46,8 @@ internal sealed class WeekGrid : Grid
         RowDefinitions.Add(new RowDefinition());
         SetRow(_scroll, 1);
         _scroll.Content = _body;
+        _body.Margin = ScrollGap;
+        _header.Margin = ScrollGap;
         Children.Add(_header);
         Children.Add(_scroll);
         _scroll.SizeChanged += (_, e) => { if (Math.Abs(e.PreviousSize.Height - e.NewSize.Height) > 1) Layout(); };
@@ -54,7 +58,7 @@ internal sealed class WeekGrid : Grid
     {
         _monday = monday;
         _blocks = blocks.Where(b => b.Day is >= 2 and <= 8 && b.EndMin > b.StartMin).ToList();
-        _days = [.. Enumerable.Range(2, 5).Concat(Enumerable.Range(7, 2).Where(d => _blocks.Any(b => b.Day == d)))];
+        _days = [.. Enumerable.Range(2, 7)];
         _from = _blocks.Count == 0 ? 7 * 60 : _blocks.Min(b => b.StartMin) / 60 * 60;
         _to = _blocks.Count == 0 ? 17 * 60 : (_blocks.Max(b => b.EndMin) + 59) / 60 * 60;
         BuildHeader();

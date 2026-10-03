@@ -58,6 +58,16 @@ internal static class WebHost
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttp && IsSchoolHost("https://" + u.Authority)
             ? new UriBuilder(u) { Scheme = Uri.UriSchemeHttps, Port = -1 }.Uri.AbsoluteUri : url;
 
+    /// <summary>url là http:// tới tên miền trường (xem <see cref="IsSchoolDomain"/>) thì trả bản https://, không thì null.</summary>
+    public static string? HttpsOfSchoolDomain(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme != Uri.UriSchemeHttp) return null;
+        var https = new UriBuilder(u) { Scheme = Uri.UriSchemeHttps, Port = -1 }.Uri.AbsoluteUri;
+        return IsSchoolDomain(https) ? https : null;
+    }
+
+    public static string Scheme(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Scheme : "?";
+
     public static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : "";
 
     /// <summary>Đang ở trang nhập mật khẩu SSO (phiên SSO đã hết hoặc chưa đăng nhập).</summary>
