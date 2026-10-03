@@ -1,4 +1,4 @@
-{
+﻿{
   "_meta.culture": "vi-VN",
   "_meta.name": "Tiếng Việt",
   "about.issues": "Báo lỗi",
@@ -243,6 +243,7 @@
   "library.col.local": "Trên máy",
   "library.contribute": "Đóng góp tài liệu",
   "library.contribute.tip": "Mở trang đóng góp của thư viện trên trình duyệt",
+  "library.copyIsbn": "Sao chép ISBN {0}",
   "library.copyLink": "Sao chép link",
   "library.download": "Tải về",
   "library.downloadNew": "Tải bản mới",
@@ -281,6 +282,7 @@
   "library.sharedCode": "Mã {0} có ở {1} môn trong thư viện. Cột Khóa cho biết tài liệu thuộc môn nào.",
   "library.stale": "Đang xem bản đã lưu, chưa cập nhật được ({0}).",
   "library.tab": "Thư viện",
+  "library.type.book-ref": "Sách tham khảo",
   "library.type.cheatsheet": "Bảng công thức",
   "library.type.exam-past": "Đề cũ",
   "library.type.exam-solution": "Lời giải đề",

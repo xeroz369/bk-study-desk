@@ -6,6 +6,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- **Thư viện** (vẫn tắt sẵn): hiện sách tham khảo (tên sách, tác giả, năm, NXB; chuột phải để sao chép ISBN), không có nút tải.
+
 ## [1.1.9] - 2026-10-03
 
 ### Thêm

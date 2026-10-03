@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using SoHocTap.Api;
@@ -156,8 +156,20 @@ public partial class SubjectsPage
         var chapter = i.Chapter is { Length: > 0 } ch ? L.F("library.chapter", ch) : i.Lab is { Length: > 0 } lab ? L.F("library.lab", lab) : "";
         var exam = i.ExamKind is { Length: > 0 } k ? LibraryTypes.ExamKinds.Contains(k) ? L.T("library.exam." + k) : k : "";
         var edition = multi ? course.Edition is { } y ? L.F("library.edition", y) : course.Id : "";
-        return new LibraryRow(course, i, L.T("library.type." + type), LibraryTypes.Order(type), i.Title ?? i.Id, edition, i.Term ?? "", i.Teacher ?? "",
+        return new LibraryRow(course, i, L.T("library.type." + type), LibraryTypes.Order(type), BookTitle(i) ?? i.Title ?? i.Id, edition, i.Term ?? "", i.Teacher ?? "",
             chapter, exam, (i.Files ?? []).Sum(f => f.Size), _host.Library.LocalState(course, i));
+    }
+
+    /// <summary>Sách tham khảo: "Tên sách (tác giả, năm, NXB)" để nhận ra sách mà không cần mở web.</summary>
+    private static string? BookTitle(LibraryItem i)
+    {
+        if (!i.IsBook || i.Book is not { } b) return null;
+        var bits = new List<string>();
+        if (b.Authors is { Count: > 0 } a) bits.Add(string.Join(", ", a));
+        if (b.Year is { } y) bits.Add(y.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (!string.IsNullOrWhiteSpace(b.Publisher)) bits.Add(b.Publisher!);
+        var title = i.Title ?? b.Title ?? i.Id;
+        return bits.Count == 0 ? title : $"{title} ({string.Join(", ", bits)})";
     }
 
     /// <summary>Ghi chú trên bảng: môn đã ngừng có môn thay thế, mã dùng chung cho nhiều môn, đang xem bản cache vì lỗi mạng.</summary>
@@ -243,6 +255,7 @@ public partial class SubjectsPage
             yield return new(L.T("library.openFile"), () => OpenLocal(FirstFile(r)));
         if (r.State != ItemLocal.None)
             yield return new(L.T("common.showInExplorer"), () => Reveal(FirstFile(r)));
+        if (r.Item.Book?.Isbn is { Length: > 0 } isbn) yield return new(L.F("library.copyIsbn", isbn), () => Grids.Copy(isbn, _main), Separator: web is null);
         if (web is not null) yield return new(L.T("library.copyLink"), () => Grids.Copy(web.AbsoluteUri, _main), Separator: true);
     }
 

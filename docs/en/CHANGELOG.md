@@ -8,6 +8,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Added
+
+- **Library** (still off by default): shows reference books (title, authors, year, publisher; right-click to copy the ISBN), with no download button.
+
 ## [1.1.9] - 2026-10-03
 
 ### Added

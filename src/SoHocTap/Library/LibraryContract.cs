@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using SoHocTap.Data;
 
 namespace SoHocTap.Library;
@@ -52,16 +52,20 @@ public enum LibraryFileKind { Other, Pdf, Markdown, Zip, Json }
 
 /// <summary>
 /// Một mục tài liệu. Mục đã gỡ (<c>Removed</c>) chỉ còn id, type, removed, removedReason, added: app ẩn nó và xóa bản app đã tải.
-/// Mục loại "link" có <c>Url</c> và không có file; loại khác có <c>Files</c>. <c>Updated</c> (YYYY-MM-DD, mục còn hiệu lực luôn có,
+/// Mục loại "link" có <c>Url</c> và không có file; "book-ref" (sách tham khảo) chỉ có <c>Book</c>, không file, không url; loại khác có <c>Files</c>. <c>Updated</c> (YYYY-MM-DD, mục còn hiệu lực luôn có,
 /// mặc định bằng added) là ngày file đổi gần nhất: bản đã tải cũ hơn thì báo có bản mới.
 /// </summary>
 public sealed record LibraryItem(string Id, string Type, string? Title, string? Description, string? Lang, string? Term, string? Teacher,
     string? ExamKind, string? Chapter, string? Lab, string? License, string? Origin, string? Source, List<string>? Authors, string? Added,
-    string? Updated, bool Example, bool Removed, string? RemovedReason, string? Url, List<FileRef>? Files)
+    string? Updated, bool Example, bool Removed, string? RemovedReason, string? Url, List<FileRef>? Files, BookRef? Book = null)
 {
     public bool IsLink => Type == LibraryTypes.Link;
+    public bool IsBook => Type == LibraryTypes.BookRef;
     public bool IsQuizPack => Type == LibraryTypes.QuizPack;
 }
+
+/// <summary>Sách tham khảo (loại "book-ref"): chỉ thông tin sách, thư viện không giữ file sách.</summary>
+public sealed record BookRef(string? Title, List<string>? Authors, int? Year, string? Publisher, string? Isbn);
 
 public sealed record CourseDetail(int SchemaVersion, string Id, string? Code, string? Name, List<LibraryItem>? Items);
 
@@ -69,6 +73,7 @@ public sealed record CourseDetail(int SchemaVersion, string Id, string? Code, st
 public static class LibraryTypes
 {
     public const string Link = "link";
+    public const string BookRef = "book-ref";
     public const string QuizPack = "quiz-pack";
     public const string Other = "other";
 
@@ -78,7 +83,7 @@ public static class LibraryTypes
         "summary", "notes", "cheatsheet", "quiz-pack", "tips",
         "exercise-solution", "exam-solution", "exam-past",
         "prelab-template", "prelab-reference", "lab-report-reference", "project-reference",
-        "link",
+        "link", "book-ref",
     ];
 
     public static IReadOnlyList<string> Known => KnownTypes;
@@ -138,6 +143,8 @@ public static partial class LibraryJson
         Type = i.Type ?? LibraryTypes.Other,
         Updated = i.Updated ?? i.Added,
         Authors = Strings(i.Authors),
+        Book = i.Book is { } b ? b with { Authors = Strings(b.Authors) } : null,
+        Title = i.Title ?? i.Book?.Title,
         // File thiếu tên, thiếu sha256 hay không có url thì không tải được: bỏ khỏi danh sách thay vì để nút Tải về báo lỗi.
         Files = Clean(i.Files).Where(f => f.Name is { Length: > 0 } && f.Sha256 is not null && Sha256Hex().IsMatch(f.Sha256))
             .Select(f => f with { Urls = Strings(f.Urls) }).Where(f => f.Urls!.Count > 0).ToList(),
