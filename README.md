@@ -146,8 +146,3 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép này.
 
 Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).
-
-
-
-
-

@@ -17,5 +17,3 @@ A Windows app that brings Ho Chi Minh City University of Technology's **BK-LMS**
 - [FAQ](FAQ)
 - [Security and privacy](Security-and-privacy)
 - [How the app works](How-the-app-works)
-
-

@@ -142,7 +142,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 By contributing code (a pull request) you agree to license your contribution under the same terms.
 
 Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included).
-
-
-
-
