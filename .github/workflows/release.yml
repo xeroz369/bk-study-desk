@@ -200,9 +200,21 @@ jobs:
           CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
         run: |
+          # Chẩn đoán trước: xin token client credentials từ Microsoft Entra. Lỗi thì in mã AADSTS (sai secret, sai app, sai tenant,
+          # thiếu service principal của Partner Center...). Không in token hay secret.
+          foreach ($scope in 'https://manage.devcenter.microsoft.com/.default', 'https://api.store.microsoft.com/.default') {
+            try {
+              Invoke-RestMethod -Method Post "https://login.microsoftonline.com/$env:TENANT_ID/oauth2/v2.0/token" `
+                -Body @{ client_id = $env:CLIENT_ID; client_secret = $env:CLIENT_SECRET; scope = $scope; grant_type = 'client_credentials' } | Out-Null
+              Write-Host "Entra: lấy được token cho $scope"
+            } catch {
+              $err = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction SilentlyContinue
+              Write-Host "Entra: không lấy được token cho ${scope}: $($err.error) $(($err.error_description -split "`n")[0].Trim())"
+            }
+          }
           msstore settings --enableTelemetry false
-          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
-          if ($LASTEXITCODE) { throw 'Không đăng nhập được Partner Center. Kiểm tra 4 secret và hạn của client secret.' }
+          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET --verbose
+          if ($LASTEXITCODE) { throw 'Không đăng nhập được Partner Center. Xem dòng "Entra:" ở trên để biết sai secret, app hay tenant.' }
       - name: Submit to Microsoft Store
         shell: pwsh
         run: |
