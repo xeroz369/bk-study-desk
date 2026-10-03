@@ -1,4 +1,4 @@
-{
+﻿{
   "_meta.culture": "en-US",
   "_meta.name": "English",
   "about.issues": "Report a bug",
@@ -243,6 +243,7 @@
   "library.col.local": "On this PC",
   "library.contribute": "Contribute material",
   "library.contribute.tip": "Open the library's contribution page in your browser",
+  "library.copyIsbn": "Copy ISBN {0}",
   "library.copyLink": "Copy link",
   "library.download": "Download",
   "library.downloadNew": "Download new version",
@@ -281,6 +282,7 @@
   "library.sharedCode": "Code {0} belongs to {1} courses in the library. The Edition column shows which course each item is for.",
   "library.stale": "Showing the saved copy; could not update ({0}).",
   "library.tab": "Library",
+  "library.type.book-ref": "Reference books",
   "library.type.cheatsheet": "Formula sheets",
   "library.type.exam-past": "Past exams",
   "library.type.exam-solution": "Exam solutions",

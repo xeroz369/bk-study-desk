@@ -138,17 +138,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 [PolyForm Noncommercial 1.0.0](../../LICENSE.md) (since 1.0.6; earlier versions were MIT). The source is public, **not for commercial use**:
 - **Allowed:** use, modify and share for personal use, study, research, schools and nonprofits. Keep the author line (Required Notice) in LICENSE.
 - **Not allowed:** selling the app or a modified version, or including it in a paid product or service.
-- **Support** for the author is voluntary; it is not a purchase.
 
 By contributing code (a pull request) you agree to license your contribution under the same terms.
 
 Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included).
-
-## Support
-
-The app is free and will keep getting fixes and new features. If it helps you, you can buy the author a coffee. Support is voluntary and unlocks nothing extra in the app.
-
-- **Ko-fi:** [ko-fi.com/F1F3SN4UE](https://ko-fi.com/F1F3SN4UE) (international cards, PayPal).
-- **MoMo / Vietnamese banks (VietQR):** scan the code below with MoMo or a banking app.
-
-<img src="../ung-ho-momo.png" alt="Support QR code (MoMo)" width="220">

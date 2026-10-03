@@ -142,18 +142,7 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 [PolyForm Noncommercial 1.0.0](LICENSE.md) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
 - **Được:** dùng, sửa, chia sẻ cho cá nhân, học tập, nghiên cứu, trường học, tổ chức phi lợi nhuận. Giữ dòng ghi tác giả (Required Notice) trong LICENSE.
 - **Không được:** bán app hay bản sửa, đưa vào sản phẩm hoặc dịch vụ thu tiền.
-- **Ủng hộ** người làm app là tự nguyện, không phải mua app.
 
 Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép này.
 
 Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).
-
-## Ủng hộ
-
-App miễn phí và sẽ tiếp tục được sửa lỗi, thêm tính năng. Nếu app giúp ích cho bạn, bạn có thể mời người làm app một ly cà phê. Ủng hộ là tự nguyện, không mở khóa gì thêm trong app.
-
-- **Ko-fi:** [ko-fi.com/F1F3SN4UE](https://ko-fi.com/F1F3SN4UE) (thẻ quốc tế, PayPal).
-- **MoMo / ngân hàng (VietQR):** quét mã bên dưới bằng app MoMo hoặc app ngân hàng.
-
-<img src="docs/ung-ho-momo.png" alt="Mã QR ủng hộ qua MoMo" width="220">
-
