@@ -12,6 +12,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- MyBK sync reported "the registration page has no registration rounds table". On the first visit to the registration system, MyBK returns an intermediate page before the page with the table, and the app read it too early. The app now waits and opens the page again when the table is missing.
 - Every LMS assignment showed up twice on **Today**, **Calendar** and in due-date reminders, so the "due in 7 days" count was doubled.
 - Submitted assignments still triggered reminders. The app now follows the Moodle calendar: Moodle removes the entry once you submit, so the app no longer counts or reminds you about it. The brief and attachments are still saved to your computer as before.
 

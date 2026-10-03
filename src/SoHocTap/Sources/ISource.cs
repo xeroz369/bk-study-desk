@@ -34,7 +34,8 @@ public interface IBrowserRunner
     Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct);
 
     /// <summary>Mở một page trong WebView ẩn, trả về HTML khi đã tới đúng path.</summary>
-    Task<string> PageAsync(string url, CancellationToken ct);
+    /// <summary>HTML của trang url. mustContain: chữ phải có trong trang mới coi là đã tới (trang trung gian thì mở lại).</summary>
+    Task<string> PageAsync(string url, CancellationToken ct, string? mustContain = null);
 }
 
 /// <summary>Dòng log đặc biệt: nguồn đã lưu phần dữ liệu chính (đang làm tiếp phần chậm như tải tài liệu), giao diện nên đọc lại ngay.</summary>

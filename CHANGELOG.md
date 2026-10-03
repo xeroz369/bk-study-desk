@@ -10,6 +10,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Sửa lỗi
 
+- Đồng bộ MyBK báo "Trang đăng ký môn không có bảng đợt đăng ký". Lần đầu vào hệ thống đăng ký, MyBK trả một trang trung gian rồi mới chuyển sang trang có bảng; app đọc quá sớm. Giờ app chờ và mở lại trang khi chưa thấy bảng.
 - Mỗi bài tập LMS hiện hai lần ở **Hôm nay**, **Lịch** và trong thông báo nhắc hạn, nên số "hạn nộp trong 7 ngày" bị gấp đôi.
 - Bài tập đã nộp vẫn bị nhắc hạn. App giờ dựa vào lịch của Moodle: Moodle gỡ mốc của bài đã nộp, nên app cũng không đếm và không nhắc bài đó nữa. Đề và file đính kèm vẫn được lưu về máy như trước.
 

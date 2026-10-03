@@ -405,7 +405,8 @@ public sealed partial class LmsSource : ISource
         var subj = courses.ToDictionary(c => c.Id, c => c.Subject + (c.Part is null ? "" : $" ({c.Part})"));
         var groups = await MyGroupsAsync(courses, uid, ct);   // CollectGradesAsync cũng dùng cái này để lọc mục điểm của nhóm khác
         var outMap = new Dictionary<string, JsonObject>();
-        // Bài tập có mốc trên lịch hành động: instance của mod_assign → mục "ev" tương ứng. Lịch đọc đủ (không lỗi, không bị cắt
+        // Bài tập có mốc trên lịch hành động: "instance" của mốc → mục "ev" tương ứng. Trên LMS trường, instance trùng cmid
+        // của bài (đo trên dữ liệu thật 03/10/2026), không phải id như tài liệu; ghép theo cmid, id để dự phòng. Lịch đọc đủ (không lỗi, không bị cắt
         // ở 4 trang) thì biết chắc bài nào không còn mốc, tức là đã nộp (xem dưới).
         var assignEvents = new Dictionary<long, JsonObject>();
         var calendarComplete = false;
@@ -465,7 +466,8 @@ public sealed partial class LmsSource : ISource
                     var aid = a["id"]!.GetValue<long>();
                     // Cùng một bài đã có mốc "ev" trên lịch: không thêm mục thứ hai (trước đây mỗi bài hiện và được nhắc 2 lần).
                     // Chỉ chép đề và file đính kèm sang mục "ev" để vẫn lưu về máy.
-                    if (assignEvents.TryGetValue(aid, out var ev))
+                    var cmid = a["cmid"]?.GetValue<long>() ?? -1;
+                    if (assignEvents.TryGetValue(cmid, out var ev) || assignEvents.TryGetValue(aid, out ev))
                     {
                         ev["intro"] = a["intro"]?.GetValue<string>();
                         ev["files"] = AttachmentFiles(a);
