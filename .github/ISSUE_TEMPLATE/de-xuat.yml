@@ -1,21 +1,19 @@
-name: Đề xuất tính năng / Feature request
-description: Ý tưởng làm app tiện hơn / An idea to make the app better
+name: Đề xuất tính năng
+description: Ý tưởng làm app tiện hơn
 labels: [enhancement]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        App chỉ đọc dữ liệu của trường. Việc cần nộp bài, đăng ký môn hay sửa dữ liệu trên LMS, MyBK sẽ không làm.
   - type: textarea
     id: need
     attributes:
-      label: Bạn cần gì / What you need
-      description: Mô tả việc bạn muốn làm được, không cần nghĩ cách làm. / Describe what you want to be able to do; no need to design the solution.
+      label: Bạn cần gì
+      description: Việc bạn muốn làm được, không cần nghĩ cách làm.
     validations: { required: true }
   - type: textarea
     id: more
     attributes:
-      label: Thêm (không bắt buộc) / More (optional)
-      description: Ảnh minh họa, app khác làm thế nào... / Screenshots, how other apps do it...
-  - type: markdown
-    attributes:
-      value: |
-        App chỉ **đọc** dữ liệu của trường. Đề xuất cần nộp bài, đăng ký môn hay sửa dữ liệu trên LMS/MyBK sẽ không được làm.
-
-        The app only **reads** university data. Requests that need to submit work, register for courses or change data on LMS/MyBK won't be built.
+      label: Thêm (không bắt buộc)
+      description: Ảnh minh họa, app khác làm thế nào.
