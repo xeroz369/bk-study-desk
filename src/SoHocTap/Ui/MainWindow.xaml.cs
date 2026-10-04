@@ -79,6 +79,8 @@ public partial class MainWindow : Window, IDisposable
     public MainWindow()
     {
         InitializeComponent();
+        StatusBarRoot.SizeChanged += (_, e) => { if (e.WidthChanged) FitStatusBar(); };
+        AppFont.Changed += () => Dispatcher.BeginInvoke(FitStatusBar, System.Windows.Threading.DispatcherPriority.Loaded);
         Title = AppInfo.Name;
         Core.AppEvents.UnhandledError += ShowUnhandled;
         // Ctrl+1 đến Ctrl+N theo thứ tự trong PageRegistry: các mục điều hướng, rồi Cài đặt.
@@ -108,6 +110,8 @@ public partial class MainWindow : Window, IDisposable
         Closing += OnClosing;
         Closed += (_, _) => Dispose();
         Loaded += (_, _) => FitTopBar();
+        // Đổi phông, cỡ chữ ở Cài đặt: bề rộng các mục trên thanh trên cùng đổi theo, đo lại rồi xếp lại (NavFit).
+        AppFont.Changed += OnFontChanged;
         Nav.ItemContainerGenerator.StatusChanged += (_, _) =>
         {
             if (Nav.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
@@ -144,8 +148,8 @@ public partial class MainWindow : Window, IDisposable
         // Bản public lần đầu: hỏi có kiểm tra bản mới không (chưa trả lời thì app không gọi mạng để kiểm tra). Mỗi lần mở chỉ một hộp thoại.
         else if (!hidden) AskUpdateMode();
         ShowUpdateState();
-        // Vừa lên bản mới (cài lúc thoát hay lúc mở app): báo một lần ở thanh trạng thái, lần mở sau không còn.
-        if (UpdateService.UpdatedNotice is { } updated) Say(updated);
+        // Vừa lên bản mới: không ghi "Đã cập nhật lên ..." ở thanh trạng thái, vì số phiên bản đã hiện ngay bên cạnh (StVersion);
+        // câu báo nằm lại mãi chỉ thừa (người dùng góp ý 04/10/2026). Việc cập nhật vẫn ghi trong app.log.
     }
 
     private bool _askedUpdate;
@@ -222,6 +226,7 @@ public partial class MainWindow : Window, IDisposable
 
     public void Dispose()
     {
+        AppFont.Changed -= OnFontChanged;
         _host.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -332,6 +337,12 @@ public partial class MainWindow : Window, IDisposable
         UpdateLayout();
         return (full, small, right, Outer(NavMoreBar));
     }
+
+    private void OnFontChanged() => Dispatcher.BeginInvoke(() =>
+    {
+        _widths = null;
+        FitTopBar();
+    }, System.Windows.Threading.DispatcherPriority.Loaded);
 
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
     {
@@ -463,12 +474,51 @@ public partial class MainWindow : Window, IDisposable
         StProgress.IsIndeterminate = bar.Indeterminate;
         if (!bar.Indeterminate) StProgress.Value = bar.Value;
         StProgressItem.Visibility = bar.Visible ? Visibility.Visible : Visibility.Collapsed;
+        Dispatcher.BeginInvoke(FitStatusBar, System.Windows.Threading.DispatcherPriority.Loaded);
         _progressDelay.Stop();
         if (bar.Recheck is { } again)
         {
             _progressDelay.Interval = again < TimeSpan.FromMilliseconds(20) ? TimeSpan.FromMilliseconds(20) : again;
             _progressDelay.Start();
         }
+    }
+
+    /// <summary>
+    /// Thanh trạng thái hết chỗ (cửa sổ hẹp, chữ lớn): không để mục cuối (phiên bản) bị cắt. Bỏ trước dòng kỳ thi gần nhất (đã có ở Hôm nay),
+    /// rồi mới rút gọn chữ LMS, MyBK bằng "..." (di chuột xem đủ). Đủ chỗ thì hiện lại hết (DESIGN 6b-3).
+    /// </summary>
+    private void FitStatusBar()
+    {
+        var avail = StatusBarRoot.ActualWidth - StatusBarRoot.Padding.Left - StatusBarRoot.Padding.Right;
+        if (avail <= 0) return;
+        StExam.Visibility = StExam.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        StLms.MaxWidth = StMybk.MaxWidth = double.PositiveInfinity;
+        double Need()
+        {
+            var sum = 0.0;
+            foreach (var item in StatusBarRoot.Items.OfType<FrameworkElement>())
+            {
+                if (item.Visibility != Visibility.Visible || ReferenceEquals(item, StMessage.Parent)) continue;
+                item.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                sum += item.DesiredSize.Width;
+            }
+            return sum;
+        }
+        var need = Need();
+        if (need > avail && StExam.Visibility == Visibility.Visible)
+        {
+            StExam.Visibility = Visibility.Collapsed;
+            need = Need();
+        }
+        if (need > avail)
+        {
+            StLms.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            StMybk.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var cap = Math.Max(60, (StLms.DesiredSize.Width + StMybk.DesiredSize.Width - (need - avail)) / 2);
+            StLms.MaxWidth = StMybk.MaxWidth = cap;
+        }
+        foreach (var t in new[] { StLms, StMybk })
+            if (double.IsFinite(t.MaxWidth) && t.ToolTip is null) t.ToolTip = t.Text;
     }
 
     private void OnState()

@@ -85,6 +85,23 @@ public static class Ics
         return ISOWeek.ToDateTime(year, week, dow);
     }
 
+    /// <summary>
+    /// Mọi ngày học của một môn trong kỳ, mỗi tuần MyBK liệt kê một buổi. Kỳ vắt qua năm mới (tuần 52 rồi tuần 1) thì tuần đầu kỳ
+    /// là tuần nhỏ nhất trong nửa sau của năm. MyBK không ghi năm (calendarYear) thì đoán theo <paramref name="today"/>: kỳ vắt năm mà
+    /// đang ở nửa đầu năm sau thì năm bắt đầu kỳ là năm trước. Tuần không có trong năm (tuần 53 của năm chỉ có 52 tuần) thì bỏ qua.
+    /// </summary>
+    public static List<DateTime> ClassDates(int? termStartYear, IReadOnlyCollection<int> weeks, int mybkDay, DateTime today)
+    {
+        var dates = new List<DateTime>();
+        if (weeks.Count == 0 || mybkDay is < 2 or > 8) return dates;
+        var straddles = weeks.Any(w => w >= 27) && weeks.Any(w => w < 27);
+        var first = straddles ? weeks.Where(w => w >= 27).Min() : weeks.Min();
+        var year = termStartYear ?? (straddles && ISOWeek.GetWeekOfYear(today) < 27 ? today.Year - 1 : today.Year);
+        foreach (var w in weeks.Distinct())
+            if (w >= 1 && w <= ISOWeek.GetWeeksInYear(w < first ? year + 1 : year)) dates.Add(ClassDate(year, first, w, mybkDay));
+        return dates;
+    }
+
     /// <summary>"07:00" hay "7g30" → số phút từ 0 giờ; chuỗi lạ → null (xem <see cref="VnTime.ParseClock"/>).</summary>
     public static int? Minutes(string? hhmm) => VnTime.ParseClock(hhmm);
 }

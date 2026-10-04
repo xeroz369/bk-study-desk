@@ -53,11 +53,12 @@ public partial class SchoolWindow : Window
                 else if (sawLogin && e.IsSuccess && WebHost.IsSchoolHost(core.Source))
                 {
                     sawLogin = false;
+                    SsoSession.MarkLogin();
                     Log.Info($"Cửa sổ trường: đã đăng nhập lại ({WebHost.Host(core.Source)})");
                     onSignedIn?.Invoke();
                 }
             };
-            // Phiên LMS/MyBK trên server hết hạn sớm hơn cookie (cookie giữ 30 ngày, phiên server vài giờ), nên trang trường
+            // Phiên LMS/MyBK trên server hết hạn sớm hơn cookie (cookie giữ sso.rememberDays ngày, phiên server theo lịch riêng), nên trang trường
             // hiện "session timed out" / trang đăng nhập. Khi đó đi qua cổng SSO một lần: SSO còn phiên thì tự vào lại, không thì
             // hiện trang đăng nhập HCMUT. Giới hạn 1 lần / 60 giây để không lặp vòng chuyển trang.
             var lastSso = DateTime.MinValue;

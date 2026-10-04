@@ -4,7 +4,7 @@
 Bộ cài trên GitHub chưa có chữ ký số (chứng chỉ tốn phí hằng năm). Chọn **Thông tin thêm** > **Vẫn chạy**. Chỉ hiện một lần lúc cài; cập nhật sau không bị hỏi lại. Muốn chắc file không bị sửa, so mã SHA-256 như ở [[Cài đặt]].
 
 **Mở LMS/MyBK trong app thấy "session timed out" hay bắt đăng nhập lại.**
-Phiên đăng nhập trên server trường hết hạn sau vài giờ, dù app vẫn nhớ. App tự đi qua trang đăng nhập SSO; nếu SSO cũng hết phiên thì bạn đăng nhập lại một lần.
+Phiên đăng nhập trên server trường có hạn riêng (server tự quyết), dù app vẫn nhớ. App tự đi qua trang đăng nhập SSO; nếu SSO cũng hết phiên thì bạn đăng nhập lại một lần.
 
 **Dữ liệu của app nằm ở đâu?**
 `%LOCALAPPDATA%\BKStudyDesk.Data`, chỉ tài khoản Windows của bạn (cùng SYSTEM và Administrators) mở được. Tài liệu môn học nằm ở thư mục bạn chọn (mặc định `Documents\BK Study Desk`).

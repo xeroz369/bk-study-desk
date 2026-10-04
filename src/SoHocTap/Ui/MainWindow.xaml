@@ -3,6 +3,7 @@
      [điều hướng, Thêm ... Đồng bộ, LMS, MyBK, Cài đặt, Giới thiệu] / InfoBar / dòng mô tả page / page / status bar. Tên app chỉ nằm ở title bar.
      Cài đặt và Giới thiệu luôn chỉ icon. Cửa sổ hẹp thì thanh trên cùng gọn dần (NavFit): mục điều hướng chỉ icon, Đồng bộ chỉ icon, rồi mới dồn vào menu Thêm. -->
 <Window x:Class="SoHocTap.Ui.MainWindow"
+        FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppFontSize}"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SoHocTap.Ui"
@@ -19,7 +20,7 @@
 
     <DockPanel>
         <!-- Status bar. Panel là Grid: câu báo chiếm phần còn lại (cột *) và tự cắt "...", không đẩy kỳ thi, phiên bản ra ngoài. -->
-        <StatusBar DockPanel.Dock="Bottom" Padding="8,0" Background="{DynamicResource LayerFillColorDefaultBrush}">
+        <StatusBar x:Name="StatusBarRoot" DockPanel.Dock="Bottom" Padding="8,0" Background="{DynamicResource LayerFillColorDefaultBrush}">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid>
@@ -43,14 +44,14 @@
             <StatusBarItem Grid.Column="2">
                 <StackPanel Orientation="Horizontal">
                     <ui:SeverityIcon x:Name="StLmsIcon" Severity="Error" Size="12" Margin="0,0,6,0" Visibility="Collapsed" />
-                    <TextBlock x:Name="StLms" VerticalAlignment="Center" />
+                    <TextBlock x:Name="StLms" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </StatusBarItem>
             <Separator Grid.Column="3" />
             <StatusBarItem Grid.Column="4">
                 <StackPanel Orientation="Horizontal">
                     <ui:SeverityIcon x:Name="StMybkIcon" Severity="Error" Size="12" Margin="0,0,6,0" Visibility="Collapsed" />
-                    <TextBlock x:Name="StMybk" VerticalAlignment="Center" />
+                    <TextBlock x:Name="StMybk" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </StatusBarItem>
             <!-- Tiến độ đồng bộ: có tổng thì chạy theo số (3/5), không đếm được thì chạy vô định. -->
@@ -171,7 +172,7 @@
         <ui:SeverityBar x:Name="InfoBar" DockPanel.Dock="Top" Margin="16,10,16,0" />
 
         <!-- Dòng mô tả page (ngày, học kỳ, MSSV...); tên page thì đã hiện ở mục điều hướng đang chọn -->
-        <TextBlock x:Name="PageSubtitle" DockPanel.Dock="Top" Margin="18,10,16,0" Style="{StaticResource Muted}" FontSize="13" />
+        <TextBlock x:Name="PageSubtitle" DockPanel.Dock="Top" Margin="18,10,16,0" Style="{StaticResource MutedSub}" />
 
         <ContentControl x:Name="Page" Margin="16,8,16,12" Focusable="False" />
     </DockPanel>

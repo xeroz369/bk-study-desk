@@ -23,6 +23,22 @@ public static class VnTime
     public static DateTime Today => ToWall(DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Date;
 
     /// <summary>
+    /// Số ngày lịch ở VN từ ngày của <paramref name="now"/> tới ngày của <paramref name="sec"/>: hôm nay = 0, ngày mai = 1.
+    /// Tính theo giờ VN chứ không theo DateTime.Today của máy: máy để UTC thì 0:30 sáng ở VN vẫn là "hôm nay" mới.
+    /// </summary>
+    public static int DayDiff(long sec, long now) => (int)(ToWall(sec).Date - ToWall(now).Date).TotalDays;
+
+    /// <summary>Thứ hai của tuần chứa <paramref name="day"/> (tuần ở trường bắt đầu từ Thứ hai).</summary>
+    public static DateTime Monday(DateTime day) => day.Date.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+
+    // MyBK ghi ngày thi kiểu "2026-10-15"; mấy kiểu kia để dự phòng khi trường đổi định dạng.
+    private static readonly string[] DateFormats = ["yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ss", "dd/MM/yyyy", "d/M/yyyy"];
+
+    /// <summary>Ngày dạng chữ của MyBK ("2026-10-15", "15/10/2026") ra ngày; chuỗi lạ thì null.</summary>
+    public static DateTime? ParseDate(string? text) =>
+        DateTime.TryParseExact((text ?? "").Trim(), DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d.Date : null;
+
+    /// <summary>
     /// Giờ trong ngày → số phút từ 0 giờ: "07:00", "7:5", "7g30", "09g00", "9g" (MyBK ghi giờ thi kiểu "09g00").
     /// Chuỗi lạ, giờ ≥ 24 hay phút ≥ 60 thì null, không throw: dữ liệu trường đổi định dạng không được làm hỏng cả trang.
     /// </summary>
@@ -46,9 +62,6 @@ public static class VnTime
         DateTime.TryParseExact((text ?? "").Trim(), format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? FromWall(d) : null;
 
     /// <summary>"2026-10-15" + "09g00" (lịch thi MyBK) → Unix seconds; ngày sai thì null, giờ sai thì lấy 0 giờ.</summary>
-    public static long? ParseDateAndClock(string? date, string? clock)
-    {
-        if (!DateTime.TryParseExact((date ?? "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)) return null;
-        return FromWall(d.AddMinutes(ParseClock(clock) ?? 0));
-    }
+    public static long? ParseDateAndClock(string? date, string? clock) =>
+        ParseDate(date) is { } d ? FromWall(d.AddMinutes(ParseClock(clock) ?? 0)) : null;
 }

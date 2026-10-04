@@ -54,9 +54,10 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         var prev = MybkStore.Latest() is { Count: > 0 } latest ? latest : null;
         var special = Config.Map("sources.mybk.specialScores");
         // Đăng ký môn chỉ tải lại mỗi ngày một lần (xem dưới): biết trước để tiến độ đếm đúng số bước.
+        // Đồng bộ bấm tay (force, vd. "Đồng bộ lại") thì luôn đọc lại, kẻo đợt đăng ký mới mở phải chờ tới hôm sau.
         var regAt = MybkNormalize.Long(prev?["registrationAt"]) ?? 0;
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var regCached = prev?["registration"] is JsonArray { Count: > 0 } && now - regAt < 86400;
+        var regCached = !force && prev?["registration"] is JsonArray { Count: > 0 } && now - regAt < 86400;
 
         // Tiến độ: 1 mỗi API, trang đăng ký môn 2. Lúc đầu (mở MyBK, có thể phải qua SSO) chưa biết bao lâu nên thanh vô định
         // tới khi API đầu tiên trả về.

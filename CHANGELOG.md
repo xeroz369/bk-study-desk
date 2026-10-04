@@ -6,9 +6,22 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.10] - 2026-10-04
+
 ### Thêm
 
-- **Thư viện** (vẫn tắt sẵn): hiện sách tham khảo (tên sách, tác giả, năm, NXB; chuột phải để sao chép ISBN), không có nút tải.
+- **Cài đặt** > **Chữ**: đổi phông và cỡ chữ.
+
+### Sửa lỗi
+
+- MyBK không còn tự đăng xuất sau khoảng 8 giờ.
+- **Sắp tới** hiện đủ mọi mốc, không dừng ở 14 ngày. Việc quá hạn chưa làm nằm ở nhóm **Quá hạn**.
+- Hạn nộp có mã nhóm (L01...) không còn bị ẩn khi app không đọc được nhóm.
+- Giờ học kiểu "7g30" hiện đúng trên lưới tuần.
+- Ngày, giờ luôn theo giờ Việt Nam.
+- Thanh trạng thái không còn ghi "Đã cập nhật lên ..." sau khi cập nhật.
+- Chữ bị cắt có tooltip hiện đủ.
+- Chữ lớn không còn làm cắt cột bảng hay số phiên bản ở thanh trạng thái.
 
 ## [1.1.9] - 2026-10-03
 
@@ -144,6 +157,7 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 ## [1.1.2] - 2026-10-03 [YANKED]
 
+Đã gỡ khỏi trang phát hành. Mọi thay đổi chuyển sang 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 
@@ -232,7 +246,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...HEAD
+[1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10
 [1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7

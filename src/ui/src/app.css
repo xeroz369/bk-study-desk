@@ -146,8 +146,9 @@
 }
 
 @theme inline {
-	/* Phông hệ thống của Windows 11/10: đủ dấu tiếng Việt, khớp với thanh tiêu đề, menu, hộp thoại. */
-	--font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+	/* Phông hệ thống của Windows 11/10: đủ dấu tiếng Việt, khớp với thanh tiêu đề, menu, hộp thoại.
+	   --app-font: phông người dùng chọn trong Cài đặt của app (main.ts đặt trên :root), không có thì dùng Segoe UI Variable. */
+	--font-sans: var(--app-font, 'Segoe UI Variable Text'), 'Segoe UI', system-ui, sans-serif;
 	--font-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
@@ -211,9 +212,10 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
-	/* Gốc 16px: chữ phụ (text-xs) = 12px, mức tối thiểu dễ đọc; mật độ gọn nhờ khoảng cách, không nhờ chữ nhỏ. */
+	/* Gốc 16px: chữ phụ (text-xs) = 12px, mức tối thiểu dễ đọc; mật độ gọn nhờ khoảng cách, không nhờ chữ nhỏ.
+	   --app-root-size: cỡ chữ người dùng chọn trong Cài đặt của app (main.ts, chỉ lớn hơn 16px), chữ và khoảng cách giãn cùng tỉ lệ. */
 	html {
-		font-size: 16px;
+		font-size: var(--app-root-size, 16px);
 	}
 	/* Ứng dụng Windows: cửa sổ không cuộn (từng vùng tự cuộn), không kéo dãn, không bôi chọn chữ trên khung giao diện,
 	   con trỏ mũi tên (bàn tay chỉ cho liên kết trong văn bản). DESIGN.md mục 7. */

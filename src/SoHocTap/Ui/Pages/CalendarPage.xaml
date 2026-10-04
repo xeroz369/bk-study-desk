@@ -1,4 +1,4 @@
-<!-- Lịch: Sắp tới (14 ngày, nhóm theo ngày), Thời khóa biểu (theo tuần: lưới tuần hoặc danh sách), Lịch thi. -->
+<!-- Lịch: Sắp tới (mọi mốc từ hôm nay, nhóm Quá hạn, Hôm nay, ..., Sau đó), Thời khóa biểu (theo tuần: lưới tuần hoặc danh sách), Lịch thi. -->
 <UserControl x:Class="SoHocTap.Ui.Pages.CalendarPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -27,7 +27,7 @@
                         <Button x:Name="ThisWeek" Content="{ui:T calendar.thisWeek}" Margin="12,0,0,0" Click="OnThisWeek" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <ComboBox x:Name="View" Width="150" SelectionChanged="OnView" AutomationProperties.Name="{ui:T calendar.view}" />
+                        <ComboBox x:Name="View" MinWidth="150" SelectionChanged="OnView" AutomationProperties.Name="{ui:T calendar.view}" />
                         <Button Content="{ui:T calendar.export}" Margin="16,0,0,0" Click="OnExport" ToolTip="{ui:T calendar.exportTip}" />
                         <Button Content="{ui:T events.add}" Margin="8,0,0,0" Click="OnAddEvent" ToolTip="{ui:T events.addTip}" />
                         <TextBlock x:Name="DimNote" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" Text="{ui:T calendar.dimNote}" />

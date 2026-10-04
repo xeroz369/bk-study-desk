@@ -96,9 +96,6 @@ public sealed class UpdateService
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) { Log.Warn($"Đăng ký bộ gỡ: {e.Message}"); }
     }
 
-    /// <summary>Vừa lên bản mới so với lần chạy trước: câu báo một lần ở thanh trạng thái ("Đã cập nhật lên x.y.z"), null nếu không.</summary>
-    public static string? UpdatedNotice { get; private set; }
-
     /// <summary>Ghi log khi vừa lên bản mới (so với lần chạy trước).</summary>
     public static void NoteVersion()
     {
@@ -115,11 +112,7 @@ public sealed class UpdateService
             }
             if (applying is not null) { o.Remove("applying"); JsonStore.Write(StateFile, o); }
             if (prev == AppInfo.Version) return;
-            if (prev is not null)
-            {
-                Log.Info($"Đã cập nhật {prev} lên {AppInfo.Version}");
-                UpdatedNotice = L.F("update.updatedTo", AppInfo.Version);
-            }
+            if (prev is not null) Log.Info($"Đã cập nhật {prev} lên {AppInfo.Version}");
             o["version"] = AppInfo.Version;
             o.Remove("failedVersion");
             JsonStore.Write(StateFile, o);
@@ -367,7 +360,7 @@ public sealed class UpdateService
     {
         var src = Config.Str("app.update.source");
         var ok = src.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase)
-                 || (IsTestInstall && UpdatePolicy.IsValidSource(src, Directory.Exists));
+                 || (IsTestInstall && (UpdatePolicy.IsValidSource(src, Directory.Exists) || UpdatePolicy.IsLoopbackHttp(src)));
         return ok ? src : throw new InvalidOperationException(L.T("update.badSource"));
     }
 

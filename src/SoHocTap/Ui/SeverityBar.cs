@@ -71,7 +71,7 @@ public sealed class SeverityIcon : Grid
 public sealed class SeverityBar : Border
 {
     private readonly SeverityIcon _icon = new() { Margin = new Thickness(0, 0, 12, 0) };
-    private readonly TextBlock _title = new() { FontWeight = FontWeights.SemiBold, FontSize = 14, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock _title = new() { FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _message = new() { TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
     private readonly Button _detailsToggle = new() { Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
     private readonly Button _copy = new() { Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
@@ -104,6 +104,7 @@ public sealed class SeverityBar : Border
         BorderThickness = new Thickness(1);
         CornerRadius = new CornerRadius(4);
         SetResourceReference(BorderBrushProperty, "CardStrokeColorDefaultBrush");
+        _title.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSizeSection");
         _close.SetResourceReference(Control.FontFamilyProperty, "IconFont");
         AutomationProperties.SetName(_close, L.T("common.close"));
         _close.ToolTip = L.T("common.close");

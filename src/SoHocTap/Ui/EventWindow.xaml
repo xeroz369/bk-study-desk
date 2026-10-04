@@ -1,5 +1,6 @@
 <!-- Thêm / sửa sự kiện tự thêm (issue #22): ô nhập nhanh ở trên điền dần các ô bên dưới. Enter lưu, Esc hủy. -->
 <Window x:Class="SoHocTap.Ui.EventWindow"
+        FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppFontSize}"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SoHocTap.Ui"
@@ -17,7 +18,7 @@
         </Style>
     </Window.Resources>
     <StackPanel Margin="16">
-        <TextBlock x:Name="Heading" FontSize="16" FontWeight="SemiBold" />
+        <TextBlock x:Name="Heading" Style="{StaticResource HeadingText}" />
         <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,12" TextWrapping="Wrap" Text="{ui:T events.localNote}" />
 
         <TextBlock Text="{ui:T events.quick}" Margin="0,0,0,4" />
@@ -53,12 +54,13 @@
 
             <TextBlock Grid.Row="2" x:Name="StartLabel" Text="{ui:T events.fStart}" Style="{StaticResource FieldLabel}" VerticalAlignment="Top" Margin="0,6,12,0" />
             <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,8">
-                <StackPanel Orientation="Horizontal">
+                <!-- WrapPanel: chữ lớn thì gợi ý giờ kết thúc xuống dòng, không bị cắt mất. -->
+                <WrapPanel>
                     <TextBox x:Name="StartBox" Width="90" AutomationProperties.LabeledBy="{Binding ElementName=StartLabel}" TextChanged="OnField" />
                     <TextBlock x:Name="EndLabel" Text="{ui:T events.fEnd}" Style="{StaticResource FieldLabel}" Margin="16,0,12,0" />
                     <TextBox x:Name="EndBox" Width="90" AutomationProperties.LabeledBy="{Binding ElementName=EndLabel}" TextChanged="OnField" />
-                    <TextBlock Text="{ui:T events.fEndHint}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,0" />
-                </StackPanel>
+                    <TextBlock Text="{ui:T events.fEndHint}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,0" TextWrapping="Wrap" />
+                </WrapPanel>
                 <TextBlock x:Name="StartError" Style="{StaticResource FieldError}" />
                 <TextBlock x:Name="EndError" Style="{StaticResource FieldError}" />
             </StackPanel>

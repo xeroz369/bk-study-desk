@@ -15,7 +15,7 @@
                     <Border Style="{StaticResource Card}" Margin="0,0,8,0" Padding="12,8" ToolTip="{Binding Tip}">
                         <StackPanel>
                             <TextBlock Text="{Binding Label}" Style="{StaticResource Muted}" />
-                            <TextBlock Text="{Binding Value}" FontSize="20" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Value}" FontSize="{DynamicResource AppFontSizeDisplay}" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
                 </DataTemplate>
@@ -33,7 +33,7 @@
                 <DockPanel Margin="0,8,0,0">
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                         <TextBlock Text="{ui:T grades.show}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <ComboBox x:Name="Filter" Width="200" SelectionChanged="OnFilter" />
+                        <ComboBox x:Name="Filter" MinWidth="200" SelectionChanged="OnFilter" />
                         <TextBlock x:Name="Stale" VerticalAlignment="Center" Margin="16,0,0,0" Style="{StaticResource Muted}" />
                     </StackPanel>
                     <c:DataView x:Name="ProgramGrid" />

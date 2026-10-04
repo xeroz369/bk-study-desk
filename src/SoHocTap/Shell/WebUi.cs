@@ -15,9 +15,16 @@ internal static class WebUi
     // Tên host ảo phải là tên không ai đăng ký được (RFC 6761: .example/.invalid/.test), theo khuyến nghị của
     // SetVirtualHostNameToFolderMapping: nếu request lỡ không được app trả lời, nó không tới máy chủ của ai trên Internet.
     public static string VirtualHost => Config.Str("app.virtualHost", "sohoc.example");
-    /// <summary>URL của khung HTML. accent là màu accent hiện tại của Windows (#RRGGBB) để khung đồng màu với phần WPF.</summary>
-    public static string Url(string hash, string accent = "") =>
-        $"https://{VirtualHost}/index.html?embed=1&app={Uri.EscapeDataString(AppInfo.Name)}{(accent.Length > 0 ? "&accent=" + Uri.EscapeDataString(accent) : "")}#{hash}";
+    /// <summary>
+    /// URL của khung HTML. accent là màu accent hiện tại của Windows (#RRGGBB) để khung đồng màu với phần WPF; fontFamily, fontScale là
+    /// phông, tỉ lệ cỡ chữ người dùng chọn trong Cài đặt (rỗng, 1 = để app.css tự lo). main.ts đọc rồi đặt biến CSS trên :root.
+    /// </summary>
+    public static string Url(string hash, string accent = "", string fontFamily = "", double fontScale = 1) =>
+        $"https://{VirtualHost}/index.html?embed=1&app={Uri.EscapeDataString(AppInfo.Name)}" +
+        (accent.Length > 0 ? "&accent=" + Uri.EscapeDataString(accent) : "") +
+        (fontFamily.Length > 0 ? "&font=" + Uri.EscapeDataString(fontFamily) : "") +
+        (fontScale > 1 ? "&fs=" + fontScale.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) : "") +
+        $"#{hash}";
 
     private static readonly HashSet<string> EditCommands = ["cut", "copy", "paste", "selectAll"];
 

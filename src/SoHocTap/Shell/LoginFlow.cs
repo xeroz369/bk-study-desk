@@ -18,6 +18,7 @@ internal sealed class LoginFlow(CoreWebView2 core, Action<string, string> progre
     private Stage _stage = Stage.Sso;
     private string _launchUrl = "";
     private bool _tokenCaught;
+    private bool _sawPassword;   // flow này đã gặp trang nhập mật khẩu: xong là một lần đăng nhập đầy đủ (đo phiên SSO)
 
     public event Action? NeedPassword;
     public event Action? Finished;
@@ -40,6 +41,7 @@ internal sealed class LoginFlow(CoreWebView2 core, Action<string, string> progre
 
         if (u.Host == ssoHost && u.AbsolutePath.Contains("/login", StringComparison.Ordinal))
         {
+            _sawPassword = true;
             NeedPassword?.Invoke();
             return;
         }
@@ -94,6 +96,8 @@ internal sealed class LoginFlow(CoreWebView2 core, Action<string, string> progre
     private async Task FinishAsync()
     {
         _stage = Stage.Done;
+        if (_sawPassword) SsoSession.MarkLogin();
+        else SsoSession.MarkAlive();
         await SessionKeeper.PersistAsync(core);
         progress("done", "");
         Finished?.Invoke();

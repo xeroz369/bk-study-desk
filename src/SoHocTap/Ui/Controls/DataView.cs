@@ -36,7 +36,7 @@ public sealed class DataView : UserControl
         Focusable = false;
         IsTabStop = false;
         _text.SetResourceReference(StyleProperty, "Muted");
-        _text.FontSize = 13;
+        _text.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSizeSub");
         var line = new DockPanel();
         DockPanel.SetDock(_icon, Dock.Left);
         line.Children.Add(_icon);

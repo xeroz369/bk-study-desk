@@ -228,7 +228,6 @@
       "wiki.hcmut.edu.vn"
     ],
     "rememberDays": 30,
-    "rememberHours": 8,
     "keepAliveMinutes": 60
   },
   "folders": {
@@ -313,6 +312,10 @@
     "closeToTray": true,
     "calendarView": "grid",
     "practiceReleaseMinutes": 3,
+    "font": {
+      "family": "",
+      "size": 0
+    },
     "update": {
       "mode": "ask",
       "checkHours": 6,

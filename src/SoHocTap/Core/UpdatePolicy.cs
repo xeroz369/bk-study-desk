@@ -47,6 +47,13 @@ public static class UpdatePolicy
         || (Path.IsPathFullyQualified(src) && !src.Contains("://", StringComparison.Ordinal) && dirExists(src));
 
     /// <summary>
+    /// http://127.0.0.1:&lt;cổng&gt;/ (chỉ máy này): nguồn thử cho bản cài thử, để phát gói chậm trên máy
+    /// có chủ đích và xem thanh tiến trình tải chạy theo số thật. Không nằm trong IsValidSource: chỉ UpdateService.Source() nhận nguồn này, và chỉ ở bản cài thử.
+    /// </summary>
+    public static bool IsLoopbackHttp(string src) =>
+        Uri.TryCreate(src, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttp && u.IsLoopback && u.Host == "127.0.0.1";
+
+    /// <summary>
     /// Lần trước app định cài <paramref name="applying"/>: giờ đang chạy bản đó (hoặc mới hơn) là đã lên, còn thấp hơn là cài lỗi
     /// (Velopack giữ bản cũ). Không có gì đang chờ thì None.
     /// </summary>
