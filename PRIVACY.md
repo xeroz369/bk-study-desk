@@ -27,6 +27,7 @@ Sau khi bạn đăng nhập, app tải xuống và lưu **trên máy của bạn
 - họ tên, MSSV, lớp (để hiển thị);
 - bản xem lại quiz LMS **bạn đã nộp** (để ôn lại, tắt được trong Cài đặt; không đọc quiz đang làm);
 - quiz bạn tự soạn hoặc nhập, kết quả luyện tập, ghi chú;
+- giờ đăng nhập SSO gần nhất và lúc phiên hết hạn (`data\sso-session.json`, chỉ có mốc thời gian), để biết phiên của trường sống bao lâu;
 - khi bật **Thư viện**: bản lưu danh sách tài liệu (`data\library-cache`), danh sách file đã tải từ thư viện (`data\library-downloads.json`), và các file bạn tải về trong thư mục `Thư viện` của từng môn. Tài liệu bị gỡ khỏi thư viện thì app xóa bản đã tải (chỉ khi bạn chưa sửa file đó). **Cài đặt** > **Thư viện** > **Xóa bộ nhớ đệm thư viện** xóa bản lưu danh sách.
 
 Những dữ liệu này nằm trong `%LOCALAPPDATA%\BKStudyDesk.Data`, dù bạn cài app vào thư mục nào. Lúc gỡ app bạn chọn xóa hay giữ.

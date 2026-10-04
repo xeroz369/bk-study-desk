@@ -44,6 +44,8 @@ public partial class SubjectsPage
     private bool _libFilterReady;
     private int _libGen;
     private DataGridColumn? _editionColumn;
+    // Cột nhãn tùy chọn (học kỳ, giảng viên...): ẩn khi không mục nào của môn có giá trị, đỡ chiếm chỗ; có mục nào có là hiện lại.
+    private readonly List<(DataGridColumn Column, Func<LibraryRow, bool> Has)> _optionalColumns = [];
 
     private void SetupLibrary()
     {
@@ -51,11 +53,12 @@ public partial class SubjectsPage
         g.Columns.Add(Grids.Text(L.T("col.name"), nameof(LibraryRow.Title), star: true));
         _editionColumn = Grids.Flex(L.T("library.col.course"), nameof(LibraryRow.Edition), 0.6, 80);
         g.Columns.Add(_editionColumn);
-        g.Columns.Add(Grids.Flex(L.T("col.term"), nameof(LibraryRow.Term), 0.5, 70));
-        g.Columns.Add(Grids.Flex(L.T("col.teacher"), nameof(LibraryRow.Teacher), 0.9, 90));
-        g.Columns.Add(Grids.Flex(L.T("library.col.chapter"), nameof(LibraryRow.Chapter), 0.5, 70));
-        g.Columns.Add(Grids.Flex(L.T("library.col.exam"), nameof(LibraryRow.Exam), 0.5, 70));
-        g.Columns.Add(Grids.Right(L.T("col.size"), nameof(LibraryRow.SizeText), 80, nameof(LibraryRow.Size)));
+        void Optional(DataGridColumn c, Func<LibraryRow, bool> has) { g.Columns.Add(c); _optionalColumns.Add((c, has)); }
+        Optional(Grids.Flex(L.T("col.term"), nameof(LibraryRow.Term), 0.5, 70), r => r.Term.Length > 0);
+        Optional(Grids.Flex(L.T("col.teacher"), nameof(LibraryRow.Teacher), 0.9, 90), r => r.Teacher.Length > 0);
+        Optional(Grids.Flex(L.T("library.col.chapter"), nameof(LibraryRow.Chapter), 0.5, 70), r => r.Chapter.Length > 0);
+        Optional(Grids.Flex(L.T("library.col.exam"), nameof(LibraryRow.Exam), 0.5, 70), r => r.Exam.Length > 0);
+        Optional(Grids.Right(L.T("col.size"), nameof(LibraryRow.SizeText), 96, nameof(LibraryRow.Size)), r => r.Size > 0);
         g.Columns.Add(Grids.Flex(L.T("library.col.local"), nameof(LibraryRow.Local), 0.6, 80));
         g.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
         LibraryItems.KeyOf = o => o is LibraryRow r ? r.Course.Id + "/" + r.Item.Id : null;
@@ -156,8 +159,17 @@ public partial class SubjectsPage
         var chapter = i.Chapter is { Length: > 0 } ch ? L.F("library.chapter", ch) : i.Lab is { Length: > 0 } lab ? L.F("library.lab", lab) : "";
         var exam = i.ExamKind is { Length: > 0 } k ? LibraryTypes.ExamKinds.Contains(k) ? L.T("library.exam." + k) : k : "";
         var edition = multi ? course.Edition is { } y ? L.F("library.edition", y) : course.Id : "";
-        return new LibraryRow(course, i, L.T("library.type." + type), LibraryTypes.Order(type), BookTitle(i) ?? i.Title ?? i.Id, edition, i.Term ?? "", i.Teacher ?? "",
+        return new LibraryRow(course, i, L.T("library.type." + type), LibraryTypes.Order(type), Shown(i), edition, i.Term ?? "", i.Teacher ?? "",
             chapter, exam, (i.Files ?? []).Sum(f => f.Size), _host.Library.LocalState(course, i));
+    }
+
+    /// <summary>Tên hiện trên bảng. Mục mẫu (example: true) có nhãn "(mẫu)" do app gắn, trừ khi tên đã tự ghi "mẫu"/"ví dụ".</summary>
+    private static string Shown(LibraryItem i)
+    {
+        var title = BookTitle(i) ?? i.Title ?? i.Id;
+        if (!i.Example || title.Contains(L.T("library.example"), StringComparison.OrdinalIgnoreCase)
+            || title.Contains("ví dụ", StringComparison.OrdinalIgnoreCase) || title.Contains("example", StringComparison.OrdinalIgnoreCase)) return title;
+        return $"{title} ({L.T("library.example")})";
     }
 
     /// <summary>Sách tham khảo: "Tên sách (tác giả, năm, NXB)" để nhận ra sách mà không cần mở web.</summary>
@@ -216,6 +228,8 @@ public partial class SubjectsPage
         static string? Pick(ComboBox b) => b.Visibility == Visibility.Visible ? (b.SelectedItem as FilterOption)?.Value : null;
         string? teacher = Pick(TeacherFilter), term = Pick(TermFilter), exam = Pick(ExamFilter);
         var rows = _libRows.Where(r => (teacher is null || r.Teacher == teacher) && (term is null || r.Term == term) && (exam is null || r.Exam == exam)).ToList();
+        foreach (var (column, has) in _optionalColumns)
+            column.Visibility = _libRows.Any(has) ? Visibility.Visible : Visibility.Collapsed;
         LibraryItems.Show(rows.Count == 0 ? rows : Grids.Grouped(rows, nameof(LibraryRow.Group)),
             L.T(_libRows.Count == 0 ? "library.empty" : "library.filteredEmpty"));
     }

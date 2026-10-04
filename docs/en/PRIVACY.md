@@ -29,6 +29,7 @@ After you sign in, the app downloads and stores **on your PC**:
 - your name, student ID and class (for display);
 - reviews of LMS quizzes **you have submitted** (for revision; can be turned off in Settings; quizzes in progress are never read);
 - quizzes you write or import, practice results, notes;
+- the time of your last SSO sign-in and when the session expired (`data\sso-session.json`, timestamps only), to learn how long the school keeps sessions;
 - with **Library** on: a saved copy of the library list (`data\library-cache`), the list of files downloaded from the library (`data\library-downloads.json`), and the files you download, in each course's `Thư viện` folder. When an item is removed from the library, the app deletes the copy it downloaded (only if you have not edited that file). **Settings** > **Library** > **Clear library cache** deletes the saved list.
 
 This data lives in `%LOCALAPPDATA%\BKStudyDesk.Data`, wherever you install the app. When uninstalling you choose whether to delete or keep it.
