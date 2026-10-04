@@ -2,22 +2,18 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md)
 
-> Translated from README.md (Vietnamese) for BK Study Desk 1.1.4.
+> Translated from README.md (Vietnamese) for BK Study Desk 1.1.10.
 
 ![BK Study Desk](../hero.png)
 
-A small Windows app for students of **Ho Chi Minh City University of Technology (HCMUT)**. It brings **BK-LMS** and **MyBK** together in one window:
-- deadlines and quizzes;
-- timetable and exam schedule;
-- course documents, downloaded section by section when you choose;
-- grades (LMS gradebook and MyBK component scores);
-- curriculum progress;
-- **practice**: write your own quizzes, review LMS quizzes you have submitted, take mock exams;
-- shortcuts to about 30 university services.
+A Windows app for HCMUT students: BK-LMS and MyBK in one place, plus a few extras.
+- Deadlines, quizzes, timetable, exam schedule, grades.
+- Course documents, download only the parts you pick.
+- Practice: write your own quizzes, review LMS quizzes, mock exams.
 
-> **Unofficial.** This is a personal project, not affiliated with or endorsed by HCMUT or Moodle HQ. The app uses your own account and only reads what you can already see after signing in. Every address and API the app calls is listed on the Wiki page [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/How-the-app-works) (Vietnamese). If the university asks, the project will change or remove the feature concerned.
+> **Unofficial.** A personal project, not endorsed by HCMUT or Moodle HQ. The app only reads what your account can already see. Addresses and APIs it calls: Wiki [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/How-the-app-works).
 
-The interface is Vietnamese by default; English is available in **Settings**. The Wiki is written in Vietnamese.
+The interface is Vietnamese by default; English is available in **Settings**. The Wiki has English pages.
 
 ## Install
 
