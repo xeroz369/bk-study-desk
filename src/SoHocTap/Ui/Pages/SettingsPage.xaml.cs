@@ -284,6 +284,12 @@ public partial class SettingsPage : UserControl, IPage
         if (e.Key == System.Windows.Input.Key.Enter) OnLibraryUrl(sender, e);
     }
 
+    /// <summary>Mở web thư viện theo địa chỉ đang đặt (chỉ https).</summary>
+    private void OnLibraryOpen(object sender, RoutedEventArgs e)
+    {
+        if (Uri.TryCreate(Config.Str("library.baseUrl"), UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps) Links.Open(u.AbsoluteUri);
+    }
+
     private void OnLibraryClear(object sender, RoutedEventArgs e)
     {
         try

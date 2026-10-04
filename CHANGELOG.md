@@ -6,6 +6,12 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.11] - 2026-10-04
+
+### Thêm
+
+- **Thư viện** tài liệu chung ([hcmut-library](https://bk-study-library.github.io/hcmut-library/)) bật sẵn: tab **Thư viện** ở trang **Môn học**, có nút **Mở trên web**. Tắt ở **Cài đặt** > **Thư viện**.
+
 ## [1.1.10] - 2026-10-04
 
 ### Thêm
@@ -246,7 +252,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...HEAD
+[1.1.11]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...v1.1.11
 [1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10
 [1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8

@@ -648,6 +648,52 @@ public sealed class LibraryTests : IDisposable
     }
 }
 
+/// <summary>
+/// Đọc thư viện thật qua mạng (chỉ GET, chạy tay): BKSD_LIBRARY_URL là địa chỉ gốc của web thư viện. Tải mọi mục có file của
+/// môn đầu tiên có file, kiểm sha256; link đầu hỏng thì phải tự thử link sau. Không đặt biến thì bỏ qua (CI không gọi mạng).
+/// </summary>
+public sealed class LiveLibraryTests : IDisposable
+{
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "bksd-live-lib-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        try { Directory.Delete(_dir, recursive: true); }
+        catch (IOException) { }
+    }
+
+    [LiveLibraryFact]
+    public async Task RealSite_IndexCoursesAndDownloads()
+    {
+        var root = Environment.GetEnvironmentVariable(LiveLibraryFactAttribute.Variable)!;
+        using var c = new LibraryClient(new HttpClient(), new LibraryOptions(root, Path.Combine(_dir, "cache"), Path.Combine(_dir, "downloads.json")) { Gap = TimeSpan.Zero });
+        var got = await c.GetIndexAsync(LibraryRefresh.Force, default);
+        Assert.True(got.Value is not null, got.Error);
+        var index = got.Value;
+        foreach (var course in index.Courses!.Where(x => x.Items > 0))
+        {
+            var gd = await c.GetCourseAsync(course, LibraryRefresh.Force, default);
+            Assert.True(gd.Value is not null, $"{course.Id}: {gd.Error}");
+            var d = gd.Value;
+            foreach (var item in d.Items!.Where(i => !i.Removed && i.Files is { Count: > 0 }))
+            {
+                var r = await c.DownloadAsync(course, item, Path.Combine(_dir, course.Id), default);
+                Assert.True(r.Ok, $"{course.Id}/{item.Id}: {r.Error} {r.Detail}");
+            }
+        }
+    }
+}
+
+public sealed class LiveLibraryFactAttribute : FactAttribute
+{
+    public const string Variable = "BKSD_LIBRARY_URL";
+
+    public LiveLibraryFactAttribute()
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(Variable))) Skip = $"Đặt {Variable} (địa chỉ web thư viện) để chạy test này.";
+    }
+}
+
 /// <summary>Test chỉ chạy khi biến môi trường BKSD_LIBRARY_V1 trỏ tới thư mục v1/ có index.json.</summary>
 public sealed class LibraryFolderFactAttribute : FactAttribute
 {

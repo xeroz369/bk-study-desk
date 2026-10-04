@@ -133,6 +133,7 @@ public partial class SubjectsPage
         if (gen != _libGen || !ReferenceEquals(_subject, s)) return;   // đã chọn môn khác trong lúc chờ
         if (cleaned > 0) _main.Say(L.F("library.cleaned", cleaned));
         ContributeButton.Visibility = LibraryClient.ContributeUrl(_host.Library.Index) is null ? Visibility.Collapsed : Visibility.Visible;
+        LibraryWebButton.Visibility = LibraryWeb() is null ? Visibility.Collapsed : Visibility.Visible;
         if (_editionColumn is not null) _editionColumn.Visibility = multi ? Visibility.Visible : Visibility.Collapsed;
         ShowLibraryNote(matches, any ? error : null);
         if (!any)
@@ -377,6 +378,18 @@ public partial class SubjectsPage
     private static void Reveal(string? full)
     {
         if (full is not null) Documents.Reveal(Paths.RelativeToStudy(full));
+    }
+
+    /// <summary>Trang của môn trên web thư viện (môn khớp đầu tiên), không có thì trang chủ thư viện.</summary>
+    private Uri? LibraryWeb()
+    {
+        var index = _host.Library.Index;
+        return _libMatches.Count > 0 && LibraryClient.CourseUrl(index, _libMatches[0].Course) is { } u ? u : LibraryClient.SiteOf(index);
+    }
+
+    private void OnLibraryWeb(object sender, RoutedEventArgs e)
+    {
+        if (LibraryWeb() is { } u) Links.Open(u.AbsoluteUri);
     }
 
     private void OnContribute(object sender, RoutedEventArgs e)
