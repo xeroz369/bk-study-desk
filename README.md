@@ -137,10 +137,10 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 
 ## Giấy phép
 
-[PolyForm Noncommercial 1.0.0](LICENSE.md) (từ bản 1.0.6; các bản trước theo MIT). Mã nguồn công khai, **không dùng cho mục đích thương mại**:
-- **Được:** dùng, sửa, chia sẻ cho cá nhân, học tập, nghiên cứu, trường học, tổ chức phi lợi nhuận. Giữ dòng ghi tác giả (Required Notice) trong LICENSE.
-- **Không được:** bán app hay bản sửa, đưa vào sản phẩm hoặc dịch vụ thu tiền.
+[AGPL-3.0](LICENSE.md) (từ bản sau 1.2.0; bản 1.0.6 đến 1.2.0 theo PolyForm Noncommercial, các bản trước theo MIT). Mã nguồn mở:
+- **Được:** dùng, sửa, chia sẻ, kể cả dùng vào việc thu tiền.
+- **Phải:** bản sửa phát hành ra (hoặc cho người khác dùng qua mạng) cũng theo AGPL-3.0 và công khai mã nguồn, giữ ghi chú bản quyền.
 
-Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép này.
+Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo AGPL-3.0.
 
 Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).

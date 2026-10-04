@@ -8,6 +8,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Changed
+
+- The license is now [AGPL-3.0](../../LICENSE.md). Version 1.2.0 and earlier stay under PolyForm Noncommercial.
+
 ### Fixed
 
 - **Contribute material** opens the library's [submit page](https://bk-study-library.github.io/hcmut-library/gui-tai-lieu/) directly.

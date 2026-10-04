@@ -2,7 +2,7 @@
   "_meta.culture": "en-US",
   "_meta.name": "English",
   "about.issues": "Report a bug",
-  "about.line": "Developed by {0}, {1} license, noncommercial",
+  "about.line": "Developed by {0}, {1} license, open source",
   "about.source": "GitHub",
   "about.title": "About",
   "about.tip": "About: version, source code, bug reports",
