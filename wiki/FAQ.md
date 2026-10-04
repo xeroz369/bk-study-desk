@@ -26,6 +26,9 @@ Yes. Download `-Setup-arm64.exe`.
 **Can I use the timetable in Google Calendar?**
 Yes. Go to **Calendar** > **Timetable** > **Export calendar (.ics)**, save the file, then in Google Calendar open **Settings** > **Import & export** and choose that file. Importing into a separate calendar makes it easy to remove next term.
 
+**Does it work offline?**
+Yes. Timetable, grades, deadlines, downloaded files and practice come from the last sync, stored on your PC. You need a connection to sync, sign in and download new files; the app syncs again once you're back online.
+
 **Where do I suggest a feature?**
 In [Discussions > Ideas](https://github.com/xeroz369/bk-study-desk/discussions/new?category=ideas). Issues are for bugs only.
 

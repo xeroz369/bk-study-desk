@@ -24,6 +24,9 @@ Chưa. Bản đa nền tảng đang làm; khi ổn định sẽ có ở trang Re
 **Dùng thời khóa biểu trên Google Calendar được không?**
 Được. Vào **Lịch** > **Thời khóa biểu** > **Xuất lịch (.ics)**, lưu file, rồi trên Google Calendar mở **Cài đặt** > **Nhập và xuất** và chọn file đó. Nên nhập vào một lịch riêng để sang kỳ sau xóa cho dễ.
 
+**Mất mạng có dùng được không?**
+Được. Lịch, điểm, hạn nộp, tài liệu đã tải và luyện tập lấy từ lần đồng bộ gần nhất, lưu trên máy. Cần mạng để đồng bộ, đăng nhập và tải tài liệu mới; có mạng lại thì app tự đồng bộ.
+
 **Đề xuất tính năng ở đâu?**
 Ở [Discussions > Ideas](https://github.com/xeroz369/bk-study-desk/discussions/new?category=ideas). Issue chỉ dùng để báo lỗi.
 

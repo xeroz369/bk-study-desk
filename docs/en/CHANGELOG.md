@@ -8,6 +8,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Fixed
+
+- **Contribute material** opens the library's [submit page](https://bk-study-library.github.io/hcmut-library/gui-tai-lieu/) directly.
+
 ## [1.2.0] - 2026-10-04
 
 ### Added

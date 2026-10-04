@@ -132,7 +132,7 @@ public partial class SubjectsPage
         }
         if (gen != _libGen || !ReferenceEquals(_subject, s)) return;   // đã chọn môn khác trong lúc chờ
         if (cleaned > 0) _main.Say(L.F("library.cleaned", cleaned));
-        ContributeButton.Visibility = LibraryClient.ContributeUrl(_host.Library.Index) is null ? Visibility.Collapsed : Visibility.Visible;
+        ContributeButton.Visibility = ContributeUrl() is null ? Visibility.Collapsed : Visibility.Visible;
         LibraryWebButton.Visibility = LibraryWeb() is null ? Visibility.Collapsed : Visibility.Visible;
         if (_editionColumn is not null) _editionColumn.Visibility = multi ? Visibility.Visible : Visibility.Collapsed;
         ShowLibraryNote(matches, any ? error : null);
@@ -392,8 +392,10 @@ public partial class SubjectsPage
         if (LibraryWeb() is { } u) Links.Open(u.AbsoluteUri);
     }
 
+    private Uri? ContributeUrl() => LibraryClient.ContributeUrl(_host.Library.Index, Config.Str("library.contributePath", "gui-tai-lieu/"));
+
     private void OnContribute(object sender, RoutedEventArgs e)
     {
-        if (LibraryClient.ContributeUrl(_host.Library.Index) is { } u) Links.Open(u.AbsoluteUri);
+        if (ContributeUrl() is { } u) Links.Open(u.AbsoluteUri);
     }
 }
