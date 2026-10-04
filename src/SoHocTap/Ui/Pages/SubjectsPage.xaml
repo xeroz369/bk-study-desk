@@ -108,6 +108,8 @@
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6" LastChildFill="True">
                             <Button x:Name="ContributeButton" DockPanel.Dock="Right" Content="{ui:T library.contribute}" Click="OnContribute"
                                     ToolTip="{ui:T library.contribute.tip}" Margin="8,0,0,0" VerticalAlignment="Top" />
+                            <Button x:Name="LibraryWebButton" DockPanel.Dock="Right" Content="{ui:T library.openCourseWeb}" Click="OnLibraryWeb"
+                                    ToolTip="{ui:T library.openCourseWeb.tip}" Margin="8,0,0,0" VerticalAlignment="Top" />
                             <WrapPanel>
                                 <ComboBox x:Name="TeacherFilter" MinWidth="180" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
                                           AutomationProperties.Name="{ui:T library.filter.teacher}" />

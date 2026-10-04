@@ -241,8 +241,8 @@
     "librarySubfolder": "Thư viện"
   },
   "library": {
-    "enabled": false,
-    "baseUrl": "",
+    "enabled": true,
+    "baseUrl": "https://bk-study-library.github.io/hcmut-library/",
     "refreshHours": 24,
     "tabRefreshMinutes": 10,
     "timeoutSeconds": 30,

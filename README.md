@@ -8,6 +8,7 @@ App Windows cho sinh viên Bách Khoa TP.HCM: kết hợp BK-LMS và MyBK và v�
 - Deadline, quiz, thời khóa biểu, lịch thi, điểm.
 - Tài liệu từng môn, chọn mục nào tải mục đó.
 - Luyện tập: tự soạn quiz, ôn quiz LMS, thi thử.
+- Thư viện tài liệu chung theo môn ([hcmut-library](https://bk-study-library.github.io/hcmut-library/)).
 
 > **Không chính thức.** Dự án cá nhân, không do trường hay Moodle HQ xác nhận. App chỉ đọc những gì tài khoản của bạn vốn xem được. Địa chỉ và API app gọi: Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động).
 

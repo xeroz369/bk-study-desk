@@ -5,7 +5,7 @@ namespace SoHocTap.Library;
 
 /// <summary>
 /// Nối LibraryClient với config và thư mục của app (phần không test được bằng unit test vì đọc Config/Paths).
-/// Tắt (library.enabled = false, mặc định tới khi thư viện mở) hoặc chưa có địa chỉ thì không gọi mạng gì cả.
+/// Tắt (library.enabled = false; mặc định bật từ khi thư viện mở) hoặc chưa có địa chỉ thì không gọi mạng gì cả.
 /// Mọi việc chạy nền; <see cref="Changed"/> bắn từ thread pool, UI tự chuyển về UI thread.
 /// </summary>
 internal sealed class LibraryService : IDisposable
@@ -28,7 +28,7 @@ internal sealed class LibraryService : IDisposable
     /// <summary>Index vừa đổi (đọc xong từ cache hay mạng).</summary>
     public event Action? Changed;
 
-    public static bool Enabled => Config.Bool("library.enabled", false);
+    public static bool Enabled => Config.Bool("library.enabled", true);
     public static string BaseUrl => Config.Str("library.baseUrl").Trim();
 
     /// <summary>Bật và có địa chỉ hợp lệ: mới được gọi mạng.</summary>

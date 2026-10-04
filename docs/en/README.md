@@ -10,6 +10,7 @@ A Windows app for HCMUT students: BK-LMS and MyBK in one place, plus a few extra
 - Deadlines, quizzes, timetable, exam schedule, grades.
 - Course documents, download only the parts you pick.
 - Practice: write your own quizzes, review LMS quizzes, mock exams.
+- Shared study library by course ([hcmut-library](https://bk-study-library.github.io/hcmut-library/)).
 
 > **Unofficial.** A personal project, not endorsed by HCMUT or Moodle HQ. The app only reads what your account can already see. Addresses and APIs it calls: Wiki [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/How-the-app-works).
 
