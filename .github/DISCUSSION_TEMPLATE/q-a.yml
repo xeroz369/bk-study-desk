@@ -1,0 +1,10 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Xem [Câu hỏi thường gặp](https://github.com/xeroz369/bk-study-desk/wiki/Câu-hỏi-thường-gặp) trước. App lỗi thì [báo lỗi](https://github.com/xeroz369/bk-study-desk/issues/new/choose).
+  - type: textarea
+    id: question
+    attributes:
+      label: Câu hỏi
+    validations: { required: true }

@@ -1,7 +1,10 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Đề xuất tính năng
+    url: https://github.com/xeroz369/bk-study-desk/discussions/new?category=ideas
+    about: Issue chỉ dùng để báo lỗi. Ý tưởng mới gửi ở Discussions.
   - name: Hỏi đáp
-    url: https://github.com/xeroz369/bk-study-desk/discussions
+    url: https://github.com/xeroz369/bk-study-desk/discussions/new?category=q-a
     about: Hỏi cách dùng, góp ý chung.
   - name: Hướng dẫn (Wiki)
     url: https://github.com/xeroz369/bk-study-desk/wiki

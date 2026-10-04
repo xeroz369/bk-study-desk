@@ -1,6 +1,4 @@
-name: Đề xuất tính năng
-description: Ý tưởng làm app tiện hơn
-labels: [enhancement]
+title: "Đề xuất: "
 body:
   - type: markdown
     attributes:
