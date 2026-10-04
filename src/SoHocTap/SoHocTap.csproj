@@ -7,6 +7,8 @@
     <!-- UI dùng WPF với theme Fluent (Windows 11) có sẵn của .NET. WinForms chỉ để lấy NotifyIcon cho tray icon. -->
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Cho restore trên Linux (GitHub Automatic Dependency Submission đọc gói NuGet trên ubuntu); build và chạy vẫn chỉ trên Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>SoHocTap</RootNamespace>
     <Version Condition="'$(Version)' == ''">1.1.10</Version>
