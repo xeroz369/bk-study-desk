@@ -35,4 +35,4 @@ Sửa khung Luyện tập (`src/ui`) thì chạy thêm `npm run check` và `npx 
 
 ## Giấy phép
 
-Gửi PR nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép của dự án ([PolyForm Noncommercial 1.0.0](LICENSE.md)).
+Gửi PR nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép của dự án ([AGPL-3.0](LICENSE.md)).

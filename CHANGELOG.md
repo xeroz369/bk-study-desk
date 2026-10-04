@@ -6,6 +6,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Giấy phép đổi sang [AGPL-3.0](LICENSE.md). Bản 1.2.0 trở về trước vẫn theo PolyForm Noncommercial.
+
 ### Sửa lỗi
 
 - Nút **Đóng góp tài liệu** mở thẳng trang [Gửi tài liệu](https://bk-study-library.github.io/hcmut-library/gui-tai-lieu/) của thư viện.

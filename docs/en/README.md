@@ -133,10 +133,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](../../LICENSE.md) (since 1.0.6; earlier versions were MIT). The source is public, **not for commercial use**:
-- **Allowed:** use, modify and share for personal use, study, research, schools and nonprofits. Keep the author line (Required Notice) in LICENSE.
-- **Not allowed:** selling the app or a modified version, or including it in a paid product or service.
+[AGPL-3.0](../../LICENSE.md) (from the release after 1.2.0; 1.0.6 to 1.2.0 were PolyForm Noncommercial, earlier versions MIT). Open source:
+- **You may:** use, modify and share it, including for paid work.
+- **You must:** release modified versions (or ones you let others use over a network) under AGPL-3.0 with their source, and keep the copyright notices.
 
-By contributing code (a pull request) you agree to license your contribution under the same terms.
+By contributing code (a pull request) you agree to license your contribution under AGPL-3.0.
 
 Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included).

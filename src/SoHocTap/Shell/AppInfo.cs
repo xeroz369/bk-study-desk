@@ -16,7 +16,7 @@ internal static class AppInfo
     public const string Author = "xeroz369";
     public const string Repo = "https://github.com/xeroz369/bk-study-desk";
     public const string Issues = Repo + "/issues";
-    public const string License = "PolyForm Noncommercial 1.0.0";
+    public const string License = "AGPL-3.0";
     public const string Support = "";
 
     /// <summary>Version của bản build (bỏ phần "+commit" mà SDK tự gắn).</summary>

@@ -13,7 +13,7 @@
     <RootNamespace>SoHocTap</RootNamespace>
     <Version Condition="'$(Version)' == ''">1.2.0</Version>
     <Authors>xeroz369</Authors>
-    <Copyright>Copyright (c) 2026 xeroz369. PolyForm Noncommercial 1.0.0</Copyright>
+    <Copyright>Copyright (c) 2026 xeroz369. AGPL-3.0-or-later</Copyright>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <SatelliteResourceLanguages>vi</SatelliteResourceLanguages>

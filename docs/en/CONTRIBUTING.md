@@ -37,4 +37,4 @@ If you change the Practice view (`src/ui`), also run `npm run check` and `npx pr
 
 ## License
 
-By opening a pull request you agree to license your contribution under the project's license ([PolyForm Noncommercial 1.0.0](../../LICENSE.md)).
+By opening a pull request you agree to license your contribution under the project's license ([AGPL-3.0](../../LICENSE.md)).
