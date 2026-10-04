@@ -1,5 +1,6 @@
 <!-- Window login HCMUT: hiện trang SSO của trường cho người dùng tự nhập. Login xong MyBK và LMS thì tự đóng. -->
 <Window x:Class="SoHocTap.Ui.LoginWindow"
+        FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppFontSize}"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SoHocTap.Ui"

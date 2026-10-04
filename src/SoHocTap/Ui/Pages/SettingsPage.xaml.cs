@@ -41,12 +41,71 @@ public partial class SettingsPage : UserControl, IPage
             new("Backspace", L.T("settings.keys.up")),
         };
         Load();
+        _host.Library.Changed += () => Dispatcher.InvokeAsync(ShowLibraryStatus);
         var langs = L.Available().Select(x => new LanguageItem(x.Code, x.Name)).ToList();
         LanguageBox.ItemsSource = langs;
         LanguageBox.SelectedItem = langs.FirstOrDefault(x => x.Code == Config.Str("app.language", L.Base)) ?? langs.FirstOrDefault(x => x.Code == L.Code);
         _languageReady = true;
         ShowRestart();
+        LoadFont();
         LoadUpdates();
+    }
+
+    // ------------------------------------------------------------------ phông, cỡ chữ
+
+    private sealed record SizeItem(double Size, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    private bool _fontReady;
+
+    /// <summary>Dòng đầu là Mặc định (Source rỗng = theo theme, tức phông của Windows), sau đó mọi phông trên máy.</summary>
+    private void LoadFont()
+    {
+        var families = new List<FontItem> { new("", L.F("settings.font.default", AppFont.SystemFamily)) };
+        families.AddRange(AppFont.Installed());
+        FontFamilyBox.ItemsSource = families;
+        var sizes = new List<SizeItem> { new(0, L.F("settings.font.sizeDefault", Math.Round(AppFont.SystemSize, 1))) };
+        sizes.AddRange(FontChoice.Sizes.Select(s => new SizeItem(s, L.F("settings.font.sizeN", s))));
+        FontSizeBox.ItemsSource = sizes;
+        ShowFont();
+        _fontReady = true;
+    }
+
+    private void ShowFont()
+    {
+        var cur = AppFont.Current;
+        var families = (List<FontItem>)FontFamilyBox.ItemsSource;
+        FontFamilyBox.SelectedItem = families.FirstOrDefault(f => string.Equals(f.Source, cur.Family, StringComparison.OrdinalIgnoreCase)) ?? families[0];
+        var sizes = (List<SizeItem>)FontSizeBox.ItemsSource;
+        FontSizeBox.SelectedItem = sizes.FirstOrDefault(s => s.Size == cur.Size) ?? sizes[0];
+    }
+
+    private void OnFontFamily(object sender, SelectionChangedEventArgs e)
+    {
+        if (_fontReady && FontFamilyBox.SelectedItem is FontItem f) SetFont(AppFont.Current with { Family = f.Source });
+    }
+
+    private void OnFontSize(object sender, SelectionChangedEventArgs e)
+    {
+        if (_fontReady && FontSizeBox.SelectedItem is SizeItem s) SetFont(AppFont.Current with { Size = s.Size });
+    }
+
+    private void OnFontReset(object sender, RoutedEventArgs e)
+    {
+        SetFont(FontChoice.Default);
+        _fontReady = false;
+        try { ShowFont(); }
+        finally { _fontReady = true; }
+    }
+
+    /// <summary>Áp ngay cho cả app và lưu app.font. Ghi config lỗi thì chữ vẫn đổi trong lần chạy này, báo ngay dưới thẻ.</summary>
+    private void SetFont(FontChoice choice)
+    {
+        FontStatus.Text = "";
+        try { AppFont.Set(choice); }
+        catch (IOException x) { FontStatus.Text = L.F("settings.saveError", x.Message); }
     }
 
     // ------------------------------------------------------------------ cập nhật
@@ -71,17 +130,48 @@ public partial class SettingsPage : UserControl, IPage
         ImportZip.Visibility = Paths.Kind == InstallKind.Installed ? Visibility.Visible : Visibility.Collapsed;
         UpdateModeBox.ItemsSource = items;
         UpdateModeBox.SelectedItem = items.FirstOrDefault(x => x.Mode == UpdateService.Mode);
+        var hours = UpdatePolicy.CheckHourChoices.Select(h => new HoursItem(h, L.F("update.intervalHours", h))).ToList();
+        UpdateIntervalBox.ItemsSource = hours;
+        UpdateIntervalBox.SelectedItem = hours.First(x => x.Hours == UpdatePolicy.NearestChoice(Config.Int("app.update.checkHours", 6)));
+        ShowIntervalRow();
         _updateReady = true;
+        _updateView = new DownloadView(_host.Updates, UpdateBar);
+        // Chỉ nghe khi trang đang hiện (trang Cài đặt được giữ lại sau khi rời đi).
+        Loaded += (_, _) => { _host.Updates.Changed += OnUpdatesChanged; ShowUpdateNote(); };
+        Unloaded += (_, _) => { _host.Updates.Changed -= OnUpdatesChanged; _updateView.Stop(); };
         ShowUpdateNote();
+    }
+
+    private DownloadView? _updateView;
+
+    private void OnUpdatesChanged() => Dispatcher.InvokeAsync(ShowUpdateNote);
+
+    private void OnUpdateCancel(object sender, RoutedEventArgs e) => _host.Updates.CancelDownload();
+
+    private sealed record HoursItem(int Hours, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    /// <summary>Chu kỳ chỉ có nghĩa khi app được phép kiểm tra (Báo, Tự động).</summary>
+    private void ShowIntervalRow() =>
+        UpdateIntervalRow.Visibility = UpdateService.Mode is UpdateMode.Notify or UpdateMode.Auto ? Visibility.Visible : Visibility.Collapsed;
+
+    private void OnUpdateInterval(object sender, SelectionChangedEventArgs e)
+    {
+        if (_updateReady && UpdateIntervalBox.SelectedItem is HoursItem h) Config.Set("app.update.checkHours", h.Hours);
     }
 
     private void ShowUpdateNote()
     {
         var u = _host.Updates;
-        UpdateNote.Text = u.LastError is { } err ? L.F("update.error", err)
+        var progress = _updateView?.Render();
+        UpdateProgressRow.Visibility = u.Downloading ? Visibility.Visible : Visibility.Collapsed;
+        UpdateNote.Text = progress ?? (u.LastError is { } err ? L.F("update.error", err)
+            : u.Downloaded && u.Offer is not null ? L.T("update.restart")
             : u.Offer is { } o ? L.F("update.available", o.Version)
             : u.LastCheck is { } t ? L.F("update.latest", AppInfo.Version) + ", " + L.F("update.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
-            : !UpdateService.CanSelfUpdate ? L.T("update.zipNote") : "";
+            : !UpdateService.CanSelfUpdate ? L.T("update.zipNote") : "");
     }
 
     /// <summary>
@@ -121,6 +211,7 @@ public partial class SettingsPage : UserControl, IPage
     private void OnUpdateMode(object sender, SelectionChangedEventArgs e)
     {
         if (_updateReady && UpdateModeBox.SelectedItem is ModeItem m) UpdateService.SetMode(m.Mode);
+        if (_updateReady) ShowIntervalRow();
     }
 
     private async void OnUpdateCheck(object sender, RoutedEventArgs e)
@@ -154,10 +245,54 @@ public partial class SettingsPage : UserControl, IPage
         AutoDownload.IsChecked = Config.Bool("sources.lms.autoDownload", false);
         AutoExtract.IsChecked = Config.Bool("archives.extract", true);
         SaveQuizzes.IsChecked = Config.Bool("sources.lms.saveQuizzes", true);
-        Remember.Content = L.F("settings.remember", Config.Int("sso.rememberHours", 8));
+        Remember.Content = L.T("settings.remember");
         Remember.IsChecked = Config.Int("sso.rememberDays", RememberDays) > 0;
         KeepAlive.IsChecked = Config.Int("sso.keepAliveMinutes", KeepAliveMinutes) > 0;
         DebugLog.IsChecked = DiagnosticLog.Active();
+        LibraryEnabled.IsChecked = Library.LibraryService.Enabled;
+        LibraryUrl.Text = Library.LibraryService.BaseUrl;
+        // Địa chỉ thư viện chỉ đổi khi đang bật log chẩn đoán (dev, thử thư viện trên máy); bình thường là chữ chỉ đọc.
+        LibraryUrl.IsReadOnly = !DiagnosticLog.Active();
+        ShowLibraryStatus();
+    }
+
+    // ------------------------------------------------------------------ thư viện
+
+    private void ShowLibraryStatus()
+    {
+        var lib = _host.Library;
+        LibraryStatus.Text = Library.LibraryService.BaseUrl.Length == 0 ? L.T("settings.library.noUrl")
+            : lib.LastChecked is { } t ? L.F("settings.library.lastCheck", t.ToLocalTime().ToString("g", L.Culture))
+            : L.T("settings.library.never");
+    }
+
+    private void OnLibraryEnabled(object sender, RoutedEventArgs e)
+    {
+        _host.Library.SetEnabled(LibraryEnabled.IsChecked == true);
+        ShowLibraryStatus();
+    }
+
+    private void OnLibraryUrl(object sender, RoutedEventArgs e)
+    {
+        if (LibraryUrl.IsReadOnly || LibraryUrl.Text.Trim() == Library.LibraryService.BaseUrl) return;
+        _host.Library.SetBaseUrl(LibraryUrl.Text);
+        ShowLibraryStatus();
+    }
+
+    private void OnLibraryUrlKey(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter) OnLibraryUrl(sender, e);
+    }
+
+    private void OnLibraryClear(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            _host.Library.ClearCache();
+            // Sau handler Changed (cũng xếp hàng trên Dispatcher), để câu "đã xóa" không bị ghi đè.
+            Dispatcher.InvokeAsync(() => LibraryStatus.Text = L.T("settings.library.cleared"));
+        }
+        catch (Exception x) when (x is IOException or UnauthorizedAccessException) { LibraryStatus.Text = L.F("settings.saveError", x.Message); }
     }
 
     private const int KeepAliveMinutes = 60;
@@ -166,7 +301,11 @@ public partial class SettingsPage : UserControl, IPage
     private void OnKeepAlive(object sender, RoutedEventArgs e) => Config.Set("sso.keepAliveMinutes", KeepAlive.IsChecked == true ? KeepAliveMinutes : 0);
 
     /// <summary>Log chẩn đoán: có hiệu lực ngay, tự tắt sau DiagnosticLog.Days ngày.</summary>
-    private void OnDebugLog(object sender, RoutedEventArgs e) => DiagnosticLog.Set(DebugLog.IsChecked == true);
+    private void OnDebugLog(object sender, RoutedEventArgs e)
+    {
+        DiagnosticLog.Set(DebugLog.IsChecked == true);
+        LibraryUrl.IsReadOnly = !DiagnosticLog.Active();
+    }
 
     /// <summary>Mở Explorer, chọn sẵn app.log để người dùng kéo vào issue/tin nhắn báo lỗi.</summary>
     private void OnOpenLog(object sender, RoutedEventArgs e)

@@ -1,12 +1,13 @@
 ﻿<!-- Lần mở đầu của bản Store: cho user chọn folder lưu tài liệu (gợi ý sẵn ổ khác ổ C). Lưu vào folders.root. -->
 <Window x:Class="SoHocTap.Ui.FolderSetupWindow"
+        FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppFontSize}"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SoHocTap.Ui"
         Title="{ui:T setup.title}" Width="560" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Icon="/app.ico">
     <StackPanel Margin="24,20,24,20">
-        <TextBlock Text="{ui:T setup.title}" Style="{StaticResource SectionTitle}" FontSize="18" />
+        <TextBlock Text="{ui:T setup.title}" Style="{StaticResource SectionTitle}" FontSize="{DynamicResource AppFontSizeTitle}" />
         <TextBlock Text="{ui:T setup.text}" TextWrapping="Wrap" Margin="0,8,0,16" />
         <DockPanel>
             <Button DockPanel.Dock="Right" Content="{ui:T settings.browse}" Margin="8,0,0,0" Click="OnBrowse" />

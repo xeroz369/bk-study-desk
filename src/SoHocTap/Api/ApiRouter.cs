@@ -35,10 +35,6 @@ public sealed partial class ApiRouter(IShellActions shell)
 {
     private static string StateFile => Paths.DataFile("ket-qua.json");
     private static string PacksDir => Paths.Packs;
-    private const int MaxPackBytes = 20 * 1024 * 1024;   // gói có ảnh nhúng
-
-    // Id gói = tên file: chặn chặt để không ghi ra ngoài content/packs (cùng luật với validatePack bên UI).
-    [GeneratedRegex("^[a-z0-9][a-z0-9-]{1,63}$")] private static partial Regex PackId();
 
     public Task<ApiResponse> HandleAsync(ApiRequest r, CancellationToken ct)
     {
@@ -147,21 +143,27 @@ public sealed partial class ApiRouter(IShellActions shell)
     /// </summary>
     private static ApiResponse ImportPack(string? body)
     {
-        if (body is null || Encoding.UTF8.GetByteCount(body) > MaxPackBytes) return ApiResponse.Error(400, "gói rỗng hoặc quá 20 MB");
-        if (JsonNode.Parse(body) is not JsonObject pack || pack["format"]?.GetValue<string>() != "studypack/1") return ApiResponse.Error(400, "không phải studypack/1");
-        var id = pack["id"]?.GetValue<string>() ?? "";
-        if (!PackId().IsMatch(id)) return ApiResponse.Error(400, "id gói không hợp lệ");
+        if (PackImport.Check(body, out var pack) is { } error) return ApiResponse.Error(400, error);
+        return ApiResponse.Json(new JsonObject { ["ok"] = true, ["file"] = InstallPack(pack!) });
+    }
+
+    /// <summary>Ghi gói đã qua <see cref="PackImport.Check"/> vào content/packs (hoặc data/packs); trả tên file.</summary>
+    public static string InstallPack(JsonObject pack)
+    {
         Directory.CreateDirectory(PacksDir);
-        var file = $"{id}.studypack.json";
+        var file = PackImport.FileName(pack["id"]!.GetValue<string>());
         JsonStore.Write(Path.Combine(PacksDir, file), pack);
         Log.Info($"Cài gói luyện tập: {file}");
-        return ApiResponse.Json(new JsonObject { ["ok"] = true, ["file"] = file });
+        return file;
     }
+
+    /// <summary>Đã có gói cùng id chưa (cập nhật gói thì phải qua khung Luyện tập để giữ kết quả theo fingerprint).</summary>
+    public static bool PackInstalled(string id) => PackImport.Id().IsMatch(id) && File.Exists(Path.Combine(PacksDir, PackImport.FileName(id)));
 
     private static ApiResponse DeletePack(string id)
     {
-        if (!PackId().IsMatch(id)) return ApiResponse.Error(400, "id gói không hợp lệ");
-        var path = Path.Combine(PacksDir, $"{id}.studypack.json");
+        if (!PackImport.Id().IsMatch(id)) return ApiResponse.Error(400, "id gói không hợp lệ");
+        var path = Path.Combine(PacksDir, PackImport.FileName(id));
         if (!File.Exists(path)) return ApiResponse.Error(404, "không có gói này");
         File.Delete(path);   // gói do user tự cài vào content/packs, không phải tài liệu môn học
         Log.Info($"Gỡ gói luyện tập: {id}");

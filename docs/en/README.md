@@ -52,7 +52,7 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
   - **Export calendar (.ics)**: save the whole-term timetable and exams to a file you can import into Google Calendar, Outlook or Windows Calendar.
 - **Subjects**:
   - browse each subject's folder like File Explorer;
-  - see new files, deadlines, announcements, gradebook and classes on LMS;
+  - see recently updated files on your computer, deadlines, announcements, gradebook and classes on LMS;
   - **download documents section by section**, filter by file type (PDF, slides, other), optionally extract .zip/.rar/.7z;
   - optional auto-download: each sync fetches new files (including assignment attachments), so they open even when LMS is slow.
 - **Grades & records**:
@@ -86,7 +86,7 @@ Full policy: [PRIVACY.md](PRIVACY.md).
   - cookies in `data\webview`, encrypted by WebView2;
   - the LMS token in `data\secrets\`, **encrypted with Windows DPAPI**, so it does not work on another PC or Windows account.
 - The data folder sits in `%LOCALAPPDATA%`, readable only by your Windows account (plus SYSTEM and Administrators).
-- **Stay signed in after closing the app** keeps cookies for at most 8 hours, the SSO server's session limit; it can be turned off in Settings.
+- **Stay signed in after closing the app** keeps you signed in until the university's SSO server ends the session (the app never removes it earlier); it can be turned off in Settings.
 - The LMS token comes from Moodle's built-in sign-in flow for the mobile app (`launch.php`, service `moodle_mobile_app`, URL scheme `moodlemobile` of the official Moodle app). Details on the Wiki page [How the app works](https://github.com/xeroz369/bk-study-desk/wiki/How-the-app-works).
 - Limit: malware running under your own Windows account can still read the session. This is true of any Windows app. If you suspect malware, choose **Sign out** and change your HCMUT password.
 - The app only calls **read** APIs and sends data nowhere except the university servers (GitHub is asked for new versions only if you allow it). It never submits work, registers, cancels, pays or takes quizzes for you.
@@ -142,7 +142,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 By contributing code (a pull request) you agree to license your contribution under the same terms.
 
 Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included).
-
-
-
-

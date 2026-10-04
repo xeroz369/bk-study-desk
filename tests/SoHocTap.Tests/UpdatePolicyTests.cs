@@ -78,6 +78,17 @@ public class UpdatePolicyTests
     [InlineData("", false)]
     public void IsValidSource_Values(string src, bool expected) => Assert.Equal(expected, UpdatePolicy.IsValidSource(src, _ => false));
 
+    [Theory]
+    [InlineData("http://127.0.0.1:8765/", true)]
+    [InlineData("http://localhost:8765/", false)]
+    [InlineData("http://192.168.1.2:8765/", false)]
+    [InlineData("https://127.0.0.1:8765/", false)]
+    public void LoopbackHttp_OnlyIpv4Loopback(string src, bool expected)
+    {
+        Assert.Equal(expected, UpdatePolicy.IsLoopbackHttp(src));
+        Assert.False(UpdatePolicy.IsValidSource(src, _ => false));   // nguồn chung (cả bản Linux) không nhận
+    }
+
     [Fact]
     public void IsValidSource_ExistingLocalFolder_True() =>
         Assert.True(UpdatePolicy.IsValidSource(Path.Combine(Path.GetTempPath(), "feed"), _ => true));
@@ -90,4 +101,56 @@ public class UpdatePolicyTests
     [InlineData("1.0.7", "1.0.8", ApplyOutcome.Updated)]
     public void ApplyResult_Values(string? applying, string current, ApplyOutcome expected) =>
         Assert.Equal(expected, UpdatePolicy.ApplyResult(applying, current));
+
+    // ------------------------------------------------------------------ 1.1.8: cài lúc mở app, chu kỳ 6/12/24, kiểm tra khi thức dậy
+
+    [Fact]
+    public void ShouldCheck_DefaultSixHours_DueAfterSix()
+    {
+        Assert.True(Check(UpdateMode.Notify, last: Now.AddHours(-6), hours: 6));
+        Assert.False(Check(UpdateMode.Notify, last: Now.AddHours(-5.9), hours: 6));
+    }
+
+    [Theory]
+    [InlineData(6, 6)]
+    [InlineData(12, 12)]
+    [InlineData(24, 24)]
+    [InlineData(1, 6)]
+    [InlineData(10, 12)]
+    [InlineData(72, 24)]
+    public void NearestChoice_MapsToSettingsItems(int hours, int expected) => Assert.Equal(expected, UpdatePolicy.NearestChoice(hours));
+
+    [Fact]
+    public void WakeCheck_AtMostOncePerHour()
+    {
+        Assert.True(UpdatePolicy.WakeCheckAllowed(null, Now));
+        Assert.False(UpdatePolicy.WakeCheckAllowed(Now.AddMinutes(-59), Now));
+        Assert.True(UpdatePolicy.WakeCheckAllowed(Now.AddHours(-1), Now));
+        Assert.True(UpdatePolicy.WakeCheckAllowed(Now.AddHours(2), Now));   // đồng hồ bị chỉnh lùi
+    }
+
+    [Fact]
+    public void ApplyOnStartup_OnlyAutoModeInstalled() =>
+        Assert.True(UpdatePolicy.ApplyOnStartup(UpdateMode.Auto, InstallKind.Installed, [], otherInstanceRunning: false));
+
+    [Theory]
+    [InlineData(UpdateMode.Notify, InstallKind.Installed)]
+    [InlineData(UpdateMode.Ask, InstallKind.Installed)]
+    [InlineData(UpdateMode.Off, InstallKind.Installed)]
+    [InlineData(UpdateMode.Auto, InstallKind.Portable)]
+    [InlineData(UpdateMode.Auto, InstallKind.Store)]
+    public void ApplyOnStartup_NotOtherModesOrKinds(UpdateMode mode, InstallKind kind) =>
+        Assert.False(UpdatePolicy.ApplyOnStartup(mode, kind, [], false));
+
+    [Fact]
+    public void ApplyOnStartup_NotDuringVelopackHooks() =>
+        Assert.False(UpdatePolicy.ApplyOnStartup(UpdateMode.Auto, InstallKind.Installed, ["--veloapp-uninstall"], false));
+
+    [Fact]
+    public void ApplyOnStartup_NotWhenAnotherInstanceRuns() =>
+        Assert.False(UpdatePolicy.ApplyOnStartup(UpdateMode.Auto, InstallKind.Installed, ["--tray"], otherInstanceRunning: true));
+
+    [Fact]
+    public void ApplyOnStartup_TrayStartStillApplies() =>
+        Assert.True(UpdatePolicy.ApplyOnStartup(UpdateMode.Auto, InstallKind.Installed, ["--tray"], false));
 }

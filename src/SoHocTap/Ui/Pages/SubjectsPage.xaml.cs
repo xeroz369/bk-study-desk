@@ -10,7 +10,8 @@ using SoHocTap.Ui.Controls;
 
 namespace SoHocTap.Ui.Pages;
 
-internal sealed record SubjectRow(string Name, string Meta, string Group, bool Current, List<LmsCourse> Courses)
+/// <param name="Files">Số tài liệu trên máy (không tính rác); null = chưa quét xong.</param>
+internal sealed record SubjectRow(string Name, string Meta, string Group, bool Current, List<LmsCourse> Courses, int? Files = null)
 {
     public override string ToString() => Name;   // tên cho screen reader đọc
 }
@@ -118,6 +119,8 @@ public partial class SubjectsPage : UserControl, IPage
             new(L.T("subjects.downloadBySection"), () => Download(c.Course)),
             new(L.T("subjects.copyCode"), () => Grids.Copy(c.Code, _main), Separator: true),
         ]);
+
+        SetupLibrary();
     }
 
     public string Title => L.T("nav.subjects");
@@ -126,9 +129,18 @@ public partial class SubjectsPage : UserControl, IPage
     public void Open(string arg)
     {
         var name = Uri.UnescapeDataString(arg);
-        if (_stale) Load();   // vừa chuyển sang trang (chưa hiện) mà cần chọn môn: quét luôn
+        if (_stale) Load();   // vừa chuyển sang trang (chưa hiện) mà cần chọn môn: dựng danh sách luôn (quét thư mục chạy nền)
+        _want = name;
+        SelectWanted();
+    }
+
+    private string? _want;   // môn cần chọn (Open) khi danh sách chưa có môn đó (đang quét thư mục)
+
+    private void SelectWanted()
+    {
+        if (_want is null) return;
         foreach (var o in List.Items)
-            if (o is SubjectRow r && r.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) { List.SelectedItem = r; List.ScrollIntoView(r); return; }
+            if (o is SubjectRow r && NameMatch.Same(r.Name, _want)) { _want = null; List.SelectedItem = r; List.ScrollIntoView(r); return; }
     }
 
     private bool _stale;
@@ -139,19 +151,46 @@ public partial class SubjectsPage : UserControl, IPage
         Load();
     }
 
-    private void Load()
+    private JsonArray? _scan;            // kết quả quét thư mục môn gần nhất (Documents có cache theo mtime)
+    private LmsData? _lmsShown;          // dữ liệu LMS đã dựng danh sách
+    private int _loadGen;
+
+    /// <summary>
+    /// Dựng danh sách môn: ngay từ dữ liệu LMS và lần quét trước (không chặn UI thread), rồi quét thư mục trên thread pool
+    /// (Documents.ListSubjectsAsync, cache theo mtime nên mở lại trang mà không đổi gì thì chỉ đi qua các thư mục). Kết quả y như cũ
+    /// thì không dựng lại danh sách, không vẽ lại các tab.
+    /// </summary>
+    private async void Load()
     {
         _stale = false;
+        var gen = ++_loadGen;
         var lms = _host.State.Lms;
+        if (!ReferenceEquals(lms, _lmsShown) || _rows.Count == 0) Build(lms, _scan);
+        try
+        {
+            var scan = await Documents.ListSubjectsAsync();
+            if (gen != _loadGen) return;   // đã có lượt Load mới hơn
+            if (_scan is not null && JsonNode.DeepEquals(scan, _scan) && ReferenceEquals(lms, _lmsShown)) return;
+            _scan = scan;
+            Build(lms, scan);
+        }
+        // Thư mục tài liệu trên ổ rút ra, mất quyền: giữ danh sách theo LMS, ghi log; lỗi lạ cũng không được làm sập trang (async void).
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Quét thư mục môn: {e.Message}"); }
+    }
+
+    private void Build(LmsData? lms, JsonArray? scan)
+    {
+        _lmsShown = lms;
         var term = lms?.Term;
-        var map = new Dictionary<string, (string Name, List<LmsCourse> Courses, int Files)>(StringComparer.OrdinalIgnoreCase);
+        // So tên theo NFC: thư mục trên đĩa có thể ở dạng NFD, tên môn từ LMS là NFC; không so thì một môn hiện thành hai dòng.
+        var map = new Dictionary<string, (string Name, List<LmsCourse> Courses, int Files)>(NameMatch.NfcIgnoreCase);
         foreach (var c in lms?.Courses ?? [])
         {
             if (!map.TryGetValue(c.Subject, out var v)) v = (c.Subject, [], 0);
             v.Courses.Add(c);
             map[c.Subject] = v;
         }
-        foreach (var d in Documents.ListSubjects().OfType<JsonObject>())
+        foreach (var d in (scan ?? []).OfType<JsonObject>())
         {
             var n = d["name"]!.GetValue<string>();
             var files = d["files"]?.GetValue<int>() ?? 0;
@@ -163,11 +202,14 @@ public partial class SubjectsPage : UserControl, IPage
         {
             var current = v.Courses.Any(c => c.Term == term);
             var codes = string.Join(", ", v.Courses.Select(c => c.Code.Split('_')[0]).Distinct());
-            return new SubjectRow(v.Name, string.Join(", ", new[] { codes, L.F("subjects.docs", v.Files) }.Where(x => x.Length > 0)),
-                L.T(current ? "subjects.current" : "subjects.past"), current, v.Courses);
+            // Chưa quét xong thì chưa ghi số tài liệu (không ghi "0 tài liệu" sai).
+            var docs = scan is null ? "" : L.F("subjects.docs", v.Files);
+            return new SubjectRow(v.Name, string.Join(", ", new[] { codes, docs }.Where(x => x.Length > 0)),
+                L.T(current ? "subjects.current" : "subjects.past"), current, v.Courses, scan is null ? null : v.Files);
         }).OrderByDescending(r => r.Current).ThenBy(r => r.Name, StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true)).ToList();
         _rows = rows;
         ShowList();
+        SelectWanted();
     }
 
     private void OnFilter(object sender, TextChangedEventArgs e)
@@ -179,13 +221,19 @@ public partial class SubjectsPage : UserControl, IPage
     private void ShowList()
     {
         var q = Filter.Text.Trim();
-        var rows = q.Length == 0 ? _rows : _rows.Where(r => r.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase) || r.Meta.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+        // Lọc bỏ dấu: gõ "giai tich" vẫn ra "Giải tích 2", tên NFD trên đĩa cũng khớp.
+        var rows = q.Length == 0 ? _rows : _rows.Where(r => NameMatch.ContainsFolded(r.Name, q) || NameMatch.ContainsFolded(r.Meta, q)).ToList();
         var keep = _subject?.Name;
         List.ItemsSource = Grids.Grouped(rows, nameof(SubjectRow.Group));
-        if (rows.FirstOrDefault(r => r.Name == keep) is { } same) List.SelectedItem = same;
+        if (rows.FirstOrDefault(r => NameMatch.Same(r.Name, keep)) is { } same) List.SelectedItem = same;
         else if (rows.Count > 0 && q.Length > 0) List.SelectedItem = rows[0];
         else if (List.SelectedItem is null && rows.Count > 0) List.SelectedItem = rows[0];
     }
+
+    // ------------------------------------------------------------------ chi tiết môn, tab tải lười
+
+    /// <summary>Tab đã dựng cho môn đang chọn; tab khác chỉ dựng khi người dùng mở (đỡ quét thư mục, đỡ dựng bảng không ai xem).</summary>
+    private readonly HashSet<int> _filled = [];
 
     private void OnPick(object sender, SelectionChangedEventArgs e)
     {
@@ -196,39 +244,95 @@ public partial class SubjectsPage : UserControl, IPage
         LmsButton.IsEnabled = DownloadButton.IsEnabled = s.Courses.Count > 0;
         _root = Config.Str("folders.subjects", "Môn học") + "/" + s.Name;
         if (changed) _dir = _root;
-        LoadDir();
+        _filled.Clear();   // môn khác, hay dữ liệu mới (danh sách dựng lại): tab nào mở thì dựng lại tab đó
+        ShowMeta(s);
+        UpdateLibraryTab(s);
+        FillTab();
+    }
 
+    private void OnTab(object sender, SelectionChangedEventArgs e)
+    {
+        // SelectionChanged của DataGrid bên trong cũng nổi bọt lên đây: chỉ nghe của chính TabControl.
+        if (!ReferenceEquals(e.OriginalSource, Tabs)) return;
+        FillTab();
+    }
+
+    /// <summary>Dựng tab đang chọn nếu chưa dựng cho môn này.</summary>
+    private void FillTab()
+    {
+        if (_subject is not { } s || Tabs.SelectedIndex < 0 || !_filled.Add(Tabs.SelectedIndex)) return;
         var st = _host.State;
         // Môn chỉ có tài liệu trên máy (không có lớp LMS) thì các tab LMS nói rõ vậy, không để bảng trống.
         var onLms = s.Courses.Count > 0;
-        Due.Show(st.Timeline.Where(x => x.Subject.StartsWith(s.Name, StringComparison.OrdinalIgnoreCase) && x.Time > Format.Now - 86400
-                                        && x.Time < Format.Now + 60 * 86400 && x.Kind != "class").ToList(), L.T("subjects.dueEmpty"), st, Src.Lms, Src.Mybk);
-        var books = (st.Lms?.Grades ?? []).Where(b => b.Subject.Equals(s.Name, StringComparison.OrdinalIgnoreCase));
-        Grades.Show(books.SelectMany(b => b.Items.Select(i => new GradeRow(b.Part ?? L.T("common.theory"), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? "",
-            i.Kind is "course" or "category"))).ToList(), L.T(onLms ? "subjects.gradesEmpty" : "subjects.notOnLms"), st, Src.Lms);
-        Courses.Show(s.Courses.OrderByDescending(c => c.Term).Select(c => new CourseRow(c.Term, c.Part ?? L.T("common.theory"), c.Code, c.Teacher, c.Url, c.Id, c)).ToList(),
-            L.T("subjects.notOnLms"), st, Src.Lms);
+        switch (Tabs.SelectedIndex)
+        {
+            case 0: _ = LoadDirAsync(); break;
+            case 1: _ = LoadRecentAsync(s); break;
+            case 2:
+                // Mọi mốc sắp tới (không cắt ở 60 ngày, DESIGN 6b-3) và hạn LMS đã qua mà chưa làm (cột Còn ghi "quá hạn").
+                Due.Show(st.Timeline.Where(x => Mine(x, s) && (x.Time > Format.Now - 86400 || x.Overdue) && x.Kind != "class").ToList(),
+                    L.T("subjects.dueEmpty"), st, Src.Lms, Src.Mybk);
+                break;
+            case 3:
+                News.Show((st.Lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name))
+                    .OrderByDescending(a => a.Time).Select(a => new NewsRow2(a.Title, a.Author ?? "", a.Forum, a.Time, a.Url ?? "")).ToList(),
+                    L.T(onLms ? "subjects.newsEmpty" : "subjects.notOnLms"), st, Src.Lms);
+                break;
+            case 4:
+                Grades.Show(Books(s).SelectMany(b => b.Items.Select(i => new GradeRow(b.Part ?? L.T("common.theory"), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? "",
+                    i.Kind is "course" or "category"))).ToList(), L.T(onLms ? "subjects.gradesEmpty" : "subjects.notOnLms"), st, Src.Lms);
+                break;
+            case 5:
+                Courses.Show(s.Courses.OrderByDescending(c => c.Term).Select(c => new CourseRow(c.Term, c.Part ?? L.T("common.theory"), c.Code, c.Teacher, c.Url, c.Id, c)).ToList(),
+                    L.T("subjects.notOnLms"), st, Src.Lms);
+                break;
+            case LibraryTabIndex: _ = LoadLibraryAsync(s); break;
+        }
+    }
 
-        var recent = Documents.SubjectFiles(s.Name, 200);
-        Recent.Show((recent["files"] as JsonArray ?? []).OfType<JsonObject>().Select(x => new RecentRow(
-            x["name"]!.GetValue<string>(), x["folder"]?.GetValue<string>() is { } fd && fd != "." ? fd : "",
-            x["path"]!.GetValue<string>(), x["size"]?.GetValue<long>() ?? 0, x["modified"]?.GetValue<long>() ?? 0)).ToList(), L.T("subjects.recentEmpty"));
-        News.Show((st.Lms?.Announcements ?? []).Where(a => a.Subject.Equals(s.Name, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(a => a.Time).Select(a => new NewsRow2(a.Title, a.Author ?? "", a.Forum, a.Time, a.Url ?? "")).ToList(),
-            L.T(onLms ? "subjects.newsEmpty" : "subjects.notOnLms"), st, Src.Lms);
+    private IEnumerable<LmsGradeBook> Books(SubjectRow s) => (_host.State.Lms?.Grades ?? []).Where(b => NameMatch.Same(b.Subject, s.Name));
 
-        // Thông tin nhanh: mã môn · số tài liệu · mốc gần nhất · tổng điểm LMS.
-        var next = st.Timeline.FirstOrDefault(x => x.Subject.StartsWith(s.Name, StringComparison.OrdinalIgnoreCase) && x.Time > Format.Now && !x.Done && x.Kind != "class");
-        var total = books.SelectMany(b => b.Items).FirstOrDefault(i => i.Kind == "course" && i.Grade is not null);
+    /// <summary>Tab Mới cập nhật: quét cả cây thư mục môn trên thread pool (có cache), bảng hiện "đang đọc" trong lúc chờ.</summary>
+    private async Task LoadRecentAsync(SubjectRow s)
+    {
+        Recent.ShowStatus(DataState.Loading, L.T("subjects.scanning"));
+        try
+        {
+            var recent = await Documents.SubjectFilesAsync(s.Name, 200);
+            if (!ReferenceEquals(_subject, s)) return;   // đã chọn môn khác trong lúc quét
+            Recent.Show((recent["files"] as JsonArray ?? []).OfType<JsonObject>().Select(x => new RecentRow(
+                x["name"]!.GetValue<string>(), x["folder"]?.GetValue<string>() is { } fd && fd != "." ? fd : "",
+                x["path"]!.GetValue<string>(), x["size"]?.GetValue<long>() ?? 0, x["modified"]?.GetValue<long>() ?? 0)).ToList(), L.T("subjects.recentEmpty"));
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            Log.Warn($"Quét tài liệu {s.Name}: {e.Message}");
+            if (ReferenceEquals(_subject, s)) Recent.ShowStatus(DataState.Error, L.T("subjects.scanFailed"));
+        }
+    }
+
+    /// <summary>Thông tin nhanh: mã môn, số tài liệu (từ lần quét danh sách), mốc gần nhất, tổng điểm LMS.</summary>
+    private void ShowMeta(SubjectRow s)
+    {
+        var st = _host.State;
+        var next = st.Timeline.FirstOrDefault(x => Mine(x, s) && x.Time > Format.Now && !x.Done && x.Kind != "class");
+        var total = Books(s).SelectMany(b => b.Items).FirstOrDefault(i => i.Kind == "course" && i.Grade is not null);
         SubjectMeta.Text = string.Join(", ", new[]
         {
             string.Join(", ", s.Courses.Select(c => c.Code.Split('_')[0]).Distinct()),
-            L.F("subjects.docs", recent["total"]?.GetValue<int>() ?? 0),
-            // Tên đã mở đầu bằng loại (vd. "Quiz 3: …") thì bỏ chữ loại để khỏi lặp "Quiz Quiz 3".
+            s.Files is { } n ? L.F("subjects.docs", n) : "",
+            // Tên đã mở đầu bằng loại (vd. "Quiz 3: ...") thì bỏ chữ loại để khỏi lặp "Quiz Quiz 3".
             next is null ? "" : L.F("subjects.next", next.Name.StartsWith(next.KindName, StringComparison.CurrentCultureIgnoreCase) ? "" : next.KindName, next.Name, next.Left).Trim(),
             total is null ? "" : L.F("subjects.lmsScore", Format.Score(total.Grade), Format.Score(total.Max)),
         }.Where(x => x.Length > 0));
     }
+
+    /// <summary>
+    /// Mốc thuộc môn đang chọn: mốc LMS khớp theo id lớp, mốc khác (lịch thi MyBK) khớp đúng tên môn sau khi chuẩn hóa.
+    /// Không dùng StartsWith(tên môn): "Giải tích 1" khớp nhầm cả mốc của "Giải tích 12".
+    /// </summary>
+    private static bool Mine(TimelineItem x, SubjectRow s) =>
+        x.Course is { } id ? s.Courses.Any(c => c.Id == id) : NameMatch.SubjectIs(x.Subject, s.Name);
 
     // ------------------------------------------------------------------ download theo mục
 
@@ -246,17 +350,35 @@ public partial class SubjectsPage : UserControl, IPage
     {
         if (_host.Hub.Get("lms") is not SoHocTap.Sources.Lms.LmsSource lms) return;
         new DownloadWindow(lms, c) { Owner = Window.GetWindow(this) }.ShowDialog();
-        LoadDir();
-        if (_subject is not null) OnPick(this, null!);
+        // Có thể vừa thêm tệp: dựng lại tab đang mở và số tài liệu (cache theo mtime tự biết thư mục đã đổi).
+        _filled.Clear();
+        FillTab();
+        Load();
     }
 
     // ------------------------------------------------------------------ tài liệu
 
-    private void LoadDir()
+    private int _dirGen;
+
+    /// <summary>Một tầng thư mục, đọc trên thread pool (ổ mạng, ổ USB chậm không làm đứng UI); bảng hiện "đang đọc" nếu lâu.</summary>
+    private async Task LoadDirAsync()
     {
-        var d = Documents.ListDir(_dir);
-        PathText.Text = _dir.Replace('/', '\\');
-        UpButton.IsEnabled = !_dir.Equals(_root, StringComparison.OrdinalIgnoreCase);
+        var gen = ++_dirGen;
+        var dir = _dir;
+        PathText.Text = dir.Replace('/', '\\');
+        UpButton.IsEnabled = !dir.Equals(_root, StringComparison.OrdinalIgnoreCase);
+        var task = Task.Run(() => Documents.ListDir(dir));
+        // Đọc nhanh (thường vài ms) thì không chớp chữ "đang đọc".
+        if (await Task.WhenAny(task, Task.Delay(150)) != task && gen == _dirGen) Files.ShowStatus(DataState.Loading, L.T("subjects.scanning"));
+        JsonObject d;
+        try { d = await task; }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            Log.Warn($"Đọc thư mục {dir}: {e.Message}");
+            if (gen == _dirGen) Files.ShowStatus(DataState.Error, L.T("subjects.scanFailed"));
+            return;
+        }
+        if (gen != _dirGen) return;   // đã đi sang thư mục khác
         if (d["missing"] is not null) { Files.Show(null, L.T("subjects.filesEmpty")); return; }
         var rows = (d["dirs"] as JsonArray ?? []).OfType<JsonObject>().Select(x => new FileRow(x["name"]!.GetValue<string>(), true, L.T("files.folder"), 0, 0, x["count"]?.GetValue<int>() ?? 0))
             .Concat((d["files"] as JsonArray ?? []).OfType<JsonObject>().Select(x => new FileRow(x["name"]!.GetValue<string>(), false,
@@ -268,7 +390,7 @@ public partial class SubjectsPage : UserControl, IPage
 
     private void OpenFile(FileRow f)
     {
-        if (f.Dir) { _dir = Full(f); LoadDir(); }
+        if (f.Dir) { _dir = Full(f); _ = LoadDirAsync(); }
         else if (!Documents.Open(Full(f))) _main.Say(L.F("common.cantOpen", f.Name));
     }
 
@@ -283,7 +405,7 @@ public partial class SubjectsPage : UserControl, IPage
     {
         if (_dir.Equals(_root, StringComparison.OrdinalIgnoreCase)) return;
         _dir = _dir[.._dir.LastIndexOf('/')];
-        LoadDir();
+        _ = LoadDirAsync();
     }
 
     private void OnReveal(object sender, RoutedEventArgs e)

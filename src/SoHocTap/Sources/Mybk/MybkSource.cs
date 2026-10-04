@@ -39,21 +39,46 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
     {
         var d = MybkStore.Read();
         var signedIn = Session.Get()?["signedIn"] is JsonValue v && v.TryGetValue<bool>(out var on) ? on : File.Exists(DataFile);
-        return new SourceStatus(runner() is not null && signedIn, d is { SyncedAt: > 0 } ? d.SyncedAt : null, d?.Student.Name);
+        return new SourceStatus(runner() is not null && signedIn, MybkStore.SyncedAt(), d?.Student.Name);
     }
 
     public JsonNode? Data() => JsonStore.Read(DataFile);
+
+    public void Flush() => MybkStore.Flush();
 
     public async Task SyncAsync(Action<string> log, bool force, CancellationToken ct)
     {
         var browser = runner() ?? throw new InvalidOperationException("Cần mở app để đồng bộ MyBK.");
         var api = Config.Node("sources.mybk.api") as JsonObject ?? throw new InvalidOperationException("Thiếu sources.mybk.api trong cấu hình.");
         // Bản đã lưu: phần nào lần này không đọc được thì giữ phần của lần trước, không ghi đè bằng danh sách rỗng.
-        var prev = JsonStore.Read(DataFile) as JsonObject;
+        var prev = MybkStore.Latest() is { Count: > 0 } latest ? latest : null;
         var special = Config.Map("sources.mybk.specialScores");
+        // Đăng ký môn chỉ tải lại mỗi ngày một lần (xem dưới): biết trước để tiến độ đếm đúng số bước.
+        // Đồng bộ bấm tay (force, vd. "Đồng bộ lại") thì luôn đọc lại, kẻo đợt đăng ký mới mở phải chờ tới hôm sau.
+        var regAt = MybkNormalize.Long(prev?["registrationAt"]) ?? 0;
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var regCached = !force && prev?["registration"] is JsonArray { Count: > 0 } && now - regAt < 86400;
 
-        log(SyncSignal.Step("sync.mybk.open", 0, 4));
-        var first = await RunAsync(browser, api, ["info", "semesters"], new(), log, ct);
+        // Tiến độ: 1 mỗi API, trang đăng ký môn 2. Lúc đầu (mở MyBK, có thể phải qua SSO) chưa biết bao lâu nên thanh vô định
+        // tới khi API đầu tiên trả về.
+        string[] first2 = ["info", "semesters"], study = ["schedule", "exams", "gradesCourses", "gradesTerms", "curriculumInfo", "curriculum"],
+            more = ["components", "decisions", "socialWork", "fees", "registered"];
+        var calls = first2.Concat(study).Concat(more).ToList();
+        var plan = new SyncPlan().Add("sync.mybk.open", weight: null);
+        foreach (var n in calls) plan.Add("mybk:" + n);
+        if (!regCached) plan.Add("sync.mybk.registration", 2);
+        void Report(SyncProgress p) => log(SyncSignal.Progress(p));
+        var doneCalls = 0;
+        void OnEach(string name)
+        {
+            doneCalls++;
+            plan.SetWeight("sync.mybk.open", 0);
+            var next = calls.IndexOf(name) + 1;
+            if (next > 0 && next < calls.Count) Report(plan.Enter("mybk:" + calls[next], "sync.mybk.api", Math.Min(doneCalls + 1, calls.Count), calls.Count));
+            else Report(plan.Advance(1, doneCalls, calls.Count));
+        }
+        Report(plan.Enter("sync.mybk.open"));
+        var first = await RunAsync(browser, api, first2, new(), log, OnEach, ct);
         var info = first.GetValueOrDefault("info") as JsonObject;
         if (info?["id"] is null) throw new SyncException(SyncErrorKind.Data, "Không đọc được thông tin sinh viên từ MyBK.");
         var sems = first.GetValueOrDefault("semesters") as JsonArray ?? [];
@@ -71,11 +96,9 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         Dictionary<string, JsonNode?> got = [], extra = [];
         try
         {
-            log(SyncSignal.Step("sync.mybk.study", 1, 4));
-            got = await RunAsync(browser, api, ["schedule", "exams", "gradesCourses", "gradesTerms", "curriculumInfo", "curriculum"], args, log, ct);
+            got = await RunAsync(browser, api, study, args, log, OnEach, ct);
             // Mấy API đọc dò ra từ source trang MyBK (01/10/2026): điểm thành phần, quyết định học vụ, ngày CTXH, khoản phí. Lỗi thì bỏ qua.
-            log(SyncSignal.Step("sync.mybk.extra", 2, 4));
-            extra = await RunAsync(browser, api, ["components", "decisions", "socialWork", "fees", "registered"], args, log, ct);
+            extra = await RunAsync(browser, api, more, args, log, OnEach, ct);
         }
         catch (Exception e) when (got.Count > 0 && !ct.IsCancellationRequested)
         {
@@ -93,10 +116,8 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         var output = Build(info, sem, cur, got, extra, prev, special);
         // Đăng ký môn là trang HTML riêng nên để cuối cùng (WebView ẩn phải rời /app). Trang này nằm trên hệ thống đăng ký môn,
         // hay quá tải vào đợt đăng ký, nên chỉ tải lại mỗi ngày một lần; giữa chừng dùng bản đã lưu.
-        var regAt = MybkNormalize.Long(prev?["registrationAt"]) ?? 0;
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         // Danh sách rỗng không giữ cả ngày: có thể là lần đọc trước bị lỗi (ví dụ rơi vào trang khác), thử lại ở lần đồng bộ sau.
-        if (prev?["registration"] is JsonArray { Count: > 0 } cached && now - regAt < 86400)
+        if (regCached && prev?["registration"] is JsonArray cached)
         {
             output["registration"] = cached.DeepClone();
             output["registrationAt"] = regAt;
@@ -105,7 +126,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         {
             try
             {
-                log(SyncSignal.Step("sync.mybk.registration", 3, 4));
+                Report(plan.Enter("sync.mybk.registration"));
                 var html = await browser.PageAsync(Config.Str("sources.mybk.registration"), ct, "Đợt Đăng ký");
                 var rounds = ParseRegistration(html);
                 // Trang không có bảng đợt đăng ký (cột "Đợt Đăng ký") là đã mở nhầm trang: báo, giữ bản cũ, không lưu danh sách rỗng.
@@ -124,6 +145,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         }
         MybkStore.Write(output);
         log($"Xong: {output["schedule"]!.AsArray().Count} buổi học, {output["exams"]!.AsArray().Count} lịch thi, {output["grades"]!.AsArray().Count} môn có điểm");
+        Report(plan.Finish());
     }
 
     /// <summary>
@@ -165,7 +187,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
 
     /// <summary>Gọi các API theo tên trong config, điền sẵn {id} {mssv} {sem} {year} {term}. Request POST gửi MSSV làm body.</summary>
     private static async Task<Dictionary<string, JsonNode?>> RunAsync(IBrowserRunner browser, JsonObject api, string[] names,
-        Dictionary<string, string> args, Action<string> log, CancellationToken ct)
+        Dictionary<string, string> args, Action<string> log, Action<string> onEach, CancellationToken ct)
     {
         var baseUrl = Config.Str("sources.mybk.site").TrimEnd('/') + "/api/";
         string Fill(string s) => args.Aggregate(s, (acc, kv) => acc.Replace("{" + kv.Key + "}", kv.Value));
@@ -176,7 +198,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
                 JsonSerializer.Serialize(Fill(o["body"]?.GetValue<string>() ?? "{mssv}"))),
             _ => throw new InvalidOperationException($"Cấu hình API MyBK sai: {n}"),
         }).ToList();
-        var res = await browser.FetchAsync(reqs, ct);
+        var res = await browser.FetchAsync(reqs, ct, onEach);
         var output = new Dictionary<string, JsonNode?>();
         foreach (var n in names)
         {

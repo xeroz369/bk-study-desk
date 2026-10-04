@@ -2,11 +2,68 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.7.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.10.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.10] - 2026-10-04
+
+### Added
+
+- **Settings** > **Text**: change the font and text size.
+
+### Fixed
+
+- MyBK no longer signs you out after about 8 hours.
+- **Upcoming** lists everything ahead, not just 14 days. Overdue unfinished work sits in an **Overdue** group.
+- Deadlines with a group code (L01...) are no longer hidden when the app cannot read your groups.
+- Class times written like "7g30" now show correctly in the week grid.
+- Dates and times always follow Vietnam time.
+- The status bar no longer says "Updated to ..." after an update.
+- Truncated text shows the full text in a tooltip.
+- Large text no longer cuts off table columns or the version in the status bar.
+
+## [1.1.9] - 2026-10-03
+
+### Added
+
+- Shared study **Library** (BK Study Library), **off by default until the library opens**. Turn it on in **Settings** > **Library** and the **Subjects** page gets a **Library** tab for courses whose code matches: material grouped by type, with filters for teacher, term and exam type. Each item offers **Open on the web**, **Download** (to the course's `Thư viện` folder, checked before saving, never overwriting your files), **Add to Practice** for quiz packs, and **Copy link**. A **Contribute material** button opens the contribution page on the web. Items removed from the library are hidden and the app deletes the copy it downloaded.
+
+### Changed
+
+- Downloading an update shows a progress bar with the real percentage and the amount downloaded (e.g. "Downloading version 1.2.0... 42% (12.3/29.1 MB)"), in the update window, **Settings** > **Updates** and the status bar (also when **Automatic** mode downloads in the background). The bar never moves backwards and only fills up once the package is downloaded and checked. There is a **Cancel download** button.
+- Installing an update no longer shows Velopack's English "Installing Update" window with its endless bar. The app says "Installing version ..., the app will reopen in a few seconds" in the status bar, then reopens by itself.
+- The sync progress bar keeps the percentage reached while a step takes long, instead of switching to a back-and-forth bar.
+
+### Fixed
+
+- **Calendar** > **Timetable**: the current time line disappeared in the evening or early morning, because the grid only spanned your earliest to latest class ([#25](https://github.com/xeroz369/bk-study-desk/issues/25)). The grid now always covers 0:00 to 24:00 and scrolls to your earliest class, or to the current time when it is out of view.
+- **Calendar** and **Today**: deadlines and quizzes set more than 120 days ahead on LMS now show too (the app used to read the LMS calendar only 120 days ahead). **Today** lists every LMS announcement from the last 7 days, matching the **LMS announcements (7 days)** count (it used to stop at 8).
+- MyBK sometimes failed to sync with "no response after 45 seconds (at .../my/homeSSO.action)" while the school server was fine. It happened when the MyBK session had expired and the app had to sign in again through SSO.
+
+## [1.1.8] - 2026-10-03
+
+### Added
+
+- **Calendar** > **Timetable** grid: an accent-coloured line marks the current time in today's column ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)).
+- **Add event...** on the **Calendar** page: add your own events or makeup classes ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)). Type one line such as "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" and the form fills itself. Your events show in the week grid (dashed border), **Upcoming**, **Today**, the .ics export, and get a reminder about an hour before. Right-click to edit, delete or copy. Stored only on your computer.
+- **Settings** > **Updates**: choose how often to check for a new version (6, 12 or 24 hours).
+
+### Changed
+
+- The sync progress bar shows real progress step by step (e.g. "LMS: Đang tải tệp 2/5 (Giải tích 2)..."), never moves backwards, and doesn't flash for short syncs.
+- A sync with nothing new writes no files, redraws nothing and sends no notification. Due-date reminders are not repeated, even after restarting the app.
+- The **Subjects** page opens faster: folders are scanned in the background and only the open tab is loaded; junk files and hidden folders (`.history`, `~$...`, `desktop.ini`...) are skipped.
+- The **About** button is icon only.
+- Checks for a new version every 6 hours (was 24), and when the PC wakes up or the network returns. **Automatic** mode installs a downloaded update the next time the app starts; the status bar then says "Updated to ...".
+
+### Fixed
+
+- When LMS updated a file whose content matched a file you had saved elsewhere in the course folder, the app could move **your file** to `_Lưu trữ\Bản cũ`. The app now only replaces files inside `Tài liệu LMS`.
+- Course names with accents stored in a different Unicode form (common for folders created on another computer) didn't match the LMS course.
+- A course's **Upcoming** tab could show deadlines of another course whose name started the same way.
 
 ## [1.1.7] - 2026-10-03
 
@@ -103,7 +160,7 @@ An experimental release: most of the code has been reorganised to make features 
 
 ## [1.1.2] - 2026-10-03 [YANKED]
 
-Withdrawn because this build had a support section inside the app. All changes moved to 1.1.3.
+Withdrawn. All changes moved to 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 
@@ -192,7 +249,10 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...HEAD
+[1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10
+[1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
+[1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5

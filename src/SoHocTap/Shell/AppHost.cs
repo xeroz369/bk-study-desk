@@ -32,6 +32,8 @@ internal sealed class AppHost : IDisposable
     public UpdateService Updates { get; } = new();
     public ApiRouter Router { get; }
     public AppState State { get; }
+    /// <summary>Thư viện tài liệu chung (tắt mặc định; bật trong Cài đặt). Không gọi mạng khi tắt.</summary>
+    public SoHocTap.Library.LibraryService Library { get; } = new();
 
     /// <summary>Tiến độ login (stage, message), window chính hiện lên InfoBar.</summary>
     public event Action<string, string>? LoginProgress;
@@ -57,12 +59,16 @@ internal sealed class AppHost : IDisposable
         _notifier = new DeadlineNotifier((t, b, p) => _ui.InvokeAsync(() => _tray.Show(t, b, p)));
         _notifyTimer.Tick += (_, _) => _notifier.Check();
 
-        // Thoát để cài bản mới (Velopack thoát ngay, không qua Dispose): dọn icon khay để không còn icon "ma", dừng đồng bộ.
-        Updates.Restarting += () => _ui.Invoke(() => { _tray.Dispose(); Hub.Dispose(); });
+        // Update.exe đã chạy và đang đợi app thoát: báo tiếng Việt rồi thoát êm (qua Dispose: dọn icon khay, dừng đồng bộ, lưu cửa sổ).
+        Updates.Restarting += version => _ui.InvokeAsync(() => ExitForUpdateAsync(version));
         Hub.Changed += (name, stage) => _ui.InvokeAsync(() =>
         {
-            if (stage is "done" or "data") State.Reload();
+            // Lượt không có gì mới, hay vừa bắt đầu khi đã có dữ liệu: chỉ thanh trạng thái và InfoBar, không đọc lại, không vẽ lại trang.
+            // Chưa có dữ liệu thì bắt đầu đồng bộ phải vẽ lại trang để bảng trống nói "đang tải lần đầu".
+            if (stage == "done" && Hub.Quiet(name)) State.RefreshStatusOnly();
+            else if (stage is "done" or "data") State.Reload();
             else if (stage == "progress") State.RefreshProgress();   // chỉ cập nhật thanh trạng thái, không vẽ lại các trang
+            else if (stage == "start" && State.SyncedAt(name) is not null) State.RefreshStatusOnly();
             else State.RefreshStatus();
             if (name == "mybk" && stage == "done")
             {
@@ -85,6 +91,7 @@ internal sealed class AppHost : IDisposable
         _notifyTimer.Start();
         StartUpdates();
         StartKeepAlive();
+        StartLibrary();
         // Có mạng lại hay máy vừa thức dậy: chạy ngay một lượt scheduler (nguồn nào tới hạn thì sync), không đợi tới tick kế.
         System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += OnNetworkChanged;
         Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
@@ -95,6 +102,7 @@ internal sealed class AppHost : IDisposable
         if (!e.IsAvailable) return;
         Log.Debug("Có mạng lại, kiểm tra nguồn tới hạn");
         Hub.RunDueSoon(TimeSpan.FromSeconds(15));
+        CheckUpdatesSoon(TimeSpan.FromSeconds(20));
     }
 
     private void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
@@ -103,14 +111,15 @@ internal sealed class AppHost : IDisposable
         Log.Debug("Máy thức dậy, kiểm tra nguồn tới hạn");
         // Wi-Fi thường mất vài chục giây mới nối lại sau khi thức dậy; chưa có mạng thì RunDue tự bỏ lượt, NetworkChange gọi lại sau.
         Hub.RunDueSoon(TimeSpan.FromSeconds(30));
+        CheckUpdatesSoon(TimeSpan.FromSeconds(45));
     }
 
     private DateTime _ssoAliveAt = DateTime.MinValue;   // lần cuối biết chắc phiên SSO còn (đăng nhập, giữ phiên)
     private bool _ssoExpired;                           // đã thấy phiên hết: thôi giữ phiên cho tới khi đăng nhập lại
 
     /// <summary>
-    /// Giữ phiên SSO khi app đang mở (kể cả ẩn ở khay): SSO của trường tự hủy phiên sau vài giờ không dùng dù cookie còn hạn,
-    /// nên cứ sso.keepAliveMinutes phút (mặc định 60) đi qua cổng SSO một lần bằng WebView ẩn: 1 lượt GET chỉ đọc.
+    /// Giữ phiên SSO khi app đang mở (kể cả ẩn ở khay): SSO của trường tự hủy phiên để lâu không dùng dù cookie còn hạn
+    /// (giới hạn thật đang đo, xem <see cref="SsoSession"/>), nên cứ sso.keepAliveMinutes phút (mặc định 60) đi qua cổng SSO một lần bằng WebView ẩn: 1 lượt GET chỉ đọc.
     /// 0 = tắt (Cài đặt). Kiểm tra mỗi 5 phút để sau khi máy thức dậy thì làm ngay. Phiên đã hết thì đồng bộ MyBK một lần
     /// để app báo "cần đăng nhập lại" thay vì vẫn ghi là đã đăng nhập.
     /// </summary>
@@ -146,8 +155,9 @@ internal sealed class AppHost : IDisposable
                 break;
             case false:
                 _ssoExpired = true;
-                // Ghi cả mức Info: biết phiên SSO thật sự sống bao lâu (cookie còn mà server đã hủy).
-                Log.Info($"Phiên SSO đã hết hạn trên server (lần cuối còn phiên: {since} trước)");
+                // Ghi mức Info (một lần mỗi phiên): biết phiên SSO thật sự sống bao lâu (cookie còn mà server đã hủy).
+                SsoSession.Expired();
+                Log.Debug($"Giữ phiên SSO: hết phiên (lần trước còn phiên {since} trước)");
                 Hub.Start("mybk", force: true);   // MyBK báo "phiên hết hạn" → thanh báo mời đăng nhập lại
                 break;
         }
@@ -166,7 +176,7 @@ internal sealed class AppHost : IDisposable
             _ = Task.Run(async () =>
             {
                 if (await Updates.CheckAsync(manual: true, default) is null) { Log.Info("update-now: không có bản mới"); return; }
-                if (await Updates.DownloadAsync(userAsked: true, null, default)) Updates.ApplyAndRestart();
+                if (await Updates.DownloadAsync(userAsked: true, default)) Updates.ApplyAndRestart();
             });
             return;
         }
@@ -174,18 +184,86 @@ internal sealed class AppHost : IDisposable
         {
             await Task.Delay(TimeSpan.FromSeconds(60));
             using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
+            do await UpdateTickAsync();
+            while (await timer.WaitForNextTickAsync());
+        });
+    }
+
+    /// <summary>Một lượt kiểm tra cập nhật: tới hạn (app.update.checkHours) thì hỏi nguồn; chế độ tự động thì tải sẵn.</summary>
+    private async Task UpdateTickAsync()
+    {
+        try
+        {
+            if (!Updates.Due()) return;
+            var offer = await Updates.CheckAsync(manual: false, default);
+            // Chế độ tự động: tải sẵn, cài lúc app thoát hẳn (Dispose, ApplyOnExit) hoặc lúc mở app lần sau (Program, ApplyOnStartup).
+            if (offer is not null && UpdateService.Mode == UpdateMode.Auto && UpdateService.CanSelfUpdate)
+                await Updates.DownloadAsync(userAsked: false, default);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Vòng kiểm tra cập nhật: {e.Message}"); }
+    }
+
+    /// <summary>
+    /// Sau khi Update.exe (silent) đã chạy: câu "Đang cài bản x.y.z, app sẽ tự mở lại sau vài giây" ở thanh trạng thái (MainWindow nghe
+    /// Restarting), thêm thông báo khay nếu cửa sổ đang ẩn; đợi một chút cho người dùng đọc rồi thoát hẳn. Update.exe chỉ đợi app thoát
+    /// 60 giây, nên nếu thoát êm bị kẹt thì 30 giây sau thoát cứng.
+    /// </summary>
+    private async Task ExitForUpdateAsync(string version)
+    {
+        if (!_main.IsVisible) _tray.Show(AppInfo.Name, L.F("update.installing", version), "");
+        _ = Task.Delay(TimeSpan.FromSeconds(30)).ContinueWith(_ =>
+        {
+            Log.Warn("Thoát để cài bản mới quá 30 giây, thoát cứng");
+            Environment.Exit(0);
+        }, TaskScheduler.Default);
+        await Task.Delay(UpdateService.ExitNoticeDelay);
+        // Cửa sổ khác (cửa sổ cập nhật đang mở dạng hộp thoại, cửa sổ trường...) đóng trước, rồi mới đóng cửa sổ chính.
+        foreach (var w in Application.Current.Windows.OfType<Window>().Where(w => w != _main).ToList())
+        {
+            try { w.Close(); }
+            catch (InvalidOperationException e) { Log.Warn($"Đóng cửa sổ trước khi cài bản mới: {e.Message}"); }   // cửa sổ đang tự đóng
+        }
+        ((MainWindow)_main).Exit();
+    }
+
+    private DateTimeOffset? _wakeUpdateCheck;
+    private readonly object _wakeGate = new();
+
+    /// <summary>
+    /// Máy thức dậy hay có mạng lại: vòng mỗi giờ có thể đã lỡ (máy ngủ cả đêm), nên kiểm tra luôn nếu đã tới hạn. Tối đa mỗi giờ một lần
+    /// (Wi-Fi chập chờn bắn sự kiện liên tục); chờ một chút cho mạng ổn định.
+    /// </summary>
+    private void CheckUpdatesSoon(TimeSpan delay)
+    {
+        if (!UpdateService.Supported) return;
+        // NetworkChange bắn trên thread pool, PowerModeChanged trên thread của SystemEvents: khóa để hai sự kiện liền nhau chỉ chạy một lượt.
+        lock (_wakeGate)
+        {
+            if (!UpdatePolicy.WakeCheckAllowed(_wakeUpdateCheck, DateTimeOffset.UtcNow)) return;
+            _wakeUpdateCheck = DateTimeOffset.UtcNow;
+        }
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(delay);
+            await UpdateTickAsync();
+        });
+    }
+
+    /// <summary>
+    /// Thư viện: đọc index (cache trước, tới hạn thì hỏi mạng) lúc mở app rồi mỗi giờ xem đã quá một ngày chưa.
+    /// Tắt thì RefreshAsync không làm gì. Mở tab Thư viện cũng làm mới (SubjectsPage).
+    /// </summary>
+    private void StartLibrary()
+    {
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
             do
             {
-                try
-                {
-                    if (!Updates.Due()) continue;
-                    var offer = await Updates.CheckAsync(manual: false, default);
-                    // Chế độ tự động: tải sẵn, cài lúc app thoát hẳn (Dispose → ApplyOnExit).
-                    if (offer is not null && UpdateService.Mode == UpdateMode.Auto && UpdateService.CanSelfUpdate)
-                        await Updates.DownloadAsync(userAsked: false, null, default);
-                }
-                catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Vòng kiểm tra cập nhật: {e.Message}"); }
-            } while (await timer.WaitForNextTickAsync());
+                try { await Library.RefreshAsync(SoHocTap.Library.LibraryRefresh.IfDue); }
+                catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Thư viện: {e.Message}"); }
+            }
+            while (await timer.WaitForNextTickAsync());
         });
     }
 
@@ -237,6 +315,7 @@ internal sealed class AppHost : IDisposable
         }
         // Xóa cookie lỗi (WebView2 runtime hỏng…) thì vẫn ghi là đã đăng xuất: token LMS đã xóa, MyBK không chạy nữa.
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Đăng xuất: không xóa được cookie WebView2", e); }
+        SsoSession.Forget();
         OnLogin("logout", "");
     });
 
@@ -276,5 +355,6 @@ internal sealed class AppHost : IDisposable
         _tray.Dispose();
         Hub.Dispose();
         _mybk.Dispose();
+        Library.Dispose();
     }
 }

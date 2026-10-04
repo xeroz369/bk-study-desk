@@ -47,6 +47,13 @@ public static class UpdatePolicy
         || (Path.IsPathFullyQualified(src) && !src.Contains("://", StringComparison.Ordinal) && dirExists(src));
 
     /// <summary>
+    /// http://127.0.0.1:&lt;cổng&gt;/ (chỉ máy này): nguồn thử cho bản cài thử, để phát gói chậm trên máy
+    /// có chủ đích và xem thanh tiến trình tải chạy theo số thật. Không nằm trong IsValidSource: chỉ UpdateService.Source() nhận nguồn này, và chỉ ở bản cài thử.
+    /// </summary>
+    public static bool IsLoopbackHttp(string src) =>
+        Uri.TryCreate(src, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttp && u.IsLoopback && u.Host == "127.0.0.1";
+
+    /// <summary>
     /// Lần trước app định cài <paramref name="applying"/>: giờ đang chạy bản đó (hoặc mới hơn) là đã lên, còn thấp hơn là cài lỗi
     /// (Velopack giữ bản cũ). Không có gì đang chờ thì None.
     /// </summary>
@@ -56,4 +63,53 @@ public static class UpdatePolicy
 
     /// <summary>Đang bật Tiết kiệm pin thì hoãn tải, chỉ báo có bản mới.</summary>
     public static bool CanDownload(bool batterySaver) => !batterySaver;
+
+    /// <summary>Các lựa chọn chu kỳ kiểm tra trong Cài đặt (giờ). Mặc định 6 (app.update.checkHours).</summary>
+    public static readonly IReadOnlyList<int> CheckHourChoices = [6, 12, 24];
+
+    /// <summary>Giá trị config lạ (tự sửa tay) thì chọn mục gần nhất trong Cài đặt.</summary>
+    public static int NearestChoice(int hours) => CheckHourChoices.MinBy(h => Math.Abs(h - hours));
+
+    /// <summary>Khoảng tối thiểu giữa hai lần kiểm tra do máy thức dậy hay có mạng lại (Wi-Fi chập chờn bắn sự kiện liên tục).</summary>
+    public static readonly TimeSpan WakeGap = TimeSpan.FromHours(1);
+
+    /// <summary>Máy thức dậy / có mạng lại: được kiểm tra thêm một lần không (tối đa mỗi giờ một lần; việc có tới hạn chưa vẫn do ShouldCheck).</summary>
+    public static bool WakeCheckAllowed(DateTimeOffset? lastWakeCheck, DateTimeOffset now) =>
+        lastWakeCheck is not { } last || last > now || now - last >= WakeGap;
+
+    /// <summary>
+    /// Mở app có cài luôn bản đã tải (Velopack SetAutoApplyOnStartup) không: chỉ chế độ Tự động ở bản cài. Không khi Velopack gọi exe
+    /// để chạy hook (--veloapp-*: cài, gỡ, cập nhật), và không khi đã có một bản app đang chạy (bản thứ hai chỉ đưa cửa sổ bản đầu lên,
+    /// cài lúc đó thì Update.exe phải tắt bản đang dùng). Velopack tự kiểm có gói đã tải mới hơn bản đang chạy hay không.
+    /// <paramref name="restartedByUpdater"/>: Update.exe vừa mở lại app sau khi cài (biến môi trường VELOPACK_RESTART). Lúc đó không cài
+    /// nữa, kể cả khi vẫn thấy gói mới hơn (cài hỏng): chặn vòng lặp cài, mở lại, cài. Cùng điều kiện Velopack tự dùng trong VelopackApp.Run.
+    /// </summary>
+    public static bool ApplyOnStartup(UpdateMode mode, InstallKind kind, IEnumerable<string> args, bool otherInstanceRunning, bool restartedByUpdater = false) =>
+        mode == UpdateMode.Auto && kind == InstallKind.Installed && !otherInstanceRunning && !restartedByUpdater
+        && !args.Any(a => a.StartsWith("--veloapp", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Cài bản đã tải theo cách nào (hàm thuần). Luôn <see cref="ApplyPlan.Silent"/>: Update.exe không hiện cửa sổ tiếng Anh của Velopack
+    /// ("Installing Update", thanh chạy vô định); app tự báo bằng tiếng Việt trước khi thoát. Bản cài là self-contained nên không có bước
+    /// cài .NET cần hỏi người dùng. null = không cài: không phải bản cài (zip, Store tự cập nhật), chưa tải xong, hay đã gọi Update.exe
+    /// một lần trong lượt này (bấm khởi động lại rồi thì lúc thoát không gọi thêm lần nữa).
+    /// </summary>
+    public static ApplyPlan? PlanApply(ApplyTrigger trigger, InstallKind kind, UpdateMode mode, bool downloaded, bool alreadyLaunched)
+    {
+        if (kind != InstallKind.Installed || !downloaded || alreadyLaunched) return null;
+        return trigger switch
+        {
+            ApplyTrigger.UserRestart => new ApplyPlan(Silent: true, Restart: true),
+            ApplyTrigger.Startup when mode == UpdateMode.Auto => new ApplyPlan(Silent: true, Restart: true),
+            // Thoát hẳn (menu khay, X): người dùng muốn tắt app, cài xong không mở lại.
+            ApplyTrigger.AppExit when mode == UpdateMode.Auto => new ApplyPlan(Silent: true, Restart: false),
+            _ => null,
+        };
+    }
 }
+
+/// <summary>Lúc cài bản đã tải: người dùng bấm "Khởi động lại để cập nhật", app thoát hẳn, hay mở app (chế độ Tự động).</summary>
+public enum ApplyTrigger { UserRestart, AppExit, Startup }
+
+/// <summary>Tham số cho Velopack WaitExitThenApplyUpdates: không hiện cửa sổ của Update.exe, có mở lại app sau khi cài không.</summary>
+public readonly record struct ApplyPlan(bool Silent, bool Restart);

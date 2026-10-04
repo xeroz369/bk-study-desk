@@ -20,6 +20,9 @@ public interface ISource
 
     /// <summary>Chu kỳ tự động sync.</summary>
     TimeSpan Interval { get; }
+
+    /// <summary>App thoát: ghi phần chỉ giữ trong RAM (lần kiểm tra cuối của lượt không có gì mới).</summary>
+    void Flush() { }
 }
 
 public sealed record SourceStatus(bool Connected, long? SyncedAt, string? User = null, string? Term = null);
@@ -30,11 +33,13 @@ public sealed record SourceStatus(bool Connected, long? SyncedAt, string? User =
 /// </summary>
 public interface IBrowserRunner
 {
-    /// <summary>Chạy fetch() ngay trong page MyBK /app (dùng token #hid_Token của page).</summary>
-    Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct);
+    /// <summary>
+    /// Chạy fetch() ngay trong page MyBK /app (dùng token #hid_Token của page). <paramref name="onEach"/> được gọi sau mỗi request
+    /// (tên request), để nguồn báo tiến độ theo từng API.
+    /// </summary>
+    Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct, Action<string>? onEach = null);
 
-    /// <summary>Mở một page trong WebView ẩn, trả về HTML khi đã tới đúng path.</summary>
-    /// <summary>HTML của trang url. mustContain: chữ phải có trong trang mới coi là đã tới (trang trung gian thì mở lại).</summary>
+    /// <summary>HTML của trang url (mở trong WebView ẩn). mustContain: chữ phải có trong trang mới coi là đã tới (trang trung gian thì mở lại).</summary>
     Task<string> PageAsync(string url, CancellationToken ct, string? mustContain = null);
 }
 
@@ -62,21 +67,29 @@ public static class SyncSignal
     }
 
     /// <summary>
-    /// Dòng log báo bước đang làm, hiện trên thanh trạng thái: <paramref name="key"/> là key trong file ngôn ngữ (vd. "sync.lms.quizzes"),
-    /// kèm số đã xong / tổng (0/0 = không đếm được). Người dùng thấy app đang làm gì, không phải chờ mà không biết.
+    /// Dòng log báo tiến độ (câu đang làm, đếm, tên đi kèm, phần đã xong theo trọng số), hiện trên thanh trạng thái.
+    /// Nguồn dựng bằng <see cref="SyncPlan"/>. Người dùng thấy app đang làm gì, không phải chờ mà không biết.
+    /// Dạng: \u0002count/of/permille\u0002key[\u001fdetail] (permille -1 = chưa biết tổng).
     /// </summary>
-    public static string Step(string key, int done = 0, int total = 0) => $"{StepMark}{done}/{total}{StepMark}{key}";
+    public static string Progress(SyncProgress p) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture,
+            $"{StepMark}{p.Count}/{p.Of}/{p.Permille ?? -1}{StepMark}{p.Key}{(p.Detail is { Length: > 0 } d ? DetailMark + d : "")}");
 
-    public static bool TryParseStep(string line, out string key, out int done, out int total)
+    public static bool TryParseProgress(string line, out SyncProgress progress)
     {
-        key = ""; done = total = 0;
+        progress = default;
         if (line.Length < 4 || line[0] != StepMark) return false;
         var end = line.IndexOf(StepMark, 1);
         if (end < 0) return false;
-        var counts = line[1..end].Split('/');
-        if (counts.Length != 2 || !int.TryParse(counts[0], out done) || !int.TryParse(counts[1], out total)) return false;
-        key = line[(end + 1)..];
-        return key.Length > 0;
+        var n = line[1..end].Split('/');
+        if (n.Length != 3) return false;
+        var v = new int[3];
+        for (var i = 0; i < 3; i++)
+            if (!int.TryParse(n[i], System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out v[i])) return false;
+        var rest = line[(end + 1)..].Split(DetailMark, 2);
+        if (rest[0].Length == 0) return false;
+        progress = new SyncProgress(rest[0], v[0], v[1], rest.Length > 1 ? rest[1] : null, v[2] < 0 ? null : Math.Min(v[2], 1000));
+        return true;
     }
 }
 

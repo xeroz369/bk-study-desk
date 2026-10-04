@@ -8,13 +8,15 @@ on:
   schedule:
     - cron: '23 3 * * 1'
 
-permissions:
-  security-events: write
-  contents: read
-  actions: read
+# Quyền cấp workflow để trống, từng job tự khai báo quyền tối thiểu (OpenSSF Scorecard: Token-Permissions).
+permissions: {}
 
 jobs:
   analyze:
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
     strategy:
       fail-fast: false
       matrix:

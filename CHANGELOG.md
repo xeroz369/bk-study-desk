@@ -6,6 +6,63 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.1.10] - 2026-10-04
+
+### Thêm
+
+- **Cài đặt** > **Chữ**: đổi phông và cỡ chữ.
+
+### Sửa lỗi
+
+- MyBK không còn tự đăng xuất sau khoảng 8 giờ.
+- **Sắp tới** hiện đủ mọi mốc, không dừng ở 14 ngày. Việc quá hạn chưa làm nằm ở nhóm **Quá hạn**.
+- Hạn nộp có mã nhóm (L01...) không còn bị ẩn khi app không đọc được nhóm.
+- Giờ học kiểu "7g30" hiện đúng trên lưới tuần.
+- Ngày, giờ luôn theo giờ Việt Nam.
+- Thanh trạng thái không còn ghi "Đã cập nhật lên ..." sau khi cập nhật.
+- Chữ bị cắt có tooltip hiện đủ.
+- Chữ lớn không còn làm cắt cột bảng hay số phiên bản ở thanh trạng thái.
+
+## [1.1.9] - 2026-10-03
+
+### Thêm
+
+- **Thư viện** tài liệu chung (BK Study Library), **tắt sẵn cho tới khi thư viện mở**. Bật ở **Cài đặt** > **Thư viện** thì trang **Môn học** có thêm tab **Thư viện** cho môn khớp mã: tài liệu nhóm theo loại, lọc theo giảng viên, học kỳ, loại kiểm tra. Mỗi tài liệu: **Mở trên web**, **Tải về** (vào thư mục `Thư viện` của môn, kiểm tra file trước khi lưu, không ghi đè file của bạn), **Cài vào Luyện tập** với gói quiz, **Sao chép link**. Có nút **Đóng góp tài liệu** mở trang đóng góp trên web. Tài liệu bị gỡ khỏi thư viện thì ẩn và xóa bản app đã tải.
+
+### Thay đổi
+
+- Tải bản cập nhật có thanh tiến trình với số phần trăm thật và dung lượng đã tải (vd. "Đang tải bản 1.2.0... 42% (12,3/29,1 MB)"), ở cửa sổ cập nhật, **Cài đặt** > **Cập nhật** và thanh trạng thái (cả khi chế độ **Tự động** tải ở nền). Thanh không chạy lùi, chỉ đầy khi đã tải xong và kiểm tra gói. Có nút **Hủy tải**.
+- Cài bản cập nhật không còn hiện cửa sổ tiếng Anh "Installing Update" với thanh chạy mãi. App báo "Đang cài bản ..., app sẽ tự mở lại sau vài giây" ở thanh trạng thái rồi tự mở lại.
+- Thanh tiến trình đồng bộ giữ số phần trăm đã đạt khi một bước chạy lâu, không chuyển sang thanh chạy qua lại.
+
+### Sửa lỗi
+
+- **Lịch** > **Thời khóa biểu**: mất vạch giờ hiện tại vào buổi tối hoặc sáng sớm, vì lưới chỉ kéo từ buổi học sớm nhất tới buổi muộn nhất ([#25](https://github.com/xeroz369/bk-study-desk/issues/25)). Lưới giờ luôn đủ 0:00 tới 24:00, mở tuần thì tự cuộn tới buổi học sớm nhất, hoặc tới giờ hiện tại nếu đang ngoài khung nhìn.
+- **Lịch** và **Hôm nay**: hạn nộp, quiz đặt xa hơn 120 ngày trên LMS nay cũng hiện (trước đây app chỉ đọc lịch LMS tới 120 ngày sau). **Hôm nay** hiện đủ mọi tin LMS trong 7 ngày, khớp số ở ô **Thông báo LMS trong 7 ngày** (trước đây chỉ 8 tin).
+- MyBK có lúc không đồng bộ được và báo "không phản hồi sau 45 giây (đang ở .../my/homeSSO.action)" dù máy chủ trường vẫn chạy bình thường. Lỗi xảy ra khi phiên MyBK hết hạn và app phải đăng nhập lại qua SSO.
+
+## [1.1.8] - 2026-10-03
+
+### Thêm
+
+- **Lịch** > **Thời khóa biểu** dạng lưới: vạch màu nhấn chỉ giờ hiện tại ở cột hôm nay ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)).
+- **Thêm sự kiện...** trên trang **Lịch**: tự nhập sự kiện hoặc lịch học bù ([#22](https://github.com/xeroz369/bk-study-desk/issues/22)). Gõ nhanh một dòng như "Học bù Giải tích 2 - 12/10 - 7:00-8:50 - H1-201" là app tự điền. Sự kiện tự thêm hiện ở lưới tuần (viền nét đứt), **Sắp tới**, **Hôm nay**, có trong file .ics và được nhắc trước khoảng 1 giờ. Chuột phải để sửa, xóa, sao chép. Chỉ lưu trên máy.
+- **Cài đặt** > **Cập nhật**: chọn khoảng kiểm tra bản mới 6, 12 hoặc 24 giờ.
+
+### Thay đổi
+
+- Thanh tiến trình đồng bộ hiện đúng tiến độ theo từng bước (vd. "LMS: Đang tải tệp 2/5 (Giải tích 2)..."), không chạy lùi, không nháy với lượt đồng bộ ngắn.
+- Đồng bộ không có gì mới thì không ghi lại file, không vẽ lại trang, không thông báo. Nhắc hạn không lặp lại, kể cả sau khi mở lại app.
+- Trang **Môn học** mở nhanh hơn: quét thư mục chạy nền, chỉ nạp tab đang xem; bỏ qua file rác và thư mục ẩn (`.history`, `~$...`, `desktop.ini`...).
+- Nút **Giới thiệu** chỉ còn biểu tượng.
+- Kiểm tra bản mới 6 giờ một lần (trước là 24), và khi máy thức dậy hoặc có mạng lại. Chế độ **Tự động**: bản đã tải được cài ở lần mở app kế tiếp; mở lên thanh trạng thái báo "Đã cập nhật lên ...".
+
+### Sửa lỗi
+
+- Khi LMS cập nhật một file trùng nội dung với file bạn tự lưu ở chỗ khác trong thư mục môn, app có thể chuyển **file của bạn** vào `_Lưu trữ\Bản cũ`. Giờ app chỉ thay file trong thư mục `Tài liệu LMS`.
+- Tên môn có dấu viết theo hai kiểu mã hóa Unicode (thường gặp với thư mục tạo trên máy khác) không khớp được với môn trên LMS.
+- Tab **Sắp tới** của một môn có lúc hiện cả hạn nộp của môn khác có tên bắt đầu giống nhau.
+
 ## [1.1.7] - 2026-10-03
 
 Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thêm tính năng và sửa lỗi hơn. Nếu thấy lỗi lạ, hãy mở issue.
@@ -100,6 +157,7 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 ## [1.1.2] - 2026-10-03 [YANKED]
 
+Đã gỡ khỏi trang phát hành. Mọi thay đổi chuyển sang 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 
@@ -188,7 +246,10 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...HEAD
+[1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10
+[1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
+[1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.4...v1.1.5

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "PH1007",
+  "code": "PH1007",
+  "name": "Thí nghiệm Vật lý",
+  "items": [
+    {
+      "id": "prelab-bai-5",
+      "type": "prelab-reference",
+      "title": "Prelab tham khảo bài 5",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "self-made",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "lab": "5",
+      "files": [
+        {
+          "name": "prelab-bai-5.md",
+          "size": 67,
+          "sha256": "de2eb1ebd4f53842262baf6d7cdc8268a4b8d55fa1991001c51a578a59a0a591",
+          "urls": [
+            "https://library.example/files/PH1007/prelab-bai-5.md",
+            "https://mirror.library.example/PH1007/prelab-bai-5.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "huong-dan-sai-so",
+      "type": "link",
+      "title": "Hướng dẫn tính sai số",
+      "lang": "vi",
+      "license": "CC-BY-SA-4.0",
+      "origin": "link",
+      "authors": [
+        "Nhóm soạn mẫu"
+      ],
+      "added": "2026-10-01",
+      "updated": "2026-10-01",
+      "url": "https://library.example/guides/sai-so/"
+    }
+  ]
+}

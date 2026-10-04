@@ -26,6 +26,8 @@ public partial class App : Application
         // Ngôn ngữ UI (lang\<mã>.json theo app.language): load trước khi tạo window.
         Ui.L.Load();
         Log.Info(StartupLine());
+        // Phông, cỡ chữ người dùng chọn (app.font): đặt resource trước khi tạo window để window đầu tiên vẽ đúng ngay.
+        Ui.AppFont.Load(this);
         DispatcherUnhandledException += (_, x) =>
         {
             Log.Error("Lỗi trên UI thread", x.Exception);

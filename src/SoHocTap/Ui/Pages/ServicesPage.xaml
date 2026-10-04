@@ -7,7 +7,7 @@
              xmlns:c="clr-namespace:SoHocTap.Ui.Controls">
     <DockPanel>
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Style="{StaticResource Muted}" FontSize="13"
+            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Style="{StaticResource MutedSub}"
                        Text="{ui:T services.hint}" />
             <Label Content="{ui:T services.filter}" Target="{Binding ElementName=Search}" VerticalAlignment="Center" Padding="0,0,10,0" />
             <TextBox x:Name="Search" Width="280" HorizontalAlignment="Left" TextChanged="OnSearch" ToolTip="{ui:T services.search.tip}"

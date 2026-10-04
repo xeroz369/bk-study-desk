@@ -7,47 +7,54 @@ namespace SoHocTap.Shell;
 /// <summary>
 /// Nhắc hạn nộp và quiz LMS bằng notification Windows (qua tray icon). Chạy phía app, không phụ thuộc UI,
 /// nên vẫn nhắc được khi window đang thu nhỏ (WebView2 bị tạm dừng). Mỗi mốc nhắc hai lần: trước notify.hoursBefore giờ
-/// và trước notify.lastHours giờ; mỗi lần gộp thành một thông báo, ghi lại vào data/notified.json.
+/// và trước notify.lastHours giờ; mỗi lần gộp thành một thông báo, ghi lại vào data/notified.json (chống trùng qua lần khởi động
+/// lại: <see cref="Reminders"/>). Không bao giờ thông báo "đồng bộ xong"; lỗi đồng bộ chỉ hiện trên InfoBar và thanh trạng thái.
 /// </summary>
 internal sealed class DeadlineNotifier(Action<string, string, string> show)
 {
     private static string StateFile => Paths.DataFile("notified.json");
 
-    private sealed record Due(string Id, string Title, string Subject, long Time);
-
     public void Check()
     {
         try { Run(); }
         catch (Exception e) { Log.Error("Nhắc hạn", e); }
+        try { RunCustom(); }
+        catch (Exception e) { Log.Error("Nhắc sự kiện tự thêm", e); }
+    }
+
+    // Sự kiện tự thêm (issue #22): nhắc một lần trước 1 giờ. File đánh dấu riêng để không đụng cách chống trùng của notified.json.
+    private static string CustomStateFile => Paths.DataFile("notified-custom.json");
+
+    private void RunCustom()
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var events = CustomEventsData.Store.All();
+        if (events.Count == 0) return;
+        var sent = JsonStore.ReadObject(CustomStateFile);
+        var due = CustomEvents.DueSoon(events, now, 3600, sent.ContainsKey);
+        if (due.Count == 0) return;
+        foreach (var d in due) sent[d.Key] = now;
+        foreach (var k in sent.Where(p => p.Value?.GetValue<long>() < now - 30 * 86400).Select(p => p.Key).ToList()) sent.Remove(k);
+        JsonStore.Write(CustomStateFile, sent);
+        // Thường chỉ một sự kiện trong một giờ tới; nhiều hơn thì cũng chỉ hiện 3 cái đầu, tránh dội thông báo.
+        foreach (var (e, time, _) in due.Take(3))
+        {
+            var place = e.Location.Length > 0 ? e.Location : L.T(e.IsMakeup ? "kind.makeup" : "kind.custom");
+            show(e.Title, L.F("notify.left", L.F("notify.custom", place, e.Start), Left(time - now)), "lich");
+        }
     }
 
     private void Run()
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var stages = new[] { Config.Int("notify.hoursBefore", 24), Config.Int("notify.lastHours", 2) }.Where(h => h > 0).Distinct().OrderByDescending(h => h).ToArray();
-        if (stages.Length == 0) return;
-        var items = Collect(now, stages[0] * 3600L);
-        if (items.Count == 0) return;
-
-        var sent = JsonStore.ReadObject(StateFile);
-        var fresh = new List<(Due Item, int Hours)>();
-        foreach (var d in items)
-        {
-            // Lấy mốc gần nhất mà mục này đã lọt vào; mốc xa hơn coi như đã qua (mở app trễ thì chỉ nhắc một lần).
-            var stage = stages.Last(h => d.Time - now <= h * 3600L);
-            var key = $"{d.Id}@{stage}";
-            if (sent.ContainsKey(key)) continue;
-            foreach (var h in stages.Where(h => h >= stage)) sent[$"{d.Id}@{h}"] = now;
-            fresh.Add((d, stage));
-        }
+        int[] stages = [Config.Int("notify.hoursBefore", 24), Config.Int("notify.lastHours", 2)];
+        // Chọn mốc và chống trùng (khóa nguồn:id:mức:giờ hạn, mốc nước) ở Reminders; sổ chỉ ghi khi đổi (JsonStore bỏ qua nếu y như cũ).
+        var ledger = JsonStore.ReadObject(StateFile);
+        var (fresh, changed) = Reminders.Pick(Collect(), stages, now, ledger);
+        if (changed) JsonStore.Write(StateFile, ledger);
         if (fresh.Count == 0) return;
 
-        // Bỏ bản ghi cũ hơn 30 ngày.
-        foreach (var k in sent.Where(p => p.Value?.GetValue<long>() < now - 30 * 86400).Select(p => p.Key).ToList()) sent.Remove(k);
-        JsonStore.Write(StateFile, sent);
-
-        fresh.Sort((a, b) => a.Item.Time.CompareTo(b.Item.Time));
-        if (fresh.Count == 1)
+        if (fresh.Count < Reminders.SummaryFrom)
         {
             var d = fresh[0].Item;
             show(d.Title, L.F("notify.left", d.Subject, Left(d.Time - now)), "lich");
@@ -59,22 +66,17 @@ internal sealed class DeadlineNotifier(Action<string, string, string> show)
         }
     }
 
-    private static List<Due> Collect(long now, long window)
+    /// <summary>Mọi mốc LMS chưa xong (hạn nộp, quiz chưa làm có giờ đóng); Reminders tự lọc theo khung nhắc.</summary>
+    private static List<DueItem> Collect()
     {
-        var list = new List<Due>();
+        var list = new List<DueItem>();
         if (LmsStore.Read() is not { } lms) return list;
         foreach (var e in lms.Events)
-        {
-            if (e.Kind == "quiz" || e.Done) continue;
-            if (e.Time > now && e.Time - now <= window)
-                list.Add(new Due(e.Id ?? "", L.F("notify.title", e.Label ?? L.T("notify.due"), e.Name), e.Subject ?? "", e.Time));
-        }
+            if (e.Kind != "quiz" && !e.Done && !string.IsNullOrEmpty(e.Id))
+                list.Add(new DueItem("lms", e.Id, L.F("notify.title", e.Label ?? L.T("notify.due"), e.Name), e.Subject ?? "", e.Time));
         foreach (var q in lms.Quizzes)
-        {
-            if (q.Attempts.Count > 0 || q.Close is not { } t) continue;
-            if (t > now && t - now <= window)
-                list.Add(new Due("qz" + q.Id, L.F("notify.quizClose", q.Name), q.Subject ?? "", t));
-        }
+            if (q.Attempts.Count == 0 && q.Close is { } t)
+                list.Add(new DueItem("lms", "qz" + q.Id, L.F("notify.quizClose", q.Name), q.Subject ?? "", t));
         return list;
     }
 

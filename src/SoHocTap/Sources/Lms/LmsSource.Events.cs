@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -13,26 +13,28 @@ public sealed partial class LmsSource
 {
     // ------------------------------------------------------------------ mốc thời gian, quiz
 
-    private async Task<JsonArray> CollectEventsAsync(List<CourseInfo> courses, long uid, CancellationToken ct)
+    /// <param name="groups">Nhóm của mình trong từng lớp (<see cref="MyGroupsAsync"/>, một bước riêng của lượt đồng bộ): mốc của nhóm khác thì bỏ.
+    /// Lớp không có trong map (đọc nhóm lỗi) hay có mà rỗng thì giữ mọi mốc (<see cref="GroupFilter.Keep"/>).</param>
+    private async Task<JsonArray> CollectEventsAsync(List<CourseInfo> courses, Dictionary<long, HashSet<string>> groups, CancellationToken ct)
     {
         var subj = courses.ToDictionary(c => c.Id, c => c.Subject + (c.Part is null ? "" : $" ({c.Part})"));
-        var groups = await MyGroupsAsync(courses, uid, ct);   // CollectGradesAsync cũng dùng cái này để lọc mục điểm của nhóm khác
         var outMap = new Dictionary<string, JsonObject>();
+        var noGroupInfo = new HashSet<long>();
         // Bài tập có mốc trên lịch hành động: "instance" của mốc → mục "ev" tương ứng. Trên LMS trường, instance trùng cmid
         // của bài (đo trên dữ liệu thật 03/10/2026), không phải id như tài liệu; ghép theo cmid, id để dự phòng. Lịch đọc đủ (không lỗi, không bị cắt
-        // ở 4 trang) thì biết chắc bài nào không còn mốc, tức là đã nộp (xem dưới).
+        // ở MaxPages trang) thì biết chắc bài nào không còn mốc, tức là đã nộp (xem dưới).
         var assignEvents = new Dictionary<long, JsonObject>();
         var calendarComplete = false;
         var assignWithoutInstance = false;
         try
         {
-            // Moodle chỉ cho tối đa 50 mục mỗi lần (limitnum 1..50): đọc theo trang bằng aftereventid, tối đa 4 trang.
+            // Moodle chỉ cho tối đa 50 mục mỗi lần (limitnum 1..50): đọc theo trang bằng aftereventid, tối đa MaxPages trang.
             var events = new List<JsonObject>();
             long after = 0;
             for (var page = 0; page < AssignPairing.MaxPages; page++)
             {
                 var res = await CallAsync("core_calendar_get_action_events_by_timesort",
-                    [Arg("timesortfrom", Now() - AssignPairing.WindowBefore), Arg("timesortto", Now() + AssignPairing.WindowAfter), Arg("limitnum", AssignPairing.PageSize),
+                    [Arg("timesortfrom", Now() - AssignPairing.WindowBefore), Arg("limitnum", AssignPairing.PageSize),
                      Arg("aftereventid", after), Arg("limittononsuspendedevents", 1)], ct);
                 var batch = (res["events"] as JsonArray ?? []).OfType<JsonObject>().ToList();
                 events.AddRange(batch);
@@ -44,7 +46,7 @@ public sealed partial class LmsSource
             {
                 var cid = e["course"]?["id"]?.GetValue<long>() ?? -1;
                 var name = e["name"]?.GetValue<string>() ?? "";
-                if (!subj.ContainsKey(cid) || !ForMyGroup(name, cid, groups)) continue;
+                if (!subj.ContainsKey(cid) || !ForMyGroup(name, cid, groups, subj, noGroupInfo)) continue;
                 var mod = e["modulename"]?.GetValue<string>();
                 outMap["ev" + e["id"]] = new JsonObject
                 {
@@ -77,7 +79,7 @@ public sealed partial class LmsSource
                 {
                     var cid = c["id"]!.GetValue<long>();
                     var due = a["duedate"]?.GetValue<long>() ?? 0;
-                    if (due == 0 || !ForMyGroup(a["name"]!.GetValue<string>(), cid, groups)) continue;
+                    if (due == 0 || !ForMyGroup(a["name"]!.GetValue<string>(), cid, groups, subj, noGroupInfo)) continue;
                     var aid = a["id"]!.GetValue<long>();
                     // Cùng một bài đã có mốc "ev" trên lịch: không thêm mục thứ hai (trước đây mỗi bài hiện và được nhắc 2 lần).
                     // Chỉ chép đề và file đính kèm sang mục "ev" để vẫn lưu về máy.
@@ -142,18 +144,27 @@ public sealed partial class LmsSource
                 var r = await CallAsync("core_group_get_course_user_groups", [Arg("courseid", c.Id), Arg("userid", uid)], ct);
                 map[c.Id] = r["groups"]!.AsArray().Select(g => g?["name"]?.GetValue<string>() ?? "").ToHashSet();
             }
-            catch (Exception e) when (Recoverable(e, ct)) { map[c.Id] = []; Warn($"nhóm lớp {c.Subject}", e); }
+            // Lỗi thì để lớp này ngoài map (chưa biết nhóm): không cache, lần sau hỏi lại; mốc có mã nhóm của lớp vẫn được giữ.
+            catch (Exception e) when (Recoverable(e, ct)) { Warn($"nhóm lớp {c.Subject}", e); }
         }
-        if (asked) JsonStore.Write(GroupsFile, map);
+        // Cache 7 ngày tính theo mtime: hỏi lại mà nhóm không đổi (JsonStore không ghi) thì vẫn chạm mtime, kẻo lượt nào cũng hỏi lại hết.
+        if (asked && !JsonStore.Write(GroupsFile, map) && File.Exists(GroupsFile)) File.SetLastWriteTimeUtc(GroupsFile, DateTime.UtcNow);
         return map;
     }
 
-    /// <summary>Mốc có mã nhóm trong tên (theo groupPattern) mà không phải nhóm của mình thì bỏ.</summary>
-    private static bool ForMyGroup(string name, long cid, Dictionary<long, HashSet<string>> groups)
+    /// <summary>
+    /// Mốc có mã nhóm trong tên (theo groupPattern) mà chắc chắn không phải nhóm của mình thì bỏ. Lớp chưa biết nhóm thì giữ,
+    /// và ghi WARN một lần mỗi lớp trong lượt đồng bộ (<paramref name="warned"/>) để biết lớp nào thiếu thông tin nhóm. Sổ điểm gọi không kèm
+    /// <paramref name="warned"/> (bước mốc thời gian đã ghi rồi).
+    /// </summary>
+    private static bool ForMyGroup(string name, long cid, Dictionary<long, HashSet<string>> groups, Dictionary<long, string>? subj = null, HashSet<long>? warned = null)
     {
         var pattern = Config.Str("sources.lms.groupPattern");
         if (pattern.Length == 0) return true;
         var codes = Regex.Matches(name, pattern).Select(x => x.Value).ToHashSet();
-        return codes.Count == 0 || codes.Overlaps(groups.GetValueOrDefault(cid, []));
+        var mine = groups.GetValueOrDefault(cid);
+        if (codes.Count > 0 && mine is not { Count: > 0 } && warned?.Add(cid) == true)
+            Log.Warn($"LMS: lớp {subj?.GetValueOrDefault(cid) ?? cid.ToString(System.Globalization.CultureInfo.InvariantCulture)} chưa có thông tin nhóm, giữ cả mốc có mã nhóm");
+        return GroupFilter.Keep(codes, mine);
     }
 }

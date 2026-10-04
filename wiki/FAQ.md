@@ -6,7 +6,7 @@
 The GitHub installer isn't code-signed yet (a certificate costs a yearly fee). Select **More info** > **Run anyway**. This appears only once, when installing; later updates don't ask again. To make sure the file wasn't altered, compare its SHA-256 as described in [Installation](Installation).
 
 **Opening LMS/MyBK in the app shows "session timed out" or asks me to sign in again.**
-The university server ends the session after a few hours, even though the app remembers you. The app goes through the SSO sign-in page by itself; if the SSO session has also ended, sign in once more.
+The university server ends sessions on its own schedule, even though the app remembers you. The app goes through the SSO sign-in page by itself; if the SSO session has also ended, sign in once more.
 
 **Where is the app's data?**
 In `%LOCALAPPDATA%\BKStudyDesk.Data`, readable only by your Windows account (plus SYSTEM and Administrators). Course documents are in the folder you chose (by default `Documents\BK Study Desk`).

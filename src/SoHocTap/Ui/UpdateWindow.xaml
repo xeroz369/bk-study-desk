@@ -1,13 +1,14 @@
 <!-- Cập nhật: (1) lần mở đầu hỏi người dùng muốn app làm gì khi có bản mới; (2) có bản mới thì hiện phiên bản, dung lượng,
      thay đổi và để người dùng chọn Cập nhật / Để sau / Bỏ qua bản này. Không bao giờ tự cập nhật khi chưa được phép. -->
 <Window x:Class="SoHocTap.Ui.UpdateWindow"
+        FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppFontSize}"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SoHocTap.Ui"
         Title="{ui:T update.title}" Width="520" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Icon="/app.ico">
     <StackPanel Margin="24,20,24,20">
-        <TextBlock x:Name="Heading" Text="{ui:T update.title}" Style="{StaticResource SectionTitle}" FontSize="18" />
+        <TextBlock x:Name="Heading" Text="{ui:T update.title}" Style="{StaticResource SectionTitle}" FontSize="{DynamicResource AppFontSizeTitle}" />
 
         <!-- Lần đầu: chọn chế độ -->
         <StackPanel x:Name="AskPanel">
@@ -27,7 +28,10 @@
             <TextBox x:Name="Notes" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="220" MinHeight="60" VerticalScrollBarVisibility="Auto"
                      AutomationProperties.Name="{ui:T update.notes}" />
             <TextBlock x:Name="Status" Style="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap" />
+            <!-- Tiến độ tải: số thật của Velopack (DownloadView, DESIGN.md "Thanh tiến trình"); chữ % và MB nằm ở Status, không trên thanh. -->
+            <ProgressBar x:Name="Bar" Minimum="0" Maximum="100" Margin="0,8,0,0" Visibility="Collapsed" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button x:Name="CancelButton" Content="{ui:T update.cancel}" Margin="0,0,8,0" Visibility="Collapsed" Click="OnCancel" />
                 <Button x:Name="SkipButton" Content="{ui:T update.skip}" Margin="0,0,8,0" Click="OnSkip" />
                 <Button x:Name="LaterButton" Content="{ui:T update.later}" Margin="0,0,8,0" IsCancel="True" Click="OnLater" />
                 <Button x:Name="InstallButton" Content="{ui:T update.install}" Style="{DynamicResource AccentButtonStyle}" MinWidth="120"

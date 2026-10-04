@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>SoHocTap</RootNamespace>
-    <Version Condition="'$(Version)' == ''">1.1.7</Version>
+    <Version Condition="'$(Version)' == ''">1.1.10</Version>
     <Authors>xeroz369</Authors>
     <Copyright>Copyright (c) 2026 xeroz369. PolyForm Noncommercial 1.0.0</Copyright>
     <ApplicationIcon>app.ico</ApplicationIcon>

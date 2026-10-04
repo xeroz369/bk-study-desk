@@ -17,5 +17,3 @@ App Windows gom **BK-LMS** và **MyBK** của Bách Khoa TP.HCM vào một cửa
 - [[Câu hỏi thường gặp]]
 - [[Bảo mật và quyền riêng tư]]
 - [[Cách app hoạt động]]
-
-

@@ -15,7 +15,8 @@ internal sealed record MenuEntry(string Label, Action Run, bool Primary = false,
 /// </summary>
 internal static class Grids
 {
-    public static void Setup<T>(DataGrid g, Action<T>? open = null, Func<T, IEnumerable<MenuEntry>>? menu = null) where T : class
+    /// <param name="hideOpen">Dòng không có lệnh "Mở" ở đầu menu (menu của dòng tự có lệnh chính khác, ví dụ "Sửa").</param>
+    public static void Setup<T>(DataGrid g, Action<T>? open = null, Func<T, IEnumerable<MenuEntry>>? menu = null, Func<T, bool>? hideOpen = null) where T : class
     {
         g.MouseDoubleClick += (_, e) =>
         {
@@ -35,7 +36,7 @@ internal static class Grids
             if (row is null) { e.Handled = true; return; }
             g.SelectedItem = row;
             var entries = new List<MenuEntry>();
-            if (open is not null) entries.Add(new(L.T("common.open"), () => open(row), Primary: true));
+            if (open is not null && hideOpen?.Invoke(row) != true) entries.Add(new(L.T("common.open"), () => open(row), Primary: true));
             if (menu is not null) entries.AddRange(menu(row).Where(m => !(m.Primary && open is not null && m.Label == L.T("common.open"))));
             if (entries.Count == 0) { e.Handled = true; return; }
             g.ContextMenu = Build(entries);
@@ -96,12 +97,31 @@ internal static class Grids
             HeaderTemplate = (DataTemplate)Application.Current.FindResource("TrimHeader"),
             SortMemberPath = sortPath ?? path,
         };
-        c.Width = star ? new DataGridLength(2, DataGridLengthUnitType.Star) : double.IsNaN(width) ? DataGridLength.Auto : new DataGridLength(width);
+        c.Width = star ? new DataGridLength(2, DataGridLengthUnitType.Star) : double.IsNaN(width) ? DataGridLength.Auto : new DataGridLength(width * FontScale);
         // Cột chính (tên, tiêu đề) không co dưới ~160: hẹp hơn thì chữ chỉ còn vài ký tự, thà cuộn ngang.
         if (star) c.MinWidth = 160;
         Design.AddOrUpdate(c, c.Width);
+        if (!star && !double.IsNaN(width)) Fixed.Add((new WeakReference<DataGridColumn>(c), width));
         return c;
     }
+
+    // Cột rộng cố định (giờ, còn, loại...) thiết kế ở cỡ chữ mặc định: giãn theo cỡ chữ đang chọn, không thì chữ lớn bị cắt
+    // (cỡ 18 từng làm "còn 9 ngày" thành ":òn 9 ngày", 04/10/2026). Đổi cỡ chữ khi đang mở app thì giãn lại ngay.
+    private static readonly List<(WeakReference<DataGridColumn> Column, double Width)> Fixed = [];
+
+    private static double FontScale => AppFont.Current.Scale(AppFont.SystemSize);
+
+    static Grids() => AppFont.Changed += () =>
+    {
+        var scale = FontScale;
+        Fixed.RemoveAll(f => !f.Column.TryGetTarget(out _));
+        foreach (var (weak, width) in Fixed)
+        {
+            if (!weak.TryGetTarget(out var c)) continue;
+            c.Width = new DataGridLength(width * scale);
+            Design.AddOrUpdate(c, c.Width);
+        }
+    };
 
     /// <summary>
     /// Cột phụ co giãn theo tỉ lệ (môn, giảng viên, chi tiết...): cửa sổ hẹp thì co về <paramref name="min"/> thay vì đẩy bảng tràn ngang.

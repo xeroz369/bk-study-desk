@@ -4,16 +4,12 @@
 
 ![BK Study Desk](docs/hero.png)
 
-App Windows nhỏ gọn cho sinh viên **Bách Khoa TP.HCM (HCMUT)**. App gom **BK-LMS** và **MyBK** vào một cửa sổ:
-- deadline, quiz;
-- thời khóa biểu, lịch thi;
-- tài liệu từng môn, chọn mục nào thì tải xuống máy mục đó;
-- điểm (sổ điểm LMS lẫn điểm thành phần trên MyBK);
-- tiến độ chương trình đào tạo;
-- **luyện tập**: tự soạn quiz, ôn lại quiz LMS đã nộp, thi thử;
-- lối tắt tới khoảng 30 dịch vụ của trường.
+App Windows cho sinh viên Bách Khoa TP.HCM: kết hợp BK-LMS và MyBK và vài tính năng khác.
+- Deadline, quiz, thời khóa biểu, lịch thi, điểm.
+- Tài liệu từng môn, chọn mục nào tải mục đó.
+- Luyện tập: tự soạn quiz, ôn quiz LMS, thi thử.
 
-> **Không chính thức.** Đây là dự án cá nhân, không liên quan và không được Trường Đại học Bách khoa hay Moodle HQ xác nhận. App dùng tài khoản của chính bạn và chỉ đọc những gì bạn vốn xem được sau khi đăng nhập. Mọi địa chỉ và API app gọi được liệt kê ở Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động). Nếu trường yêu cầu, dự án sẽ thay đổi hoặc dừng tính năng tương ứng.
+> **Không chính thức.** Dự án cá nhân, không do trường hay Moodle HQ xác nhận. App chỉ đọc những gì tài khoản của bạn vốn xem được. Địa chỉ và API app gọi: Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động).
 
 Giao diện mặc định tiếng Việt, có thêm tiếng Anh.
 
@@ -56,7 +52,7 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
   - **Xuất lịch (.ics)**: lưu thời khóa biểu cả kỳ và lịch thi ra file để nhập vào Google Calendar, Outlook, Lịch của Windows.
 - **Môn học**:
   - duyệt thư mục từng môn kiểu File Explorer;
-  - xem file mới, deadline, thông báo, sổ điểm và các lớp trên LMS.
+  - xem file mới cập nhật trên máy, deadline, thông báo, sổ điểm và các lớp trên LMS.
   - **Tải tài liệu theo từng mục** của lớp trên LMS, chọn loại file (PDF, slide, khác), tùy chọn tự giải nén .zip/.rar/.7z.
   - Bật tự tải: mỗi lần đồng bộ, app tải file mới (cả đề và file đính kèm bài tập), LMS chậm vẫn mở được.
 - **Điểm và học vụ**:
@@ -90,7 +86,7 @@ Chính sách đầy đủ: [PRIVACY.md](PRIVACY.md).
   - cookie trong `data\webview`, do WebView2 tự mã hóa;
   - token LMS trong `data\secrets\`, **mã hóa bằng Windows DPAPI**. Chép sang máy khác hay tài khoản Windows khác thì không dùng được.
 - Thư mục dữ liệu nằm trong `%LOCALAPPDATA%`, chỉ tài khoản Windows của bạn (cùng SYSTEM và Administrators) mở được.
-- **Giữ đăng nhập khi tắt rồi mở lại app** giữ cookie tối đa 8 giờ, bằng giới hạn phiên của máy chủ SSO; tắt được trong Cài đặt.
+- **Giữ đăng nhập khi tắt rồi mở lại app** giữ đăng nhập cho tới khi máy chủ SSO của trường kết thúc phiên (app không tự xóa sớm hơn); tắt được trong Cài đặt.
 - Token LMS lấy bằng luồng đăng nhập có sẵn của Moodle dành cho app di động (`launch.php`, service `moodle_mobile_app`, URL scheme `moodlemobile` của app Moodle chính thức). Chi tiết ở Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động).
 - Giới hạn: malware chạy dưới chính tài khoản Windows của bạn vẫn có thể đọc được phiên đăng nhập. App nào trên Windows cũng vậy. Nghi máy dính malware thì chọn **Đăng xuất** rồi đổi mật khẩu HCMUT.
 - App chỉ gọi API **đọc** và không gửi dữ liệu đi đâu ngoài server của trường (riêng GitHub chỉ được hỏi phiên bản mới khi bạn cho phép). App không bao giờ nộp bài, đăng ký, hủy, thanh toán hay làm quiz thay bạn.
@@ -146,8 +142,3 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo cùng giấy phép này.
 
 Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).
-
-
-
-
-
