@@ -161,6 +161,7 @@ public sealed class SeverityBar : Border
         _detailsToggle.Visibility = string.IsNullOrEmpty(details) ? Visibility.Collapsed : Visibility.Visible;
         if (_details.Text != (details ?? "")) { _details.Text = details ?? ""; SetDetailsOpen(false); }
         if (Visibility == Visibility.Visible && _icon.Severity == severity && _title.Text == title && _message.Text == message) return;
+        _autoHide?.Stop();
         _icon.Severity = severity;
         _title.Text = title;
         _title.Visibility = title.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -170,7 +171,46 @@ public sealed class SeverityBar : Border
         Visibility = Visibility.Visible;
     }
 
-    public void Hide() => Visibility = Visibility.Collapsed;
+    public void Hide()
+    {
+        _autoHide?.Stop();
+        Visibility = Visibility.Collapsed;
+    }
+
+    private System.Windows.Threading.DispatcherTimer? _autoHide;
+
+    /// <summary>Báo xong thì tự ẩn khi đọc hết giờ.</summary>
+    public event Action? AutoHidden;
+
+    /// <summary>
+    /// Tự ẩn thanh báo đang hiện sau <see cref="ReadTime"/>. Chuột đang trỏ hay bàn phím đang ở trong thanh thì đợi thêm,
+    /// để kịp đọc (WCAG 2.2.2). Gọi Show với nội dung khác thì hủy hẹn.
+    /// </summary>
+    public void HideAfterRead()
+    {
+        _autoHide ??= new System.Windows.Threading.DispatcherTimer();
+        _autoHide.Stop();
+        _autoHide.Interval = ReadTime();
+        _autoHide.Tick -= OnAutoHide;
+        _autoHide.Tick += OnAutoHide;
+        _autoHide.Start();
+    }
+
+    private void OnAutoHide(object? sender, EventArgs e)
+    {
+        if (IsMouseOver || IsKeyboardFocusWithin) return;   // đợi lượt sau
+        Hide();
+        AutoHidden?.Invoke();
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SystemParametersInfo(uint action, uint param, out uint value, uint winIni);
+
+    /// <summary>
+    /// Thời gian đọc theo cài đặt Windows "Ẩn thông báo sau" (Trợ năng, SPI_GETMESSAGEDURATION, mặc định 5 giây); không ngắn hơn 5 giây.
+    /// </summary>
+    internal static TimeSpan ReadTime() =>
+        TimeSpan.FromSeconds(SystemParametersInfo(0x2016, 0, out var s, 0) && s > 5 ? Math.Min(s, 300) : 5);
 
     private void SetDetailsOpen(bool open)
     {

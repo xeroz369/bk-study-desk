@@ -98,6 +98,7 @@ public partial class MainWindow : Window, IDisposable
         _host.State.StatusChanged += () => { UpdateStatus(); UpdateInfoBar(); };
         _progressDelay.Tick += (_, _) => { _progressDelay.Stop(); UpdateStatus(); };
         InfoBar.Closed += OnInfoClose;
+        InfoBar.AutoHidden += () => _keepShown = false;
         _host.LoginProgress += OnLogin;
         _host.Navigate += Go;
         _updateView = new DownloadView(_host.Updates, StUpdateBar);
@@ -583,8 +584,8 @@ public partial class MainWindow : Window, IDisposable
             _ => LoginText.TryGetValue(stage, out var key) ? L.T(key) : "",
         };
         ShowInfo(stage switch { "error" => Severity.Error, "cancel" => Severity.Warning, "done" => Severity.Success, _ => Severity.Informational }, text, null, null);
-        // InfoBar dành cho thông báo dài hạn, không tự ẩn (hướng dẫn InfoBar của Microsoft): báo xong thì để người dùng tự đóng.
-        if (stage is "done" or "logout") { _loginStage = ""; _keepShown = true; }
+        // Báo xong (đăng nhập, đăng xuất) chỉ hiện đủ lâu để đọc rồi tự ẩn; lỗi thì giữ tới khi người dùng xử lý.
+        if (stage is "done" or "logout") { _loginStage = ""; _keepShown = true; InfoBar.HideAfterRead(); }
     }
 
     private bool _keepShown;   // đang hiện "đăng nhập xong/đã đăng xuất": giữ tới khi người dùng đóng hoặc có lỗi mới

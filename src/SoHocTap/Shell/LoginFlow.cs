@@ -35,6 +35,7 @@ internal sealed class LoginFlow(CoreWebView2 core, Action<string, string> progre
     private async Task OnLoadedAsync()
     {
         if (_stage == Stage.Done || !Uri.TryCreate(core.Source, UriKind.Absolute, out var u)) return;
+        Log.Debug($"Đăng nhập: trang {Log.Where(core.Source)} ({_stage})");
         var ssoHost = WebHost.Host(Config.Str("sources.mybk.casLogin"));
         var lmsHost = WebHost.Host(Config.Str("sources.lms.site"));
         var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));

@@ -2,11 +2,22 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.11.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.2.0.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.2.0] - 2026-10-04
+
+### Added
+
+- The shared study **Library** ([hcmut-library](https://bk-study-library.github.io/hcmut-library/)) is built into the app: each course has a **Library** tab, and downloads go into that course's `Thư viện` folder.
+
+### Fixed
+
+- The sign-in window is no longer blank: it shows that the page is opening, slow or failed, with a **Try again** button.
+- The "Signed in" bar hides by itself after a few seconds (following the Windows "Dismiss notifications after" setting).
 
 ## [1.1.11] - 2026-10-04
 
@@ -255,7 +266,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...v1.2.0
 [1.1.11]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...v1.1.11
 [1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10
 [1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
