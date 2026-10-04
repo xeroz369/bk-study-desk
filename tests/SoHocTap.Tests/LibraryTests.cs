@@ -137,7 +137,10 @@ public sealed class LibraryTests : IDisposable
         Assert.Equal("https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/",
             LibraryClient.ItemUrl(index, mt, items.Single(i => i.Id == "mit-ocw-1802"))!.AbsoluteUri);
         Assert.Equal("https://library.example/course/MT1005/#tom-tat-chuong-1", LibraryClient.ItemUrl(index, mt, items.Single(i => i.Id == "tom-tat-chuong-1"))!.AbsoluteUri);
-        Assert.Equal("https://library.example/contribute/", LibraryClient.ContributeUrl(index)!.AbsoluteUri);
+        Assert.Equal("https://library.example/gui-tai-lieu/", LibraryClient.ContributeUrl(index)!.AbsoluteUri);
+        Assert.Equal("https://library.example/contribute/", LibraryClient.ContributeUrl(index, "contribute/")!.AbsoluteUri);
+        Assert.Null(LibraryClient.ContributeUrl(index, "https://evil.example/"));
+        Assert.Null(LibraryClient.ContributeUrl(index, "../x/"));
         var js = items.Single(i => i.Id == "mit-ocw-1802") with { Url = "javascript:alert(1)" };
         Assert.Null(LibraryClient.ItemUrl(index, mt, js));
     }

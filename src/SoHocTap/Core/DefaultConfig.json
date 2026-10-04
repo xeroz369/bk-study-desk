@@ -243,6 +243,7 @@
   "library": {
     "enabled": true,
     "baseUrl": "https://bk-study-library.github.io/hcmut-library/",
+    "contributePath": "gui-tai-lieu/",
     "refreshHours": 24,
     "tabRefreshMinutes": 10,
     "timeoutSeconds": 30,

@@ -6,6 +6,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Nút **Đóng góp tài liệu** mở thẳng trang [Gửi tài liệu](https://bk-study-library.github.io/hcmut-library/gui-tai-lieu/) của thư viện.
+
 ## [1.2.0] - 2026-10-04
 
 ### Thêm

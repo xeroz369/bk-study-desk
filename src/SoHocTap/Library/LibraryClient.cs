@@ -266,7 +266,10 @@ public sealed class LibraryClient : IDisposable
     public static Uri? SiteOf(LibraryIndex? index) =>
         index?.Site is { } s && Uri.TryCreate(s.EndsWith('/') ? s : s + "/", UriKind.Absolute, out var u) && u.Scheme is "https" or "http" ? u : null;
 
-    public static Uri? ContributeUrl(LibraryIndex? index) => SiteOf(index) is { } site ? new Uri(site, "contribute/") : null;
+    /// <summary>Trang gửi tài liệu: <paramref name="path"/> (library.contributePath) tính từ site, chỉ nhận đường dẫn tương đối.</summary>
+    public static Uri? ContributeUrl(LibraryIndex? index, string path = "gui-tai-lieu/") =>
+        SiteOf(index) is { } site && path.Length > 0 && !path.Contains("..", StringComparison.Ordinal) && !path.Contains(':')
+            ? new Uri(site, path.TrimStart('/')) : null;
 
     /// <summary>Trang của môn trên web: url trong index, không có thì &lt;site&gt;course/&lt;id&gt;/.</summary>
     public static Uri? CourseUrl(LibraryIndex? index, CourseRef course)
