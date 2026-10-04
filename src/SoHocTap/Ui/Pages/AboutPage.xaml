@@ -1,4 +1,4 @@
-﻿<!-- Giới thiệu: tên, version, tác giả, giấy phép, link chính thức (AppInfo). Không có mục ủng hộ trong app (giấy phép: không đưa dịch vụ thu tiền vào app); ủng hộ chỉ để trên GitHub. -->
+﻿<!-- Giới thiệu: tên, version, tác giả, giấy phép, link chính thức (AppInfo). -->
 <UserControl x:Class="SoHocTap.Ui.Pages.AboutPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

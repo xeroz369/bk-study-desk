@@ -148,7 +148,6 @@ An experimental release: most of the code has been reorganised to make features 
 - **Download** lets you choose file types: PDF, slides (.ppt, .pptx), other; the file count and size follow your choice ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - The course registration table shows the lecturer and class times, taken from the MyBK timetable ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - English documents are separate, complete translations: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, the studypack documents, and English Wiki pages. English style guide: `docs/english-style.md`.
-- A **Support** section in the README and the Wiki: Ko-fi and a MoMo/VietQR code.
 - The **About** page opens the English privacy policy when the interface is in English.
 
 ### Changed
@@ -161,7 +160,7 @@ An experimental release: most of the code has been reorganised to make features 
 
 ## [1.1.2] - 2026-10-03 [YANKED]
 
-Withdrawn because this build had a support section inside the app. All changes moved to 1.1.3.
+Withdrawn. All changes moved to 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 

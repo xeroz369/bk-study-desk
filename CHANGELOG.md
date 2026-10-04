@@ -146,7 +146,6 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 - **Tải tài liệu** chọn được loại file: PDF, slide (.ppt, .pptx), khác; số file và dung lượng tính theo lựa chọn ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - Bảng **Kết quả đăng ký** có thêm cột giảng viên và giờ học, lấy từ thời khóa biểu MyBK ([#6](https://github.com/xeroz369/bk-study-desk/issues/6)).
 - Tài liệu tiếng Anh tách thành file riêng, dịch đầy đủ: `README.en.md`, `PRIVACY.en.md`, `SECURITY.en.md`, `CODE_OF_CONDUCT.en.md`, `CONTRIBUTING.en.md`, `CHANGELOG.en.md`, tài liệu studypack, và các trang Wiki tiếng Anh. Chuẩn viết tiếng Anh: `docs/english-style.md`.
-- Mục **Ủng hộ** trong README và Wiki: Ko-fi và mã QR MoMo/VietQR.
 
 ### Thay đổi
 
@@ -158,7 +157,7 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 ## [1.1.2] - 2026-10-03 [YANKED]
 
-Đã gỡ khỏi trang phát hành vì bản này có mục ủng hộ trong app. Mọi thay đổi chuyển sang 1.1.3.
+Đã gỡ khỏi trang phát hành. Mọi thay đổi chuyển sang 1.1.3.
 
 ## [1.1.1] - 2026-10-03
 
