@@ -276,7 +276,7 @@ internal sealed class AppHost : IDisposable
     private void OnLogin(string stage, string message)
     {
         LoginProgress?.Invoke(stage, message);
-        Log.Debug($"Đăng nhập: {stage}");
+        Log.Info($"Đăng nhập: {stage}");   // Info: chỉ tên bước (check, password, mybk, lms, done, cancel, error), để biết lần đăng nhập dừng ở đâu
         if (stage is "done" or "logout") MybkSource.SetSignedIn(stage == "done");
         if (stage == "done") { _ssoAliveAt = DateTime.UtcNow; _ssoExpired = false; }
         if (stage == "done") SyncAll();
