@@ -29,14 +29,44 @@
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="{ui:T settings.language}" Style="{StaticResource SectionTitle}" />
-                    <StackPanel Orientation="Horizontal">
-                        <ComboBox x:Name="LanguageBox" Width="200" DisplayMemberPath="Name" SelectionChanged="OnLanguage"
+                    <WrapPanel>
+                        <ComboBox x:Name="LanguageBox" MinWidth="200" DisplayMemberPath="Name" SelectionChanged="OnLanguage"
                                   AutomationProperties.Name="{ui:T settings.language}" />
                         <TextBlock x:Name="LanguageNote" Text="{ui:T settings.languageNote}" Style="{StaticResource Muted}" VerticalAlignment="Center"
                                    Margin="12,0,0,0" Visibility="Collapsed" />
                         <Button x:Name="RestartButton" Content="{ui:T settings.restart}" Margin="12,0,0,0" Click="OnRestart"
                                 Style="{DynamicResource AccentButtonStyle}" Visibility="Collapsed" />
-                    </StackPanel>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Chữ: phông và cỡ chữ của cả app (app.font.family, app.font.size), đổi là thấy ngay (Ui/AppFont.cs). Dòng mẫu có dấu tiếng Việt
+                 vẽ bằng phông đang chọn để thấy phông có đủ dấu không. -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{ui:T settings.font}" Style="{StaticResource SectionTitle}" />
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,16,8">
+                            <Label Content="{ui:T settings.font.family}" Target="{Binding ElementName=FontFamilyBox}" Padding="0,0,0,4" />
+                            <ComboBox x:Name="FontFamilyBox" MinWidth="260" MaxDropDownHeight="360" SelectionChanged="OnFontFamily" IsTextSearchEnabled="True"
+                                      AutomationProperties.Name="{ui:T settings.font.family}">
+                                <ComboBox.ItemsPanel>
+                                    <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                                </ComboBox.ItemsPanel>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8">
+                            <Label Content="{ui:T settings.font.size}" Target="{Binding ElementName=FontSizeBox}" Padding="0,0,0,4" />
+                            <ComboBox x:Name="FontSizeBox" MinWidth="200" SelectionChanged="OnFontSize" AutomationProperties.Name="{ui:T settings.font.size}" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Text="{ui:T settings.font.preview}" Style="{StaticResource Muted}" Margin="0,4,0,2" />
+                    <TextBlock x:Name="FontPreview" Text="{ui:T settings.font.sample}" TextWrapping="Wrap" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" Text="{ui:T settings.font.note}" />
+                    <WrapPanel Margin="0,10,0,0">
+                        <Button Content="{ui:T settings.font.reset}" Click="OnFontReset" />
+                        <TextBlock x:Name="FontStatus" VerticalAlignment="Center" Margin="12,0,0,0" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </WrapPanel>
                 </StackPanel>
             </Border>
 
@@ -44,15 +74,15 @@
             <Border x:Name="UpdateCard" Style="{StaticResource Card}" Margin="0,0,0,12" Visibility="Collapsed">
                 <StackPanel>
                     <TextBlock Text="{ui:T update.settings}" Style="{StaticResource SectionTitle}" />
-                    <StackPanel Orientation="Horizontal">
-                        <ComboBox x:Name="UpdateModeBox" Width="320" SelectionChanged="OnUpdateMode" AutomationProperties.Name="{ui:T update.settings}" />
+                    <WrapPanel>
+                        <ComboBox x:Name="UpdateModeBox" MinWidth="320" SelectionChanged="OnUpdateMode" AutomationProperties.Name="{ui:T update.settings}" />
                         <Button x:Name="UpdateCheck" Content="{ui:T update.check}" Margin="12,0,0,0" Click="OnUpdateCheck" />
-                    </StackPanel>
+                    </WrapPanel>
                     <!-- Kiểm tra bao lâu một lần (app.update.checkHours): 6, 12, 24 giờ. Máy thức dậy, có mạng lại thì kiểm tra thêm nếu đã tới hạn. -->
-                    <StackPanel x:Name="UpdateIntervalRow" Orientation="Horizontal" Margin="0,8,0,0">
+                    <WrapPanel x:Name="UpdateIntervalRow" Margin="0,8,0,0">
                         <TextBlock Text="{ui:T update.interval}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                        <ComboBox x:Name="UpdateIntervalBox" Width="160" SelectionChanged="OnUpdateInterval" AutomationProperties.Name="{ui:T update.interval}" />
-                    </StackPanel>
+                        <ComboBox x:Name="UpdateIntervalBox" MinWidth="160" SelectionChanged="OnUpdateInterval" AutomationProperties.Name="{ui:T update.interval}" />
+                    </WrapPanel>
                     <TextBlock x:Name="UpdateNote" Style="{StaticResource Muted}" Margin="0,6,0,0" TextWrapping="Wrap" />
                     <!-- Đang tải bản mới (từ cửa sổ cập nhật hay chế độ Tự động): thanh có số thật (DownloadView) và nút Hủy tải. -->
                     <StackPanel x:Name="UpdateProgressRow" Orientation="Horizontal" Margin="0,8,0,0" Visibility="Collapsed">
@@ -98,8 +128,8 @@
                     <TextBlock Text="{ui:T settings.sync}" Style="{StaticResource SectionTitle}" />
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="260" />
-                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="Auto" MinWidth="260" />
+                            <ColumnDefinition Width="Auto" MinWidth="120" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
@@ -107,16 +137,16 @@
                         </Grid.RowDefinitions>
                         <Label Grid.Row="0" Content="{ui:T settings.lmsHours}" Target="{Binding ElementName=LmsHours}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="0" Grid.Column="1" x:Name="LmsHours" Margin="0,3" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" Text="{ui:T settings.lmsHoursNote}" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap" Text="{ui:T settings.lmsHoursNote}" />
                         <Label Grid.Row="1" Content="{ui:T settings.mybkHours}" Target="{Binding ElementName=MybkHours}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="1" Grid.Column="1" x:Name="MybkHours" Margin="0,3" />
-                        <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" Text="{ui:T settings.mybkHoursNote}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap" Text="{ui:T settings.mybkHoursNote}" />
                         <Label Grid.Row="2" Content="{ui:T settings.notifyHours}" Target="{Binding ElementName=NotifyHours}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="2" Grid.Column="1" x:Name="NotifyHours" Margin="0,3" />
-                        <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" Text="{ui:T settings.notifyHoursNote}" />
+                        <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap" Text="{ui:T settings.notifyHoursNote}" />
                         <Label Grid.Row="3" Content="{ui:T settings.lastHours}" Target="{Binding ElementName=LastHours}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="3" Grid.Column="1" x:Name="LastHours" Margin="0,3" />
-                        <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" Text="{ui:T settings.lastHoursNote}" />
+                        <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap" Text="{ui:T settings.lastHoursNote}" />
                         <Label Grid.Row="4" Content="{ui:T settings.maxMb}" Target="{Binding ElementName=MaxMb}" VerticalAlignment="Center" />
                         <TextBox Grid.Row="4" Grid.Column="1" x:Name="MaxMb" Margin="0,3" />
                     </Grid>
@@ -124,21 +154,21 @@
                     <CheckBox x:Name="AutoExtract" Margin="0,6,0,0" Content="{ui:T settings.autoExtract}" Style="{StaticResource WrapCheck}" />
                     <CheckBox x:Name="SaveQuizzes" Margin="0,6,0,0" Content="{ui:T settings.saveQuizzes}" ToolTip="{ui:T settings.saveQuizzes.tip}" Click="OnSaveQuizzes"
                               Style="{StaticResource WrapCheck}" />
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <WrapPanel Margin="0,10,0,0">
                         <Button Content="{ui:T settings.save}" Click="OnSave" IsDefault="False" Style="{DynamicResource AccentButtonStyle}" />
                         <Button Content="{ui:T settings.resync}" Margin="8,0,0,0" Click="OnResync" ToolTip="{ui:T settings.resync.tip}" />
                         <TextBlock x:Name="SaveText" VerticalAlignment="Center" Margin="12,0,0,0" Style="{StaticResource Muted}" />
-                    </StackPanel>
+                    </WrapPanel>
                 </StackPanel>
             </Border>
 
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="{ui:T settings.organize}" Style="{StaticResource SectionTitle}" />
-                    <StackPanel Orientation="Horizontal">
+                    <WrapPanel>
                         <Button Content="{ui:T settings.preview}" Click="OnPlan" />
                         <Button x:Name="ApplyButton" Content="{ui:T settings.apply}" Margin="8,0,0,0" Click="OnApply" IsEnabled="False" />
-                    </StackPanel>
+                    </WrapPanel>
                     <TextBox x:Name="PlanText" Margin="0,8,0,0" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" MaxHeight="200"
                              VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Visibility="Collapsed" />
                 </StackPanel>

@@ -2,15 +2,28 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../CHANGELOG.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](CHANGELOG.md)
 
-> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.9.
+> Translated from CHANGELOG.md (Vietnamese) for BK Study Desk 1.1.10.
 
 Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.10] - 2026-10-04
+
 ### Added
 
-- **Library** (still off by default): shows reference books (title, authors, year, publisher; right-click to copy the ISBN), with no download button.
+- **Settings** > **Text**: change the font and text size.
+
+### Fixed
+
+- MyBK no longer signs you out after about 8 hours.
+- **Upcoming** lists everything ahead, not just 14 days. Overdue unfinished work sits in an **Overdue** group.
+- Deadlines with a group code (L01...) are no longer hidden when the app cannot read your groups.
+- Class times written like "7g30" now show correctly in the week grid.
+- Dates and times always follow Vietnam time.
+- The status bar no longer says "Updated to ..." after an update.
+- Truncated text shows the full text in a tooltip.
+- Large text no longer cuts off table columns or the version in the status bar.
 
 ## [1.1.9] - 2026-10-03
 
@@ -237,7 +250,8 @@ Withdrawn because this build had a support section inside the app. All changes m
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...HEAD
+[1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10
 [1.1.9]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.6...v1.1.7

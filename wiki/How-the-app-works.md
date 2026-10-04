@@ -10,7 +10,7 @@ This page lists exactly what the app sends to the university's servers, so anyon
 
 - The app opens the university SSO page (`sso.hcmut.edu.vn`, a CAS system) in a window of the in-app browser (WebView2). You type your account and password yourself; the app never reads the password.
 - After you sign in, the SSO server sets a session cookie. The cookie stays in WebView2's data folder on your PC.
-- The server decides how long the SSO session lasts: CAS by default ends a session after 2 hours of inactivity and at most 8 hours after sign-in. While the app is open, it reopens the SSO entry page every 60 minutes so the session isn't ended for inactivity (can be turned off in Settings); after 8 hours you still need to sign in again.
+- The university server decides how long the SSO session lasts: it ends sessions on its own schedule and after a long idle time. The app keeps the sign-in cookies and extends them on every pass through SSO, so it never removes a session earlier than the server does. While the app is open, it reopens the SSO entry page every 60 minutes so the session isn't ended for inactivity (can be turned off in Settings). Once the server has ended the session, sign in once more.
 
 ## 2. BK-LMS (Moodle)
 

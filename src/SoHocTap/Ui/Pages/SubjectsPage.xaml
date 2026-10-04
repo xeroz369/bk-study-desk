@@ -69,8 +69,8 @@
                     <Button x:Name="LmsButton" Content="{ui:T subjects.openLms}" Click="OnOpenLms" Margin="0,0,8,0" />
                     <Button Content="{ui:T subjects.openFolder}" Click="OnReveal" ToolTip="{ui:T subjects.openFolder.tip}" />
                 </StackPanel>
-                <TextBlock x:Name="SubjectName" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                <TextBlock x:Name="SubjectMeta" Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Muted}" FontSize="13" Margin="0,2,0,0" />
+                <TextBlock x:Name="SubjectName" FontSize="{DynamicResource AppFontSizeTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                <TextBlock x:Name="SubjectMeta" Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource MutedSub}" Margin="0,2,0,0" />
             </Grid>
             <!-- Chỉ dựng tab đang chọn (OnTab): tab Tài liệu, Mới cập nhật đọc đĩa trên thread pool. -->
             <TabControl x:Name="Tabs" SelectionChanged="OnTab">
@@ -79,7 +79,7 @@
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
                             <Button x:Name="UpButton" Content="&#xE74A;" FontFamily="{StaticResource IconFont}" Click="OnUp" ToolTip="{ui:T subjects.up.tip}"
                                     AutomationProperties.Name="{ui:T subjects.up.tip}" />
-                            <TextBlock x:Name="PathText" VerticalAlignment="Center" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" Style="{StaticResource Muted}" FontSize="13" />
+                            <TextBlock x:Name="PathText" VerticalAlignment="Center" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" Style="{StaticResource MutedSub}" />
                         </DockPanel>
                         <c:DataView x:Name="Files" />
                     </DockPanel>
@@ -109,15 +109,15 @@
                             <Button x:Name="ContributeButton" DockPanel.Dock="Right" Content="{ui:T library.contribute}" Click="OnContribute"
                                     ToolTip="{ui:T library.contribute.tip}" Margin="8,0,0,0" VerticalAlignment="Top" />
                             <WrapPanel>
-                                <ComboBox x:Name="TeacherFilter" Width="180" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
+                                <ComboBox x:Name="TeacherFilter" MinWidth="180" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
                                           AutomationProperties.Name="{ui:T library.filter.teacher}" />
-                                <ComboBox x:Name="TermFilter" Width="150" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
+                                <ComboBox x:Name="TermFilter" MinWidth="150" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
                                           AutomationProperties.Name="{ui:T library.filter.term}" />
-                                <ComboBox x:Name="ExamFilter" Width="170" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
+                                <ComboBox x:Name="ExamFilter" MinWidth="170" Margin="0,0,8,4" SelectionChanged="OnLibraryFilter" Visibility="Collapsed"
                                           AutomationProperties.Name="{ui:T library.filter.exam}" />
                             </WrapPanel>
                         </DockPanel>
-                        <TextBlock x:Name="LibraryNote" DockPanel.Dock="Top" Style="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap"
+                        <TextBlock x:Name="LibraryNote" DockPanel.Dock="Top" Style="{StaticResource MutedSub}" TextWrapping="Wrap"
                                    Margin="0,0,0,6" Visibility="Collapsed" />
                         <c:DataView x:Name="LibraryItems" />
                     </DockPanel>

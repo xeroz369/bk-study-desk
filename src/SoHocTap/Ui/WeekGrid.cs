@@ -147,9 +147,11 @@ internal sealed class WeekGrid : Grid
             var date = _monday.AddDays(_days[i] - 2);
             var isToday = date == today;
             var cell = new StackPanel { Margin = new Thickness(0, 0, 0, 6), HorizontalAlignment = HorizontalAlignment.Center };
-            var name = new TextBlock { Text = Format.MybkDays.GetValueOrDefault(_days[i]) ?? "", HorizontalAlignment = HorizontalAlignment.Center, FontSize = 12 };
+            var name = new TextBlock { Text = Format.MybkDays.GetValueOrDefault(_days[i]) ?? "", HorizontalAlignment = HorizontalAlignment.Center };
+            name.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSize");
             name.SetResourceReference(TextBlock.ForegroundProperty, isToday ? "AccentTextFillColorPrimaryBrush" : "TextFillColorSecondaryBrush");
-            var day = new TextBlock { Text = date.ToString("dd/MM", System.Globalization.CultureInfo.InvariantCulture), HorizontalAlignment = HorizontalAlignment.Center, FontSize = 16, FontWeight = isToday ? FontWeights.SemiBold : FontWeights.Normal };
+            var day = new TextBlock { Text = date.ToString("dd/MM", System.Globalization.CultureInfo.InvariantCulture), HorizontalAlignment = HorizontalAlignment.Center, FontWeight = isToday ? FontWeights.SemiBold : FontWeights.Normal };
+            day.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSizeHeading");
             day.SetResourceReference(TextBlock.ForegroundProperty, isToday ? "AccentTextFillColorPrimaryBrush" : "TextFillColorPrimaryBrush");
             cell.Children.Add(name);
             cell.Children.Add(day);
@@ -175,7 +177,8 @@ internal sealed class WeekGrid : Grid
         for (var m = From; m <= To; m += 60)
         {
             var y = Pad + (m - From) * px;
-            var label = new TextBlock { Text = $"{m / 60}:00", FontSize = 11, Margin = new Thickness(0, y - 7, 8, 0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
+            var label = new TextBlock { Text = $"{m / 60}:00", Margin = new Thickness(0, y - 7, 8, 0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
+            label.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSizeCaption");
             label.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorTertiaryBrush");
             _body.Children.Add(label);
             var line = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, y, 0, 0) };
@@ -250,9 +253,11 @@ internal sealed class WeekGrid : Grid
     private FrameworkElement Block(WeekBlock b, double px)
     {
         var color = Palette[(int)((uint)StableHash(b.Key) % (uint)Palette.Length)];
-        var title = new TextBlock { Text = b.Title, FontWeight = FontWeights.SemiBold, FontSize = 12, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis };
+        var title = new TextBlock { Text = b.Title, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis };
+        title.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSize");
         title.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
-        var detail = new TextBlock { Text = b.Tag is { } tag ? $"{tag}, {b.Detail}" : b.Detail, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis };
+        var detail = new TextBlock { Text = b.Tag is { } tag ? $"{tag}, {b.Detail}" : b.Detail, TextTrimming = TextTrimming.CharacterEllipsis };
+        detail.SetResourceReference(TextBlock.FontSizeProperty, "AppFontSizeCaption");
         detail.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
         var panel = new StackPanel();
         panel.Children.Add(title);

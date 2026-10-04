@@ -25,9 +25,11 @@
     <Compile Include="$(Src)Core\LogRedactor.cs" Link="Linked\LogRedactor.cs" />
     <Compile Include="$(Src)Core\Ics.cs" Link="Linked\Ics.cs" />
     <Compile Include="$(Src)Core\VnTime.cs" Link="Linked\VnTime.cs" />
+    <Compile Include="$(Src)Core\SsoLifetime.cs" Link="Linked\SsoLifetime.cs" />
     <Compile Include="$(Src)Ui\NavFit.cs" Link="Linked\NavFit.cs" />
     <Compile Include="$(Src)Ui\ScreenFit.cs" Link="Linked\ScreenFit.cs" />
     <Compile Include="$(Src)Ui\WeekMath.cs" Link="Linked\WeekMath.cs" />
+    <Compile Include="$(Src)Ui\FontChoice.cs" Link="Linked\FontChoice.cs" />
     <Compile Include="..\..\src\BKStudyDesk.Setup\InstallTarget.cs" Link="Linked\InstallTarget.cs" />
     <Compile Include="$(Src)Data\Models.cs" Link="Linked\Data\Models.cs" />
     <Compile Include="$(Src)Data\CachedFile.cs" Link="Linked\Data\CachedFile.cs" />
@@ -45,6 +47,7 @@
     <Compile Include="$(Src)Sources\SyncErrors.cs" Link="Linked\Sources\SyncErrors.cs" />
     <Compile Include="$(Src)Sources\Lms\LmsException.cs" Link="Linked\Sources\LmsException.cs" />
     <Compile Include="$(Src)Sources\Lms\AssignPairing.cs" Link="Linked\Sources\AssignPairing.cs" />
+    <Compile Include="$(Src)Sources\Lms\GroupFilter.cs" Link="Linked\Sources\GroupFilter.cs" />
     <Compile Include="$(Src)Sources\Mybk\MybkNormalize.cs" Link="Linked\Sources\MybkNormalize.cs" />
     <!-- Phần Files không phụ thuộc config: test trên thư mục tạm. Không link Paths/Config: Paths.AppRoot đi ngược từ thư mục test
          lên tới thư mục có data\, trong worktree dưới "Sổ học tập" đó là data thật của người dùng. -->
@@ -65,6 +68,8 @@
   <ItemGroup>
     <!-- File ngôn ngữ (test parity) và fixture viết tay (không có dữ liệu thật) chép ra thư mục output. -->
     <None Include="$(Src)lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- XAML của các Window (test: window nào cũng theo phông, cỡ chữ đã chọn). -->
+    <None Include="$(Src)Ui\*Window.xaml" Link="xaml\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

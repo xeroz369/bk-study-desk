@@ -269,8 +269,9 @@ public partial class SubjectsPage : UserControl, IPage
             case 0: _ = LoadDirAsync(); break;
             case 1: _ = LoadRecentAsync(s); break;
             case 2:
-                Due.Show(st.Timeline.Where(x => Mine(x, s) && x.Time > Format.Now - 86400
-                                                && x.Time < Format.Now + 60 * 86400 && x.Kind != "class").ToList(), L.T("subjects.dueEmpty"), st, Src.Lms, Src.Mybk);
+                // Mọi mốc sắp tới (không cắt ở 60 ngày, DESIGN 6b-3) và hạn LMS đã qua mà chưa làm (cột Còn ghi "quá hạn").
+                Due.Show(st.Timeline.Where(x => Mine(x, s) && (x.Time > Format.Now - 86400 || x.Overdue) && x.Kind != "class").ToList(),
+                    L.T("subjects.dueEmpty"), st, Src.Lms, Src.Mybk);
                 break;
             case 3:
                 News.Show((st.Lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name))

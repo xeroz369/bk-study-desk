@@ -78,6 +78,17 @@ public class UpdatePolicyTests
     [InlineData("", false)]
     public void IsValidSource_Values(string src, bool expected) => Assert.Equal(expected, UpdatePolicy.IsValidSource(src, _ => false));
 
+    [Theory]
+    [InlineData("http://127.0.0.1:8765/", true)]
+    [InlineData("http://localhost:8765/", false)]
+    [InlineData("http://192.168.1.2:8765/", false)]
+    [InlineData("https://127.0.0.1:8765/", false)]
+    public void LoopbackHttp_OnlyIpv4Loopback(string src, bool expected)
+    {
+        Assert.Equal(expected, UpdatePolicy.IsLoopbackHttp(src));
+        Assert.False(UpdatePolicy.IsValidSource(src, _ => false));   // nguồn chung (cả bản Linux) không nhận
+    }
+
     [Fact]
     public void IsValidSource_ExistingLocalFolder_True() =>
         Assert.True(UpdatePolicy.IsValidSource(Path.Combine(Path.GetTempPath(), "feed"), _ => true));

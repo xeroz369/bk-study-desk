@@ -97,12 +97,31 @@ internal static class Grids
             HeaderTemplate = (DataTemplate)Application.Current.FindResource("TrimHeader"),
             SortMemberPath = sortPath ?? path,
         };
-        c.Width = star ? new DataGridLength(2, DataGridLengthUnitType.Star) : double.IsNaN(width) ? DataGridLength.Auto : new DataGridLength(width);
+        c.Width = star ? new DataGridLength(2, DataGridLengthUnitType.Star) : double.IsNaN(width) ? DataGridLength.Auto : new DataGridLength(width * FontScale);
         // Cột chính (tên, tiêu đề) không co dưới ~160: hẹp hơn thì chữ chỉ còn vài ký tự, thà cuộn ngang.
         if (star) c.MinWidth = 160;
         Design.AddOrUpdate(c, c.Width);
+        if (!star && !double.IsNaN(width)) Fixed.Add((new WeakReference<DataGridColumn>(c), width));
         return c;
     }
+
+    // Cột rộng cố định (giờ, còn, loại...) thiết kế ở cỡ chữ mặc định: giãn theo cỡ chữ đang chọn, không thì chữ lớn bị cắt
+    // (cỡ 18 từng làm "còn 9 ngày" thành ":òn 9 ngày", 04/10/2026). Đổi cỡ chữ khi đang mở app thì giãn lại ngay.
+    private static readonly List<(WeakReference<DataGridColumn> Column, double Width)> Fixed = [];
+
+    private static double FontScale => AppFont.Current.Scale(AppFont.SystemSize);
+
+    static Grids() => AppFont.Changed += () =>
+    {
+        var scale = FontScale;
+        Fixed.RemoveAll(f => !f.Column.TryGetTarget(out _));
+        foreach (var (weak, width) in Fixed)
+        {
+            if (!weak.TryGetTarget(out var c)) continue;
+            c.Width = new DataGridLength(width * scale);
+            Design.AddOrUpdate(c, c.Width);
+        }
+    };
 
     /// <summary>
     /// Cột phụ co giãn theo tỉ lệ (môn, giảng viên, chi tiết...): cửa sổ hẹp thì co về <paramref name="min"/> thay vì đẩy bảng tràn ngang.

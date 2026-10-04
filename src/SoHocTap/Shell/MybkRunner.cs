@@ -133,6 +133,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
                 await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u => u.Host == mybkHost, ct,
                     failAt: u => WebHost.IsSsoLogin(u.AbsoluteUri));
+                SsoSession.MarkAlive();
                 await SessionKeeper.PersistAsync(core);
                 return true;
             }
@@ -234,18 +235,28 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         var appLogin = Config.Str("sources.mybk.appLogin");
         var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
         var ssoHost = WebHost.Host(Config.Str("sources.mybk.casLogin"));
-        await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u =>
+        try
         {
-            if (u.Host != mybkHost) return false;
-            if (u.AbsolutePath.StartsWith("/my/", StringComparison.Ordinal) || u.AbsolutePath.TrimEnd('/') == "/app/login")
+            await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u =>
             {
-                core.Navigate(appLogin);
-                return false;
-            }
-            return u.AbsolutePath.StartsWith("/app", StringComparison.Ordinal) && !u.AbsolutePath.Contains("/login") && !u.AbsolutePath.Contains("/401");
-        }, ct, failAt: u => u.Host == ssoHost && u.AbsolutePath.Contains("/login", StringComparison.Ordinal));
+                if (u.Host != mybkHost) return false;
+                if (u.AbsolutePath.StartsWith("/my/", StringComparison.Ordinal) || u.AbsolutePath.TrimEnd('/') == "/app/login")
+                {
+                    core.Navigate(appLogin);
+                    return false;
+                }
+                return u.AbsolutePath.StartsWith("/app", StringComparison.Ordinal) && !u.AbsolutePath.Contains("/login") && !u.AbsolutePath.Contains("/401");
+            }, ct, failAt: u => u.Host == ssoHost && u.AbsolutePath.Contains("/login", StringComparison.Ordinal));
+        }
+        catch (SessionExpiredException)
+        {
+            // Chỉ trang nhập mật khẩu của SSO dừng lượt này: chính phiên SSO đã hết trên server (đo thời gian sống thật).
+            SsoSession.Expired();
+            throw;
+        }
         Log.Debug("MyBK: vào lại qua SSO");
         _onApp = true;
+        SsoSession.MarkAlive();
         await SessionKeeper.PersistAsync(core);
     }
 

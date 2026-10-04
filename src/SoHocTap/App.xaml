@@ -7,23 +7,56 @@
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- Phông biểu tượng: không theo phông chữ người dùng chọn. -->
             <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+            <!-- Phông, cỡ chữ của app (Cài đặt, thẻ Chữ) do Ui/AppFont.cs đặt lúc khởi động và khi đổi: AppFontFamily, AppFontSize (thân chữ),
+                 các vai chữ AppFontSizeCaption/Sub/Section/Heading/Title/Display, AppGridRowHeight/HeaderHeight. Mọi Window bind FontFamily,
+                 FontSize vào hai key đầu; chỗ nào cần cỡ riêng thì dùng DynamicResource của vai chữ, không viết số cứng. -->
+
+            <!-- ContextMenu là popup ngoài cây của Window nên không kế thừa phông, cỡ chữ: đặt riêng ở đây. -->
+            <Style TargetType="ContextMenu" BasedOn="{StaticResource {x:Type ContextMenu}}">
+                <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
+            </Style>
 
             <!-- Tiêu đề trang, tiêu đề khối, chữ phụ -->
             <Style x:Key="PageTitle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSizeDisplay}" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
             <Style x:Key="SectionTitle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSizeSection}" />
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="Margin" Value="0,0,0,6" />
             </Style>
+            <!-- Chữ phụ bị cắt bằng "..." khi hẹp: tooltip hiện đủ chữ (như WrapCell). Chữ đã xuống hàng hoặc trống thì không cần tooltip. -->
             <Style x:Key="Muted" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                <Style.Triggers>
+                    <Trigger Property="Text" Value="">
+                        <Setter Property="ToolTip" Value="{x:Null}" />
+                    </Trigger>
+                    <Trigger Property="TextWrapping" Value="Wrap">
+                        <Setter Property="ToolTip" Value="{x:Null}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <!-- Chữ phụ cỡ 13 (dòng mô tả trang, ghi chú, đường dẫn) và tiêu đề các cỡ: giãn theo cỡ chữ đã chọn. -->
+            <Style x:Key="MutedSub" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSizeSub}" />
+            </Style>
+            <Style x:Key="HeadingText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSizeHeading}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+            <Style x:Key="TitleText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="{DynamicResource AppFontSizeTitle}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
 
             <!-- Card: nền card, viền mảnh, bo góc 6 -->
@@ -47,8 +80,9 @@
                 <Setter Property="CanUserResizeColumns" Value="True" />
                 <Setter Property="CanUserSortColumns" Value="True" />
                 <Setter Property="RowHeaderWidth" Value="0" />
-                <Setter Property="MinRowHeight" Value="28" />
-                <Setter Property="ColumnHeaderHeight" Value="30" />
+                <!-- Cao theo cỡ chữ đã chọn (AppFont), mặc định 28 và 30 như cũ: chữ lớn không bị cắt ở tiêu đề cột. -->
+                <Setter Property="MinRowHeight" Value="{DynamicResource AppGridRowHeight}" />
+                <Setter Property="ColumnHeaderHeight" Value="{DynamicResource AppGridHeaderHeight}" />
                 <Setter Property="EnableRowVirtualization" Value="True" />
                 <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="True" />
                 <Setter Property="BorderThickness" Value="0" />
@@ -249,7 +283,7 @@
                     <DataTemplate>
                         <DockPanel Margin="8,10,8,4">
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
-                            <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}" Style="{StaticResource Muted}" VerticalAlignment="Center" ToolTip="{x:Null}" />
                             <Border Height="1" Margin="10,0,0,0" VerticalAlignment="Center" Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
                         </DockPanel>
                     </DataTemplate>

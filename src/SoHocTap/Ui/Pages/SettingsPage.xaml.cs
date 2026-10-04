@@ -47,7 +47,65 @@ public partial class SettingsPage : UserControl, IPage
         LanguageBox.SelectedItem = langs.FirstOrDefault(x => x.Code == Config.Str("app.language", L.Base)) ?? langs.FirstOrDefault(x => x.Code == L.Code);
         _languageReady = true;
         ShowRestart();
+        LoadFont();
         LoadUpdates();
+    }
+
+    // ------------------------------------------------------------------ phông, cỡ chữ
+
+    private sealed record SizeItem(double Size, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    private bool _fontReady;
+
+    /// <summary>Dòng đầu là Mặc định (Source rỗng = theo theme, tức phông của Windows), sau đó mọi phông trên máy.</summary>
+    private void LoadFont()
+    {
+        var families = new List<FontItem> { new("", L.F("settings.font.default", AppFont.SystemFamily)) };
+        families.AddRange(AppFont.Installed());
+        FontFamilyBox.ItemsSource = families;
+        var sizes = new List<SizeItem> { new(0, L.F("settings.font.sizeDefault", Math.Round(AppFont.SystemSize, 1))) };
+        sizes.AddRange(FontChoice.Sizes.Select(s => new SizeItem(s, L.F("settings.font.sizeN", s))));
+        FontSizeBox.ItemsSource = sizes;
+        ShowFont();
+        _fontReady = true;
+    }
+
+    private void ShowFont()
+    {
+        var cur = AppFont.Current;
+        var families = (List<FontItem>)FontFamilyBox.ItemsSource;
+        FontFamilyBox.SelectedItem = families.FirstOrDefault(f => string.Equals(f.Source, cur.Family, StringComparison.OrdinalIgnoreCase)) ?? families[0];
+        var sizes = (List<SizeItem>)FontSizeBox.ItemsSource;
+        FontSizeBox.SelectedItem = sizes.FirstOrDefault(s => s.Size == cur.Size) ?? sizes[0];
+    }
+
+    private void OnFontFamily(object sender, SelectionChangedEventArgs e)
+    {
+        if (_fontReady && FontFamilyBox.SelectedItem is FontItem f) SetFont(AppFont.Current with { Family = f.Source });
+    }
+
+    private void OnFontSize(object sender, SelectionChangedEventArgs e)
+    {
+        if (_fontReady && FontSizeBox.SelectedItem is SizeItem s) SetFont(AppFont.Current with { Size = s.Size });
+    }
+
+    private void OnFontReset(object sender, RoutedEventArgs e)
+    {
+        SetFont(FontChoice.Default);
+        _fontReady = false;
+        try { ShowFont(); }
+        finally { _fontReady = true; }
+    }
+
+    /// <summary>Áp ngay cho cả app và lưu app.font. Ghi config lỗi thì chữ vẫn đổi trong lần chạy này, báo ngay dưới thẻ.</summary>
+    private void SetFont(FontChoice choice)
+    {
+        FontStatus.Text = "";
+        try { AppFont.Set(choice); }
+        catch (IOException x) { FontStatus.Text = L.F("settings.saveError", x.Message); }
     }
 
     // ------------------------------------------------------------------ cập nhật
@@ -187,7 +245,7 @@ public partial class SettingsPage : UserControl, IPage
         AutoDownload.IsChecked = Config.Bool("sources.lms.autoDownload", false);
         AutoExtract.IsChecked = Config.Bool("archives.extract", true);
         SaveQuizzes.IsChecked = Config.Bool("sources.lms.saveQuizzes", true);
-        Remember.Content = L.F("settings.remember", Config.Int("sso.rememberHours", 8));
+        Remember.Content = L.T("settings.remember");
         Remember.IsChecked = Config.Int("sso.rememberDays", RememberDays) > 0;
         KeepAlive.IsChecked = Config.Int("sso.keepAliveMinutes", KeepAliveMinutes) > 0;
         DebugLog.IsChecked = DiagnosticLog.Active();

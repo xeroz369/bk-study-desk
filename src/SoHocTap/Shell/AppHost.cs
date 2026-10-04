@@ -118,8 +118,8 @@ internal sealed class AppHost : IDisposable
     private bool _ssoExpired;                           // đã thấy phiên hết: thôi giữ phiên cho tới khi đăng nhập lại
 
     /// <summary>
-    /// Giữ phiên SSO khi app đang mở (kể cả ẩn ở khay): SSO của trường tự hủy phiên sau vài giờ không dùng dù cookie còn hạn,
-    /// nên cứ sso.keepAliveMinutes phút (mặc định 60) đi qua cổng SSO một lần bằng WebView ẩn: 1 lượt GET chỉ đọc.
+    /// Giữ phiên SSO khi app đang mở (kể cả ẩn ở khay): SSO của trường tự hủy phiên để lâu không dùng dù cookie còn hạn
+    /// (giới hạn thật đang đo, xem <see cref="SsoSession"/>), nên cứ sso.keepAliveMinutes phút (mặc định 60) đi qua cổng SSO một lần bằng WebView ẩn: 1 lượt GET chỉ đọc.
     /// 0 = tắt (Cài đặt). Kiểm tra mỗi 5 phút để sau khi máy thức dậy thì làm ngay. Phiên đã hết thì đồng bộ MyBK một lần
     /// để app báo "cần đăng nhập lại" thay vì vẫn ghi là đã đăng nhập.
     /// </summary>
@@ -155,8 +155,9 @@ internal sealed class AppHost : IDisposable
                 break;
             case false:
                 _ssoExpired = true;
-                // Ghi cả mức Info: biết phiên SSO thật sự sống bao lâu (cookie còn mà server đã hủy).
-                Log.Info($"Phiên SSO đã hết hạn trên server (lần cuối còn phiên: {since} trước)");
+                // Ghi mức Info (một lần mỗi phiên): biết phiên SSO thật sự sống bao lâu (cookie còn mà server đã hủy).
+                SsoSession.Expired();
+                Log.Debug($"Giữ phiên SSO: hết phiên (lần trước còn phiên {since} trước)");
                 Hub.Start("mybk", force: true);   // MyBK báo "phiên hết hạn" → thanh báo mời đăng nhập lại
                 break;
         }
@@ -314,6 +315,7 @@ internal sealed class AppHost : IDisposable
         }
         // Xóa cookie lỗi (WebView2 runtime hỏng…) thì vẫn ghi là đã đăng xuất: token LMS đã xóa, MyBK không chạy nữa.
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Đăng xuất: không xóa được cookie WebView2", e); }
+        SsoSession.Forget();
         OnLogin("logout", "");
     });
 

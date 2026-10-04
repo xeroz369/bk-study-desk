@@ -40,6 +40,30 @@ public class IcsTests
         Assert.Equal(new DateTime(y, m, d), Ics.ClassDate(2026, 35, week, day));
 
     [Fact]
+    public void ClassDates_EveryListedWeek()
+    {
+        Assert.Equal([new DateTime(2026, 9, 21), new DateTime(2026, 9, 28)], Ics.ClassDates(2026, [39, 40], 2, new DateTime(2026, 10, 4)));
+        // Thứ ngoài 2-8 (MyBK ghi 0 cho môn chưa xếp lịch) hay không có tuần: không có buổi nào.
+        Assert.Empty(Ics.ClassDates(2026, [39, 40], 0, new DateTime(2026, 10, 4)));
+        Assert.Empty(Ics.ClassDates(2026, [], 2, new DateTime(2026, 10, 4)));
+    }
+
+    [Fact]
+    public void ClassDates_MissingYear_GuessesTermStartAcrossNewYear()
+    {
+        // Kỳ vắt năm, MyBK không ghi năm, hôm nay là 05/01/2027: năm bắt đầu kỳ là 2026.
+        var dates = Ics.ClassDates(null, [52, 1, 2], 2, new DateTime(2027, 1, 5));
+        Assert.Equal([new DateTime(2026, 12, 21), new DateTime(2027, 1, 4), new DateTime(2027, 1, 11)], dates);
+    }
+
+    [Fact]
+    public void ClassDates_SkipsWeekNotInYear()
+    {
+        // 2025 chỉ có 52 tuần ISO: tuần 53 bỏ qua, không throw.
+        Assert.Equal([new DateTime(2025, 9, 29)], Ics.ClassDates(2025, [53, 40], 2, new DateTime(2025, 10, 1)));
+    }
+
+    [Fact]
     public void Minutes_ParsesOrNull()
     {
         Assert.Equal(420, Ics.Minutes("07:00"));

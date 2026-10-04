@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -31,6 +32,7 @@ public partial class PracticePage : UserControl, IPage
         _host = host;
         _main = main;
         _idle.Tick += (_, _) => { _idle.Stop(); _ = ReleaseAsync(); };
+        AppFont.Changed += OnFontChanged;
         IsVisibleChanged += (_, _) =>
         {
             if (IsVisible)
@@ -106,7 +108,22 @@ public partial class PracticePage : UserControl, IPage
             // Route của khung HTML ("mon/...", "tl", "lich/thi", "mybk", "cai-dat"...): PageRegistry nhận ra, lạ thì về Hôm nay.
             if (m["type"]?.GetValue<string>() == "navigate") _main.Go(m["route"]?.GetValue<string>() ?? "");
         };
-        core.Navigate(WebUi.Url(_pending, Accent()));
+        core.Navigate(PageUrl());
+    }
+
+    private string PageUrl() => WebUi.Url(_pending, Accent(), AppFont.Current.Family, AppFont.Current.WebScale(AppFont.SystemSize));
+
+    /// <summary>
+    /// Đổi phông, cỡ chữ ở Cài đặt khi khung đang mở: gọi applyAppFont của main.ts (cùng hàm đọc ?font=&amp;fs= lúc mở), không tải lại trang
+    /// để không mất bài đang làm. WebView đã đóng thì lần dựng sau tự lấy giá trị mới qua URL.
+    /// </summary>
+    private async void OnFontChanged()
+    {
+        if (_web?.CoreWebView2 is not { } core) return;
+        var f = AppFont.Current;
+        var js = $"window.applyAppFont?.({JsonSerializer.Serialize(f.Family)}, {f.WebScale(AppFont.SystemSize).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)})";
+        try { await core.ExecuteScriptAsync(js); }
+        catch (Exception x) when (x is InvalidOperationException or System.Runtime.InteropServices.COMException) { Log.Warn("Luyện tập: đổi phông lỗi: " + x.Message); }
     }
 
     /// <summary>App xuống khay: đóng WebView ngay (cửa sổ ẩn nên trang cũng ẩn).</summary>
@@ -153,7 +170,7 @@ public partial class PracticePage : UserControl, IPage
     public void Open(string arg)
     {
         _pending = arg.Length > 0 ? arg : "luyen-tap";
-        if (_web?.CoreWebView2 is { } core) core.Navigate(WebUi.Url(_pending, Accent()));
+        if (_web?.CoreWebView2 is { } core) core.Navigate(PageUrl());
     }
 
     public void Refresh() { }

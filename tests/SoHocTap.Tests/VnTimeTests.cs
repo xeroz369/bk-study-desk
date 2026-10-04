@@ -32,6 +32,8 @@ public class VnTimeTests
 
     [Theory]
     [InlineData("07:00", 420)]
+    [InlineData("07:30", 450)]
+    [InlineData("7:30", 450)]
     [InlineData("7:05", 425)]
     [InlineData("7g30", 450)]
     [InlineData("09g00", 540)]
@@ -68,6 +70,39 @@ public class VnTimeTests
     {
         Assert.Equal(VnTime.FromWall(new DateTime(2026, 10, 15, 9, 0, 0)), VnTime.ParseDateAndClock("2026-10-15", "09g00"));
         Assert.Equal(VnTime.FromWall(new DateTime(2026, 10, 15)), VnTime.ParseDateAndClock("2026-10-15", "??"));
-        Assert.Null(VnTime.ParseDateAndClock("15/10/2026", "09g00"));
+        Assert.Equal(VnTime.FromWall(new DateTime(2026, 10, 15, 9, 0, 0)), VnTime.ParseDateAndClock("15/10/2026", "09g00"));
+        Assert.Null(VnTime.ParseDateAndClock("15.10.2026", "09g00"));
+        Assert.Null(VnTime.ParseDateAndClock(null, "09g00"));
     }
+
+    [Theory]
+    [InlineData("2026-10-15")]
+    [InlineData(" 15/10/2026 ")]
+    [InlineData("15/10/2026")]
+    public void ParseDate_Accepts(string text) => Assert.Equal(new DateTime(2026, 10, 15), VnTime.ParseDate(text));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("chưa xếp")]
+    [InlineData("2026-02-31")]
+    public void ParseDate_RejectsWithoutThrowing(string? text) => Assert.Null(VnTime.ParseDate(text));
+
+    [Fact]
+    public void DayDiff_UsesVnMidnight_NotMachineZone()
+    {
+        // Máy để UTC: 17:30 UTC ngày 04/10 đã là 00:30 sáng 05/10 ở VN. Buổi học 07:00 ngày 05/10 phải là "hôm nay",
+        // còn mốc 23:00 tối 04/10 (giờ VN) là hôm qua, dù trên đồng hồ UTC cả hai cùng ngày 04/10 hoặc 05/10.
+        var now = new DateTimeOffset(2026, 10, 4, 17, 30, 0, TimeSpan.Zero).ToUnixTimeSeconds();
+        Assert.Equal(0, VnTime.DayDiff(VnTime.FromWall(new DateTime(2026, 10, 5, 7, 0, 0)), now));
+        Assert.Equal(-1, VnTime.DayDiff(VnTime.FromWall(new DateTime(2026, 10, 4, 23, 0, 0)), now));
+        Assert.Equal(1, VnTime.DayDiff(VnTime.FromWall(new DateTime(2026, 10, 6, 0, 0, 0)), now));
+    }
+
+    [Theory]
+    [InlineData(2026, 10, 4, 2026, 9, 28)]   // Chủ nhật thuộc tuần bắt đầu Thứ hai trước đó
+    [InlineData(2026, 10, 5, 2026, 10, 5)]
+    [InlineData(2026, 10, 7, 2026, 10, 5)]
+    public void Monday_OfWeek(int y, int m, int d, int my, int mm, int md) =>
+        Assert.Equal(new DateTime(my, mm, md), VnTime.Monday(new DateTime(y, m, d, 23, 59, 0)));
 }

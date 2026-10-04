@@ -19,7 +19,7 @@
                         <StackPanel>
                             <TextBlock Text="{Binding Label}" Style="{StaticResource Muted}" />
                             <!-- Màu số theo mức (sắp thi, có hạn nộp): DynamicResource để đổi theo sáng/tối của Windows ngay khi đang mở. -->
-                            <TextBlock Text="{Binding Value}" FontSize="20" FontWeight="SemiBold">
+                            <TextBlock Text="{Binding Value}" FontSize="{DynamicResource AppFontSizeDisplay}" FontWeight="SemiBold">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />

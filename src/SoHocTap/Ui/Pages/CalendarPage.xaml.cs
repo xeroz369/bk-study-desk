@@ -23,7 +23,8 @@ public partial class CalendarPage : UserControl, IPage
         _main = main;
 
         var up = Upcoming.Grid;
-        up.Columns.Add(Grids.Text(L.T("col.time"), nameof(TimelineItem.Hour), 56, sortPath: nameof(TimelineItem.Time)));
+        // Nhóm gom nhiều ngày ("Trong 7 ngày", "Quá hạn") nên cột giờ ghi cả ngày.
+        up.Columns.Add(Grids.Text(L.T("col.when"), nameof(TimelineItem.When), 130, sortPath: nameof(TimelineItem.Time)));
         up.Columns.Add(Grids.Text(L.T("col.name"), nameof(TimelineItem.Name), star: true));
         up.Columns.Add(Grids.Text(L.T("col.kind"), nameof(TimelineItem.KindName), 90));
         up.Columns.Add(Grids.Flex(L.T("col.detail"), nameof(TimelineItem.Label), 1, 100));
@@ -87,7 +88,7 @@ public partial class CalendarPage : UserControl, IPage
     private static CustomEventStore Store => CustomEventsData.Store;
 
     /// <summary>Thứ hai của tuần đang xem ở tab Thời khóa biểu.</summary>
-    private DateTime ShownMonday => DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7) + _offset * 7.0);
+    private DateTime ShownMonday => Core.VnTime.Monday(Core.VnTime.Today).AddDays(_offset * 7.0);
 
     /// <summary>Sửa, Xóa, Sao chép (dòng nhập nhanh, dán lại vào ô Nhập nhanh được) cho một sự kiện tự thêm.</summary>
     private List<MenuEntry> CustomMenu(string id) => Store.Find(id) is not { } ev ? [] :
@@ -162,25 +163,21 @@ public partial class CalendarPage : UserControl, IPage
         var custom = Store.All().Select(x => CustomEvents.ToIcs(x, L.T("kind.makeup"))).OfType<Core.IcsEvent>().ToList();
         if (m is null && custom.Count == 0) { MessageBox.Show(Window.GetWindow(this), L.T("calendar.exportNoData"), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information); return; }
         var events = new List<Core.IcsEvent>(custom);
+        // Mục không đặt được lên lịch (giờ, ngày đọc không ra) thì không xuất, nhưng báo tên ở hộp thoại, không bỏ im lặng.
+        var skipped = new List<string>();
         foreach (var c in (m?.Schedule ?? []).Where(c => c.Day is >= 2 and <= 8 && c.Weeks.Count > 0))
         {
-            if (Core.Ics.Minutes(c.Start) is not { } s || Core.Ics.Minutes(c.End) is not { } en || en <= s) continue;
-            // Kỳ vắt qua năm mới (tuần 52 rồi tuần 1): tuần đầu kỳ là tuần nhỏ nhất trong nửa sau của năm.
-            var first = c.Weeks.Any(w => w >= 27) && c.Weeks.Any(w => w < 27) ? c.Weeks.Where(w => w >= 27).Min() : c.Weeks.Min();
-            var year = c.Year ?? DateTime.Today.Year;
-            foreach (var w in c.Weeks.Distinct())
+            if (Core.VnTime.ParseClock(c.Start) is not { } s || Core.VnTime.ParseClock(c.End) is not { } en || en <= s) { skipped.Add(c.Name); continue; }
+            foreach (var date in Core.Ics.ClassDates(c.Year, c.Weeks, c.Day, Core.VnTime.Today))
             {
-                var date = Core.Ics.ClassDate(year, first, w, c.Day);
                 events.Add(new Core.IcsEvent($"cl-{c.Code}-{c.Group}-{date:yyyyMMdd}-{s}", date.AddMinutes(s), date.AddMinutes(en), c.Name, c.Room,
                     string.Join("\n", new[] { c.Code + (c.Group is { } g ? ", " + g : ""), c.Teacher ?? "" }.Where(x => x.Length > 0))));
             }
         }
         foreach (var x in m?.Exams ?? [])
         {
-            if (!DateTime.TryParseExact(x.Date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d)) continue;
-            var t = System.Text.RegularExpressions.Regex.Match(x.Time ?? "", @"(\d+)g(\d+)");
-            if (!t.Success) continue;
-            var start = d.AddHours(int.Parse(t.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)).AddMinutes(int.Parse(t.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture));
+            if (Core.VnTime.ParseDate(x.Date) is not { } d || Core.VnTime.ParseClock(x.Time) is not { } min) { skipped.Add(L.F("timeline.exam", x.Name)); continue; }
+            var start = d.AddMinutes(min);
             var type = x.Type == "GK" ? L.T("timeline.examMid") : x.Type == "CK" ? L.T("timeline.examFinal") : "";
             var title = type.Length > 0 ? L.F("timeline.examTyped", type, x.Name) : L.F("timeline.exam", x.Name);
             events.Add(new Core.IcsEvent($"ex-{x.Code}-{x.Type}-{start:yyyyMMddHHmm}", start, start.AddMinutes(x.Minutes ?? 90), title, x.Room, x.Code));
@@ -198,7 +195,9 @@ public partial class CalendarPage : UserControl, IPage
         try
         {
             File.WriteAllText(dlg.FileName, Core.Ics.Build(m is null ? "BK Study Desk" : $"BK Study Desk, {m.Term.Name}", events, DateTime.UtcNow), new System.Text.UTF8Encoding(false));
-            MessageBox.Show(Window.GetWindow(this), L.F("calendar.exportDone", events.Count, dlg.FileName), L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information);
+            var done = L.F("calendar.exportDone", events.Count, dlg.FileName);
+            if (skipped.Count > 0) done += L.F("calendar.exportSkipped", skipped.Count, string.Join(", ", skipped.Distinct()));
+            MessageBox.Show(Window.GetWindow(this), done, L.T("calendar.export").TrimEnd('.'), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception x) when (x is IOException or UnauthorizedAccessException)
         {
@@ -217,11 +216,15 @@ public partial class CalendarPage : UserControl, IPage
     public void Refresh()
     {
         var s = _host.State;
-        var start = Format.Sec(DateTime.Today);
-        var list = s.Timeline.Where(e => e.Time >= start && e.Time < start + 14 * 86400
+        // Mọi mốc từ đầu hôm nay trở đi, không cắt theo số ngày (DESIGN 6b-3), cộng hạn LMS đã qua mà chưa làm (nhóm "Quá hạn" ở đầu).
+        // Buổi học cả kỳ khá nhiều nên để công tắc "Hiện buổi học" quyết định.
+        var start = Format.Sec(Format.Today);
+        var list = s.Timeline.Where(e => (e.Time >= start || e.Overdue)
                                          && (ShowClasses.IsChecked == true || e.Kind != "class")
                                          && (ShowDone.IsChecked == true || !e.Done || e.Kind == "class")).ToList();
-        Upcoming.Show(Grids.Grouped(list, nameof(TimelineItem.Day), nameof(TimelineItem.Time)), L.T("calendar.upcomingEmpty"), s, Src.Lms, Src.Mybk);
+        var view = Grids.Grouped(list, nameof(TimelineItem.Group), nameof(TimelineItem.GroupRank));
+        view.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(TimelineItem.Time), System.ComponentModel.ListSortDirection.Ascending));
+        Upcoming.Show(view, L.T("calendar.upcomingEmpty"), s, Src.Lms, Src.Mybk);
         Exams.Show(s.Timeline.Where(e => e.Kind == "exam").ToList(), L.T("calendar.examsEmpty"), s, Src.Mybk);
         RefreshWeek();
     }
@@ -232,30 +235,28 @@ public partial class CalendarPage : UserControl, IPage
         var week = Format.IsoWeek(monday);
         WeekText.Text = L.F("calendar.week", week, monday, monday.AddDays(6));
         ThisWeek.IsEnabled = _offset != 0;
-        static int Min(string? hhmm)
-        {
-            var p = (hhmm ?? "").Split(':');
-            return int.TryParse(p[0], out var h) ? h * 60 + (p.Length > 1 && int.TryParse(p[1], out var m) ? m : 0) : 0;
-        }
+        // Giờ đọc chung bằng VnTime.ParseClock ("7g30", "07:30", "9g"): đọc không ra thì không đặt lên lưới mà ghi ở dòng NoSlot.
+        static bool Timed(Data.MybkClass c) => Core.VnTime.ParseClock(c.Start) is not null && Core.VnTime.ParseClock(c.End) is not null;
         var all = _host.State.Mybk?.Schedule ?? [];
-        // MyBK ghi thứ 0 (hoặc ngoài 2–8) cho môn không có giờ cố định (sinh hoạt sinh viên, thí nghiệm chưa xếp lịch): không phải một ngày.
+        // MyBK ghi thứ 0 (hoặc ngoài 2-8) cho môn không có giờ cố định (sinh hoạt sinh viên, thí nghiệm chưa xếp lịch): không phải một ngày.
         var slotted = all.Where(c => c.Day is >= 2 and <= 8).ToList();
-        var noSlot = all.Where(c => c.Day is < 2 or > 8).Select(c => c.Name).Distinct().ToList();
+        var noSlot = all.Where(c => c.Day is < 2 or > 8 || !Timed(c)).Select(c => c.Name).Distinct().ToList();
         NoSlot.Text = noSlot.Count == 0 ? "" : L.F("calendar.noSlot", string.Join(", ", noSlot));
         NoSlot.Visibility = noSlot.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
 
         var grid = View.SelectedIndex != 1;
         var thisWeek = slotted.Where(c => c.Weeks.Contains(week)).ToList();
+        var placeable = thisWeek.Where(Timed).ToList();
         var custom = CustomInWeek(monday);
         WeekEmpty.Text = _host.State.NoDataReason("mybk", "MyBK") ?? L.T("calendar.weekEmpty");
-        WeekEmpty.Visibility = grid && thisWeek.Count == 0 && custom.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        WeekEmpty.Visibility = grid && placeable.Count == 0 && custom.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         DimNote.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         Grid.Visibility = grid ? Visibility.Visible : Visibility.Collapsed;
         Week.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         if (grid)
         {
             var courses = _host.State.Courses();
-            var blocks = thisWeek.Select(c => new WeekBlock(c.Day, Min(c.Start), Min(c.End), c.Name, $"{c.Start}-{c.End}, {c.Room}",
+            var blocks = placeable.Select(c => new WeekBlock(c.Day, Core.VnTime.ParseClock(c.Start) ?? 0, Core.VnTime.ParseClock(c.End) ?? 0, c.Name, $"{c.Start}-{c.End}, {c.Room}",
                 string.Join("\n", new[] { c.Name, $"{Format.MybkDays.GetValueOrDefault(c.Day)} {c.Start}-{c.End}, {c.Room}", c.Teacher ?? "", c.Code + (c.Group is { } g ? ", " + g : "") }
                     .Where(x => x.Length > 0)), c.Code)).ToList();
             foreach (var e in custom)
@@ -272,7 +273,7 @@ public partial class CalendarPage : UserControl, IPage
         }
         var rows = slotted.Select(c => new ClassRow(c.Day,
             L.F("format.dateLong", Format.MybkDays.GetValueOrDefault(c.Day) ?? L.F("calendar.weekday", c.Day), monday.AddDays(c.Day - 2)),
-            $"{c.Start}-{c.End}", Min(c.Start), c.Name, c.Code, c.Room, $"{c.Lesson}-{c.Lesson + c.Lessons - 1}", c.Teacher ?? "", c.Weeks.Contains(week))).ToList();
+            $"{c.Start}-{c.End}", Core.VnTime.ParseClock(c.Start) ?? 24 * 60, c.Name, c.Code, c.Room, $"{c.Lesson}-{c.Lesson + c.Lessons - 1}", c.Teacher ?? "", c.Weeks.Contains(week))).ToList();
         foreach (var e in custom)
         {
             var day = Format.MybkDay(e.Day!.Value);

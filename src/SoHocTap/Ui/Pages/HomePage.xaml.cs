@@ -56,7 +56,7 @@ public partial class HomePage : UserControl, IPage
     private void OnPlan(object sender, RoutedEventArgs e) => _main.Go("luyen-tap/trang/lo-trinh");
 
     public string Title => L.T("nav.today");
-    public string Subtitle => Format.DateLong(DateTime.Today);
+    public string Subtitle => Format.DateLong(Format.Today);
 
     private void OpenItem(TimelineItem e)
     {
@@ -75,7 +75,7 @@ public partial class HomePage : UserControl, IPage
     {
         var s = _host.State;
         var now = Format.Now;
-        var exam = s.Timeline.FirstOrDefault(e => e.Kind == "exam" && e.Time > now);
+        var exam = s.Timeline.FirstOrDefault(e => e.Kind == "exam" && e.Time > now && !e.Undated);
         var todo7 = s.Upcoming(24 * 7).Count(e => !e.Done && e.Kind is "assign" or "event");
         var quiz14 = s.Upcoming(24 * 14).Count(e => e.Kind == "quiz" && !e.Done && !e.Opens);
         var news = (s.Lms?.Announcements ?? []).Where(a => a.Time > now - 7 * 86400).ToList();
@@ -90,11 +90,14 @@ public partial class HomePage : UserControl, IPage
             new(L.T("home.quiz14"), Count(quiz14), Tone.Normal),
             new(L.T("home.news7"), Count(news.Count), Tone.Normal),
         };
-        var today = Format.Sec(DateTime.Today);
-        var week = s.Timeline.Where(e => e.Time >= today && Format.DayDiff(e.Time) <= 7 && e.Kind != "exam"
-                                         && (e.Kind == "class" ? Format.DayDiff(e.Time) <= 1 : !e.Done)).ToList();
+        var today = Format.Sec(Format.Today);
+        // Hạn LMS đã qua mà chưa làm không biến mất: nhóm "Quá hạn" đứng đầu (GroupRank).
+        var week = s.Timeline.Where(e => e.Overdue || (e.Time >= today && Format.DayDiff(e.Time) <= 7 && e.Kind != "exam"
+                                         && (e.Kind == "class" ? Format.DayDiff(e.Time) <= 1 : !e.Done))).ToList();
+        var agenda = Grids.Grouped(week, nameof(TimelineItem.Day), nameof(TimelineItem.GroupRank));
+        agenda.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(TimelineItem.Time), System.ComponentModel.ListSortDirection.Ascending));
         // Trống vì chưa lấy được dữ liệu thì nói rõ (đang tải lần đầu / lỗi / chưa đăng nhập), không ghi "không có hạn nộp".
-        Agenda.Show(Grids.Grouped(week, nameof(TimelineItem.Day), nameof(TimelineItem.Time)), L.T("home.agendaEmpty"), s, Src.Lms, Src.Mybk);
+        Agenda.Show(agenda, L.T("home.agendaEmpty"), s, Src.Lms, Src.Mybk);
         Exams.Show(s.Timeline.Where(e => e.Kind == "exam" && e.Time > now - 86400).ToList(), L.T("home.examsEmpty"), s, Src.Mybk);
         // Đủ mọi tin trong 7 ngày, khớp số ở ô "Tin 7 ngày" (trước đây cắt còn 8 tin mà không báo, DESIGN 6b-3).
         News.Show(news.OrderByDescending(a => a.Time).Select(a => new NewsRow(a.Title, Format.Ago(a.Time), a.Url ?? "")).ToList(), L.T("home.newsEmpty"), s, Src.Lms);

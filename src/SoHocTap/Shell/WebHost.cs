@@ -88,8 +88,9 @@ internal static class WebHost
 
 /// <summary>
 /// Giữ session login: web trường chỉ dùng session cookie (form SSO không có "ghi nhớ") nên WebView2 xóa hết khi tắt app.
-/// Ở đây đổi session cookie của sso.hosts thành cookie có hạn sso.rememberDays ngày, ngay trong cookie store của WebView2
-/// (Chromium tự encrypt bằng DPAPI). App không ghi cookie ra file riêng. Phải gọi trên UI thread.
+/// Sau mỗi lượt đi qua SSO thành công (đăng nhập, giữ phiên, đồng bộ MyBK qua SSO, trang trường tải xong), mọi cookie của
+/// sso.hosts mà server còn giữ được đẩy hạn tới sso.rememberDays ngày, ngay trong cookie store của WebView2 (Chromium tự encrypt
+/// bằng DPAPI). App không ghi cookie ra file riêng. Phải gọi trên UI thread.
 /// </summary>
 internal static class SessionKeeper
 {
@@ -100,24 +101,31 @@ internal static class SessionKeeper
             var hosts = Config.List("sso.hosts").Select(h => h.ToLowerInvariant()).ToList();
             var days = Config.Int("sso.rememberDays", 30);
             if (days <= 0) return;   // người dùng tắt "Ghi nhớ đăng nhập" thì session cookie mất khi tắt app
-            // Phiên trên server không sống quá giới hạn của nó (CAS 3.5 mặc định: tối đa 8 giờ kể từ lúc đăng nhập, 2 giờ không dùng;
-            // Moodle sessiontimeout mặc định 8 giờ), nên cookie cũng chỉ giữ tối đa sso.rememberHours (8) giờ. OWASP khuyên cookie phiên
-            // không nên sống lâu hơn phiên trên server.
+            // Hạn cookie chỉ để app không tự xóa vé SSO sớm hơn server. Vé (TGT) trên server vẫn tự hết theo lịch của server,
+            // lúc đó trang trường đòi đăng nhập lại dù cookie còn hạn. Bản 1.1.9 trở về trước giữ cookie tối đa 8 giờ (chép số mặc định
+            // của CAS, chưa đo trên server trường) và không gia hạn cookie đã có hạn, nên chính app xóa cookie SSO đúng 8 giờ sau
+            // khi đăng nhập. OWASP muốn hạn phiên do server kiểm; cookie sống lâu hơn không làm phiên sống lâu hơn, chỉ để server
+            // tự quyết khi nào hết.
             // Chuỗi rỗng = lấy mọi cookie của profile; lọc theo domain vì cookie SSO gắn path /cas/.
             var cookies = await core.CookieManager.GetCookiesAsync("");
-            int kept = 0, total = 0;
+            var now = DateTime.Now;
+            int kept = 0, converted = 0, total = 0;
             foreach (var c in cookies)
             {
                 var domain = c.Domain.TrimStart('.');
                 if (!hosts.Any(h => domain.Equals(h, StringComparison.OrdinalIgnoreCase) || domain.EndsWith("." + h, StringComparison.OrdinalIgnoreCase))) continue;
                 total++;
-                if (!c.IsSession) continue;
-                c.Expires = DateTime.Now.AddHours(Math.Min(days * 24, Config.Int("sso.rememberHours", 8)));
+                if (SsoLifetime.CookieExpiry(c.IsSession, c.Expires, now, days) is not { } until) continue;
+                if (c.IsSession) converted++;
+                c.Expires = until;
                 core.CookieManager.AddOrUpdateCookie(c);
                 kept++;
-                Log.Debug($"Giữ cookie {c.Name} ({domain}{c.Path}) tới {c.Expires:dd/MM HH:mm}");   // chỉ tên cookie, không ghi giá trị
+                Log.Debug($"Giữ cookie {c.Name} ({domain}{c.Path}) tới {until:dd/MM HH:mm}");   // chỉ tên cookie, không ghi giá trị
             }
-            if (kept > 0) Log.Info($"Giữ session: {kept} session cookie / {total} cookie của trường");
+            // Lượt nào qua SSO cũng gia hạn (mỗi giờ khi giữ phiên): chỉ ghi Info khi có session cookie mới, còn lại để Debug.
+            var line = $"Giữ session: gia hạn {kept} cookie ({converted} session cookie mới) / {total} cookie của trường, {days} ngày";
+            if (converted > 0) Log.Info(line);
+            else if (kept > 0) Log.Debug(line);
         }
         catch (Exception e) { Log.Error("Giữ session", e); }
     }
