@@ -18,6 +18,7 @@ public partial class SchoolWindow : Window
     public SchoolWindow(string url, string title, Action? onSignedIn = null)
     {
         InitializeComponent();
+        WindowPlacement.FitToWorkArea(this);
         Title = string.IsNullOrWhiteSpace(title) ? WebHost.Host(url) : title;
         Loaded += async (_, _) =>
         {

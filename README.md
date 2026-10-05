@@ -137,7 +137,7 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 
 ## Giấy phép
 
-[AGPL-3.0](LICENSE.md) (từ bản sau 1.2.0; bản 1.0.6 đến 1.2.0 theo PolyForm Noncommercial, các bản trước theo MIT). Mã nguồn mở:
+[AGPL-3.0](LICENSE.md) (từ bản 1.2.1; bản 1.0.6 đến 1.2.0 theo PolyForm Noncommercial, các bản trước theo MIT). Mã nguồn mở:
 - **Được:** dùng, sửa, chia sẻ, kể cả dùng vào việc thu tiền.
 - **Phải:** bản sửa phát hành ra (hoặc cho người khác dùng qua mạng) cũng theo AGPL-3.0 và công khai mã nguồn, giữ ghi chú bản quyền.
 

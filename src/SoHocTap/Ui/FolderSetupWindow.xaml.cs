@@ -17,6 +17,7 @@ public partial class FolderSetupWindow : Window
     public FolderSetupWindow()
     {
         InitializeComponent();
+        Shell.WindowPlacement.FitToWorkArea(this);
         Folder.Text = Paths.SuggestedRoot;
         Closing += OnClosing;
     }

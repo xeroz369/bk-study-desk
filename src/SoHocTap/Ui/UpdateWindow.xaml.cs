@@ -22,6 +22,7 @@ public partial class UpdateWindow : Window
     public UpdateWindow()
     {
         InitializeComponent();
+        Shell.WindowPlacement.FitToWorkArea(this);
         Closing += (_, _) => _closed = true;
         // Bản zip không tự cài được: chỉ có "báo" hoặc "không kiểm tra".
         if (!UpdateService.CanSelfUpdate) ModeAuto.Visibility = Visibility.Collapsed;

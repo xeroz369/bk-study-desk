@@ -15,8 +15,7 @@ public partial class LoginWindow : Window
     {
         InitializeComponent();
         // Màn hình nhỏ / scale lớn: không cao hơn vùng làm việc, kẻo nút Đăng nhập của trang SSO bị khuất dưới taskbar.
-        Width = Math.Min(Width, SystemParameters.WorkArea.Width - 40);
-        Height = Math.Min(Height, SystemParameters.WorkArea.Height - 40);
+        WindowPlacement.FitToWorkArea(this);
         Loaded += async (_, _) =>
         {
             try
