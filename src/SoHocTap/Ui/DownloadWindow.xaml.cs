@@ -48,6 +48,7 @@ public partial class DownloadWindow : Window
     internal DownloadWindow(LmsSource lms, LmsCourse course)
     {
         InitializeComponent();
+        Shell.WindowPlacement.FitToWorkArea(this);
         _ready = true;
         _lms = lms;
         _course = course;

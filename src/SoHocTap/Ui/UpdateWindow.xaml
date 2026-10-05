@@ -7,6 +7,8 @@
         xmlns:ui="clr-namespace:SoHocTap.Ui"
         Title="{ui:T update.title}" Width="520" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Icon="/app.ico">
+    <!-- Màn hình thấp hoặc chữ lớn: cửa sổ không cao quá vùng làm việc (WindowPlacement.FitToWorkArea), nội dung cuộn được. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="24,20,24,20">
         <TextBlock x:Name="Heading" Text="{ui:T update.title}" Style="{StaticResource SectionTitle}" FontSize="{DynamicResource AppFontSizeTitle}" />
 
@@ -39,4 +41,5 @@
             </StackPanel>
         </StackPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>

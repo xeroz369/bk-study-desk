@@ -17,6 +17,8 @@
             <Setter Property="Visibility" Value="Collapsed" />
         </Style>
     </Window.Resources>
+    <!-- Màn hình thấp hoặc chữ lớn: cửa sổ không cao quá vùng làm việc (WindowPlacement.FitToWorkArea), nội dung cuộn được. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="16">
         <TextBlock x:Name="Heading" Style="{StaticResource HeadingText}" />
         <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,12" TextWrapping="Wrap" Text="{ui:T events.localNote}" />
@@ -81,4 +83,5 @@
             <Button Content="{ui:T events.cancel}" IsCancel="True" MinWidth="90" />
         </StackPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>

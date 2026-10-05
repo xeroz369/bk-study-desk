@@ -6,12 +6,15 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.1] - 2026-10-05
+
 ### Thay đổi
 
 - Giấy phép đổi sang [AGPL-3.0](LICENSE.md). Bản 1.2.0 trở về trước vẫn theo PolyForm Noncommercial.
 
 ### Sửa lỗi
 
+- Cửa sổ LMS, MyBK, đăng nhập, tải tài liệu và các hộp thoại luôn vừa màn hình, không còn tràn khi màn hình nhỏ hoặc scale lớn.
 - Nút **Đóng góp tài liệu** mở thẳng trang [Gửi tài liệu](https://bk-study-library.github.io/hcmut-library/gui-tai-lieu/) của thư viện.
 
 ## [1.2.0] - 2026-10-04
@@ -271,7 +274,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...v1.2.0
 [1.1.11]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...v1.1.11
 [1.1.10]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.9...v1.1.10

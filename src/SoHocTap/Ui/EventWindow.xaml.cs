@@ -23,6 +23,7 @@ public partial class EventWindow : Window
     private EventWindow(CustomEvent? editing, DateTime? date)
     {
         InitializeComponent();
+        Shell.WindowPlacement.FitToWorkArea(this);
         // DatePicker đọc, ghi ngày theo ngôn ngữ của app (dd/MM/yyyy với tiếng Việt), không theo ngôn ngữ của Windows.
         Language = XmlLanguage.GetLanguage(L.Culture.IetfLanguageTag);
         _editing = editing;

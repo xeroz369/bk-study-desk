@@ -48,6 +48,25 @@ internal sealed class WindowPlacement
     }
 
     /// <summary>
+    /// Cửa sổ phụ cỡ cố định (LMS, MyBK, đăng nhập, tải tài liệu): không lớn hơn vùng làm việc của màn hình đang có cửa sổ chính,
+    /// chừa lề <paramref name="margin"/>. Màn hình nhỏ hoặc scale lớn (vd. 3072x1800 ở 250% chỉ còn 1229x720 DIP) mà mở 1200x820 thì
+    /// thanh tiêu đề hay mép dưới bị khuất. Gọi trong constructor, trước khi hiện (WindowStartupLocation căn giữa theo cỡ đã sửa).
+    /// </summary>
+    public static void FitToWorkArea(Window w, double margin = 24)
+    {
+        var main = Application.Current?.MainWindow;
+        var near = main is { IsLoaded: true } && !double.IsNaN(main.Left) ? new Box(main.Left, main.Top, main.ActualWidth, main.ActualHeight) : new Box(0, 0, 1, 1);
+        var area = WorkAreaNear(near);
+        var maxW = Math.Max(320, area.Width - 2 * margin);
+        var maxH = Math.Max(240, area.Height - 2 * margin);
+        if (w.MinWidth > maxW) w.MinWidth = maxW;
+        if (w.MinHeight > maxH) w.MinHeight = maxH;
+        if (!double.IsNaN(w.Width)) w.Width = Math.Min(w.Width, maxW);
+        if (!double.IsNaN(w.Height)) w.Height = Math.Min(w.Height, maxH);
+        w.MaxHeight = Math.Min(w.MaxHeight, area.Height);   // SizeToContent cũng không cao quá màn hình
+    }
+
+    /// <summary>
     /// Vùng làm việc (trừ taskbar) của màn hình chứa phần lớn <paramref name="dip"/>, hoặc màn hình gần nhất. Left/Top của cửa sổ WPF là DIP
     /// theo DPI hệ thống, còn Win32 dùng pixel: đổi qua lại bằng GetDpiForSystem.
     /// </summary>

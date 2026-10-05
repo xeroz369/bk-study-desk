@@ -6,6 +6,8 @@
         xmlns:ui="clr-namespace:SoHocTap.Ui"
         Title="{ui:T setup.title}" Width="560" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Icon="/app.ico">
+    <!-- Màn hình thấp hoặc chữ lớn: cửa sổ không cao quá vùng làm việc (WindowPlacement.FitToWorkArea), nội dung cuộn được. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="24,20,24,20">
         <TextBlock Text="{ui:T setup.title}" Style="{StaticResource SectionTitle}" FontSize="{DynamicResource AppFontSizeTitle}" />
         <TextBlock Text="{ui:T setup.text}" TextWrapping="Wrap" Margin="0,8,0,16" />
@@ -18,4 +20,5 @@
             <Button x:Name="Ok" Content="{ui:T setup.ok}" Style="{DynamicResource AccentButtonStyle}" MinWidth="120" IsDefault="True" Click="OnOk" />
         </StackPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>

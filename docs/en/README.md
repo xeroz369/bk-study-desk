@@ -133,7 +133,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 
 ## License
 
-[AGPL-3.0](../../LICENSE.md) (from the release after 1.2.0; 1.0.6 to 1.2.0 were PolyForm Noncommercial, earlier versions MIT). Open source:
+[AGPL-3.0](../../LICENSE.md) (from 1.2.1; 1.0.6 to 1.2.0 were PolyForm Noncommercial, earlier versions MIT). Open source:
 - **You may:** use, modify and share it, including for paid work.
 - **You must:** release modified versions (or ones you let others use over a network) under AGPL-3.0 with their source, and keep the copyright notices.
 
