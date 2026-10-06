@@ -1,4 +1,3 @@
-using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -140,12 +139,7 @@ public partial class SubjectsView
         c[4].IsVisible = _libRows.Any(r => r.Chapter.Length > 0);
         c[5].IsVisible = _libRows.Any(r => r.Exam.Length > 0);
         c[6].IsVisible = _libRows.Any(r => r.Size > 0);
-        var view = new DataGridCollectionView(rows);
-        view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(LibraryRow.Group)));
-        LibraryItems.ItemsSource = view;
-        LibraryItems.IsVisible = rows.Count > 0;
-        LibraryEmpty.Text = L.T(_libRows.Count == 0 ? "library.empty" : "library.filteredEmpty");
-        LibraryEmpty.IsVisible = rows.Count == 0;
+        Tables.Show(LibraryItems, LibraryEmpty, Tables.Grouped(rows, nameof(LibraryRow.Group)), L.T(_libRows.Count == 0 ? "library.empty" : "library.filteredEmpty"));
     }
 
     private async Task RefreshLocalStateAsync()
@@ -183,7 +177,7 @@ public partial class SubjectsView
         if (r.Item.Files is { Count: > 0 } && primary != LibraryAction.Download && r.State != ItemLocal.Downloaded)
             Add(LibraryPresenter.Label(LibraryAction.Download, r), () => Run(() => DoAsync(r, LibraryAction.Download)));
         if (r.State != ItemLocal.None && primary != LibraryAction.Open) Add(L.T("library.openFile"), () => _ = OpenLocal(FirstFile(r)));
-        if (r.State != ItemLocal.None) Add("Mở thư mục chứa", () => { if (FirstFile(r) is { } f) _ = Opener.RevealAsync(this, Paths.RelativeToStudy(f)); });
+        if (r.State != ItemLocal.None) Add(L.T("files.reveal"),() => { if (FirstFile(r) is { } f) _ = Opener.RevealAsync(this, Paths.RelativeToStudy(f)); });
         if (r.Item.Book?.Isbn is { Length: > 0 } isbn) Add(L.F("library.copyIsbn", isbn), () => _ = Copy(isbn));
         if (web is not null) Add(L.T("library.copyLink"), () => _ = Copy(web.AbsoluteUri));
     }

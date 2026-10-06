@@ -2,6 +2,7 @@
      Trái: Cần làm, Thông báo mới. Phải: Sắp tới, Đăng ký môn. Mục nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Home.cs. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.HomeView"
              x:DataType="p:HomeModel">
@@ -69,16 +70,16 @@
 
     <StackPanel Spacing="24">
         <StackPanel Spacing="2">
-            <TextBlock Classes="title" Text="Hôm nay" />
+            <TextBlock Classes="title" Text="{l:T nav.today}" />
             <TextBlock x:Name="DateText" Classes="meta" />
         </StackPanel>
 
         <!-- Chưa có dữ liệu nào: một khối giới thiệu thay cho bốn thẻ trống -->
         <Border x:Name="Intro" Classes="card" Padding="24" IsVisible="False">
             <StackPanel Spacing="12">
-                <TextBlock Classes="card-title" Text="Chưa có dữ liệu" />
-                <TextBlock TextWrapping="Wrap" Text="BK Study Desk gom việc cần làm, lịch học, lịch thi, thông báo và đăng ký môn từ LMS và MyBK vào một chỗ. Đăng nhập để bắt đầu." />
-                <Button x:Name="LoginButton" Classes="accent" Content="Đăng nhập HCMUT" Click="OnLogin" />
+                <TextBlock Classes="card-title" Text="{l:T home.noData}" />
+                <TextBlock TextWrapping="Wrap" Text="{l:T home.intro}" />
+                <Button x:Name="LoginButton" Classes="accent" Content="{l:T common.loginHcmut}" Click="OnLogin" />
             </StackPanel>
         </Border>
 
@@ -94,7 +95,7 @@
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
                             <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="TodoMeta" />
-                            <TextBlock Classes="card-title" Text="Cần làm" />
+                            <TextBlock Classes="card-title" Text="{l:T home.todo}" />
                         </DockPanel></Border>
                         <ItemsControl ItemsSource="{Binding Todo}" ItemTemplate="{StaticResource TodoRow}" />
                         <TextBlock x:Name="TodoEmpty" Classes="empty" />
@@ -104,7 +105,7 @@
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
                             <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="NewsMeta" />
-                            <TextBlock Classes="card-title" Text="Thông báo mới" />
+                            <TextBlock Classes="card-title" Text="{l:T home.news}" />
                         </DockPanel></Border>
                         <ItemsControl ItemsSource="{Binding News}" ItemTemplate="{StaticResource NewsRow}" />
                         <TextBlock x:Name="NewsEmpty" Classes="empty" />
@@ -115,7 +116,7 @@
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
-                            <TextBlock Classes="card-title" Text="Sắp tới" />
+                            <TextBlock Classes="card-title" Text="{l:T calendar.tabUpcoming}" />
                         </DockPanel></Border>
                         <ItemsControl ItemsSource="{Binding Upcoming}" ItemTemplate="{StaticResource AgendaRow}" />
                         <TextBlock x:Name="UpcomingEmpty" Classes="empty" />
@@ -124,7 +125,7 @@
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
-                            <TextBlock Classes="card-title" Text="Đăng ký môn" />
+                            <TextBlock Classes="card-title" Text="{l:T home.reg}" />
                         </DockPanel></Border>
                         <ItemsControl ItemsSource="{Binding Registrations}" ItemTemplate="{StaticResource RegRow}" />
                         <TextBlock x:Name="RegEmpty" Classes="empty" />

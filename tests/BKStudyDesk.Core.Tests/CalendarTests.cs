@@ -23,6 +23,18 @@ public class CalendarTests
     }
 
     [Fact]
+    public void Rows_SwitchesShowClassesAndDone()
+    {
+        TimelineItem[] all = [Item("a", "assign", Now + D), Item("done", "assign", Now + H, done: true), Item("cl", "class", Now + 2 * H)];
+        Assert.Equal(["done", "cl", "a"], CalendarPresenter.Build(all, Now, showClasses: true, showDone: true).Select(r => r.Id));
+        Assert.Equal(["cl", "a"], CalendarPresenter.Build(all, Now, showClasses: true).Select(r => r.Id));
+    }
+
+    [Fact]
+    public void Rows_UndatedKeptLast() =>
+        Assert.Equal(["a", "u"], CalendarPresenter.Build([Item("u", "assign", TimelineItem.UndatedTime), Item("a", "assign", Now + D)], Now).Select(r => r.Id));
+
+    [Fact]
     public void Rows_KeepAllFuture() =>
         Assert.Equal(90, CalendarPresenter.Build([.. Enumerable.Range(1, 90).Select(i => Item("a" + i, "assign", Now + i * D))], Now).Count);
 

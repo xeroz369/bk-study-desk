@@ -62,7 +62,7 @@ public partial class SubjectsView : UserControl, IFillPage
     private void Build(JsonArray? scan)
     {
         _wanted ??= _subject?.Name;
-        _rows = SubjectsPresenter.Rows(_state.Lms, scan, Config.Bool("sources.lms.pastTerms", false));
+        _rows = SubjectsPresenter.Rows(_state.Lms, scan);
         ShowList();
     }
 
@@ -73,7 +73,7 @@ public partial class SubjectsView : UserControl, IFillPage
         var rows = SubjectsPresenter.Filter(_rows, Filter.Text ?? "");
         Subjects.ItemsSource = rows;
         ListEmpty.IsVisible = rows.Count == 0;
-        ListEmpty.Text = _rows.Count == 0 ? "Chưa có môn nào. Đăng nhập để lấy danh sách lớp từ LMS, hay chép tài liệu vào thư mục Môn học." : "Không có môn nào khớp.";
+        ListEmpty.Text = L.T(_rows.Count == 0 ? "subjects.listEmpty" : "subjects.noMatch");
         var keep = _wanted ?? _subject?.Name;
         Subjects.SelectedItem = rows.FirstOrDefault(r => NameMatch.Same(r.Name, keep)) ?? rows.FirstOrDefault();
         _wanted = null;
@@ -88,7 +88,7 @@ public partial class SubjectsView : UserControl, IFillPage
         SubjectName.Text = s.Name;
         SubjectMeta.Text = SubjectsPresenter.Meta(s, _state.Timeline, _state.Lms, Format.Now);
         LmsButton.IsEnabled = DownloadButton.IsEnabled = s.OnLms;
-        _root = Config.Str("folders.subjects", "Môn học") + "/" + s.Name;
+        _root = Config.Str("folders.subjects") + "/" + s.Name;
         if (changed) _dir = _keepDir is { } keep && keep.StartsWith(_root, StringComparison.OrdinalIgnoreCase) ? keep : _root;
         _keepDir = null;
         _filled.Clear();
@@ -114,19 +114,11 @@ public partial class SubjectsView : UserControl, IFillPage
         }
         else if (tab == LibraryTab) _ = LoadLibraryAsync(s);
         else if (tab == DueTab)
-            Show(Due, DueEmpty, SubjectsPresenter.Due(_state.Timeline, s, Format.Now), L.T("subjects.dueEmpty"));
+            Tables.Show(Due, DueEmpty, SubjectsPresenter.Due(_state.Timeline, s, Format.Now), L.T("subjects.dueEmpty"));
         else if (tab == NewsTab)
-            Show(News, NewsEmpty, SubjectsPresenter.News(_state.Lms, s), L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
+            Tables.Show(News, NewsEmpty, SubjectsPresenter.News(_state.Lms, s), L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
         else if (tab == GradesTab)
-            Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
-    }
-
-    private static void Show<T>(DataGrid grid, TextBlock empty, IReadOnlyList<T> rows, string emptyText)
-    {
-        grid.ItemsSource = rows;
-        grid.IsVisible = rows.Count > 0;
-        empty.Text = emptyText;
-        empty.IsVisible = rows.Count == 0;
+            Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
     }
 
     private static void Status(DataGrid grid, TextBlock empty, string text)
@@ -157,7 +149,7 @@ public partial class SubjectsView : UserControl, IFillPage
         }
         if (gen != _gen) return;
         if (d["missing"] is not null) { Status(Files, FilesEmpty, L.T("subjects.filesEmpty")); return; }
-        Show(Files, FilesEmpty, SubjectsPresenter.FileRows(d), L.T("subjects.folderEmpty"));
+        Tables.Show(Files, FilesEmpty, SubjectsPresenter.FileRows(d), L.T("subjects.folderEmpty"));
     }
 
     private async Task LoadRecentAsync(SubjectRow s)
@@ -167,7 +159,7 @@ public partial class SubjectsView : UserControl, IFillPage
         try
         {
             var recent = await Documents.SubjectFilesAsync(s.Name, 200);
-            if (gen == _gen) Show(Recent, FilesEmpty, SubjectsPresenter.RecentRows(recent), L.T("subjects.recentEmpty"));
+            if (gen == _gen) Tables.Show(Recent, FilesEmpty, SubjectsPresenter.RecentRows(recent), L.T("subjects.recentEmpty"));
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
@@ -234,7 +226,7 @@ public partial class SubjectsView : UserControl, IFillPage
             i.Click += async (_, _) => await run();
             return i;
         }
-        menu.Items.Add(Item("Mở thư mục chứa", () => Opener.RevealAsync(this, f.Rel)));
+        menu.Items.Add(Item(L.T("files.reveal"), () => Opener.RevealAsync(this, f.Rel)));
         menu.Items.Add(Item(L.T("common.copyName"), () => Copy(f.Name)));
         menu.Items.Add(Item(L.T("common.copyPath"), () => Copy(Paths.StudyPath(f.Rel) ?? f.Rel)));
     }
@@ -276,10 +268,7 @@ public partial class SubjectsView : UserControl, IFillPage
         menu.ShowAt(button);
     }
 
-    private async Task OpenUrl(string url)
-    {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && TopLevel.GetTopLevel(this) is { } top) await top.Launcher.LaunchUriAsync(uri);
-    }
+    private Task OpenUrl(string url) => Links.OpenAsync(this, url, _subject?.Name ?? "");
 
     // ------------------------------------------------------------------ bố cục co giãn
 

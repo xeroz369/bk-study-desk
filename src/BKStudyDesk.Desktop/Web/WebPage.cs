@@ -126,9 +126,9 @@ internal sealed class WebPage
             last = u.AbsoluteUri;
             Log.Debug($"Web: xong {Log.Where(last)} {(ok ? "ok" : "lỗi")}");
             if (_blocked is { } b)
-                done.TrySetException(new HttpRequestException($"Trang chuyển sang trang ngoài trường ({Log.Where(b)}), app không mở trang này."));
+                done.TrySetException(new HttpRequestException(L.F("web.blocked", Log.Where(b))));
             else if (!ok) done.TrySetException(new HttpRequestException(L.T("web.offline")));
-            else if (failAt?.Invoke(u) == true) done.TrySetException(new SessionExpiredException("Phiên đăng nhập HCMUT đã hết hạn. Cần đăng nhập lại trong app."));
+            else if (failAt?.Invoke(u) == true) done.TrySetException(new SessionExpiredException(L.T("web.sessionEnded")));
             else if (arrived(u)) done.TrySetResult();
         };
         var seconds = Config.Int("sources.mybk.timeoutSeconds", 45);
@@ -141,7 +141,7 @@ internal sealed class WebPage
             else
             {
                 ct.ThrowIfCancellationRequested();
-                throw new TimeoutException($"Trang trường không phản hồi sau {seconds} giây (đang ở {Log.Where(last)}). Máy chủ có thể đang chậm, thử lại sau.");
+                throw new TimeoutException(L.F("web.noResponse", seconds, Log.Where(last)));
             }
         }
         finally { _loaded = null; }

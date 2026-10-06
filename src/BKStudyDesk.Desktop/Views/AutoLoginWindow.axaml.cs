@@ -14,7 +14,7 @@ public partial class AutoLoginWindow : Window
     {
         var user = User.Text?.Trim() ?? "";
         var password = Password.Text ?? "";
-        if (user.Length == 0 || password.Length == 0) { Show("Cần cả tên đăng nhập và mật khẩu."); return; }
+        if (user.Length == 0 || password.Length == 0) { Show(SoHocTap.Ui.L.T("autologin.missing")); return; }
         try
         {
             Credentials.Save(user, password);
@@ -24,7 +24,7 @@ public partial class AutoLoginWindow : Window
         catch (Exception x) when (x is not OutOfMemoryException)
         {
             Log.Warn($"Tự đăng nhập lại: không lưu được tài khoản: {x.Message}");
-            Show("Không lưu được tài khoản vào kho mật khẩu của hệ điều hành.");
+            Show(SoHocTap.Ui.L.T("autologin.saveFailed"));
         }
         finally { Password.Text = ""; }
     }

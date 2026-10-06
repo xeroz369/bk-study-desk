@@ -25,12 +25,15 @@ public sealed record HomeModel(bool HasLms, bool HasMybk, IReadOnlyList<TodoItem
 
 /// <summary>
 /// Trang Hôm nay hiện gì, theo thứ tự nào (thiết kế: design-system/bk). Thuần, không giao diện: View chỉ vẽ HomeModel.
-/// Cần làm: hạn chưa xong trong 14 ngày tới và hạn quá trong cửa sổ 7 ngày (TimelineItem.Overdue), quá hạn trước.
-/// Sắp tới: buổi học hôm nay và ngày mai, thi trong 14 ngày. Thông báo: 7 ngày, mới nhất trước. Không cắt số mục.
+/// Cần làm: hạn chưa xong trong TodoDays ngày tới và hạn quá trong cửa sổ 7 ngày (TimelineItem.Overdue), quá hạn trước.
+/// Sắp tới: buổi học hôm nay và ngày mai, thi trong ExamDays ngày. Thông báo: NewsDays ngày, mới nhất trước. Không cắt số mục.
+/// Số ngày ở config (app.home.*), không viết cứng.
 /// </summary>
 public static class HomePresenter
 {
-    public const int TodoDays = 14, ExamDays = 14, NewsDays = 7;
+    public static int TodoDays => Config.Int("app.home.todoDays", 14);
+    public static int ExamDays => Config.Int("app.home.examDays", 14);
+    public static int NewsDays => Config.Int("app.home.newsDays", 7);
 
     /// <summary>Phần MyBK trang cần (lịch học, thi, đợt đăng ký).</summary>
     public sealed record MybkPart(IReadOnlyList<MybkClass> Classes, IReadOnlyList<MybkExam> Exams, IReadOnlyList<MybkRegistration> Registrations);

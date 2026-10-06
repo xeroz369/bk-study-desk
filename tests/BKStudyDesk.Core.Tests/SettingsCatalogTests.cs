@@ -5,7 +5,8 @@ namespace BKStudyDesk.Core.Tests;
 /// <summary>Danh mục Cài đặt: kiểm ô số, ô địa chỉ thư viện, chia Thường dùng và Nâng cao. Không ghi cài đặt thật.</summary>
 public class SettingsCatalogTests
 {
-    private static readonly SettingsActions None = new(() => "", () => { }, () => Task.CompletedTask, _ => { }, () => { }, () => Task.CompletedTask, _ => { }, () => { }, () => false, _ => false);
+    private static readonly SettingsActions None = new(() => "", () => { }, () => Task.CompletedTask, () => { }, _ => { }, _ => { }, () => false, _ => false,
+        () => Task.FromResult<string?>(null), _ => Task.CompletedTask, () => Task.CompletedTask, _ => { }, () => { });
 
     [Fact]
     public void Number_RejectsBelowMinAndNonNumbers()
@@ -24,6 +25,23 @@ public class SettingsCatalogTests
         Assert.Equal("https://lib.example", url.Normalize(" https://lib.example "));
         Assert.Equal("", url.Normalize(""));
         Assert.Null(url.Normalize("http://lib.example"));
+    }
+
+    [Fact]
+    public void Keys_PageRangeFollowsPageCount()
+    {
+        var keys = SettingsCatalog.Groups(None with { PageCount = 6 }).SelectMany(g => g.Items).OfType<InfoItem>().ToList();
+        Assert.Contains(keys, k => k.Value.Contains("Ctrl+1") && k.Value.Contains("Ctrl+6"));
+        Assert.Contains(keys, k => k.Value == "F5");
+        // Không biết số trang thì không ghi dòng chuyển trang (không đoán số).
+        Assert.DoesNotContain(SettingsCatalog.Groups(None).SelectMany(g => g.Items).OfType<InfoItem>(), k => k.Value.Contains("Ctrl+"));
+    }
+
+    [Fact]
+    public void Language_ListsEveryLangFile()
+    {
+        var lang = SettingsCatalog.Groups(None).SelectMany(g => g.Items).OfType<ChoiceItem>().Single(c => c.Options.Any(o => o.Value == "en"));
+        Assert.Contains(lang.Options, o => o.Value == "vi");
     }
 
     [Fact]

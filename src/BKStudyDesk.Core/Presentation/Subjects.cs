@@ -37,13 +37,13 @@ public sealed record GradeRow(string Part, string Name, string GradeText, string
 
 /// <summary>
 /// Trang Môn học hiện gì (cùng quy tắc với bản 1.x, Ui/Pages/SubjectsPage): môn từ LMS và thư mục trên máy gộp theo tên (so NFC);
-/// môn kỳ trước chỉ có trên LMS thì ẩn (trừ sources.lms.pastTerms); môn đang học trước, rồi theo tên tiếng Việt.
+/// mọi môn đều hiện (cả môn kỳ trước chỉ có trên LMS, dòng phụ ghi "Môn đã học"); môn đang học trước, rồi theo tên tiếng Việt.
 /// </summary>
 public static class SubjectsPresenter
 {
     private static readonly StringComparer ViOrder = StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true);
 
-    public static IReadOnlyList<SubjectRow> Rows(LmsData? lms, JsonArray? scan, bool pastTerms)
+    public static IReadOnlyList<SubjectRow> Rows(LmsData? lms, JsonArray? scan)
     {
         var term = lms?.Term;
         var map = new Dictionary<string, (string Name, List<LmsCourse> Courses, int Files)>(NameMatch.NfcIgnoreCase);
@@ -59,7 +59,7 @@ public static class SubjectsPresenter
             var files = d["files"]?.GetValue<int>() ?? 0;
             map[n] = map.TryGetValue(n, out var v) ? v with { Files = files } : (n, [], files);
         }
-        return [.. map.Values.Where(v => pastTerms || v.Files > 0 || v.Courses.Any(c => c.Term == term)).Select(v =>
+        return [.. map.Values.Select(v =>
             {
                 var codes = string.Join(", ", v.Courses.Select(c => c.Code.Split('_')[0]).Distinct());
                 var docs = scan is null ? "" : L.F("subjects.docs", v.Files);   // chưa quét xong thì không ghi "0 tài liệu" sai

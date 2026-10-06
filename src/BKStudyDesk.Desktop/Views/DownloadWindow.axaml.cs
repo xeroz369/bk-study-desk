@@ -27,7 +27,7 @@ public partial class DownloadWindow : Window
         _lms = lms;
         _course = course;
         Heading.Text = course.Subject + (course.Part is null ? "" : ", " + course.Part) + ", " + course.Term;
-        Sub.Text = L.F("download.saveTo", $"{Config.Str("folders.subjects", "Môn học")}/{course.Subject}");
+        Sub.Text = L.F("download.saveTo", $"{Config.Str("folders.subjects")}/{course.Subject}");
         Extract.IsChecked = SoHocTap.Core.Settings.Archives.Extract;
         Start.IsEnabled = false;
         Opened += async (_, _) => await LoadAsync();

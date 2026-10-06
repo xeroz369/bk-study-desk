@@ -24,12 +24,12 @@ public partial class HomeView : UserControl
         var none = !m.HasLms && !m.HasMybk;
         Intro.IsVisible = none;
         Columns.IsVisible = !none;
-        TodoMeta.Text = $"{m.Todo.Count} việc trong {HomePresenter.TodoDays} ngày";
-        NewsMeta.Text = $"{m.News.Count} tin trong {HomePresenter.NewsDays} ngày";
-        Empty(TodoEmpty, m.Todo.Count, m.HasLms ? $"Không có việc nào trong {HomePresenter.TodoDays} ngày tới." : "Chưa có dữ liệu LMS.");
-        Empty(NewsEmpty, m.News.Count, m.HasLms ? $"Không có thông báo nào trong {HomePresenter.NewsDays} ngày qua." : "Chưa có dữ liệu LMS.");
-        Empty(UpcomingEmpty, m.Upcoming.Count, m.HasMybk ? "Hôm nay, ngày mai không có buổi học; chưa có lịch thi trong 14 ngày." : "Chưa có dữ liệu MyBK.");
-        Empty(RegEmpty, m.Registrations.Count, m.HasMybk ? "Chưa có đợt đăng ký môn sắp tới." : "Chưa có dữ liệu MyBK.");
+        TodoMeta.Text = L.F("home.todoMeta", m.Todo.Count, HomePresenter.TodoDays);
+        NewsMeta.Text = L.F("home.newsMeta", m.News.Count, HomePresenter.NewsDays);
+        Empty(TodoEmpty, m.Todo.Count, m.HasLms ? L.F("home.todoEmpty", HomePresenter.TodoDays) : L.T("home.noLms"));
+        Empty(NewsEmpty, m.News.Count, m.HasLms ? L.F("home.newsEmptyDays", HomePresenter.NewsDays) : L.T("home.noLms"));
+        Empty(UpcomingEmpty, m.Upcoming.Count, m.HasMybk ? L.F("home.upcomingEmpty", HomePresenter.ExamDays) : L.T("home.noMybk"));
+        Empty(RegEmpty, m.Registrations.Count, m.HasMybk ? L.T("home.regEmpty") : L.T("home.noMybk"));
     }
 
     private static void Empty(TextBlock box, int count, string text)
@@ -55,11 +55,10 @@ public partial class HomeView : UserControl
 
     private void OnLogin(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _login();
 
-    /// <summary>Bấm một dòng có link: mở bằng trình duyệt mặc định, nơi người dùng đã đăng nhập trang trường.</summary>
-    private void OnRowTapped(object? sender, TappedEventArgs e)
+    /// <summary>Bấm một dòng có link: trang trường mở trong cửa sổ app (dùng chung phiên đăng nhập), trang khác bằng trình duyệt.</summary>
+    private async void OnRowTapped(object? sender, TappedEventArgs e)
     {
-        var url = (sender as Control)?.DataContext switch { TodoItem t => t.Url, NewsItem n => n.Url, _ => null };
-        if (url is not null && Uri.TryCreate(url, UriKind.Absolute, out var uri) && TopLevel.GetTopLevel(this) is { } top)
-            _ = top.Launcher.LaunchUriAsync(uri);
+        if ((sender as Control)?.DataContext switch { TodoItem t => t.Url, NewsItem n => n.Url, _ => null } is { } url)
+            await Files.Links.OpenAsync(this, url);
     }
 }

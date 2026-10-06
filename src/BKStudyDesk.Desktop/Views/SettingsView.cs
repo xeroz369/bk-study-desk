@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using SoHocTap.Presentation;
+using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
@@ -22,12 +23,12 @@ public sealed class SettingsView : UserControl
         page.Children.Add(new StackPanel
         {
             Spacing = 2,
-            Children = { new TextBlock { Text = "Cài đặt", Classes = { "title" } }, new TextBlock { Text = "Mỗi mục lưu ngay khi đổi.", Classes = { "meta" } } },
+            Children = { new TextBlock { Text = L.T("set.title"), Classes = { "title" } }, new TextBlock { Text = L.T("set.subtitle"), Classes = { "meta" } } },
         });
         foreach (var g in groups.Where(g => !g.Advanced)) page.Children.Add(Card(g));
         var advanced = new StackPanel { Spacing = 24, Margin = new Thickness(0, 16, 0, 0) };
         foreach (var g in groups.Where(g => g.Advanced)) advanced.Children.Add(Card(g));
-        page.Children.Add(_advanced = new Expander { Header = "Nâng cao: đồng bộ, mở tài liệu, thư viện, nhật ký", Content = advanced, HorizontalAlignment = HorizontalAlignment.Stretch });
+        page.Children.Add(_advanced = new Expander { Header = L.T("set.advanced"), Content = advanced, HorizontalAlignment = HorizontalAlignment.Stretch });
         Content = page;
     }
 
@@ -79,6 +80,7 @@ public sealed class SettingsView : UserControl
             }),
             ChoiceItem c => Choice(c),
             ActionItem a => Action(a, Say),
+            InfoItem i => new TextBlock { Text = i.Value, Classes = { "meta" } },
             _ => new TextBlock(),
         };
         right.VerticalAlignment = VerticalAlignment.Center;
@@ -91,7 +93,7 @@ public sealed class SettingsView : UserControl
 
     private static ToggleSwitch Toggle(ToggleItem t)
     {
-        var s = new ToggleSwitch { IsChecked = t.Get(), OnContent = "Bật", OffContent = "Tắt" };
+        var s = new ToggleSwitch { IsChecked = t.Get(), OnContent = L.T("set.on"), OffContent = L.T("set.off") };
         s.IsCheckedChanged += (_, _) => t.Set(s.IsChecked == true);
         return s;
     }

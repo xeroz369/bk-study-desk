@@ -1,46 +1,111 @@
-<!-- Trang Lịch (design-system/bk mục 4, Bảng): bảng DataGrid chính thức trong thẻ; đầu bảng, dòng cao tối thiểu theo token; chỉ kẻ ngang.
-     Cột ngắn vừa theo chữ (Auto); Tên và Môn chia phần còn lại 2:1; hẹp quá mức tối thiểu thì bảng cuộn ngang, không giấu cột;
-     nhóm theo ngày (Quá hạn đứng đầu). Dòng nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Calendar.cs. -->
+<!-- Trang Lịch (design-system/bk mục 4, Bảng): ba tab, mỗi tab một bảng (kiểu bảng chung ở Tokens.axaml): Sắp tới (công tắc hiện buổi
+     học, việc đã làm), Thời khóa biểu (tuần trước, tuần này, tuần sau), Lịch thi. Nút Thêm sự kiện, Xuất lịch ở đầu trang.
+     Dòng nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Calendar.cs, Week.cs. Chữ: lang/*.json qua {l:T}. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
              x:Class="BKStudyDesk.Desktop.Views.CalendarView">
-    <!-- Trang lấp đầy (IFillPage): bảng tự cuộn dọc, ngang trong khung cửa sổ, thanh cuộn luôn ở trong tầm nhìn. -->
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,24">
-            <TextBlock Classes="title" Text="Lịch" />
-            <TextBlock Classes="meta" Text="Hạn nộp, quiz, lịch thi và đăng ký môn sắp tới. Bấm đúp một dòng để mở trên trình duyệt." />
-        </StackPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <Button Content="{l:T events.add}" ToolTip.Tip="{l:T events.addTip}" Click="OnAddEvent" />
+                <Button Content="{l:T calendar.export}" ToolTip.Tip="{l:T calendar.exportTip}" Click="OnExport" />
+            </StackPanel>
+            <StackPanel Spacing="2">
+                <TextBlock Classes="title" Text="{l:T nav.calendar}" />
+                <TextBlock Classes="meta" Text="{l:T calendar.intro}" />
+                <TextBlock x:Name="Note" Classes="meta" IsVisible="False" />
+            </StackPanel>
+        </DockPanel>
         <Border Classes="card">
-            <DockPanel>
-                <Border DockPanel.Dock="Top" Classes="card-head"><DockPanel>
-                    <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="CountText" />
-                    <TextBlock Classes="card-title" Text="Sắp tới" />
-                </DockPanel></Border>
-                <TextBlock DockPanel.Dock="Top" x:Name="EmptyText" Classes="empty" IsVisible="False" />
-                <DataGrid x:Name="Grid" RowHeight="{StaticResource TableRowHeight}" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column"
-                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" CanUserReorderColumns="False"
-                          SelectionMode="Single" Background="{DynamicResource Surface}" BorderThickness="0" DoubleTapped="OnOpen">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Giờ" Binding="{Binding Hour}" Width="Auto" MinWidth="64" x:DataType="p:CalendarRow" />
-                        <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:CalendarRow" />
-                        <DataGridTextColumn Header="Môn" Binding="{Binding Subject}" Width="*" MinWidth="120" x:DataType="p:CalendarRow" />
-                        <DataGridTextColumn Header="Loại" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:CalendarRow" />
-                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding State}" Width="Auto" MinWidth="96" x:DataType="p:CalendarRow" />
-                        <DataGridTemplateColumn Width="Auto" MinWidth="96" SortMemberPath="Time">
-                            <DataGridTemplateColumn.Header>
-                                <TextBlock Text="Còn" HorizontalAlignment="Right" />
-                            </DataGridTemplateColumn.Header>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate x:DataType="p:CalendarRow">
-                                    <TextBlock Classes="right" Classes.danger="{Binding IsDanger}" Classes.soon="{Binding IsSoon}" Text="{Binding Left}"
-                                               VerticalAlignment="Center" Margin="0,0,16,0" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </DockPanel>
+            <TabControl x:Name="Tabs" Padding="0">
+                <TabItem Header="{l:T calendar.tabUpcoming}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="16,8">
+                            <CheckBox x:Name="ShowClasses" Content="{l:T calendar.showClasses}" Click="OnFilter" />
+                            <CheckBox x:Name="ShowDone" Content="{l:T calendar.showDone}" Click="OnFilter" />
+                        </StackPanel>
+                        <TextBlock x:Name="UpcomingEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Upcoming" DoubleTapped="OnUpcomingOpen">
+                            <DataGrid.ContextFlyout><MenuFlyout Opening="OnUpcomingMenu" /></DataGrid.ContextFlyout>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.time}" Binding="{Binding Hour}" Width="Auto" MinWidth="64" x:DataType="p:CalendarRow" />
+                                <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:CalendarRow" />
+                                <DataGridTextColumn Header="{l:T col.subject}" Binding="{Binding Subject}" Width="*" MinWidth="120" x:DataType="p:CalendarRow" />
+                                <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:CalendarRow" />
+                                <DataGridTextColumn Header="{l:T col.status}" Binding="{Binding State}" Width="Auto" MinWidth="96" x:DataType="p:CalendarRow" />
+                                <DataGridTemplateColumn Width="Auto" MinWidth="96" SortMemberPath="Time">
+                                    <DataGridTemplateColumn.Header><TextBlock Text="{l:T col.left}" HorizontalAlignment="Right" /></DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="p:CalendarRow">
+                                            <TextBlock Classes="right" Classes.danger="{Binding IsDanger}" Classes.soon="{Binding IsSoon}" Text="{Binding Left}"
+                                                       VerticalAlignment="Center" Margin="0,0,16,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T calendar.tabWeek}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="16,8">
+                            <Button Content="{l:T calendar.prevWeek}" Click="OnPrevWeek" />
+                            <Button x:Name="ThisWeek" Content="{l:T calendar.thisWeek}" Click="OnThisWeek" />
+                            <Button Content="{l:T calendar.nextWeek}" Click="OnNextWeek" />
+                            <TextBlock x:Name="WeekText" Classes="card-title" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" Text="{l:T calendar.dimNote}" />
+                        <TextBlock x:Name="NoSlot" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
+                        <TextBlock x:Name="WeekEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Week" DoubleTapped="OnWeekOpen">
+                            <DataGrid.ContextFlyout><MenuFlyout Opening="OnWeekMenu" /></DataGrid.ContextFlyout>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.time}" Binding="{Binding Time}" Width="Auto" MinWidth="96" SortMemberPath="StartMin" x:DataType="p:WeekRow" />
+                                <DataGridTemplateColumn Header="{l:T col.subject}" Width="*" MinWidth="200">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="p:WeekRow">
+                                            <TextBlock Classes="name" Classes.dim="{Binding !InWeek}" Text="{Binding Name}" VerticalAlignment="Center" Margin="12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{l:T col.code}" Binding="{Binding Code}" Width="Auto" MinWidth="80" x:DataType="p:WeekRow" />
+                                <DataGridTextColumn Header="{l:T col.room}" Binding="{Binding Room}" Width="Auto" MinWidth="80" x:DataType="p:WeekRow" />
+                                <DataGridTextColumn Header="{l:T col.lessons}" Binding="{Binding Lessons}" Width="Auto" MinWidth="64" x:DataType="p:WeekRow" />
+                                <DataGridTextColumn Header="{l:T col.teacher}" Binding="{Binding Teacher}" Width="Auto" MinWidth="120" x:DataType="p:WeekRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T calendar.tabExams}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="meta" Margin="16,8" Text="{l:T calendar.examSource}" />
+                        <TextBlock x:Name="ExamsEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Exams">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="{l:T col.subject}" Width="*" MinWidth="200">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="p:ExamRow">
+                                            <TextBlock Classes="name" Classes.dim="{Binding Past}" Text="{Binding Subject}" VerticalAlignment="Center" Margin="12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{l:T col.when}" Binding="{Binding When}" Width="Auto" MinWidth="140" SortMemberPath="Time" x:DataType="p:ExamRow" />
+                                <DataGridTextColumn Header="{l:T col.roomDuration}" Binding="{Binding Label}" Width="Auto" MinWidth="140" x:DataType="p:ExamRow" />
+                                <DataGridTemplateColumn Width="Auto" MinWidth="96" SortMemberPath="Time">
+                                    <DataGridTemplateColumn.Header><TextBlock Text="{l:T col.left}" HorizontalAlignment="Right" /></DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="p:ExamRow">
+                                            <TextBlock Classes="right" Text="{Binding Left}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+            </TabControl>
         </Border>
     </DockPanel>
 </UserControl>

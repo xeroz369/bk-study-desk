@@ -1,9 +1,10 @@
 <!-- Cửa sổ Tải tài liệu theo mục của một lớp LMS: chọn loại file, chọn mục, tải; nhật ký tải bên dưới. Dòng mục: Presentation/Download.cs. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
         xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
         x:Class="BKStudyDesk.Desktop.Views.DownloadWindow"
-        Title="Tải tài liệu" Width="720" Height="720" MinWidth="440" MinHeight="480"
+        Title="{l:T download.title}" Width="720" Height="720" MinWidth="440" MinHeight="480"
         WindowStartupLocation="CenterOwner" Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
     <DockPanel Margin="24">
         <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,16">
@@ -11,20 +12,20 @@
             <TextBlock x:Name="Sub" Classes="meta" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button x:Name="Start" Classes="accent" Content="Tải" Click="OnStart" />
-            <Button Content="Đóng" Click="OnClose" />
+            <Button x:Name="Start" Classes="accent" Content="{l:T download.start}" Click="OnStart" />
+            <Button Content="{l:T common.close}" Click="OnClose" />
         </StackPanel>
         <TextBox x:Name="Output" DockPanel.Dock="Bottom" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" Height="140" Margin="0,16,0,0"
-                 IsVisible="False" PlaceholderText="Nhật ký tải" />
-        <CheckBox x:Name="Extract" DockPanel.Dock="Bottom" Content="Tự giải nén file nén (.zip, .rar, .7z)" Margin="0,12,0,0" />
+                 IsVisible="False" PlaceholderText="{l:T download.log}" />
+        <CheckBox x:Name="Extract" DockPanel.Dock="Bottom" Content="{l:T download.extract}" Margin="0,12,0,0" />
         <TextBlock x:Name="Summary" DockPanel.Dock="Bottom" Classes="meta" Margin="0,12,0,0" />
         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-            <TextBlock Classes="meta" Text="Loại file" Margin="0,0,12,0" />
+            <TextBlock Classes="meta" Text="{l:T download.kinds}" Margin="0,0,12,0" />
             <CheckBox x:Name="KindPdf" Content="PDF" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
-            <CheckBox x:Name="KindSlide" Content="Slide (.ppt, .pptx)" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
-            <CheckBox x:Name="KindOther" Content="Khác" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
-            <Button x:Name="AllButton" Content="Chọn hết" Click="OnAll" Margin="0,0,8,0" />
-            <Button x:Name="NoneButton" Content="Bỏ chọn" Click="OnNone" />
+            <CheckBox x:Name="KindSlide" Content="{l:T download.kindSlide}" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
+            <CheckBox x:Name="KindOther" Content="{l:T download.kindOther}" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
+            <Button x:Name="AllButton" Content="{l:T download.all}" Click="OnAll" Margin="0,0,8,0" />
+            <Button x:Name="NoneButton" Content="{l:T download.none}" Click="OnNone" />
         </WrapPanel>
         <Border Classes="card">
             <Panel>

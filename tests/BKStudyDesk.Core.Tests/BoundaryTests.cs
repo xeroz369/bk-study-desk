@@ -9,6 +9,6 @@ public class BoundaryTests
     public void Core_ReferencesNoUiOrWindowsUi()
     {
         var refs = typeof(SoHocTap.Core.Config).Assembly.GetReferencedAssemblies().Select(a => a.Name ?? "").ToList();
-        Assert.Empty(refs.Where(r => Banned.Any(b => r.StartsWith(b, StringComparison.Ordinal))));
+        Assert.DoesNotContain(refs, r => Banned.Any(b => r.StartsWith(b, StringComparison.Ordinal)));
     }
 }

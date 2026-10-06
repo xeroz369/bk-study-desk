@@ -33,7 +33,7 @@ public static partial class Settings
         "notify.hoursBefore", "notify.lastHours", "notify.urgentHours", "notify.soonHours", "notify.digestTimes",
         "app.update.mode", "app.update.checkHours",
         "library.baseUrl", "library.contributePath",
-        "app.language", "app.closeToTray", "app.theme",
+        "app.language", "app.closeToTray", "app.theme", "app.accent",
         "sso.rememberDays", "sso.keepAliveMinutes", "sso.autoLogin", "sso.autoLoginAsked",
         "sources.lms.syncHours", "sources.mybk.syncHours", "sources.lms.maxFileMB", "sources.lms.autoDownload", "sources.lms.saveQuizzes", "sources.lms.groupPattern",
         "archives.maxMB", "archives.extract",
@@ -95,6 +95,10 @@ public static partial class Settings
         public static bool CloseToTray { get => GetBool("app.closeToTray"); set => SetBool("app.closeToTray", value); }
         /// <summary>Chế độ màu của bản đa nền tảng: "dark" (mặc định), "light" hay "system" (theo hệ điều hành). Bản 1.x không đọc.</summary>
         public static string Theme { get => GetStr("app.theme"); set => SetStr("app.theme", value); }
+        /// <summary>Màu nhấn của bản đa nền tảng: "#RRGGBB" hay "system" (màu nhấn của hệ điều hành); lựa chọn ở app.accentChoices.</summary>
+        public static string Accent { get => GetStr("app.accent"); set => SetStr("app.accent", value); }
+        /// <summary>Màu nhấn trong config mặc định (DefaultConfig.json), dùng khi màu người dùng đặt sai dạng.</summary>
+        public static string DefaultAccent => Store.DefaultValue("app.accent") is JsonValue v && v.TryGetValue<string>(out var s) ? s : "";
     }
 
     public static class Sso

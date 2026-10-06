@@ -1,29 +1,32 @@
 <!-- Khung (design-system/bk mục 4): thanh cao tối thiểu 48 nền Bar; vùng nội dung lề 24; trang chữ rộng tối đa ContentMaxWidth và cuộn cả vùng, trang bảng (IFillPage) lấp đầy và tự cuộn. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
         x:Class="BKStudyDesk.Desktop.MainWindow"
         Title="BK Study Desk" Width="1280" Height="820" MinWidth="480" MinHeight="480"
         Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
     <DockPanel>
-        <!-- Thanh trên cùng co theo chỗ trống (MainWindow.FitBar): hẹp thì ẩn tên app trước, rồi gom Đồng bộ, Tài khoản, Cài đặt vào nút Thêm. -->
+        <!-- Thanh trên cùng (design-system/bk mục 4): mục trang bên trái; phải là nút Thông báo (trạng thái đồng bộ ngắn, bấm ra bảng
+             từng nguồn và các thông báo), Tài khoản, Cài đặt. Hẹp thì Tài khoản, Cài đặt gom vào nút Thêm (MainWindow.FitBar). -->
         <Border x:Name="Bar" DockPanel.Dock="Top" Background="{DynamicResource Bar}" MinHeight="{StaticResource BarHeight}">
-            <DockPanel Margin="24,0">
-                <TextBlock x:Name="Brand" DockPanel.Dock="Left" Text="BK Study Desk" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,28,0" />
-                <StackPanel x:Name="Tools" DockPanel.Dock="Right" Orientation="Horizontal" Spacing="20">
-                    <Button Classes="bar" Click="OnSync"><TextBlock x:Name="SyncText" FontSize="13" VerticalAlignment="Center" /></Button>
+            <DockPanel Margin="16,0">
+                <StackPanel x:Name="Tools" DockPanel.Dock="Right" Orientation="Horizontal" Spacing="20" Margin="20,0,0,0">
                     <!-- Tài khoản: tên, Đăng nhập, Đăng xuất (MainWindow.AccountItems), dựng lại mỗi lần mở. -->
-                    <Button x:Name="AccountButton" Classes="bar"><TextBlock Text="Tài khoản" VerticalAlignment="Center" /><Button.Flyout><MenuFlyout /></Button.Flyout></Button>
-                    <Button x:Name="SettingsButton" Classes="bar"><TextBlock Text="Cài đặt" VerticalAlignment="Center" /></Button>
+                    <Button x:Name="AccountButton" Classes="bar"><TextBlock Text="{l:T nav.account}" VerticalAlignment="Center" /><Button.Flyout><MenuFlyout /></Button.Flyout></Button>
+                    <Button x:Name="SettingsButton" Classes="bar"><TextBlock Text="{l:T nav.settings}" VerticalAlignment="Center" /></Button>
                 </StackPanel>
-                <Button x:Name="More" DockPanel.Dock="Right" Classes="bar" IsVisible="False">
-                    <TextBlock Text="Thêm" VerticalAlignment="Center" />
+                <Button x:Name="More" DockPanel.Dock="Right" Classes="bar" IsVisible="False" Margin="20,0,0,0">
+                    <TextBlock Text="{l:T nav.more}" VerticalAlignment="Center" />
                     <Button.Flyout>
                         <MenuFlyout>
-                            <MenuItem x:Name="MoreSync" Click="OnSync" />
-                            <MenuItem x:Name="MoreAccount" Header="Tài khoản" />
-                            <MenuItem x:Name="MoreSettings" Header="Cài đặt" />
+                            <MenuItem x:Name="MoreAccount" Header="{l:T nav.account}" />
+                            <MenuItem x:Name="MoreSettings" Header="{l:T nav.settings}" />
                         </MenuFlyout>
                     </Button.Flyout>
+                </Button>
+                <!-- Nút Thông báo: bảng dựng lại mỗi lần mở (MainWindow.FillStatus). -->
+                <Button x:Name="StatusButton" DockPanel.Dock="Right" Classes="bar" Margin="20,0,0,0">
+                    <TextBlock x:Name="StatusText" FontSize="{DynamicResource FontMeta}" VerticalAlignment="Center" />
                 </Button>
                 <StackPanel x:Name="Nav" Orientation="Horizontal" Spacing="24" />
             </DockPanel>

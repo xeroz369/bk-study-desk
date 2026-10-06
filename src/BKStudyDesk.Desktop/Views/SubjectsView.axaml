@@ -2,12 +2,13 @@
      Hẹp thì danh sách lên trên (SubjectsView.OnSizeChanged). Môn nào hiện, dòng phụ, điểm, mốc: BKStudyDesk.Core/Presentation/Subjects.cs. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.SubjectsView">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,24">
-            <TextBlock Classes="title" Text="Môn học" />
-            <TextBlock Classes="meta" Text="Tài liệu trên máy, hạn nộp, thông báo và điểm của từng môn." />
+            <TextBlock Classes="title" Text="{l:T nav.subjects}" />
+            <TextBlock Classes="meta" Text="{l:T subjects.subtitle}" />
         </StackPanel>
         <Grid x:Name="Columns" RowDefinitions="*,Auto">
             <Grid.ColumnDefinitions>
@@ -19,7 +20,7 @@
             <!-- Danh sách môn -->
             <Border x:Name="ListCard" Classes="card">
                 <DockPanel>
-                    <TextBox x:Name="Filter" DockPanel.Dock="Top" Margin="12" PlaceholderText="Lọc môn theo tên hay mã" TextChanged="OnFilter" />
+                    <TextBox x:Name="Filter" DockPanel.Dock="Top" Margin="12" PlaceholderText="{l:T subjects.filter.tip}" TextChanged="OnFilter" />
                     <TextBlock x:Name="ListEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                     <ListBox x:Name="Subjects" SelectionChanged="OnPick" Background="Transparent">
                         <ListBox.ItemTemplate>
@@ -40,8 +41,8 @@
                     <Border DockPanel.Dock="Top" Classes="card-head">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Button x:Name="LmsButton" Content="Mở trên LMS" Click="OnOpenLms" />
-                                <Button x:Name="DownloadButton" Content="Tải tài liệu" Click="OnDownload" IsVisible="False" />
+                                <Button x:Name="LmsButton" Content="{l:T subjects.openLms}" Click="OnOpenLms" />
+                                <Button x:Name="DownloadButton" Content="{l:T subjects.download}" Click="OnDownload" IsVisible="False" />
                             </StackPanel>
                             <StackPanel VerticalAlignment="Center" Spacing="2">
                                 <TextBlock x:Name="SubjectName" Classes="card-title" />
@@ -51,14 +52,14 @@
                     </Border>
                     <TextBlock x:Name="DetailEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                     <TabControl x:Name="Tabs" SelectionChanged="OnTab" Padding="0">
-                        <TabItem x:Name="FilesTab" Header="Tài liệu">
+                        <TabItem x:Name="FilesTab" Header="{l:T subjects.tabFiles}">
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top" Margin="16,8">
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
-                                        <ToggleButton x:Name="RecentToggle" Content="Mới cập nhật" Click="OnRecentToggle" />
-                                        <Button Content="Mở thư mục" Click="OnOpenFolder" />
+                                        <ToggleButton x:Name="RecentToggle" Content="{l:T subjects.tabRecent}" Click="OnRecentToggle" />
+                                        <Button Content="{l:T subjects.openFolder}" Click="OnOpenFolder" />
                                     </StackPanel>
-                                    <Button x:Name="UpButton" DockPanel.Dock="Left" Content="Lên" Click="OnUp" Margin="0,0,12,0" />
+                                    <Button x:Name="UpButton" DockPanel.Dock="Left" Content="{l:T subjects.up}" Click="OnUp" Margin="0,0,12,0" />
                                     <TextBlock x:Name="PathText" Classes="meta" TextTrimming="CharacterEllipsis" />
                                 </DockPanel>
                                 <TextBlock x:Name="FilesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
@@ -68,10 +69,10 @@
                                               BorderThickness="0" SelectionMode="Single" DoubleTapped="OnFileOpen" KeyDown="OnFilesKey">
                                         <DataGrid.ContextFlyout><MenuFlyout Opening="OnFileMenu" /></DataGrid.ContextFlyout>
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:FileRow" />
-                                            <DataGridTextColumn Header="Loại" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:FileRow" />
-                                            <DataGridTextColumn Header="Cỡ" Binding="{Binding SizeText}" Width="Auto" MinWidth="80" SortMemberPath="Size" x:DataType="p:FileRow" />
-                                            <DataGridTextColumn Header="Sửa lúc" Binding="{Binding ModifiedText}" Width="Auto" MinWidth="140" SortMemberPath="Modified" x:DataType="p:FileRow" />
+                                            <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:FileRow" />
+                                            <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:FileRow" />
+                                            <DataGridTextColumn Header="{l:T col.size}" Binding="{Binding SizeText}" Width="Auto" MinWidth="80" SortMemberPath="Size" x:DataType="p:FileRow" />
+                                            <DataGridTextColumn Header="{l:T col.modified}" Binding="{Binding ModifiedText}" Width="Auto" MinWidth="140" SortMemberPath="Modified" x:DataType="p:FileRow" />
                                         </DataGrid.Columns>
                                     </DataGrid>
                                     <DataGrid x:Name="Recent" IsVisible="False" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
@@ -79,29 +80,29 @@
                                               BorderThickness="0" SelectionMode="Single" DoubleTapped="OnRecentOpen">
                                         <DataGrid.ContextFlyout><MenuFlyout Opening="OnRecentMenu" /></DataGrid.ContextFlyout>
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:RecentRow" />
-                                            <DataGridTextColumn Header="Thư mục" Binding="{Binding Folder}" Width="*" MinWidth="120" x:DataType="p:RecentRow" />
-                                            <DataGridTextColumn Header="Cỡ" Binding="{Binding SizeText}" Width="Auto" MinWidth="80" SortMemberPath="Size" x:DataType="p:RecentRow" />
-                                            <DataGridTextColumn Header="Sửa lúc" Binding="{Binding ModifiedText}" Width="Auto" MinWidth="140" SortMemberPath="Modified" x:DataType="p:RecentRow" />
+                                            <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:RecentRow" />
+                                            <DataGridTextColumn Header="{l:T col.folder}" Binding="{Binding Folder}" Width="*" MinWidth="120" x:DataType="p:RecentRow" />
+                                            <DataGridTextColumn Header="{l:T col.size}" Binding="{Binding SizeText}" Width="Auto" MinWidth="80" SortMemberPath="Size" x:DataType="p:RecentRow" />
+                                            <DataGridTextColumn Header="{l:T col.modified}" Binding="{Binding ModifiedText}" Width="Auto" MinWidth="140" SortMemberPath="Modified" x:DataType="p:RecentRow" />
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </Panel>
                             </DockPanel>
                         </TabItem>
-                        <TabItem x:Name="DueTab" Header="Sắp tới">
+                        <TabItem x:Name="DueTab" Header="{l:T subjects.tabDue}">
                             <DockPanel>
                                 <TextBlock x:Name="DueEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                                 <DataGrid x:Name="Due" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                           BorderThickness="0" SelectionMode="Single" DoubleTapped="OnDueOpen">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Ngày" Binding="{Binding Group}" Width="Auto" MinWidth="120" SortMemberPath="Time" x:DataType="p:CalendarRow" />
-                                        <DataGridTextColumn Header="Giờ" Binding="{Binding Hour}" Width="Auto" MinWidth="64" x:DataType="p:CalendarRow" />
-                                        <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:CalendarRow" />
-                                        <DataGridTextColumn Header="Loại" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:CalendarRow" />
-                                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding State}" Width="Auto" MinWidth="96" x:DataType="p:CalendarRow" />
+                                        <DataGridTextColumn Header="{l:T col.date}" Binding="{Binding Group}" Width="Auto" MinWidth="120" SortMemberPath="Time" x:DataType="p:CalendarRow" />
+                                        <DataGridTextColumn Header="{l:T col.time}" Binding="{Binding Hour}" Width="Auto" MinWidth="64" x:DataType="p:CalendarRow" />
+                                        <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:CalendarRow" />
+                                        <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:CalendarRow" />
+                                        <DataGridTextColumn Header="{l:T col.status}" Binding="{Binding State}" Width="Auto" MinWidth="96" x:DataType="p:CalendarRow" />
                                         <DataGridTemplateColumn Width="Auto" MinWidth="96" SortMemberPath="Time">
-                                            <DataGridTemplateColumn.Header><TextBlock Text="Còn" HorizontalAlignment="Right" /></DataGridTemplateColumn.Header>
+                                            <DataGridTemplateColumn.Header><TextBlock Text="{l:T col.left}" HorizontalAlignment="Right" /></DataGridTemplateColumn.Header>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate x:DataType="p:CalendarRow">
                                                     <TextBlock Classes="right" Classes.danger="{Binding IsDanger}" Classes.soon="{Binding IsSoon}" Text="{Binding Left}"
@@ -113,52 +114,52 @@
                                 </DataGrid>
                             </DockPanel>
                         </TabItem>
-                        <TabItem x:Name="NewsTab" Header="Thông báo">
+                        <TabItem x:Name="NewsTab" Header="{l:T subjects.tabNews}">
                             <DockPanel>
                                 <TextBlock x:Name="NewsEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                                 <DataGrid x:Name="News" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                           BorderThickness="0" SelectionMode="Single" DoubleTapped="OnNewsOpen">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Tiêu đề" Binding="{Binding Title}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:SubjectNews" />
-                                        <DataGridTextColumn Header="Diễn đàn" Binding="{Binding Forum}" Width="*" MinWidth="120" x:DataType="p:SubjectNews" />
-                                        <DataGridTextColumn Header="Người đăng" Binding="{Binding Author}" Width="*" MinWidth="120" x:DataType="p:SubjectNews" />
-                                        <DataGridTextColumn Header="Lúc" Binding="{Binding When}" Width="Auto" MinWidth="96" x:DataType="p:SubjectNews" />
+                                        <DataGridTextColumn Header="{l:T col.title}" Binding="{Binding Title}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:SubjectNews" />
+                                        <DataGridTextColumn Header="{l:T col.forum}" Binding="{Binding Forum}" Width="*" MinWidth="120" x:DataType="p:SubjectNews" />
+                                        <DataGridTextColumn Header="{l:T col.author}" Binding="{Binding Author}" Width="*" MinWidth="120" x:DataType="p:SubjectNews" />
+                                        <DataGridTextColumn Header="{l:T col.at}" Binding="{Binding When}" Width="Auto" MinWidth="96" x:DataType="p:SubjectNews" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>
                         </TabItem>
-                        <TabItem x:Name="GradesTab" Header="Điểm LMS">
+                        <TabItem x:Name="GradesTab" Header="{l:T subjects.tabGrades}">
                             <DockPanel>
-                                <TextBlock DockPanel.Dock="Top" Classes="meta" Margin="16,8" Text="Điểm giảng viên nhập trên LMS. Điểm chính thức ở MyBK." />
+                                <TextBlock DockPanel.Dock="Top" Classes="meta" Margin="16,8" Text="{l:T subjects.gradesNoteMybk}" />
                                 <TextBlock x:Name="GradesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                                 <DataGrid x:Name="Grades" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                           BorderThickness="0" SelectionMode="Single">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Phần" Binding="{Binding Part}" Width="Auto" MinWidth="96" x:DataType="p:GradeRow" />
-                                        <DataGridTemplateColumn Header="Mục" Width="*" MinWidth="200">
+                                        <DataGridTextColumn Header="{l:T col.part}" Binding="{Binding Part}" Width="Auto" MinWidth="96" x:DataType="p:GradeRow" />
+                                        <DataGridTemplateColumn Header="{l:T col.item}" Width="*" MinWidth="200">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate x:DataType="p:GradeRow">
                                                     <TextBlock Classes.total="{Binding Total}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="12,0" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="Điểm" Binding="{Binding GradeText}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
-                                        <DataGridTextColumn Header="Tối đa" Binding="{Binding MaxText}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
+                                        <DataGridTextColumn Header="{l:T col.score}" Binding="{Binding GradeText}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
+                                        <DataGridTextColumn Header="{l:T col.max}" Binding="{Binding MaxText}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
                                         <DataGridTextColumn Header="%" Binding="{Binding Percent}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>
                         </TabItem>
-                        <TabItem x:Name="LibraryTab" Header="Thư viện">
+                        <TabItem x:Name="LibraryTab" Header="{l:T library.tab}">
                             <DockPanel>
                                 <WrapPanel DockPanel.Dock="Top" Margin="16,8">
                                     <ComboBox x:Name="TeacherFilter" SelectionChanged="OnLibraryFilter" Margin="0,0,8,8" MinWidth="160" />
                                     <ComboBox x:Name="TermFilter" SelectionChanged="OnLibraryFilter" Margin="0,0,8,8" MinWidth="120" />
                                     <ComboBox x:Name="ExamFilter" SelectionChanged="OnLibraryFilter" Margin="0,0,16,8" MinWidth="140" />
-                                    <Button x:Name="LibraryWebButton" Content="Mở trên web thư viện" Click="OnLibraryWeb" Margin="0,0,8,8" />
-                                    <Button x:Name="ContributeButton" Content="Đóng góp tài liệu" Click="OnContribute" Margin="0,0,8,8" />
+                                    <Button x:Name="LibraryWebButton" Content="{l:T settings.library.open}" Click="OnLibraryWeb" Margin="0,0,8,8" />
+                                    <Button x:Name="ContributeButton" Content="{l:T library.contribute}" Click="OnContribute" Margin="0,0,8,8" />
                                 </WrapPanel>
                                 <TextBlock x:Name="LibraryNote" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
                                 <TextBlock x:Name="LibraryStatus" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
@@ -168,14 +169,14 @@
                                           BorderThickness="0" SelectionMode="Single" DoubleTapped="OnLibraryOpen">
                                     <DataGrid.ContextFlyout><MenuFlyout Opening="OnLibraryMenu" /></DataGrid.ContextFlyout>
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Tên" Binding="{Binding Title}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Lớp" Binding="{Binding Edition}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Học kỳ" Binding="{Binding Term}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Giảng viên" Binding="{Binding Teacher}" Width="Auto" MinWidth="100" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Chương" Binding="{Binding Chapter}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Kiểm tra" Binding="{Binding Exam}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Cỡ" Binding="{Binding SizeText}" Width="Auto" MinWidth="72" SortMemberPath="Size" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="Trên máy" Binding="{Binding Local}" Width="Auto" MinWidth="96" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Title}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T library.col.course}" Binding="{Binding Edition}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T col.term}" Binding="{Binding Term}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T col.teacher}" Binding="{Binding Teacher}" Width="Auto" MinWidth="100" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T library.col.chapter}" Binding="{Binding Chapter}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T library.col.exam}" Binding="{Binding Exam}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T col.size}" Binding="{Binding SizeText}" Width="Auto" MinWidth="72" SortMemberPath="Size" x:DataType="p:LibraryRow" />
+                                        <DataGridTextColumn Header="{l:T library.col.local}" Binding="{Binding Local}" Width="Auto" MinWidth="96" x:DataType="p:LibraryRow" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>

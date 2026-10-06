@@ -2,14 +2,15 @@
      Người dùng tự gõ mật khẩu trong trang; app không đọc mật khẩu. Lượt đăng nhập: Web/LoginFlow.cs. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
         x:Class="BKStudyDesk.Desktop.Views.LoginWindow"
-        Title="Đăng nhập HCMUT (LMS và MyBK)" Width="560" Height="760" MinWidth="420" MinHeight="480"
+        Title="{l:T login.title}" Width="560" Height="760" MinWidth="420" MinHeight="480"
         WindowStartupLocation="CenterOwner" Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
     <DockPanel>
         <Border DockPanel.Dock="Top" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1"
                 MinHeight="{StaticResource CardHeaderHeight}" Padding="16,8">
             <DockPanel>
-                <Button x:Name="Retry" DockPanel.Dock="Right" Content="Thử lại" IsVisible="False" Click="OnRetry" />
+                <Button x:Name="Retry" DockPanel.Dock="Right" Content="{l:T web.retry}" IsVisible="False" Click="OnRetry" />
                 <TextBlock x:Name="Status" Classes="meta" />
             </DockPanel>
         </Border>

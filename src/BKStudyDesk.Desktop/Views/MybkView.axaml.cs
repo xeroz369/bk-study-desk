@@ -1,4 +1,3 @@
-using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -21,43 +20,28 @@ public partial class MybkView : UserControl, IFillPage
         _m = state.Mybk;
         var hasData = _m is not null;
         Subtitle.Text = MybkPresenter.Subtitle(_m);
-        StatsText.Text = string.Join(", ", MybkPresenter.Stats(_m).Where(s => s.Value != "-").Select(s => $"{s.Label} {s.Value}" + (s.Tip is { } t ? $" ({t})" : "")));
-        StatsText.IsVisible = StatsText.Text.Length > 0;
-        string Empty(string key) => hasData ? L.T(key) : "Chưa có dữ liệu MyBK. Đăng nhập để đồng bộ.";
-        Show(Grades, GradesEmpty, Grouped(MybkPresenter.Grades(_m), nameof(MybkGradeRow.Group)), Empty("grades.gradesEmpty"));
+        var stats = MybkPresenter.Stats(_m).Where(s => s.Value != "-").ToList();
+        Stats.ItemsSource = stats;
+        Stats.IsVisible = stats.Count > 0;
+        string Empty(string key) => L.T(hasData ? key : "mybk.noData");
+        Tables.Show(Grades, GradesEmpty, Tables.Grouped(MybkPresenter.Grades(_m), nameof(MybkGradeRow.Group)), Empty("grades.gradesEmpty"));
         ProgramFilter.ItemsSource = MybkPresenter.Filters;
         ProgramFilter.SelectedIndex = 0;   // OnProgramFilter dựng bảng chương trình
         ProgramNote.Text = MybkPresenter.ProgramNote(_m);
-        Show(Registered, RegisteredEmpty, MybkPresenter.Registered(_m), Empty("grades.regEmpty"));
-        Show(Teachers, TeachersEmpty, Grouped(MybkPresenter.Teachers(_m), nameof(TeacherRow.Teacher)), Empty("grades.teachersEmpty"));
-        Show(Fees, FeesEmpty, MybkPresenter.Fees(_m), Empty("grades.feesEmpty"));
+        Tables.Show(Registered, RegisteredEmpty, MybkPresenter.Registered(_m), Empty("grades.regEmpty"));
+        Tables.Show(Teachers, TeachersEmpty, Tables.Grouped(MybkPresenter.Teachers(_m), nameof(TeacherRow.Teacher)), Empty("grades.teachersEmpty"));
+        Tables.Show(Fees, FeesEmpty, MybkPresenter.Fees(_m), Empty("grades.feesEmpty"));
         SocialTitle.Text = L.F("grades.socialTitle", Format.Score(_m?.SocialWork?.Days));
-        Show(Social, SocialEmpty, MybkPresenter.Social(_m), Empty("grades.socialEmpty"));
-        Show(Decisions, DecisionsEmpty, MybkPresenter.Decisions(_m), Empty("grades.decisionsEmpty"));
+        Tables.Show(Social, SocialEmpty, MybkPresenter.Social(_m), Empty("grades.socialEmpty"));
+        Tables.Show(Decisions, DecisionsEmpty, MybkPresenter.Decisions(_m), Empty("grades.decisionsEmpty"));
         ShowServices();
-    }
-
-    private static DataGridCollectionView Grouped<T>(IReadOnlyList<T> rows, string path)
-    {
-        var view = new DataGridCollectionView(rows);
-        view.GroupDescriptions.Add(new DataGridPathGroupDescription(path));
-        return view;
-    }
-
-    private static void Show(DataGrid grid, TextBlock empty, System.Collections.IEnumerable rows, string emptyText)
-    {
-        var any = rows.Cast<object>().Any();
-        grid.ItemsSource = rows;
-        grid.IsVisible = any;
-        empty.Text = emptyText;
-        empty.IsVisible = !any;
     }
 
     private void OnProgramFilter(object? sender, SelectionChangedEventArgs e)
     {
         if (ProgramFilter.SelectedItem is not SoHocTap.Presentation.ProgramFilter f) return;
         var rows = MybkPresenter.Program(_m, f);
-        Show(Program, ProgramEmpty, Grouped(rows ?? [], nameof(ProgramRow.Group)), L.T("grades.programEmpty"));
+        Tables.Show(Program, ProgramEmpty, Tables.Grouped(rows ?? [], nameof(ProgramRow.Group)), L.T("grades.programEmpty"));
     }
 
     private void OnServiceFilter(object? sender, TextChangedEventArgs e) => ShowServices();
@@ -65,18 +49,13 @@ public partial class MybkView : UserControl, IFillPage
     private void ShowServices()
     {
         var q = ServiceFilter.Text ?? "";
-        Show(Services, ServicesEmpty, Grouped(MybkPresenter.Services(q), nameof(ServiceRow.Group)), L.T(q.Trim().Length == 0 ? "services.empty" : "services.noMatch"));
+        Tables.Show(Services, ServicesEmpty, Tables.Grouped(MybkPresenter.Services(q), nameof(ServiceRow.Group)), L.T(q.Trim().Length == 0 ? "services.empty" : "services.noMatch"));
     }
 
     private async void OnServiceOpen(object? sender, TappedEventArgs e)
     {
-        if (Services.SelectedItem is ServiceRow s && Uri.TryCreate(s.Url, UriKind.Absolute, out var u) && TopLevel.GetTopLevel(this) is { } top)
-            await top.Launcher.LaunchUriAsync(u);
+        if (Services.SelectedItem is ServiceRow s) await Files.Links.OpenAsync(this, s.Url, s.Name);
     }
 
-    private async void OnOpenWeb(object? sender, RoutedEventArgs e)
-    {
-        if (Uri.TryCreate(Config.Str("sources.mybk.home"), UriKind.Absolute, out var u) && TopLevel.GetTopLevel(this) is { } top)
-            await top.Launcher.LaunchUriAsync(u);
-    }
+    private async void OnOpenWeb(object? sender, RoutedEventArgs e) => await Files.Links.OpenAsync(this, Config.Str("sources.mybk.home"), "MyBK");
 }

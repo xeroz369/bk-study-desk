@@ -208,6 +208,7 @@
         "registered": "v1/course-register-results/by-student-code/{mssv}"
       },
       "syncHours": 12,
+      "minSyncHours": 6,
       "gapMs": 300,
       "timeoutSeconds": 45,
       "specialScores": {
@@ -317,8 +318,21 @@
     "language": "vi",
     "closeToTray": true,
     "theme": "dark",
+    "webSlowSeconds": 10,
+    "home": { "todoDays": 14, "examDays": 14, "newsDays": 7 },
+    "accent": "#0388B4",
+    "accentChoices": [
+      { "key": "bk", "color": "#0388B4" },
+      { "key": "blue", "color": "#0969DA" },
+      { "key": "green", "color": "#1A7F37" },
+      { "key": "purple", "color": "#8250DF" },
+      { "key": "orange", "color": "#BC4C00" },
+      { "key": "pink", "color": "#BF3989" },
+      { "key": "system", "color": "system" }
+    ],
     "calendarView": "grid",
     "practiceReleaseMinutes": 3,
+    "practiceFlushMs": 2000,
     "font": {
       "family": "",
       "size": 0

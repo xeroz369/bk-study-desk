@@ -3,8 +3,16 @@ import './app.css';
 // Nhúng trong app WPF: dùng màu nhấn của Windows (?accent=#RRGGBB) cho primary, nền trong suốt để hòa với thẻ của WPF.
 const params = new URLSearchParams(location.search);
 if (params.has('embed')) document.documentElement.classList.add('embed');
-const accent = params.get('accent');
-if (accent && /^#[0-9a-f]{6}$/i.test(accent)) {
+// Bản đa nền tảng (Avalonia): bộ màu, viền của app mới, không icon trang trí (app.css, :root.host2).
+if (params.get('host') === '2') document.documentElement.classList.add('host2');
+// Đổi màu nhấn ở Cài đặt khi khung đang mở thì app gọi window.applyAppAccent, không tải lại trang.
+declare global {
+	interface Window {
+		applyAppAccent?: (hex: string) => void;
+	}
+}
+function applyAppAccent(accent: string | null) {
+	if (!accent || !/^#[0-9a-f]{6}$/i.test(accent)) return;
 	const s = document.documentElement.style;
 	s.setProperty('--primary', accent);
 	s.setProperty('--ring', accent);
@@ -12,6 +20,8 @@ if (accent && /^#[0-9a-f]{6}$/i.test(accent)) {
 	const [r, g, b] = [1, 3, 5].map((i) => parseInt(accent.slice(i, i + 2), 16));
 	s.setProperty('--primary-foreground', 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#000000' : '#ffffff');
 }
+window.applyAppAccent = applyAppAccent;
+applyAppAccent(params.get('accent'));
 
 // Phông, cỡ chữ người dùng chọn trong Cài đặt của app (?font=<tên phông>&fs=<tỉ lệ>). Đổi khi khung đang mở thì app WPF gọi
 // window.applyAppFont qua ExecuteScriptAsync, không tải lại trang. Chỉ đặt biến CSS trên :root (app.css: --app-font, --app-root-size);

@@ -22,7 +22,7 @@ public class SubjectsTests
     [Fact]
     public void Subjects_LocalOnly_NotOnLms()
     {
-        var rows = SubjectsPresenter.Rows(Lms([]), Scan(("Vật lý", 3)), pastTerms: false);
+        var rows = SubjectsPresenter.Rows(Lms([]), Scan(("Vật lý", 3)));
         var r = Assert.Single(rows);
         Assert.Empty(r.Courses);
         Assert.False(r.OnLms);
@@ -32,7 +32,7 @@ public class SubjectsTests
     public void Subjects_NfdNfc_OneRow()
     {
         var nfd = "Giải tích 2".Normalize(NormalizationForm.FormD);
-        var rows = SubjectsPresenter.Rows(Lms([Course(1, "Giải tích 2")]), Scan((nfd, 5)), pastTerms: false);
+        var rows = SubjectsPresenter.Rows(Lms([Course(1, "Giải tích 2")]), Scan((nfd, 5)));
         var r = Assert.Single(rows);
         Assert.Equal(5, r.Files);
         Assert.True(r.Current);
@@ -41,25 +41,26 @@ public class SubjectsTests
     [Fact]
     public void Subjects_Mine_ExactSubject()
     {
-        var row = SubjectsPresenter.Rows(Lms([]), Scan(("Giải tích 1", 1)), false)[0];
+        var row = SubjectsPresenter.Rows(Lms([]), Scan(("Giải tích 1", 1)))[0];
         TimelineItem Exam(string subject) => new("e", "exam", "Thi", subject, Format.Now + 86400, "", null, SourceIds.Mybk);
         Assert.True(SubjectsPresenter.Mine(Exam("Giải tích 1"), row));
         Assert.False(SubjectsPresenter.Mine(Exam("Giải tích 12"), row));
     }
 
     [Fact]
-    public void Subjects_PastTermNoFiles_Hidden()
+    public void Subjects_PastTerm_ShownAfterCurrent()
     {
         var lms = Lms([Course(1, "Hóa đại cương", "HK252"), Course(2, "Giải tích 2")]);
-        Assert.Equal(["Giải tích 2"], SubjectsPresenter.Rows(lms, Scan(), false).Select(r => r.Name));
-        Assert.Equal(2, SubjectsPresenter.Rows(lms, Scan(), true).Count);
-        Assert.Equal(2, SubjectsPresenter.Rows(lms, Scan(("Hóa đại cương", 2)), false).Count);
+        var rows = SubjectsPresenter.Rows(lms, Scan());
+        Assert.Equal(["Giải tích 2", "Hóa đại cương"], rows.Select(r => r.Name));
+        Assert.False(rows[1].Current);
+        Assert.StartsWith("Môn đã học", rows[1].ListSub);
     }
 
     [Fact]
     public void Subjects_Filter_Folded()
     {
-        var rows = SubjectsPresenter.Rows(Lms([Course(1, "Giải tích 2"), Course(2, "Kỹ thuật số")]), Scan(), false);
+        var rows = SubjectsPresenter.Rows(Lms([Course(1, "Giải tích 2"), Course(2, "Kỹ thuật số")]), Scan());
         Assert.Equal(["Giải tích 2"], SubjectsPresenter.Filter(rows, "giai tich").Select(r => r.Name));
         Assert.Equal(2, SubjectsPresenter.Filter(rows, " ").Count);
     }
@@ -69,7 +70,7 @@ public class SubjectsTests
     {
         var book = new LmsGradeBook(1, "Giải tích 2", null, [new("Quiz 1", "mod", 9, null, 10, "90 %", null), new("Tổng", "course", 8.5, null, 10, "85 %", null)]);
         var lms = Lms([Course(1, "Giải tích 2")], [book]);
-        var g = SubjectsPresenter.Grades(lms, SubjectsPresenter.Rows(lms, Scan(), false)[0]);
+        var g = SubjectsPresenter.Grades(lms, SubjectsPresenter.Rows(lms, Scan())[0]);
         Assert.Equal(2, g.Count);
         Assert.False(g[0].Total);
         Assert.True(g[1].Total);
