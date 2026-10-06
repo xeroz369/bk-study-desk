@@ -11,6 +11,7 @@ export const PAGES: Record<string, { load: Loader; keyArg?: boolean }> = {
 	bai: { load: () => import('../pages/Lesson.svelte'), keyArg: true },
 	'on-cau-sai': { load: () => import('../pages/Review.svelte'), keyArg: true },
 	'on-hom-nay': { load: () => import('../pages/TodayReview.svelte'), keyArg: true },
+	'luyen-tron': { load: () => import('../pages/MixedPractice.svelte'), keyArg: true },
 	'danh-dau': { load: () => import('../pages/Flagged.svelte') },
 	thi: { load: () => import('../pages/Exam.svelte'), keyArg: true },
 	'ket-qua': { load: () => import('../pages/Results.svelte') },

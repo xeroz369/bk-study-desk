@@ -106,7 +106,10 @@
 		}
 	});
 	const pickList = $derived.by(() => {
-		const out = subjects.map((s) => ({ ...s, course: Study.manifest.courses.find((c) => c.code?.toUpperCase() === s.code.toUpperCase()) }));
+		const out = subjects.map((s) => ({
+			...s,
+			course: Study.manifest.courses.find((c) => c.code?.toUpperCase() === s.code.toUpperCase()),
+		}));
 		for (const c of Study.manifest.courses)
 			if (!out.some((x) => x.course === c)) out.push({ code: c.code ?? c.id.toUpperCase(), name: c.name, course: c });
 		return out;
@@ -327,7 +330,8 @@
 			{/if}
 			<Panel title={unit ? 'Bài mới trong chương này' : 'Chương mới'} pad>
 				<div class="flex flex-col gap-3 text-sm">
-					{#if !unit}<label class="flex flex-col gap-1">Tên chương<Input bind:value={newUnit} placeholder={unitHint} /></label>{/if}
+					{#if !unit}<label class="flex flex-col gap-1">Tên chương<Input bind:value={newUnit} placeholder={unitHint} /></label
+						>{/if}
 					<label class="flex flex-col gap-1">Tên bài<Input bind:value={newLesson} placeholder={lessonHint} /></label>
 					<label class="flex flex-col gap-1"
 						>Kiến thức (không bắt buộc, Markdown + TeX)<Textarea bind:value={body} rows={4} placeholder={BODY_HINT} /></label
@@ -398,8 +402,8 @@
 		<Panel title={`Xuất ${level} "${scopeLabel(scope)}"`} pad>
 			<div class="flex flex-col gap-3 text-sm">
 				<p>
-					{exportReport.stats.lessons} bài, {countQuestions(exported)} câu, {exportReport.stats.exams} đề. Người nhận nhập vào sẽ vào đúng chương,
-					bài.
+					{exportReport.stats.lessons} bài, {countQuestions(exported)} câu, {exportReport.stats.exams} đề. Người nhận nhập vào sẽ vào
+					đúng chương, bài.
 				</p>
 				<label class="flex flex-col gap-1">Tên bạn (ghi vào gói)<Input bind:value={author} /></label>
 				{#if !exportReport.ok}
@@ -413,8 +417,11 @@
 				{/if}
 				<div class="flex flex-wrap gap-2">
 					<Button size="sm" onclick={() => exportMarkdown(exported)} disabled={exportOff}>Lưu Markdown (.md / .zip)...</Button>
-					<Button size="sm" variant="outline" onclick={() => copy(writeMarkdown(exported).md, 'Đã sao chép Markdown')} disabled={exportOff}
-						>Sao chép Markdown</Button
+					<Button
+						size="sm"
+						variant="outline"
+						onclick={() => copy(writeMarkdown(exported).md, 'Đã sao chép Markdown')}
+						disabled={exportOff}>Sao chép Markdown</Button
 					>
 				</div>
 				<div class="flex flex-wrap gap-2">
@@ -433,8 +440,8 @@
 					<Button size="xs" variant="ghost" onclick={() => download(exported)} disabled={exportOff}>JSON</Button>
 				</div>
 				<p class="text-xs text-muted-foreground">
-					Gửi file cho bạn qua Zalo hoặc Messenger. Bạn ấy mở <b>Luyện tập</b> > <b>Nhập file...</b> để nhập. Moodle XML dùng để đưa lên ngân
-					hàng câu hỏi LMS.
+					Gửi file cho bạn qua Zalo hoặc Messenger. Bạn ấy mở <b>Luyện tập</b> > <b>Nhập file...</b> để nhập. Moodle XML dùng để đưa
+					lên ngân hàng câu hỏi LMS.
 				</p>
 			</div>
 		</Panel>
@@ -476,13 +483,16 @@
 				<ol class="list-decimal pl-5">
 					<li>Sao chép prompt, dán vào ChatGPT / Claude / Gemini{mode === 'soan' ? ', kèm slide hoặc đề (PDF, ảnh)' : ''}.</li>
 					{#if mode === 'giai-thich'}<li>Đọc lời giải thích của AI.</li>{:else}<li>
-							AI trả về một khối Markdown: sao chép hết, sang tab <a class="link" href={`#soan/nhap/${scopePath(scope)}`}>Nhập</a>, dán vào
-							rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
+							AI trả về một khối Markdown: sao chép hết, sang tab <a class="link" href={`#soan/nhap/${scopePath(scope)}`}
+								>Nhập</a
+							>, dán vào rồi chọn Nhập. Có lỗi thì dán lỗi lại cho AI sửa.
 						</li>{/if}
 				</ol>
 				{#if mode === 'soan' || mode === 'tuong-tu'}
 					<div class="flex flex-wrap items-end gap-3">
-						<label class="flex flex-col gap-1">Số câu<Input type="number" min={1} max={40} bind:value={count} class="w-24" /></label>
+						<label class="flex flex-col gap-1"
+							>Số câu<Input type="number" min={1} max={40} bind:value={count} class="w-24" /></label
+						>
 						<label class="flex min-w-64 flex-1 flex-col gap-1"
 							>Yêu cầu thêm (không bắt buộc)<Input
 								bind:value={extra}

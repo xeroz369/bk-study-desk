@@ -13,7 +13,16 @@
 	import { api, errorText } from '$lib/api/client';
 	import type { PackIssue, StudyPack } from '$lib/study/pack';
 	import { install, prepareImport, readPackFile } from '$lib/study/transfer';
-	import { courseActions, isLmsUnit, LABELS, lessonActions, packActions, startRandomExam, unitActions } from '$lib/study/actions';
+	import {
+		courseActions,
+		courseCanMix,
+		isLmsUnit,
+		LABELS,
+		lessonActions,
+		packActions,
+		startRandomExam,
+		unitActions,
+	} from '$lib/study/actions';
 	import { dayDiff, examTime, num } from '$lib/format';
 	import { canRandomExam, Study } from '$lib/study/registry.svelte';
 	import { Progress } from '$lib/study/progress.svelte';
@@ -29,7 +38,8 @@
 	const due = $derived(Progress.dueQuestions(undefined, 999).length);
 	const examable = $derived(Study.manifest.courses.filter(canRandomExam));
 	function randomExam(cid: string) {
-		if (!startRandomExam(cid)) notice = { title: 'Môn này chưa có câu nào để ra đề', lines: ['Tạo hoặc nhập câu hỏi cho môn này trước.'] };
+		if (!startRandomExam(cid))
+			notice = { title: 'Môn này chưa có câu nào để ra đề', lines: ['Tạo hoặc nhập câu hỏi cho môn này trước.'] };
 	}
 	// Nhập quiz từ file (.md, .zip có ảnh, .json): file tự ghi môn/chương/bài nên vào đúng chỗ. GIFT, Moodle XML cần chọn môn: dùng nút Nhập (trang Tạo quiz).
 	let picker = $state<HTMLInputElement>();
@@ -184,13 +194,17 @@
 			course.exam
 				? `thi ${course.exam.date.slice(8)}/${course.exam.date.slice(5, 7)} ${course.exam.time}${d !== null && d >= 0 ? ` (còn ${d} ngày)` : ''}`
 				: '',
-			course.scoring ? `${course.scoring.count} câu, đúng +${num(course.scoring.right, 3)}, sai −${num(-course.scoring.wrong, 3)}` : '',
+			course.scoring
+				? `${course.scoring.count} câu, đúng +${num(course.scoring.right, 3)}, sai −${num(-course.scoring.wrong, 3)}`
+				: '',
 			`${s.done}/${s.total} bài xong`,
 		]
 			.filter(Boolean)
 			.join(', ')}
 	>
-		{#snippet actions()}<SoanButtons path={course.id} where="môn này" />{/snippet}
+		{#snippet actions()}{#if courseCanMix(course)}<Button size="sm" variant="outline" href={'#luyen-tron/' + course.id}
+					>{LABELS.mix}</Button
+				>{/if}<SoanButtons path={course.id} where="môn này" />{/snippet}
 	</PageShell>
 	<div class="flex flex-col gap-stack">
 		{@render noticeBox()}
@@ -211,7 +225,10 @@
 						dim={!l}
 						meta={qs.length ? `${qs.filter((q) => Progress.q(q.id)?.correct).length}/${qs.length} câu` : ''}
 					>
-						{#snippet trailing()}{#if tone(e.id)}<Tag tone={tone(e.id)} text={STATUS_TEXT[Progress.status(e.id)]} />{/if}{/snippet}
+						{#snippet trailing()}{#if tone(e.id)}<Tag
+									tone={tone(e.id)}
+									text={STATUS_TEXT[Progress.status(e.id)]}
+								/>{/if}{/snippet}
 					</DataRow>
 				{/each}
 			</Panel>

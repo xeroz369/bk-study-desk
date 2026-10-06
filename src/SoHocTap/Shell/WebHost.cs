@@ -1,4 +1,4 @@
-﻿using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Core;
 using SoHocTap.Core;
 using SoHocTap.Ui;
 
@@ -99,7 +99,7 @@ internal static class SessionKeeper
         try
         {
             var hosts = Config.List("sso.hosts").Select(h => h.ToLowerInvariant()).ToList();
-            var days = Config.Int("sso.rememberDays", 30);
+            var days = Settings.Sso.RememberDays;
             if (days <= 0) return;   // người dùng tắt "Ghi nhớ đăng nhập" thì session cookie mất khi tắt app
             // Hạn cookie chỉ để app không tự xóa vé SSO sớm hơn server. Vé (TGT) trên server vẫn tự hết theo lịch của server,
             // lúc đó trang trường đòi đăng nhập lại dù cookie còn hạn. Bản 1.1.9 trở về trước giữ cookie tối đa 8 giờ (chép số mặc định

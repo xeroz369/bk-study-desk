@@ -1,0 +1,18 @@
+<!-- Cửa sổ đăng nhập HCMUT: một dòng trạng thái (và nút Thử lại khi trang trường lỗi, chậm) trên trang SSO thật của trường.
+     Người dùng tự gõ mật khẩu trong trang; app không đọc mật khẩu. Lượt đăng nhập: Web/LoginFlow.cs. -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BKStudyDesk.Desktop.Views.LoginWindow"
+        Title="Đăng nhập HCMUT (LMS và MyBK)" Width="560" Height="760" MinWidth="420" MinHeight="480"
+        WindowStartupLocation="CenterOwner" Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1"
+                MinHeight="{StaticResource CardHeaderHeight}" Padding="16,8">
+            <DockPanel>
+                <Button x:Name="Retry" DockPanel.Dock="Right" Content="Thử lại" IsVisible="False" Click="OnRetry" />
+                <TextBlock x:Name="Status" Classes="meta" />
+            </DockPanel>
+        </Border>
+        <Border x:Name="Host" />
+    </DockPanel>
+</Window>

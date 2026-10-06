@@ -2,8 +2,8 @@ using System.Text.Json.Nodes;
 
 namespace SoHocTap.Shell;
 
-/// <summary>Một mốc có thể nhắc: nguồn, id, tên hiện trên thông báo, giờ hạn (Unix giây).</summary>
-public sealed record DueItem(string Source, string Id, string Title, string Subject, long Time);
+/// <summary>Một mốc có thể nhắc: nguồn, id, tên hiện trên thông báo, giờ hạn (Unix giây). Mốc đã nộp (<paramref name="Done"/>) không bao giờ được nhắc.</summary>
+public sealed record DueItem(string Source, string Id, string Title, string Subject, long Time, bool Done = false);
 
 /// <summary>
 /// Chọn mốc cần nhắc và ghi sổ đã nhắc (data/notified.json), hàm thuần để test được (không đọc file, không hiện gì).
@@ -29,7 +29,9 @@ public static class Reminders
     /// <param name="all">Mọi mốc còn hạn của dữ liệu hiện tại (để biết mốc nào đã thấy từ trước).</param>
     /// <param name="stages">Các mức nhắc trước, giờ (24, 2).</param>
     /// <param name="ledger">Sổ đã nhắc (đọc từ notified.json, sửa tại chỗ). Trả true trong <c>Changed</c> nếu sổ đổi, cần ghi lại.</param>
-    public static (List<(DueItem Item, int Hours)> Fresh, bool Changed) Pick(IReadOnlyList<DueItem> all, int[] stages, long now, JsonObject ledger)
+    /// <param name="eligible">Mốc được nhắc ở lượt này không (chờ giờ gom thì không). Mốc bị hoãn vẫn tính là đã thấy, không bị đánh dấu đã nhắc.</param>
+    public static (List<(DueItem Item, int Hours)> Fresh, bool Changed) Pick(IReadOnlyList<DueItem> all, int[] stages, long now, JsonObject ledger,
+        Func<DueItem, bool>? eligible = null)
     {
         var fresh = new List<(DueItem, int)>();
         stages = [.. stages.Where(h => h > 0).Distinct().OrderByDescending(h => h)];
@@ -38,7 +40,7 @@ public static class Reminders
         var seen = ((ledger["seen"] as JsonArray) ?? []).Select(x => x?.ToString() ?? "").ToHashSet();
         var before = ledger.ToJsonString();
         if (stages.Length > 0)
-            foreach (var d in all.Where(d => d.Time > now && d.Time - now <= stages[0] * 3600L).OrderBy(d => d.Time))
+            foreach (var d in all.Where(d => !d.Done && d.Time > now && d.Time - now <= stages[0] * 3600L && (eligible?.Invoke(d) ?? true)).OrderBy(d => d.Time))
             {
                 // Lấy mức gần nhất mà mốc này đã lọt vào; mức xa hơn coi như đã qua (mở app trễ thì chỉ nhắc một lần).
                 var stage = stages.Last(h => d.Time - now <= h * 3600L);

@@ -13,8 +13,8 @@ namespace SoHocTap.Sources.Mybk;
 /// </summary>
 public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
 {
-    public string Name => "mybk";
-    public TimeSpan Interval => TimeSpan.FromHours(Config.Int("sources.mybk.syncHours", 12));
+    public string Name => SourceIds.Mybk;
+    public TimeSpan Interval => TimeSpan.FromHours(Settings.Sync.MybkHours);
 
     private static string DataFile => Paths.DataFile("mybk.json");
     private static string SessionFile => Paths.DataFile(Path.Combine("secrets", "mybk-session.json"));

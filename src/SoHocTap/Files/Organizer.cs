@@ -153,7 +153,7 @@ public static partial class Organizer
         try
         {
             // Zip bomb: xem tổng dung lượng khai trong file nén trước khi giải (archives.maxMB, mặc định 2048 MB).
-            var limit = Config.Int("archives.maxMB", 2048) * 1024L * 1024;
+            var limit = Settings.Archives.MaxMB * 1024L * 1024;
             if (ListSize(exe, path) is not { } size || size > limit)
             {
                 log($"  bỏ qua {Path.GetFileName(path)}: không đọc được dung lượng hoặc lớn hơn {limit >> 20} MB khi giải nén");

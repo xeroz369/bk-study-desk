@@ -75,7 +75,9 @@ class StudyRegistry {
 	entries(courseId?: string): Entry[] {
 		return this.manifest.courses
 			.filter((c) => !courseId || c.id === courseId)
-			.flatMap((c) => c.units.flatMap((u) => u.lessons.map((e) => ({ ...e, courseId: c.id, courseName: c.name, unitTitle: u.title }))));
+			.flatMap((c) =>
+				c.units.flatMap((u) => u.lessons.map((e) => ({ ...e, courseId: c.id, courseName: c.name, unitTitle: u.title }))),
+			);
 	}
 	entry(id: string) {
 		return this.entries().find((e) => e.id === id);
@@ -103,6 +105,11 @@ class StudyRegistry {
 		return c.units.reduce((n, u) => n + u.lessons.reduce((m, e) => m + (this.lessons[e.id]?.questions?.length ?? 0), 0), 0);
 	}
 
+	/** Câu trong bài của môn theo `[chương][bài]` (đầu vào của Đề ngẫu nhiên và Luyện trộn). */
+	unitQuestions(c: Course): Question[][][] {
+		return c.units.map((u) => u.lessons.map((e) => this.lessons[e.id]?.questions ?? []));
+	}
+
 	/**
 	 * Random mock exam shaped like the real one (course.blueprint: questions per chapter, minutes, scoring).
 	 * Câu rút theo pickRandomExam (exam.ts): nhóm câu đi cùng nhau, đề giữ thứ tự gốc (chương, bài, câu).
@@ -112,8 +119,7 @@ class StudyRegistry {
 		if (!c) return;
 		const bp = c.blueprint ?? { minutes: 50 };
 		const base = bp.scoring ?? c.scoring ?? { count: 20, right: 0.5, wrong: -0.1 };
-		const units = c.units.map((u) => u.lessons.map((e) => this.lessons[e.id]?.questions ?? []));
-		const { questions: picked, total } = pickRandomExam(units, c.blueprint, base.count, rank);
+		const { questions: picked, total } = pickRandomExam(this.unitQuestions(c), c.blueprint, base.count, rank);
 		if (!picked.length) return;
 		// Fewer questions than the real exam: same 10-point scale, same right/wrong ratio, time scaled down.
 		const right = 10 / picked.length;
@@ -223,7 +229,13 @@ class StudyRegistry {
 				const questions = (l.questions ?? []).map((q, i) => mapQ(q, key, i));
 				const host = unit.lessons.find((e) => norm(e.title) === norm(l.title));
 				if (host) {
-					const target = (this.lessons[host.id] ??= { id: host.id, title: host.title, sources: host.sources, sections: [], questions: [] });
+					const target = (this.lessons[host.id] ??= {
+						id: host.id,
+						title: host.title,
+						sources: host.sources,
+						sections: [],
+						questions: [],
+					});
 					target.sections = [...(target.sections ?? []), ...sections];
 					// Same question already in this lesson (another pack, older copy): keep one.
 					const have = new Set((target.questions ?? []).map((q) => q.fp));

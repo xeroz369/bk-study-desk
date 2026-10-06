@@ -76,13 +76,18 @@ internal static class Grids
         return c;
     }
 
-    /// <summary>Chạy sau lượt layout hiện tại; tạo DataGridLength mới (chưa có DisplayValue) để DataGrid tính lại từ đầu.</summary>
-    public static void RestoreWidths(DataGrid g)
+    /// <summary>
+    /// Chạy sau lượt layout hiện tại; tạo DataGridLength mới (chưa có DisplayValue) để DataGrid tính lại từ đầu.
+    /// <paramref name="starsOnly"/>: chỉ cột co giãn (*). DataGrid của WPF chốt cột * thành số pixel khi từng bị tính lúc hẹp, cửa sổ rộng ra
+    /// thì không giãn lại (đo 06/10/2026: mở 900 px rồi phóng to, cột Tên đứng yên); đặt lại cột * mỗi lần grid đổi rộng. Cột cố định
+    /// người dùng tự kéo thì giữ.
+    /// </summary>
+    public static void RestoreWidths(DataGrid g, bool starsOnly = false)
     {
         g.Dispatcher.InvokeAsync(() =>
         {
             foreach (var c in g.Columns)
-                if (Design.TryGetValue(c, out var o) && o is DataGridLength w)
+                if (Design.TryGetValue(c, out var o) && o is DataGridLength w && (!starsOnly || w.IsStar))
                     c.Width = new DataGridLength(w.Value, w.UnitType);
         }, System.Windows.Threading.DispatcherPriority.Background);
     }
@@ -152,7 +157,9 @@ internal static class Grids
         var parts = new List<string>();
         foreach (var c in g.Columns.OrderBy(c => c.DisplayIndex))
         {
-            if (c.Visibility != Visibility.Visible || c is not DataGridBoundColumn { Binding: Binding { Path.Path: { Length: > 0 } path } }) continue;
+            if (c.Visibility != Visibility.Visible) continue;
+            var path = c is DataGridBoundColumn { Binding: Binding { Path.Path: { Length: > 0 } p } } ? p : c.GetValue(TextPathProperty) as string;
+            if (string.IsNullOrEmpty(path)) continue;
             var key = (item.GetType(), path);
             if (!Props.TryGetValue(key, out var prop)) Props[key] = prop = item.GetType().GetProperty(path);
             if (Convert.ToString(prop?.GetValue(item), L.Culture) is { Length: > 0 } text) parts.Add(text);
@@ -169,6 +176,58 @@ internal static class Grids
         {
             Setters = { new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Right) },
         };
+        return c;
+    }
+
+    /// <summary>Tên đường dẫn chữ của cột mẫu (template), để <see cref="RowName"/> vẫn đọc được chữ của cột đó.</summary>
+    public static readonly DependencyProperty TextPathProperty = DependencyProperty.RegisterAttached("TextPath", typeof(string), typeof(Grids));
+
+    /// <summary>Như <see cref="Right"/> nhưng ô là mẫu riêng (thêm biểu tượng, màu). <paramref name="textPath"/> là thuộc tính chữ hiện trong ô.</summary>
+    public static DataGridTemplateColumn RightTemplate(string header, string textPath, double width, string sortPath, DataTemplate cell)
+    {
+        var shape = Right(header, textPath, width, sortPath);
+        var c = new DataGridTemplateColumn
+        {
+            Header = header,
+            HeaderTemplate = shape.HeaderTemplate,
+            HeaderStyle = shape.HeaderStyle,
+            SortMemberPath = sortPath,
+            Width = shape.Width,
+            CellTemplate = cell,
+        };
+        c.SetValue(TextPathProperty, textPath);
+        Design.AddOrUpdate(c, c.Width);
+        Fixed.Add((new WeakReference<DataGridColumn>(c), width));
+        return c;
+    }
+
+    /// <summary>
+    /// Cột chính hai dòng: <paramref name="titlePath"/> ở trên, <paramref name="subPath"/> chữ mờ ở dưới, cách dòng kế một khoảng để các
+    /// mục không dính nhau. Cả hai xuống dòng khi hẹp (không cắt chữ). <paramref name="textPath"/> là chữ đầy đủ cho trình đọc màn hình.
+    /// </summary>
+    public static DataGridTemplateColumn TwoLine(string header, string titlePath, string subPath, string textPath)
+    {
+        var panel = new FrameworkElementFactory(typeof(StackPanel));
+        panel.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 5));   // không lề trên: dòng tên thẳng hàng với các cột chữ khác
+        foreach (var (path, muted) in new[] { (titlePath, false), (subPath, true) })
+        {
+            var t = new FrameworkElementFactory(typeof(TextBlock));
+            t.SetBinding(TextBlock.TextProperty, new Binding(path));
+            t.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
+            if (muted) t.SetValue(FrameworkElement.StyleProperty, Application.Current.FindResource("Muted"));
+            panel.AppendChild(t);
+        }
+        var c = new DataGridTemplateColumn
+        {
+            Header = header,
+            HeaderTemplate = (DataTemplate)Application.Current.FindResource("TrimHeader"),
+            Width = new DataGridLength(2, DataGridLengthUnitType.Star),
+            MinWidth = 80,
+            SortMemberPath = titlePath,
+            CellTemplate = new DataTemplate { VisualTree = panel },
+        };
+        c.SetValue(TextPathProperty, textPath);
+        Design.AddOrUpdate(c, c.Width);
         return c;
     }
 

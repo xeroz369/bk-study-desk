@@ -41,6 +41,7 @@ public partial class App : Application
             new SizeChangedEventHandler((sender, e) =>
             {
                 if (e.PreviousSize.Width < 1 && e.NewSize.Width > 0) Ui.Grids.RestoreWidths((System.Windows.Controls.DataGrid)sender);
+                else if (e.WidthChanged) Ui.Grids.RestoreWidths((System.Windows.Controls.DataGrid)sender, starsOnly: true);   // cửa sổ đổi cỡ: cột * giãn hay co theo
             }));
         EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGrid), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((sender, _) => Ui.Grids.RestoreWidths((System.Windows.Controls.DataGrid)sender)));

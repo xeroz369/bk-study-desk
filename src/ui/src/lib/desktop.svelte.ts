@@ -68,8 +68,19 @@ class DesktopState {
 
 export const Desktop = new DesktopState();
 
-/** Báo app WPF (khung này nhúng trong trang Luyện tập): phím của app, chuyển trang. */
+/**
+ * Báo app (khung này nhúng trong trang Luyện tập): phím của app, chuyển trang. Bản 1.x (WPF, WebView2) nhận qua chrome.webview;
+ * bản đa nền tảng (Avalonia, máy chủ cục bộ, mở với ?host=2) nhận qua api/app/message, chạy giống nhau trên Windows, macOS, Linux.
+ */
 export function toApp(message: Record<string, unknown>) {
+	if (new URLSearchParams(location.search).get('host') === '2') {
+		void fetch('api/app/message', {
+			method: 'POST',
+			headers: { 'X-App': '1', 'Content-Type': 'application/json' },
+			body: JSON.stringify(message),
+		}).catch(() => {});
+		return;
+	}
 	(window as unknown as { chrome?: { webview?: { postMessage(m: unknown): void } } }).chrome?.webview?.postMessage(message);
 }
 

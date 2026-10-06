@@ -19,7 +19,7 @@ Chỉ bản mới nhất ở trang [Releases](https://github.com/xeroz369/bk-stu
 
 ## App bảo vệ bạn thế nào
 
-- Mật khẩu chỉ gõ trên trang SSO của trường; app không đọc. Chọn **Lưu** khi được hỏi thì WebView2 lưu mã hóa trên máy để tự điền.
+- Mật khẩu chỉ gõ trên trang SSO của trường; app không đọc. Chọn **Lưu** khi được hỏi thì WebView2 lưu mã hóa trên máy để tự điền. Ngoại lệ duy nhất: nếu bạn tự bật **Tự đăng nhập lại khi hết phiên** (mặc định tắt), bạn nhập tài khoản vào app; app lưu trong Windows Credential Manager (không nằm trong thư mục dữ liệu) và chỉ điền vào trang SSO của trường. Tắt tính năng hay đăng xuất thì xóa.
 - Token LMS mã hóa bằng Windows DPAPI; dữ liệu nằm trong `%LOCALAPPDATA%`, chỉ tài khoản Windows của bạn (cùng SYSTEM và Administrators) mở được.
 - App chỉ gọi API **đọc**; không nộp bài, đăng ký, hủy hay thanh toán.
 - Gói cập nhật được kiểm SHA-256 trước khi cài; nguồn cập nhật chỉ nhận repo GitHub qua https (thư mục trên máy chỉ dùng ở bản cài thử).

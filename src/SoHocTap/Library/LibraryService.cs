@@ -5,7 +5,7 @@ namespace SoHocTap.Library;
 
 /// <summary>
 /// Nối LibraryClient với config và thư mục của app (phần không test được bằng unit test vì đọc Config/Paths).
-/// Tắt (library.enabled = false; mặc định bật từ khi thư viện mở) hoặc chưa có địa chỉ thì không gọi mạng gì cả.
+/// Thư viện luôn bật (tab Thư viện luôn có); chưa có địa chỉ thì không gọi mạng gì cả.
 /// Mọi việc chạy nền; <see cref="Changed"/> bắn từ thread pool, UI tự chuyển về UI thread.
 /// </summary>
 internal sealed class LibraryService : IDisposable
@@ -28,11 +28,10 @@ internal sealed class LibraryService : IDisposable
     /// <summary>Index vừa đổi (đọc xong từ cache hay mạng).</summary>
     public event Action? Changed;
 
-    public static bool Enabled => Config.Bool("library.enabled", true);
-    public static string BaseUrl => Config.Str("library.baseUrl").Trim();
+    public static string BaseUrl => Settings.Library.BaseUrl.Trim();
 
-    /// <summary>Bật và có địa chỉ hợp lệ: mới được gọi mạng.</summary>
-    public bool Active => Enabled && Client.Root is not null;
+    /// <summary>Có địa chỉ hợp lệ: mới được gọi mạng.</summary>
+    public bool Active => Client.Root is not null;
 
     public DateTimeOffset? LastChecked => Client.LastChecked;
 
@@ -67,7 +66,6 @@ internal sealed class LibraryService : IDisposable
     /// <summary>Làm mới index (theo <paramref name="mode"/>). Không bật thì không làm gì. Không bao giờ throw lỗi mạng.</summary>
     public async Task<LibraryIndex?> RefreshAsync(LibraryRefresh mode, CancellationToken ct = default)
     {
-        if (!Enabled) return null;
         var client = Client;
         if (client.Root is null) return null;   // chưa có địa chỉ: không có gì để đọc, kể cả cache
         LibraryResult<LibraryIndex> r;
@@ -115,20 +113,6 @@ internal sealed class LibraryService : IDisposable
     public ItemLocal LocalState(CourseRef course, LibraryItem item) => Client.LocalState(course.Id, item);
 
     public IReadOnlyList<string> DownloadedFiles(CourseRef course, LibraryItem item) => Client.DownloadedFiles(course.Id, item.Id);
-
-    /// <summary>Bật/tắt trong Cài đặt: lưu config, tắt thì bỏ index trong RAM (tab Thư viện ẩn ngay), bật thì đọc index nền.</summary>
-    public void SetEnabled(bool on)
-    {
-        Config.Set("library.enabled", on);
-        if (on)
-        {
-            _ = RefreshAsync(LibraryRefresh.IfDue);
-            return;
-        }
-        Index = null;
-        LastError = null;
-        Changed?.Invoke();
-    }
 
     /// <summary>Đổi địa chỉ (chỉ khi bật log chẩn đoán): client mới, đọc lại index.</summary>
     public void SetBaseUrl(string url)

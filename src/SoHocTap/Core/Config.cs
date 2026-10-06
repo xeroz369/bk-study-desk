@@ -119,6 +119,19 @@ public static class Config
     public static string Folder(string key) =>
         Path.Combine(Paths.StudyRoot, Str("folders." + key).Replace('/', Path.DirectorySeparatorChar));
 
+    /// <summary>Giá trị default (chưa tính phần người dùng chỉnh) theo path dạng chấm.</summary>
+    internal static JsonNode? DefaultNode(string dotted)
+    {
+        JsonNode? cur = DefaultsCache.Value;
+        foreach (var part in dotted.Split('.'))
+        {
+            if (cur is not JsonObject obj || !obj.TryGetPropertyValue(part, out cur)) return null;
+        }
+        return cur;
+    }
+
+    private static readonly Lazy<JsonObject> DefaultsCache = new(Defaults);
+
     private static JsonObject Defaults()
     {
         using var s = Assembly.GetExecutingAssembly().GetManifestResourceStream("SoHocTap.Core.DefaultConfig.json")

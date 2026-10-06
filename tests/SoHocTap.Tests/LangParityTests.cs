@@ -16,6 +16,20 @@ public partial class LangParityTests
 
     private static string Holes(string s) => string.Join(",", Placeholder().Matches(s).Select(m => m.Groups[1].Value).Distinct().Order(StringComparer.Ordinal));
 
+    [Theory]
+    [InlineData("vi")]
+    [InlineData("en")]
+    public void NoDuplicateKeys(string code)
+    {
+        // Dictionary đọc im lặng ghi đè key trùng, nên đọc thẳng token để bắt.
+        var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "lang", code + ".json"))));
+        var seen = new HashSet<string>();
+        var dup = new List<string>();
+        while (reader.Read())
+            if (reader.TokenType == JsonTokenType.PropertyName && reader.CurrentDepth == 1 && !seen.Add(reader.GetString()!)) dup.Add(reader.GetString()!);
+        Assert.Empty(dup);
+    }
+
     [Fact]
     public void SameKeys()
     {

@@ -1,0 +1,15 @@
+<!-- Nhật ký lỗi: log chi tiết chỉ bật khi cần báo lỗi (app.debugLog); không ghi mật khẩu, token, cookie. -->
+<UserControl x:Class="SoHocTap.Ui.SettingsCards.DiagnosticsSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui">
+    <Border Style="{StaticResource Card}">
+        <StackPanel>
+            <TextBlock Text="{ui:T settings.debug}" Style="{StaticResource SectionTitle}" />
+            <CheckBox x:Name="DebugLog" Content="{ui:T settings.debugLog}" Click="OnDebugLog" Style="{StaticResource WrapCheck}" />
+            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.debugNote}" />
+            <TextBlock x:Name="Error" AutomationProperties.LiveSetting="Assertive" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
+            <Button Content="{ui:T settings.openLog}" Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnOpenLog" />
+        </StackPanel>
+    </Border>
+</UserControl>

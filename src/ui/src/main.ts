@@ -31,7 +31,24 @@ function applyAppFont(family: string, scale: number) {
 }
 window.applyAppFont = applyAppFont;
 applyAppFont(params.get('font') ?? '', Number(params.get('fs') ?? '1'));
+// Chế độ màu do app chọn (?mode=light|dark|system, bản đa nền tảng): ghi vào chỗ ModeWatcher đọc lúc khởi động; đổi khi khung đang mở thì app gọi
+// window.applyAppMode. Không có tham số thì theo hệ điều hành như cũ.
+declare global {
+	interface Window {
+		applyAppMode?: (mode: 'light' | 'dark' | 'system') => void;
+	}
+}
+const mode = params.get('mode');
+if (mode === 'light' || mode === 'dark' || mode === 'system') {
+	try {
+		localStorage.setItem('mode-watcher-mode', mode);
+	} catch {
+		/* không có localStorage: theo hệ điều hành */
+	}
+}
+window.applyAppMode = (m) => setMode(m);
 import { mount } from 'svelte';
+import { setMode } from 'mode-watcher';
 import App from './App.svelte';
 
 export default mount(App, { target: document.getElementById('app')! });

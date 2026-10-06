@@ -266,7 +266,8 @@ export function validatePack(input: unknown, rawSize = 0): PackReport {
 					if (!Array.isArray(x.questionRefs)) err(`${xp}.questionRefs`, 'cần mảng "idBài.idCâu"');
 					else
 						x.questionRefs.forEach((r, ri) => {
-							if (typeof r !== 'string' || !allQ.has(r)) err(`${xp}.questionRefs[${ri}]`, `không có câu "${String(r)}" trong gói`);
+							if (typeof r !== 'string' || !allQ.has(r))
+								err(`${xp}.questionRefs[${ri}]`, `không có câu "${String(r)}" trong gói`);
 						});
 				if (!x.questions && !x.questionRefs) err(xp, 'đề cần questions hoặc questionRefs');
 			});
@@ -291,7 +292,10 @@ function checkText(s: string, path: string, err: (p: string, m: string) => void,
 	// JSON hiểu "\f", "\b", "\t", "\v" là ký tự điều khiển: dấu hiệu quên viết "\\frac", "\\beta", "\\times"…
 	const ctl = s.match(/[\f\b\t\v\x00-\x08\x0e-\x1f]/);
 	if (ctl)
-		err(path, `có ký tự điều khiển (mã ${ctl[0].charCodeAt(0)}): trong JSON phải viết "\\\\frac", "\\\\beta", "\\\\times"... (hai dấu \\)`);
+		err(
+			path,
+			`có ký tự điều khiển (mã ${ctl[0].charCodeAt(0)}): trong JSON phải viết "\\\\frac", "\\\\beta", "\\\\times"... (hai dấu \\)`,
+		);
 	// "\right", "\rho" → CR + "ight"; "\neq", "\nabla", "\nu" → xuống dòng + "eq": cũng là quên escape.
 	if (/\r[a-z]/.test(s)) err(path, 'có "\\r" dính chữ (vd. "\\right", "\\rho" chưa escape): viết "\\\\right"');
 	if (/\n(eq|abla|u\b|ot\b|ewline|exists|leq|geq|i\b|cong|parallel|mid\b)/.test(s))

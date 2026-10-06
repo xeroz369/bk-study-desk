@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -87,7 +87,7 @@ public partial class MainWindow : Window, IDisposable
         _nav = [.. PageRegistry.Nav.Select(p => new NavItem(p, Hotkeyed(L.T(p.TipKey), p)))];
         for (var i = 0; i < PageRegistry.Hotkeys.Count && i < 9; i++)
             InputBindings.Add(new KeyBinding(NavigationCommands.GoToPage, Key.D1 + i, ModifierKeys.Control) { CommandParameter = PageRegistry.Hotkeys[i].Key });
-        SettingsButton.ToolTip = Hotkeyed(L.T("nav.settings.tip"), PageRegistry.Find("cai-dat"));
+        SettingsButton.ToolTip = Hotkeyed(L.T("nav.settings.tip"), PageRegistry.Find(Routes.Settings));
         StVersion.Text = $"{AppInfo.Name} {AppInfo.Version}";
         StVersion.ToolTip = Core.Paths.AppRoot;
         _placement.Apply(this);
@@ -187,7 +187,7 @@ public partial class MainWindow : Window, IDisposable
     private void OnUpdateClick(object sender, RoutedEventArgs e)
     {
         if (_host.Updates.Offer is { } o) new UpdateWindow(_host.Updates, o) { Owner = this }.ShowDialog();
-        else Go("cai-dat");   // báo cài lỗi: mở Cài đặt, phần Cập nhật để thử lại
+        else Go(Routes.Settings);   // báo cài lỗi: mở Cài đặt, phần Cập nhật để thử lại
     }
 
     /// <summary>Hiện lại window (từ tray, hoặc khi mở app lần thứ hai).</summary>
@@ -209,7 +209,7 @@ public partial class MainWindow : Window, IDisposable
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         // Config app.closeToTray: bấm X chỉ ẩn window, app vẫn chạy dưới tray để sync và nhắc hạn.
-        if (!_exiting && Config.Bool("app.closeToTray", true))
+        if (!_exiting && Core.Settings.App.CloseToTray)
         {
             e.Cancel = true;
             _placement.Capture(this);
@@ -220,6 +220,8 @@ public partial class MainWindow : Window, IDisposable
             if (!_trayHintShown) { _host.TrayHint(); _trayHintShown = true; }
             return;
         }
+        // Thoát hẳn: trang Cài đặt lưu chữ còn gõ dở. Chỉ trang này; Sleep của Luyện tập nhả WebView bất đồng bộ, không hợp lúc thoát.
+        foreach (var p in _pages.Values.OfType<Pages.SettingsPage>()) p.Sleep();
         _placement.Capture(this);
         _placement.Page = _current;
         _placement.Save();
@@ -253,6 +255,7 @@ public partial class MainWindow : Window, IDisposable
         PageSubtitle.Text = page.Subtitle;
         PageSubtitle.Visibility = page.Subtitle.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         ShowCurrent();
+        UpdateInfoBar();   // vào trang dùng MyBK thì mới mời đăng nhập lại MyBK (MybkLoginPrompt)
     }
 
     /// <summary>Chỉ báo trang đang mở: mục điều hướng (hoặc menu Thêm), nút Cài đặt, Giới thiệu.</summary>
@@ -260,8 +263,8 @@ public partial class MainWindow : Window, IDisposable
     {
         var item = _nav.FirstOrDefault(n => n.Id == _current);
         if (!ReferenceEquals(Nav.SelectedItem, item)) Nav.SelectedItem = item;
-        SettingsButton.IsChecked = _current == "cai-dat";
-        AboutButton.IsChecked = _current == "gioi-thieu";
+        SettingsButton.IsChecked = _current == Routes.Settings;
+        AboutButton.IsChecked = _current == Routes.About;
         NavMore.FontWeight = item is { Overflow: true } ? FontWeights.SemiBold : FontWeights.Normal;
         foreach (var mi in NavMore.Items.OfType<MenuItem>()) mi.IsChecked = (string)mi.Tag == _current;
     }
@@ -283,13 +286,13 @@ public partial class MainWindow : Window, IDisposable
     internal static int PageKeys => PageRegistry.Hotkeys.Count;
     // Nghe Checked thay vì Click: UI Automation (trình đọc màn hình, test) bấm ToggleButton qua TogglePattern, chỉ đổi IsChecked
     // chứ không bắn Click (ToggleButtonAutomationPeer trong dotnet/wpf).
-    private void OnSettings(object sender, RoutedEventArgs e) { if (_current != "cai-dat") Go("cai-dat"); }
-    private void OnAbout(object sender, RoutedEventArgs e) { if (_current != "gioi-thieu") Go("gioi-thieu"); }
+    private void OnSettings(object sender, RoutedEventArgs e) { if (_current != Routes.Settings) Go(Routes.Settings); }
+    private void OnAbout(object sender, RoutedEventArgs e) { if (_current != Routes.About) Go(Routes.About); }
 
     /// <summary>Bấm lại nút của trang đang mở thì giữ nguyên trạng thái chọn (nút là chỉ báo trang hiện tại).</summary>
     private void OnToggleOff(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Primitives.ToggleButton b && (b == SettingsButton ? "cai-dat" : "gioi-thieu") == _current) b.IsChecked = true;
+        if (sender is System.Windows.Controls.Primitives.ToggleButton b && (b == SettingsButton ? Routes.Settings : Routes.About) == _current) b.IsChecked = true;
     }
     private void OnBack(object sender, ExecutedRoutedEventArgs e) => Back();
 
@@ -414,8 +417,8 @@ public partial class MainWindow : Window, IDisposable
         Say(L.T("status.syncStarted"));
     }
 
-    private void OnOpenLms(object sender, RoutedEventArgs e) => _host.OpenSource("lms");
-    private void OnOpenMybk(object sender, RoutedEventArgs e) => _host.OpenSource("mybk");
+    private void OnOpenLms(object sender, RoutedEventArgs e) => _host.OpenSource(SourceIds.Lms);
+    private void OnOpenMybk(object sender, RoutedEventArgs e) => _host.OpenSource(SourceIds.Mybk);
 
     /// <summary>
     /// Lỗi không bắt được (AppEvents.UnhandledError của nhánh core, có thể bắn từ thread nền): báo một câu ở thanh trạng thái.
@@ -453,10 +456,10 @@ public partial class MainWindow : Window, IDisposable
             text.ToolTip = icon.ToolTip = tip;
             System.Windows.Automation.AutomationProperties.SetHelpText(text, tip ?? "");
         }
-        Show("lms", "LMS", StLms, StLmsIcon);
-        Show("mybk", "MyBK", StMybk, StMybkIcon);
+        Show(SourceIds.Lms, "LMS", StLms, StLmsIcon);
+        Show(SourceIds.Mybk, "MyBK", StMybk, StMybkIcon);
         StAccount.Text = L.T(s.Account == AccountNeed.None ? "status.signedIn" : "status.signedOut");
-        var syncing = s.Syncing("lms") || s.Syncing("mybk");
+        var syncing = s.Syncing(SourceIds.Lms) || s.Syncing(SourceIds.Mybk);
         SyncButton.IsEnabled = !syncing;
         var syncText = L.T(syncing ? "nav.syncing" : "nav.sync");
         if (SyncText.Text != syncText)
@@ -590,7 +593,7 @@ public partial class MainWindow : Window, IDisposable
 
     private bool _keepShown;   // đang hiện "đăng nhập xong/đã đăng xuất": giữ tới khi người dùng đóng hoặc có lỗi mới
     private readonly ProgressGate _bar = new();
-    private static readonly string[] SourceNames = ["lms", "mybk"];
+    private static readonly string[] SourceNames = [SourceIds.Lms, SourceIds.Mybk];
     // Hẹn vẽ lại thanh tiến độ khi không có sự kiện mới: tới lúc hiện (1 giây), hết lúc giữ (800 ms), số đứng yên 5 giây.
     private readonly System.Windows.Threading.DispatcherTimer _progressDelay = new() { Interval = ProgressGate.ShowDelay };
 
@@ -598,7 +601,10 @@ public partial class MainWindow : Window, IDisposable
     {
         if (_loginStage.Length > 0) return;   // đang hiện tiến độ login
         var need = _host.State.Account;
-        if (need == AccountNeed.None && SyncFailure() is { } fail)
+        // Chỉ MyBK hết phiên mà lúc này không cần MyBK: không bật thanh báo (thanh trạng thái vẫn báo), LMS vẫn chạy bình thường.
+        var quietMybk = need == AccountNeed.Mybk && !MybkLoginNeeded();
+        if (quietMybk) need = AccountNeed.None;
+        if (need == AccountNeed.None && SyncFailure(quietMybk ? SourceIds.Mybk : null) is { } fail)
         {
             // Lỗi không phải hết phiên (mất mạng, server chậm, LMS giới hạn...): báo rõ trên thanh, không chỉ trong tooltip.
             _keepShown = false;
@@ -609,6 +615,7 @@ public partial class MainWindow : Window, IDisposable
             return;
         }
         if (need == AccountNeed.None && _keepShown) return;
+        if (need == AccountNeed.None && !_infoClosedFor && OfferAutoLogin()) return;
         if (need == AccountNeed.None || _infoClosedFor)
         {
             InfoBar.Hide();
@@ -623,18 +630,37 @@ public partial class MainWindow : Window, IDisposable
         ShowInfo(firstRun ? Severity.Informational : Severity.Error, firstRun ? L.T("info.firstRun") : L.F("info.needLogin", what), L.T("common.loginHcmut"), () => _host.Login());
     }
 
+    private bool _offeringAutoLogin;
+
+    /// <summary>
+    /// Hỏi một lần (cả người đang dùng bản cũ lẫn người mới cài, sau khi đã đăng nhập và đang Ghi nhớ đăng nhập): có muốn tự đăng nhập
+    /// lại khi hết phiên không. Mặc định là không; Không hay đóng thanh thì thôi hỏi, đổi lại được ở thẻ Tài khoản.
+    /// </summary>
+    private bool OfferAutoLogin()
+    {
+        _offeringAutoLogin = !Core.Settings.Sso.AutoLoginAsked && !Core.Settings.Sso.AutoLogin && Core.Settings.Sso.RememberDays > 0 && _host.State.Mybk is not null;
+        if (!_offeringAutoLogin) return false;
+        InfoBar.Show(Severity.Informational, "", L.T("info.autoLogin"), L.T("info.autoLogin.on"), () => { if (AutoLoginWindow.Enable(this)) UpdateInfoBar(); },
+            null, L.T("info.autoLogin.no"), () => { Core.Settings.Sso.AutoLoginAsked = true; UpdateInfoBar(); });
+        return true;
+    }
+
     private string? _errorClosed;   // lỗi đồng bộ người dùng đã đóng: lỗi khác (hoặc lỗi lần sau) thì hiện lại
 
     /// <summary>
     /// Lỗi đồng bộ gần nhất của LMS/MyBK (đang đồng bộ thì chưa tính) để hiện trên InfoBar: câu dễ hiểu (vấn đề + cách xử lý) và chữ
     /// kỹ thuật cho mục Chi tiết. Lỗi cả lượt, hoặc lượt xong nhưng có phần không đọc được.
     /// </summary>
-    private (string Text, string? Detail, string Source, string Label)? SyncFailure()
+    private bool MybkLoginNeeded() => MybkLoginPrompt.Needed(_current is PageRegistry.Grades or PageRegistry.Services, Format.Now,
+        _host.State.SyncedAt(SourceIds.Mybk), (_host.State.Mybk?.Registration ?? []).Select(r => (r.Start, r.End)));
+
+    /// <param name="skip">Nguồn không xét (MyBK hết phiên đang được báo lặng lẽ ở thanh trạng thái).</param>
+    private (string Text, string? Detail, string Source, string Label)? SyncFailure(string? skip = null)
     {
         var s = _host.State;
-        foreach (var (name, label) in new[] { ("lms", "LMS"), ("mybk", "MyBK") })
+        foreach (var (name, label) in new[] { (SourceIds.Lms, "LMS"), (SourceIds.Mybk, "MyBK") })
         {
-            if (s.Syncing(name)) continue;
+            if (s.Syncing(name) || name == skip) continue;
             if (s.ExplainError(name, label) is { } err)
             {
                 var (text, detail) = err;
@@ -659,6 +685,7 @@ public partial class MainWindow : Window, IDisposable
 
     private void OnInfoClose()
     {
+        if (_offeringAutoLogin) Core.Settings.Sso.AutoLoginAsked = true;   // đóng thanh hỏi coi như chọn Không
         if (_loginStage.Length == 0)
         {
             if (_host.State.Account == AccountNeed.None && SyncFailure() is { } fail) _errorClosed = fail.Text;

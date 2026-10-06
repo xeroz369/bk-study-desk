@@ -1,0 +1,42 @@
+<!-- Đồng bộ: chu kỳ LMS/MyBK, giới hạn file, tự tải, tự giải nén, tự lưu quiz, tải lại toàn bộ LMS. Ô số lưu khi rời ô hoặc Enter. -->
+<UserControl x:Class="SoHocTap.Ui.SettingsCards.SyncSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui">
+    <Border Style="{StaticResource Card}">
+        <StackPanel>
+            <TextBlock Text="{ui:T settings.sync}" Style="{StaticResource SectionTitle}" />
+            <!-- Mỗi ô số có một hàng lỗi ngay dưới (ẩn khi không lỗi), trải qua cột ô và cột ghi chú để chữ xuống dòng được. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" MinWidth="260" />
+                    <ColumnDefinition Width="Auto" MinWidth="120" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition /><RowDefinition Height="Auto" /><RowDefinition /><RowDefinition Height="Auto" /><RowDefinition /><RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Content="{ui:T settings.lmsHours}" Target="{Binding ElementName=LmsHours}" VerticalAlignment="Center" />
+                <TextBox Grid.Row="0" Grid.Column="1" x:Name="LmsHours" Margin="0,3" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap" Text="{ui:T settings.lmsHoursNote}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="LmsHoursError" AutomationProperties.LiveSetting="Assertive" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Margin="0,0,0,4" Visibility="Collapsed" />
+                <Label Grid.Row="2" Content="{ui:T settings.mybkHours}" Target="{Binding ElementName=MybkHours}" VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="MybkHours" Margin="0,3" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap" Text="{ui:T settings.mybkHoursNote}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="MybkHoursError" AutomationProperties.LiveSetting="Assertive" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Margin="0,0,0,4" Visibility="Collapsed" />
+                <Label Grid.Row="4" Content="{ui:T settings.maxMb}" Target="{Binding ElementName=MaxMb}" VerticalAlignment="Center" />
+                <TextBox Grid.Row="4" Grid.Column="1" x:Name="MaxMb" Margin="0,3" />
+                <TextBlock Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" x:Name="MaxMbError" AutomationProperties.LiveSetting="Assertive" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Margin="0,0,0,4" Visibility="Collapsed" />
+            </Grid>
+            <CheckBox x:Name="AutoDownload" Margin="0,10,0,0" Content="{ui:T settings.autoDownload}" Click="OnAutoDownload" Style="{StaticResource WrapCheck}" />
+            <CheckBox x:Name="AutoExtract" Margin="0,6,0,0" Content="{ui:T settings.autoExtract}" Click="OnAutoExtract" Style="{StaticResource WrapCheck}" />
+            <CheckBox x:Name="SaveQuizzes" Margin="0,6,0,0" Content="{ui:T settings.saveQuizzes}" ToolTip="{ui:T settings.saveQuizzes.tip}" Click="OnSaveQuizzes"
+                      Style="{StaticResource WrapCheck}" />
+            <TextBlock x:Name="Error" AutomationProperties.LiveSetting="Assertive" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
+            <WrapPanel Margin="0,10,0,0">
+                <Button Content="{ui:T settings.resync}" Click="OnResync" ToolTip="{ui:T settings.resync.tip}" />
+                <TextBlock x:Name="ResyncText" VerticalAlignment="Center" Margin="12,0,0,0" Style="{StaticResource Muted}" />
+            </WrapPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

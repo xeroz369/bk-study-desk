@@ -1,4 +1,4 @@
-﻿namespace SoHocTap.Library;
+namespace SoHocTap.Library;
 
 /// <summary>Lệnh chính (bấm đúp, Enter) của một mục thư viện.</summary>
 public enum LibraryAction { OpenWeb, Install, Open, Download }

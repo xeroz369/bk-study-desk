@@ -1,23 +1,16 @@
+<!-- Theme Fluent có sẵn của Avalonia, màu nhấn BK cố định (không theo màu nhấn của máy); mặc định chế độ tối (Cài đặt đổi được); DataGrid chính thức; token BK. -->
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="BKStudyDesk.Desktop.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
     <Application.Styles>
-        <FluentTheme />
-        <Style Selector="TextBlock.muted">
-            <Setter Property="Opacity" Value="0.7" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-        <Style Selector="TextBlock.title">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12" />
-        </Style>
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Light" Accent="#0388B4" RegionColor="#F4F6F8" />
+                <ColorPaletteResources x:Key="Dark" Accent="#3AA6D0" RegionColor="#14181D" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://BKStudyDesk/Styles/Tokens.axaml" />
     </Application.Styles>
 </Application>

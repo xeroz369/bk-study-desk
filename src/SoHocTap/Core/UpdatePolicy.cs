@@ -1,4 +1,4 @@
-﻿namespace SoHocTap.Core;
+namespace SoHocTap.Core;
 
 /// <summary>Chế độ cập nhật người dùng chọn (app.update.mode). Ask = chưa chọn: không gọi mạng.</summary>
 public enum UpdateMode { Ask, Notify, Auto, Off }

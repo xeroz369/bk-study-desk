@@ -67,7 +67,8 @@ export function parseReview(html: string): PackQuestion | null {
 	if (rows.length) {
 		const label = (r: Element) =>
 			(r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r.querySelector('label') ?? r).innerHTML.trim();
-		const text = (r: Element) => normText((r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r).textContent ?? '');
+		const text = (r: Element) =>
+			normText((r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r).textContent ?? '');
 		const options = rows.map(label);
 		const multi = !!rows[0].querySelector('input[type="checkbox"]');
 		const picked = rows.map((r, i) => (r.querySelector('input')?.hasAttribute('checked') ? i : -1)).filter((i) => i >= 0);

@@ -5,14 +5,15 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
+using SoHocTap.Core;
 
 namespace SoHocTap.Ui.Controls;
 
 /// <summary>Nguồn dữ liệu của một bảng, để DataView nói đúng lý do khi trống (đang tải lần đầu, lỗi, chưa đăng nhập).</summary>
 internal static class Src
 {
-    public static readonly (string Name, string Label) Lms = ("lms", "LMS");
-    public static readonly (string Name, string Label) Mybk = ("mybk", "MyBK");
+    public static readonly (string Name, string Label) Lms = (SourceIds.Lms, "LMS");
+    public static readonly (string Name, string Label) Mybk = (SourceIds.Mybk, "MyBK");
 }
 
 /// <summary>Bảng đang hiện gì: các dòng, hay một câu thay cho bảng (đang tải lần đầu, trống, lỗi).</summary>

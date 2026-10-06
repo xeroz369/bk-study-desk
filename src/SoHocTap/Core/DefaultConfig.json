@@ -219,6 +219,8 @@
     }
   },
   "sso": {
+    "autoLogin": false,
+    "autoLoginAsked": false,
     "hosts": [
       "sso.hcmut.edu.vn",
       "lms.hcmut.edu.vn",
@@ -241,7 +243,6 @@
     "librarySubfolder": "Thư viện"
   },
   "library": {
-    "enabled": true,
     "baseUrl": "https://bk-study-library.github.io/hcmut-library/",
     "contributePath": "gui-tai-lieu/",
     "refreshHours": 24,
@@ -283,10 +284,14 @@
   },
   "notify": {
     "hoursBefore": 24,
-    "lastHours": 2
+    "lastHours": 2,
+    "urgentHours": 6,
+    "soonHours": 24,
+    "digestTimes": "07:00, 12:00, 19:00"
   },
   "archives": {
     "extract": true,
+    "maxMB": 2048,
     "extensions": [
       ".zip",
       ".rar",
@@ -311,6 +316,7 @@
     "schedulerMinutes": 10,
     "language": "vi",
     "closeToTray": true,
+    "theme": "dark",
     "calendarView": "grid",
     "practiceReleaseMinutes": 3,
     "font": {

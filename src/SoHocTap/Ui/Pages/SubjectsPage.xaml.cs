@@ -24,10 +24,6 @@ internal sealed record FileRow(string Name, bool Dir, string Kind, long Size, lo
     public string SortName => (Dir ? "0" : "1") + Name;
     public long SortSize => Dir ? -1 : Size;
 }
-internal sealed record CourseRow(string Term, string Name, string Code, string Teacher, string Url, long Id, LmsCourse Course)
-{
-    public override string ToString() => $"{Term}, {Name}";   // record có LmsCourse lồng bên trong: ToString mặc định rất dài
-}
 internal sealed record RecentRow(string Name, string Folder, string Path, long Size, long Modified)
 {
     public string SizeText => Format.Size(Size);
@@ -42,6 +38,7 @@ public partial class SubjectsPage : UserControl, IPage
 {
     private readonly AppHost _host;
     private readonly MainWindow _main;
+    private readonly TimelineList DueList;
     private SubjectRow? _subject;
     private string _root = "", _dir = "";
     private List<SubjectRow> _rows = [];
@@ -91,13 +88,8 @@ public partial class SubjectsPage : UserControl, IPage
         News.KeyOf = o => ((NewsRow2)o).Url;
         Grids.Setup<NewsRow2>(news, n => _host.OpenWeb(n.Url, n.Title), n => [new(L.T("common.copyTitle"), () => Grids.Copy(n.Title, _main), Separator: true)]);
 
-        var due = Due.Grid;
-        due.Columns.Add(Grids.Text(L.T("col.when"), nameof(TimelineItem.When), 130, sortPath: nameof(TimelineItem.Time)));
-        due.Columns.Add(Grids.Text(L.T("col.name"), nameof(TimelineItem.Name), star: true));
-        due.Columns.Add(Grids.Text(L.T("col.kind"), nameof(TimelineItem.KindName), 90));
-        due.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
-        Due.KeyOf = o => ((TimelineItem)o).Id;
-        Grids.Setup<TimelineItem>(due, e => { if (e.Url is { } u) _host.OpenWeb(u, e.Name); });
+        DueList = new TimelineList(TimelineView.Subject, host, main);
+        DueHost.Child = DueList;
 
         var grades = Grades.Grid;
         grades.Columns.Add(Grids.Flex(L.T("col.class"), nameof(GradeRow.Book), 1, 90));
@@ -107,18 +99,6 @@ public partial class SubjectsPage : UserControl, IPage
         grades.Columns.Add(Grids.Right("%", nameof(GradeRow.Percent), 70));
         grades.LoadingRow += (_, e) => e.Row.Opacity = e.Row.Item is GradeRow { Grade: null } ? 0.55 : 1;
         Grids.Setup<GradeRow>(grades, null, g => [new(L.T("common.copy"), () => Grids.Copy($"{g.Name}\t{g.GradeText}/{g.MaxText}", _main))]);
-
-        var courses = Courses.Grid;
-        courses.Columns.Add(Grids.Text(L.T("col.term"), nameof(CourseRow.Term), 80));
-        courses.Columns.Add(Grids.Text(L.T("col.class"), nameof(CourseRow.Name), star: true));
-        courses.Columns.Add(Grids.Flex(L.T("col.code"), nameof(CourseRow.Code), 0.8, 90));
-        courses.Columns.Add(Grids.Flex(L.T("col.teacher"), nameof(CourseRow.Teacher), 1, 90));
-        Courses.KeyOf = o => ((CourseRow)o).Id;
-        Grids.Setup<CourseRow>(courses, c => _host.OpenWeb(c.Url, c.Name), c =>
-        [
-            new(L.T("subjects.downloadBySection"), () => Download(c.Course)),
-            new(L.T("subjects.copyCode"), () => Grids.Copy(c.Code, _main), Separator: true),
-        ]);
 
         SetupLibrary();
     }
@@ -233,7 +213,7 @@ public partial class SubjectsPage : UserControl, IPage
     // ------------------------------------------------------------------ chi tiết môn, tab tải lười
 
     /// <summary>Tab đã dựng cho môn đang chọn; tab khác chỉ dựng khi người dùng mở (đỡ quét thư mục, đỡ dựng bảng không ai xem).</summary>
-    private readonly HashSet<int> _filled = [];
+    private readonly HashSet<TabItem> _filled = [];
 
     private void OnPick(object sender, SelectionChangedEventArgs e)
     {
@@ -260,34 +240,38 @@ public partial class SubjectsPage : UserControl, IPage
     /// <summary>Dựng tab đang chọn nếu chưa dựng cho môn này.</summary>
     private void FillTab()
     {
-        if (_subject is not { } s || Tabs.SelectedIndex < 0 || !_filled.Add(Tabs.SelectedIndex)) return;
+        if (_subject is not { } s || Tabs.SelectedItem is not TabItem tab || !_filled.Add(tab)) return;
         var st = _host.State;
         // Môn chỉ có tài liệu trên máy (không có lớp LMS) thì các tab LMS nói rõ vậy, không để bảng trống.
         var onLms = s.Courses.Count > 0;
-        switch (Tabs.SelectedIndex)
+        // Theo tên tab (x:Name), không theo số thứ tự: đổi thứ tự tab trong XAML không làm lệch.
+        if (tab == FilesTab)
         {
-            case 0: _ = LoadDirAsync(); break;
-            case 1: _ = LoadRecentAsync(s); break;
-            case 2:
-                // Mọi mốc sắp tới (không cắt ở 60 ngày, DESIGN 6b-3) và hạn LMS đã qua mà chưa làm (cột Còn ghi "quá hạn").
-                Due.Show(st.Timeline.Where(x => Mine(x, s) && (x.Time > Format.Now - 86400 || x.Overdue) && x.Kind != "class").ToList(),
-                    L.T("subjects.dueEmpty"), st, Src.Lms, Src.Mybk);
-                break;
-            case 3:
-                News.Show((st.Lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name))
-                    .OrderByDescending(a => a.Time).Select(a => new NewsRow2(a.Title, a.Author ?? "", a.Forum, a.Time, a.Url ?? "")).ToList(),
-                    L.T(onLms ? "subjects.newsEmpty" : "subjects.notOnLms"), st, Src.Lms);
-                break;
-            case 4:
-                Grades.Show(Books(s).SelectMany(b => b.Items.Select(i => new GradeRow(b.Part ?? L.T("common.theory"), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? "",
-                    i.Kind is "course" or "category"))).ToList(), L.T(onLms ? "subjects.gradesEmpty" : "subjects.notOnLms"), st, Src.Lms);
-                break;
-            case 5:
-                Courses.Show(s.Courses.OrderByDescending(c => c.Term).Select(c => new CourseRow(c.Term, c.Part ?? L.T("common.theory"), c.Code, c.Teacher, c.Url, c.Id, c)).ToList(),
-                    L.T("subjects.notOnLms"), st, Src.Lms);
-                break;
-            case LibraryTabIndex: _ = LoadLibraryAsync(s); break;
+            if (RecentToggle.IsChecked == true) _ = LoadRecentAsync(s);
+            else _ = LoadDirAsync();
         }
+        else if (tab == LibraryTab) _ = LoadLibraryAsync(s);
+        else if (tab == DueTab)
+            // Mọi mốc sắp tới (không cắt ở 60 ngày, DESIGN 6b-3) và hạn LMS đã qua mà chưa làm (cột Còn ghi "quá hạn").
+            DueList.Show(st.Timeline.Where(x => Mine(x, s) && (x.Time > Format.Now - 86400 || x.Overdue) && x.Kind != "class").ToList(),
+                L.T("subjects.dueEmpty"), st, Src.Lms, Src.Mybk);
+        else if (tab == NewsTab)
+            News.Show((st.Lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name))
+                .OrderByDescending(a => a.Time).Select(a => new NewsRow2(a.Title, a.Author ?? "", a.Forum, a.Time, a.Url ?? "")).ToList(),
+                L.T(onLms ? "subjects.newsEmpty" : "subjects.notOnLms"), st, Src.Lms);
+        else if (tab == GradesTab)
+            Grades.Show(Books(s).SelectMany(b => b.Items.Select(i => new GradeRow(b.Part ?? L.T("common.theory"), i.Name, i.Grade, i.Max, i.Grade is null ? "" : i.Percent ?? "",
+                i.Kind is "course" or "category"))).ToList(), L.T(onLms ? "subjects.gradesEmpty" : "subjects.notOnLms"), st, Src.Lms);
+    }
+
+    /// <summary>Tab Tài liệu: đổi giữa thư mục và danh sách mới cập nhật (đường dẫn, nút Lên chỉ có nghĩa với thư mục).</summary>
+    private void OnRecentToggle(object sender, RoutedEventArgs e)
+    {
+        var recent = RecentToggle.IsChecked == true;
+        Recent.Visibility = recent ? Visibility.Visible : Visibility.Collapsed;
+        Files.Visibility = UpButton.Visibility = PathText.Visibility = recent ? Visibility.Collapsed : Visibility.Visible;
+        _filled.Remove(FilesTab);
+        FillTab();
     }
 
     private IEnumerable<LmsGradeBook> Books(SubjectRow s) => (_host.State.Lms?.Grades ?? []).Where(b => NameMatch.Same(b.Subject, s.Name));
@@ -348,7 +332,7 @@ public partial class SubjectsPage : UserControl, IPage
 
     private void Download(LmsCourse c)
     {
-        if (_host.Hub.Get("lms") is not SoHocTap.Sources.Lms.LmsSource lms) return;
+        if (_host.Hub.Get(SourceIds.Lms) is not SoHocTap.Sources.Lms.LmsSource lms) return;
         new DownloadWindow(lms, c) { Owner = Window.GetWindow(this) }.ShowDialog();
         // Có thể vừa thêm tệp: dựng lại tab đang mở và số tài liệu (cache theo mtime tự biết thư mục đã đổi).
         _filled.Clear();

@@ -50,7 +50,10 @@ function clean(node: Element) {
 		}
 		for (const a of [...child.attributes]) {
 			const name = a.name.toLowerCase();
-			if (tag === 'img' && (name === 'src' || name === 'alt' || ((name === 'width' || name === 'height') && /^\d{1,4}$/.test(a.value))))
+			if (
+				tag === 'img' &&
+				(name === 'src' || name === 'alt' || ((name === 'width' || name === 'height') && /^\d{1,4}$/.test(a.value)))
+			)
 				continue;
 			if (name === 'class') {
 				const keep = a.value.split(/\s+/).filter((c) => ALLOWED_CLASSES.has(c));

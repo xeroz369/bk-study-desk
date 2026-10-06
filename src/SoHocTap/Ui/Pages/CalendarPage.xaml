@@ -11,7 +11,7 @@
                     <CheckBox x:Name="ShowClasses" Content="{ui:T calendar.showClasses}" IsChecked="True" Click="OnFilter" />
                     <CheckBox x:Name="ShowDone" Content="{ui:T calendar.showDone}" Margin="16,0,0,0" Click="OnFilter" />
                 </StackPanel>
-                <c:DataView x:Name="Upcoming" />
+                <Border x:Name="UpcomingHost" />
             </DockPanel>
         </TabItem>
         <TabItem Header="{ui:T calendar.tabWeek}">

@@ -79,7 +79,7 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
 
 Full policy: [PRIVACY.md](PRIVACY.md).
 
-- Your password is typed only on the university SSO page. The app never reads it. If you choose **Save** when the sign-in window asks, the in-app browser (WebView2) stores the password encrypted on your PC, like Edge, to fill it in next time; otherwise nothing is saved.
+- Your password is typed only on the university SSO page. The app never reads it. If you choose **Save** when the sign-in window asks, the in-app browser (WebView2) stores the password encrypted on your PC, like Edge, to fill it in next time; otherwise nothing is saved. The only exception: if you turn on **Sign in again automatically** (off by default), you type your account into the app; it is stored in Windows Credential Manager (not in the data folder) and only filled into the university SSO page. Turning it off or signing out deletes it.
 - Everything lives in the data folder `%LOCALAPPDATA%\BKStudyDesk.Data\data`, not in the install folder:
   - cookies in `data\webview`, encrypted by WebView2;
   - the LMS token in `data\secrets\`, **encrypted with Windows DPAPI**, so it does not work on another PC or Windows account.

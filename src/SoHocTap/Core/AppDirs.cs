@@ -1,4 +1,4 @@
-﻿namespace SoHocTap.Core;
+namespace SoHocTap.Core;
 
 /// <summary>Kiểu bản đang chạy: Store (MSIX), bản cài (Velopack: Setup.exe / AppImage) hay bản zip/local (portable).</summary>
 public enum InstallKind { Store, Installed, Portable }

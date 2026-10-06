@@ -16,7 +16,7 @@ App chỉ kết nối tới các trang của HCMUT mà bạn vốn dùng:
 - `mybk.hcmut.edu.vn`: MyBK;
 - các dịch vụ khác của trường mà bạn tự mở;
 - `github.com` / `api.github.com`: **chỉ khi bạn cho phép** kiểm tra bản mới (**Cài đặt** > **Cập nhật**; mặc định chưa kiểm tra cho tới khi bạn chọn). App chỉ hỏi phiên bản mới nhất và tải gói cập nhật, không gửi thông tin tài khoản. Như mọi kết nối mạng, GitHub (máy chủ ở Mỹ) thấy địa chỉ IP của bạn, theo [chính sách của GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). Chọn **Không kiểm tra** thì app không gọi tới GitHub.
-- trang thư viện tài liệu chung (BK Study Library): bật sẵn, tắt ở **Cài đặt** > **Thư viện**. Khi bật, app tải danh sách tài liệu (`index.json`, khoảng mỗi ngày một lần và khi bạn mở tab **Thư viện**), danh sách tài liệu của môn đang xem, và file bạn bấm **Tải về** từ địa chỉ thư viện ghi kèm tài liệu (có thể là GitHub Pages hoặc `raw.githubusercontent.com`). App chỉ gửi yêu cầu tải thông thường (HTTP GET): không gửi MSSV, tên, mã môn của bạn, không cookie, không mã định danh nào. Như mọi kết nối mạng, máy chủ thấy địa chỉ IP của bạn. Tắt **Thư viện** thì app không gọi tới trang đó.
+- trang thư viện tài liệu chung (BK Study Library): luôn bật (tab **Thư viện** ở trang Môn học). App tải danh sách tài liệu (`index.json`, khoảng mỗi ngày một lần và khi bạn mở tab **Thư viện**), danh sách tài liệu của môn đang xem, và file bạn bấm **Tải về** từ địa chỉ thư viện ghi kèm tài liệu (có thể là GitHub Pages hoặc `raw.githubusercontent.com`). App chỉ gửi yêu cầu tải thông thường (HTTP GET): không gửi MSSV, tên, mã môn của bạn, không cookie, không mã định danh nào. Như mọi kết nối mạng, máy chủ thấy địa chỉ IP của bạn.
 
 ## Dữ liệu lưu trên máy bạn
 
@@ -60,7 +60,7 @@ Dữ liệu tải xuống có thể có thông tin của người khác (tên gi
 
 ## Đăng nhập và bảo mật
 
-- Mật khẩu chỉ được gõ trên trang SSO của trường, trong trình duyệt trong app (WebView2). App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, WebView2 lưu mật khẩu (mã hóa trên máy) để tự điền lần sau.
+- Mật khẩu chỉ được gõ trên trang SSO của trường, trong trình duyệt trong app (WebView2). App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, WebView2 lưu mật khẩu (mã hóa trên máy) để tự điền lần sau. Ngoại lệ duy nhất: nếu bạn tự bật **Tự đăng nhập lại khi hết phiên** (mặc định tắt), bạn nhập tài khoản vào app; app lưu trong Windows Credential Manager (không nằm trong thư mục dữ liệu) và chỉ điền vào trang SSO của trường. Tắt tính năng hay đăng xuất thì xóa.
 - Cookie đăng nhập nằm trong profile WebView2, do WebView2 mã hóa.
 - Token BK-LMS được mã hóa bằng Windows DPAPI, chỉ tài khoản Windows của bạn giải mã được.
 - App chỉ **đọc** dữ liệu. App không nộp bài, không đăng ký hay hủy môn, không thanh toán, không làm quiz thay bạn.

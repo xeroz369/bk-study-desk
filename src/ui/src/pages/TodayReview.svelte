@@ -49,8 +49,8 @@
 		/>
 	{:else}
 		<EmptyRow
-			>Hôm nay không có câu tới hạn. Câu bạn làm trong bài học và đề thi thử sẽ được hẹn ôn lại: sai thì mai gặp lại, đúng thì giãn dần 1,
-			3, 7, 14, 30 ngày.</EmptyRow
+			>Hôm nay không có câu tới hạn. Câu bạn làm trong bài học và đề thi thử sẽ được hẹn ôn lại: sai thì mai gặp lại, đúng thì giãn
+			dần 1, 3, 7, 14, 30 ngày.</EmptyRow
 		>
 	{/each}
 </Panel>

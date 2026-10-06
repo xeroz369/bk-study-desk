@@ -5,6 +5,7 @@ import type { MenuItem } from '$lib/menu.svelte';
 import { canRandomExam, Study } from './registry.svelte';
 import { Progress, today } from './progress.svelte';
 import { RANDOM_EXAM } from './exam';
+import { canMix, interleave, MIX_COUNT } from './interleave';
 import type { StudyPack } from './pack';
 import type { QuizInfo } from './lmsquiz';
 import { exportMarkdown, lessonCan, scopeOfLesson, scopePath, shareablePack } from './transfer';
@@ -17,6 +18,7 @@ export const LABELS = {
 	pack: { remove: 'Gỡ quiz này', exportLater: 'sau khi quiz đóng', broken: 'gói đang lỗi' },
 	quiz: { review: 'Ôn lại', similar: 'Câu tương tự (nhờ AI)', recall: 'Ghi lại câu còn nhớ' },
 	randomExam: RANDOM_EXAM,
+	mix: 'Luyện trộn',
 	/** nút ngắn trên đầu trang, đầu khối */
 	button: { create: 'Tạo', import: 'Nhập', export: 'Xuất' },
 } as const;
@@ -45,12 +47,22 @@ export function startRandomExam(courseId: string): boolean {
 	return !!x;
 }
 
+/** Môn trộn được không (ít nhất hai chương có câu). */
+export const courseCanMix = (c: Course) => canMix(Study.unitQuestions(c));
+
+/** Một lượt Luyện trộn của môn: câu xen kẽ các chương, chưa làm và tới hạn ôn lên trước (cùng thứ tự ưu tiên với Đề ngẫu nhiên). */
+export function mixQuestions(courseId: string): Question[] {
+	const c = Study.course(courseId);
+	return c ? interleave(Study.unitQuestions(c), MIX_COUNT, fresh) : [];
+}
+
 /** Menu của một môn. onRandomExam: trang tự báo khi không ra được đề. */
 export function courseActions(c: Course, onRandomExam: (courseId: string) => void): MenuItem[] {
 	return [
 		{ label: LABELS.course.open, primary: true, run: go('#luyen-tap/' + c.id) },
 		...soanItems(c.id, LABELS.course),
 		...(canRandomExam(c) ? [{ label: RANDOM_EXAM, sep: true, run: () => onRandomExam(c.id) }] : []),
+		...(courseCanMix(c) ? [{ label: LABELS.mix, run: go('#luyen-tron/' + c.id) }] : []),
 	];
 }
 

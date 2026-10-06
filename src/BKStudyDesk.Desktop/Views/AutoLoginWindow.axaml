@@ -1,0 +1,18 @@
+<!-- Bật tự đăng nhập lại: người dùng tự gõ tài khoản HCMUT; app lưu vào kho mật khẩu của hệ điều hành (Platform/Credentials.cs). -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BKStudyDesk.Desktop.Views.AutoLoginWindow"
+        Title="Tự đăng nhập lại" Width="460" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Classes="card-title" Text="Tự đăng nhập lại khi hết phiên" />
+        <TextBlock Classes="meta" Text="Khi trường kết thúc phiên đăng nhập, app tự điền tài khoản này vào trang SSO một lần. Tài khoản lưu trong kho mật khẩu của hệ điều hành, không nằm trong thư mục dữ liệu. Tắt tính năng hay đăng xuất thì xóa." />
+        <TextBox x:Name="User" PlaceholderText="Tên đăng nhập HCMUT" />
+        <TextBox x:Name="Password" PlaceholderText="Mật khẩu" PasswordChar="●" Classes="revealPasswordButton" />
+        <TextBlock x:Name="Error" Classes="meta danger" IsVisible="False" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Classes="accent" Content="Lưu và bật" Click="OnSave" IsDefault="True" />
+            <Button Content="Hủy" Click="OnCancel" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

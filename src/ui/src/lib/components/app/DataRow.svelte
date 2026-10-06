@@ -68,9 +68,11 @@
 	{#if leading}<span class="flex shrink-0 items-center gap-2">{@render leading()}</span>{/if}
 	<!-- Tiêu đề được ưu tiên chỗ: dòng phụ co lại trước (shrink-[4]). -->
 	<Item.Content class={cn('min-w-0 gap-0', stack ? 'flex-col' : 'flex-row items-baseline')}>
-		<Item.Title class={cn('block max-w-full min-w-0 shrink truncate', strong ? 'font-semibold' : 'font-normal')} {title}>{title}</Item.Title
+		<Item.Title class={cn('block max-w-full min-w-0 shrink truncate', strong ? 'font-semibold' : 'font-normal')} {title}
+			>{title}</Item.Title
 		>
-		{#if sub}<span class={cn('min-w-0 shrink-[4] truncate text-xs text-muted-foreground', !stack && 'ml-2')} title={sub}>{sub}</span>{/if}
+		{#if sub}<span class={cn('min-w-0 shrink-[4] truncate text-xs text-muted-foreground', !stack && 'ml-2')} title={sub}>{sub}</span
+			>{/if}
 		{@render children?.()}
 	</Item.Content>
 	{#if meta}<span class={cn('shrink-0 text-xs whitespace-nowrap text-muted-foreground tabular-nums', metaClass)}>{meta}</span>{/if}

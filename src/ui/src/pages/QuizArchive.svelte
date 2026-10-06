@@ -102,8 +102,11 @@
 					{#snippet trailing()}
 						<Tag tone={st.tone} text={st.text} />
 						{#if i.lessonId}<Button size="xs" variant="outline" href={'#bai/' + i.lessonId}>{LABELS.quiz.review}</Button>
-						{:else}<Button size="xs" variant="outline" title="Tự ghi lại câu còn nhớ để làm lại; đáp án tự kiểm" onclick={() => recall(i)}
-								>Ghi lại</Button
+						{:else}<Button
+								size="xs"
+								variant="outline"
+								title="Tự ghi lại câu còn nhớ để làm lại; đáp án tự kiểm"
+								onclick={() => recall(i)}>Ghi lại</Button
 							>{/if}
 					{/snippet}
 				</DataRow>

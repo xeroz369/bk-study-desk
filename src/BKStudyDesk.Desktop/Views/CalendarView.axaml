@@ -1,0 +1,46 @@
+<!-- Trang Lịch (design-system/bk mục 4, Bảng): bảng DataGrid chính thức trong thẻ; đầu bảng, dòng cao tối thiểu theo token; chỉ kẻ ngang.
+     Cột ngắn vừa theo chữ (Auto); Tên và Môn chia phần còn lại 2:1; hẹp quá mức tối thiểu thì bảng cuộn ngang, không giấu cột;
+     nhóm theo ngày (Quá hạn đứng đầu). Dòng nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Calendar.cs. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
+             x:Class="BKStudyDesk.Desktop.Views.CalendarView">
+    <!-- Trang lấp đầy (IFillPage): bảng tự cuộn dọc, ngang trong khung cửa sổ, thanh cuộn luôn ở trong tầm nhìn. -->
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,24">
+            <TextBlock Classes="title" Text="Lịch" />
+            <TextBlock Classes="meta" Text="Hạn nộp, quiz, lịch thi và đăng ký môn sắp tới. Bấm đúp một dòng để mở trên trình duyệt." />
+        </StackPanel>
+        <Border Classes="card">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Classes="card-head"><DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="CountText" />
+                    <TextBlock Classes="card-title" Text="Sắp tới" />
+                </DockPanel></Border>
+                <TextBlock DockPanel.Dock="Top" x:Name="EmptyText" Classes="empty" IsVisible="False" />
+                <DataGrid x:Name="Grid" RowHeight="{StaticResource TableRowHeight}" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" CanUserReorderColumns="False"
+                          SelectionMode="Single" Background="{DynamicResource Surface}" BorderThickness="0" DoubleTapped="OnOpen">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Giờ" Binding="{Binding Hour}" Width="Auto" MinWidth="64" x:DataType="p:CalendarRow" />
+                        <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:CalendarRow" />
+                        <DataGridTextColumn Header="Môn" Binding="{Binding Subject}" Width="*" MinWidth="120" x:DataType="p:CalendarRow" />
+                        <DataGridTextColumn Header="Loại" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:CalendarRow" />
+                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding State}" Width="Auto" MinWidth="96" x:DataType="p:CalendarRow" />
+                        <DataGridTemplateColumn Width="Auto" MinWidth="96" SortMemberPath="Time">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="Còn" HorizontalAlignment="Right" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="p:CalendarRow">
+                                    <TextBlock Classes="right" Classes.danger="{Binding IsDanger}" Classes.soon="{Binding IsSoon}" Text="{Binding Left}"
+                                               VerticalAlignment="Center" Margin="0,0,16,0" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+    </DockPanel>
+</UserControl>

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
@@ -70,14 +70,14 @@ internal sealed class AppHost : IDisposable
             else if (stage == "progress") State.RefreshProgress();   // chỉ cập nhật thanh trạng thái, không vẽ lại các trang
             else if (stage == "start" && State.SyncedAt(name) is not null) State.RefreshStatusOnly();
             else State.RefreshStatus();
-            if (name == "mybk" && stage == "done")
+            if (name == SourceIds.Mybk && stage == "done")
             {
                 _mybk.Release();
                 // Sync MyBK vừa đi qua SSO: biết chắc phiên còn, khỏi chạy keep-alive ngay sau đó. Hết phiên thì thôi giữ phiên.
-                if (!Hub.Failed("mybk")) { _ssoAliveAt = DateTime.UtcNow; _ssoExpired = false; }
-                else if (Hub.ErrorKind("mybk") == Data.SyncErrorKind.SessionExpired) _ssoExpired = true;
+                if (!Hub.Failed(SourceIds.Mybk)) { _ssoAliveAt = DateTime.UtcNow; _ssoExpired = false; }
+                else if (Hub.ErrorKind(SourceIds.Mybk) == Data.SyncErrorKind.SessionExpired) _ssoExpired = true;
             }
-            if (name == "lms" && stage == "done") _notifier.Check();
+            if (name == SourceIds.Lms && stage == "done") _notifier.Check();
         });
         // Tiết kiệm pin: scheduler giãn chu kỳ gấp đôi (cùng cách đọc trạng thái pin với UpdateService).
         Hub.BatterySaver = () => Power.BatterySaverOn;
@@ -138,7 +138,7 @@ internal sealed class AppHost : IDisposable
 
     private async Task KeepAliveTickAsync()
     {
-        var minutes = Config.Int("sso.keepAliveMinutes", 60);
+        var minutes = Settings.Sso.KeepAliveMinutes;
         if (minutes <= 0 || _ssoExpired || !MybkSource.SignedIn) return;
         if (DateTime.UtcNow - _ssoAliveAt < TimeSpan.FromMinutes(minutes)) return;
         // Tiết kiệm pin: bỏ giữ phiên (mỗi lần là một WebView ẩn chạy renderer). Phiên có hết thì lần sync sau báo đăng nhập lại.
@@ -158,7 +158,7 @@ internal sealed class AppHost : IDisposable
                 // Ghi mức Info (một lần mỗi phiên): biết phiên SSO thật sự sống bao lâu (cookie còn mà server đã hủy).
                 SsoSession.Expired();
                 Log.Debug($"Giữ phiên SSO: hết phiên (lần trước còn phiên {since} trước)");
-                Hub.Start("mybk", force: true);   // MyBK báo "phiên hết hạn" → thanh báo mời đăng nhập lại
+                Hub.Start(SourceIds.Mybk, force: true);   // MyBK báo "phiên hết hạn" → thanh báo mời đăng nhập lại
                 break;
         }
     }
@@ -269,8 +269,8 @@ internal sealed class AppHost : IDisposable
 
     public void SyncAll(bool force = false)
     {
-        Hub.Start("lms", force);
-        Hub.Start("mybk", force);
+        Hub.Start(SourceIds.Lms, force);
+        Hub.Start(SourceIds.Mybk, force);
     }
 
     private void OnLogin(string stage, string message)
@@ -316,6 +316,7 @@ internal sealed class AppHost : IDisposable
         // Xóa cookie lỗi (WebView2 runtime hỏng…) thì vẫn ghi là đã đăng xuất: token LMS đã xóa, MyBK không chạy nữa.
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Đăng xuất: không xóa được cookie WebView2", e); }
         SsoSession.Forget();
+        SsoCredentials.Forget();
         OnLogin("logout", "");
     });
 
@@ -334,14 +335,14 @@ internal sealed class AppHost : IDisposable
         return true;
     }
 
-    public bool SyncLms() => Hub.Start("lms");
+    public bool SyncLms() => Hub.Start(SourceIds.Lms);
 
     /// <summary>Mở LMS/MyBK trong cửa sổ của app. Nếu người dùng đăng nhập lại trong cửa sổ đó thì đồng bộ lại nguồn này ngay
     /// (đề xuất #6: đồng bộ lỗi vì hết phiên thì mở MyBK để đăng nhập).</summary>
     public bool OpenSource(string name) => name switch
     {
-        "lms" => OpenWeb(Config.Str("sources.lms.site"), "BK-LMS", () => Hub.Start("lms", force: true)),
-        "mybk" => OpenWeb(Config.Str("sources.mybk.home"), "MyBK", () => Hub.Start("mybk", force: true)),
+        SourceIds.Lms => OpenWeb(Config.Str("sources.lms.site"), "BK-LMS", () => Hub.Start(SourceIds.Lms, force: true)),
+        SourceIds.Mybk => OpenWeb(Config.Str("sources.mybk.home"), "MyBK", () => Hub.Start(SourceIds.Mybk, force: true)),
         _ => false,
     };
 

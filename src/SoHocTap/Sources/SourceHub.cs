@@ -257,8 +257,8 @@ public sealed class SourceHub : IDisposable
     /// <summary>Dữ liệu đã lưu trước lượt sync (store có cache, không đọc lại file nếu không đổi).</summary>
     private static object? Snapshot(string name) => name switch
     {
-        "lms" => LmsStore.Read(),
-        "mybk" => MybkStore.Read(),
+        SourceIds.Lms => LmsStore.Read(),
+        SourceIds.Mybk => MybkStore.Read(),
         _ => null,
     };
 

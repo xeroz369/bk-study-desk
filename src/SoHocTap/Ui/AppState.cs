@@ -3,13 +3,17 @@ using System.Text.RegularExpressions;
 using SoHocTap.Core;
 using SoHocTap.Data;
 using SoHocTap.Sources;
+using SoHocTap.Sources.Lms;
 
 namespace SoHocTap.Ui;
 
 /// <summary>Một mốc thời gian (hạn nộp, quiz, buổi học, thi, đợt đăng ký) gộp từ LMS và MyBK.</summary>
+/// <param name="ClassGroup">Mã nhóm (lớp thí nghiệm) trong tên mốc, nối bằng ", "; rỗng nếu tên không có mã. Tên <c>Group</c> đã dùng cho nhóm theo ngày của bảng.</param>
+/// <param name="State">Trạng thái nộp bài thật từ LMS (chỉ bài tập); Unknown thì cột Trạng thái để trống.</param>
 /// <param name="RawWhen">Chữ ngày giờ gốc khi không đọc được hết (MyBK đổi định dạng): hiện nguyên chữ đó thay cho ngày giờ tính ra.</param>
 public sealed record TimelineItem(string Id, string Kind, string Name, string Subject, long Time, string Label, string? Url, string Source,
-    bool Done = false, string? Warn = null, long? Course = null, bool Opens = false, long? Due = null, string? RawWhen = null)
+    bool Done = false, string? Warn = null, long? Course = null, bool Opens = false, long? Due = null, string? RawWhen = null, string ClassGroup = "",
+    SubmissionState State = SubmissionState.Unknown)
 {
     /// <summary>Time của mốc không đọc được ngày (01/01/9999): xếp cuối, không đếm ngược, vẫn hiện trong danh sách.</summary>
     public const long UndatedTime = 253_370_764_800;
@@ -19,7 +23,7 @@ public sealed record TimelineItem(string Id, string Kind, string Name, string Su
     /// Hạn của LMS đã qua mà chưa làm: hiện ở nhóm "Quá hạn" đầu danh sách, không biến mất. Chỉ tính trong phần lịch LMS đọc về
     /// (từ 7 ngày trước, <see cref="Sources.Lms.AssignPairing.WindowBefore"/>): bài có hạn cũ hơn thì app không biết đã nộp hay chưa.
     /// </summary>
-    public bool Overdue => Source == "lms" && !Done && !Opens && !Undated && Time < Format.Now && Time >= Format.Now - Sources.Lms.AssignPairing.WindowBefore;
+    public bool Overdue => Source == SourceIds.Lms && !Done && !Opens && !Undated && Time < Format.Now && Time >= Format.Now - Sources.Lms.AssignPairing.WindowBefore;
 
     /// <summary>Thứ tự nhóm: "Quá hạn" luôn đứng đầu, các nhóm còn lại theo giờ.</summary>
     public int GroupRank => Overdue ? 0 : 1;
@@ -42,12 +46,37 @@ public sealed record TimelineItem(string Id, string Kind, string Name, string Su
 
     /// <summary>Id trong data/custom-events.json nếu mốc là sự kiện tự thêm; null với mốc từ LMS, MyBK.</summary>
     public string? CustomId => Source == "custom" && Id.StartsWith(CustomPrefix, StringComparison.Ordinal) ? Id[CustomPrefix.Length..] : null;
+    /// <summary>Cột Trạng thái: chữ theo trạng thái nộp bài LMS; mốc không phải bài tập hay chưa biết thì để trống.</summary>
+    public string StateText => State switch
+    {
+        SubmissionState.Submitted => L.T("state.submitted"),
+        SubmissionState.Draft => L.T("state.draft"),
+        SubmissionState.NotSubmitted => L.T("state.notSubmitted"),
+        SubmissionState.Graded => L.T("state.graded"),
+        _ => "",
+    };
     public string KindName => Opens ? L.T("kind.quizOpen") : KindText.TryGetValue(Kind, out var k) ? L.T(k) : Kind;
+    /// <summary>Dòng phụ dưới tên trong bảng sự kiện: môn rồi chi tiết (Hạn nộp, Quiz đóng, phòng học). Môn trùng tên mốc (buổi học) thì chỉ ghi chi tiết.</summary>
+    public string Sub => Subject.Length == 0 || Subject == Name ? Label : Label.Length == 0 ? Subject : $"{Subject}, {Label}";
+    /// <summary>Ngày giờ kèm chi tiết (phòng thi, số phút): dòng phụ của thẻ Lịch thi.</summary>
+    public string WhenAndLabel => Label.Length == 0 ? When : $"{When}, {Label}";
+    /// <summary>Tên và dòng phụ, cho trình đọc màn hình và sao chép.</summary>
+    public string Spoken => Sub.Length == 0 ? Name : $"{Name}, {Sub}";
     public string When => RawWhen ?? Format.DateTime(Time);
     /// <summary>Cột "Còn": mốc quiz mở thì ghi hạn đóng (mốc mở không phải hạn nộp, đếm ngược tới đó dễ hiểu nhầm).</summary>
     public string Left => Kind == "class" || Undated ? "" : Done ? L.T("timeline.done") : Overdue ? L.F("timeline.overdueOn", Format.Local(Time))
-        : Opens ? (Due is { } d ? L.F("timeline.dueOn", Format.Local(d)) : L.T("timeline.opens")) : Format.Until(Time);
-    public bool Urgent => !Done && !Opens && Kind != "class" && Time > Format.Now && Time - Format.Now < 86400;
+        : Opens ? (Due is { } d ? L.F("timeline.dueOn", Format.Local(d)) : L.T("timeline.opens")) : Ui.Due.LeftText(Time, Format.Now);
+    /// <summary>Mức gấp theo cài đặt (Rất gấp, Gấp). Buổi học, mốc không rõ ngày và quiz mở (chưa phải hạn nộp) không tính: None.</summary>
+    public Urgency Urgency
+    {
+        get
+        {
+            if (Kind == "class" || Undated || Opens) return Urgency.None;
+            var u = Ui.Due.Of(Time, Format.Now, Done, Core.Settings.Notify.UrgentHours, Core.Settings.Notify.SoonHours);
+            // Quá hạn chỉ tính theo <see cref="Overdue"/> (LMS, trong cửa sổ 7 ngày); hạn cũ hơn thì app không biết đã nộp chưa.
+            return u == Urgency.Overdue && !Overdue ? Urgency.None : u;
+        }
+    }
     public string Group => Undated ? L.T("timeline.undated") : Overdue ? L.T("format.group.overdue") : Format.DayGroup(Time);
     public string Hour => RawWhen is not null || Undated ? "" : Format.Hm(Time);
     /// <summary>Nhóm theo ngày: "Hôm nay, Thứ năm 01/10"; hạn đã qua mà chưa làm thì gom vào "Quá hạn".</summary>
@@ -121,8 +150,8 @@ public sealed partial class AppState(SourceHub hub)
     /// </summary>
     public static string? Unreadable(string name) => name switch
     {
-        "lms" => LmsStore.Problem,
-        "mybk" => MybkStore.Problem,
+        SourceIds.Lms => LmsStore.Problem,
+        SourceIds.Mybk => MybkStore.Problem,
         _ => null,
     };
 
@@ -188,8 +217,8 @@ public sealed partial class AppState(SourceHub hub)
     {
         get
         {
-            var lms = Source("lms") is { } l && (l["connected"]?.GetValue<bool>() != true || NeedsLogin("lms"));
-            var mybk = NeedsLogin("mybk");
+            var lms = Source(SourceIds.Lms) is { } l && (l["connected"]?.GetValue<bool>() != true || NeedsLogin(SourceIds.Lms));
+            var mybk = NeedsLogin(SourceIds.Mybk);
             return (lms, mybk) switch { (true, true) => AccountNeed.Both, (true, _) => AccountNeed.Lms, (_, true) => AccountNeed.Mybk, _ => AccountNeed.None };
         }
     }
@@ -223,7 +252,8 @@ public sealed partial class AppState(SourceHub hub)
                 var quiz = e.Kind == "quiz" ? lms.Quizzes.FirstOrDefault(q => q.Name == e.Name && q.Course == e.Course) : null;
                 var opens = e.Kind == "quiz" && (e.Phase == "open" || (e.Phase is null && quiz?.Open == e.Time && quiz.Close != e.Time));
                 var due = opens ? lms.Events.FirstOrDefault(x => x.Kind == "quiz" && x.Phase == "close" && x.Name == e.Name && x.Course == e.Course)?.Time ?? quiz?.Close : null;
-                output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, e.Label, e.Url, "lms", Done: e.Done, Course: e.Course, Opens: opens, Due: due));
+                output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, e.Label, e.Url, SourceIds.Lms, Done: e.Done, Course: e.Course, Opens: opens, Due: due,
+                    State: e.Kind == "assign" ? SubmissionStates.Parse(e.State) : SubmissionState.Unknown));
                 seen.Add(e.Name + "|" + e.Time);
             }
             foreach (var q in lms.Quizzes)
@@ -231,10 +261,10 @@ public sealed partial class AppState(SourceHub hub)
                 var odd = QuizAnomaly(q);
                 string? warn = odd is { } o ? L.F("timeline.quizWarn", o.Text, Format.Local(q.Open ?? q.Close ?? 0)) : null;
                 if (odd is { } a && q.Attempts.Count == 0)
-                    output.Add(new TimelineItem($"qz{q.Id}named", "quiz", q.Name, q.Subject, a.Named, L.T("timeline.byName"), q.Url, "lms", Warn: warn, Course: q.Course));
+                    output.Add(new TimelineItem($"qz{q.Id}named", "quiz", q.Name, q.Subject, a.Named, L.T("timeline.byName"), q.Url, SourceIds.Lms, Warn: warn, Course: q.Course));
                 foreach (var (t, label, close) in new[] { (q.Open, L.T("timeline.quizOpen"), false), (q.Close, L.T("timeline.quizClose"), true) })
                     if (t is { } time && !seen.Contains(q.Name + "|" + time))
-                        output.Add(new TimelineItem($"qz{q.Id}{(close ? "close" : "open")}", "quiz", q.Name, q.Subject, time, label, q.Url, "lms",
+                        output.Add(new TimelineItem($"qz{q.Id}{(close ? "close" : "open")}", "quiz", q.Name, q.Subject, time, label, q.Url, SourceIds.Lms,
                             Done: close && q.Attempts.Count > 0, Warn: warn, Course: q.Course, Opens: !close, Due: close ? null : q.Close));
             }
         }
@@ -252,7 +282,7 @@ public sealed partial class AppState(SourceHub hub)
                 var raw = day is null ? $"{e.Date} {e.Time}".Trim() is { Length: > 0 } x ? x : L.T("timeline.undated")
                     : clock is null ? $"{Format.DateLong(day.Value)} {e.Time}".Trim() : null;
                 output.Add(new TimelineItem($"mx-{e.Code}{e.Type}", "exam", Regex.Replace(title, @"\s+", " ").Trim(), e.Name,
-                    time, e.Minutes is { } m ? L.F("timeline.roomMinutes", e.Room, m) : L.F("timeline.room", e.Room), null, "mybk", RawWhen: raw));
+                    time, e.Minutes is { } m ? L.F("timeline.roomMinutes", e.Room, m) : L.F("timeline.room", e.Room), null, SourceIds.Mybk, RawWhen: raw));
             }
             // Buổi học của cả kỳ, mỗi tuần MyBK liệt kê một buổi (khoảng 20 tuần, vài trăm mốc): trang tự chọn hiện gì, không cắt ở đây.
             // Ngày và giờ học là giờ VN (giờ trường), không theo múi giờ máy.
@@ -263,18 +293,19 @@ public sealed partial class AppState(SourceHub hub)
                 var clock = VnTime.ParseClock(c.Start);
                 foreach (var d in Ics.ClassDates(c.Year, c.Weeks ?? [], c.Day, today))
                     output.Add(new TimelineItem($"cl-{c.Code}-{d:yyyyMMdd}-{c.Start}", "class", c.Name, c.Name, VnTime.FromWall(d.AddMinutes(clock ?? 0)),
-                        L.F("timeline.classRoom", c.Room, c.Start, c.End), null, "mybk", Done: true, RawWhen: clock is null ? $"{Format.DateLong(d)} {c.Start}".Trim() : null));
+                        L.F("timeline.classRoom", c.Room, c.Start, c.End), null, SourceIds.Mybk, Done: true, RawWhen: clock is null ? $"{Format.DateLong(d)} {c.Start}".Trim() : null));
             }
             // Mọi đợt đăng ký MyBK trả về (cả đợt đã qua, đợt còn xa): trang chỉ hiện phần sắp tới.
             var url = Config.Str("sources.mybk.registration");
             foreach (var r in M.Registration ?? [])
             {
-                output.Add(new TimelineItem("rg-o-" + r.Code, "reg", r.Name, "", r.Start, L.F("timeline.regOpen", r.Code), url, "mybk"));
-                output.Add(new TimelineItem("rg-c-" + r.Code, "reg", r.Name, "", r.End, L.F("timeline.regClose", r.Code), url, "mybk"));
+                output.Add(new TimelineItem("rg-o-" + r.Code, "reg", r.Name, "", r.Start, L.F("timeline.regOpen", r.Code), url, SourceIds.Mybk));
+                output.Add(new TimelineItem("rg-c-" + r.Code, "reg", r.Name, "", r.End, L.F("timeline.regClose", r.Code), url, SourceIds.Mybk));
             }
         }
         AddCustomEvents(output);
-        return [.. output.OrderBy(i => i.Time)];
+        var codesOf = GroupFilter.Matcher(Settings.Lms.GroupPattern);
+        return [.. output.Select(i => i with { ClassGroup = string.Join(", ", codesOf(i.Name)) }).OrderBy(i => i.Time)];
     }
 
     /// <summary>Sự kiện tự thêm sau lần sửa: dựng lại timeline, báo các trang (không đọc lại LMS/MyBK).</summary>

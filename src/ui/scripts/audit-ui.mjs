@@ -11,7 +11,8 @@ const [width = '1280', scheme = 'dark', ...only] = process.argv.slice(2);
 const PAGES = only.length ? only : ['luyen-tap', 'on-cau-sai', 'ket-qua'];
 
 const list = await (await fetch('http://127.0.0.1:9333/json')).json();
-const ws = new WebSocket(list.find((p) => p.url.includes('sohoc.example')).webSocketDebuggerUrl);
+// Bản 1.x: host ảo sohoc.example; bản 2.0: máy chủ cục bộ 127.0.0.1 (index.html?embed=1&host=2).
+const ws = new WebSocket(list.find((p) => p.url.includes('sohoc.example') || p.url.includes('host=2')).webSocketDebuggerUrl);
 await new Promise((r) => (ws.onopen = r));
 let id = 0; const pending = {}; const errors = [];
 ws.onmessage = (m) => { const d = JSON.parse(m.data); if (pending[d.id]) pending[d.id](d);

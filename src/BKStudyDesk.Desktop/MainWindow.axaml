@@ -1,26 +1,35 @@
+<!-- Khung (design-system/bk mục 4): thanh cao tối thiểu 48 nền Bar; vùng nội dung lề 24; trang chữ rộng tối đa ContentMaxWidth và cuộn cả vùng, trang bảng (IFillPage) lấp đầy và tự cuộn. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="BKStudyDesk.Desktop.MainWindow"
-        Title="BK Study Desk" Width="1180" Height="760" MinWidth="760" MinHeight="480"
-        Icon="avares://BKStudyDesk/Assets/app.ico">
-    <!-- Khung app đa nền tảng (bước 2): thanh điều hướng, trang chỉ đọc, thanh trạng thái. Trang dựng trong code (Pages.cs). -->
+        Title="BK Study Desk" Width="1280" Height="820" MinWidth="480" MinHeight="480"
+        Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
     <DockPanel>
-        <Border DockPanel.Dock="Top" Padding="12,8" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Left" Text="BK Study Desk" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0" />
-                <ListBox x:Name="Nav" SelectionMode="Single" Background="Transparent">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
+        <!-- Thanh trên cùng co theo chỗ trống (MainWindow.FitBar): hẹp thì ẩn tên app trước, rồi gom Đồng bộ, Tài khoản, Cài đặt vào nút Thêm. -->
+        <Border x:Name="Bar" DockPanel.Dock="Top" Background="{DynamicResource Bar}" MinHeight="{StaticResource BarHeight}">
+            <DockPanel Margin="24,0">
+                <TextBlock x:Name="Brand" DockPanel.Dock="Left" Text="BK Study Desk" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,28,0" />
+                <StackPanel x:Name="Tools" DockPanel.Dock="Right" Orientation="Horizontal" Spacing="20">
+                    <Button Classes="bar" Click="OnSync"><TextBlock x:Name="SyncText" FontSize="13" VerticalAlignment="Center" /></Button>
+                    <!-- Tài khoản: tên, Đăng nhập, Đăng xuất (MainWindow.AccountItems), dựng lại mỗi lần mở. -->
+                    <Button x:Name="AccountButton" Classes="bar"><TextBlock Text="Tài khoản" VerticalAlignment="Center" /><Button.Flyout><MenuFlyout /></Button.Flyout></Button>
+                    <Button x:Name="SettingsButton" Classes="bar"><TextBlock Text="Cài đặt" VerticalAlignment="Center" /></Button>
+                </StackPanel>
+                <Button x:Name="More" DockPanel.Dock="Right" Classes="bar" IsVisible="False">
+                    <TextBlock Text="Thêm" VerticalAlignment="Center" />
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem x:Name="MoreSync" Click="OnSync" />
+                            <MenuItem x:Name="MoreAccount" Header="Tài khoản" />
+                            <MenuItem x:Name="MoreSettings" Header="Cài đặt" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+                <StackPanel x:Name="Nav" Orientation="Horizontal" Spacing="24" />
             </DockPanel>
         </Border>
-        <Border DockPanel.Dock="Bottom" Padding="12,4" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
-            <DockPanel>
-                <TextBlock x:Name="StVersion" DockPanel.Dock="Right" Classes="muted" />
-                <TextBlock x:Name="StStatus" Classes="muted" />
-            </DockPanel>
-        </Border>
-        <ContentControl x:Name="Page" Margin="16" />
+        <ScrollViewer x:Name="Scroller">
+            <Border x:Name="Page" Margin="24,24,24,32" />
+        </ScrollViewer>
     </DockPanel>
 </Window>

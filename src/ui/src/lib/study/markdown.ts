@@ -172,7 +172,10 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 						.filter((s) => s.title),
 				}
 			: {}),
-		settings: { shuffleQuestions: yes(pick('xao-cau', 'shuffle-questions')), shuffleOptions: yes(pick('xao-dap-an', 'shuffle-options')) },
+		settings: {
+			shuffleQuestions: yes(pick('xao-cau', 'shuffle-questions')),
+			shuffleOptions: yes(pick('xao-dap-an', 'shuffle-options')),
+		},
 		units: [],
 		exams: [],
 	};
@@ -230,7 +233,8 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 			for (const x of b.body) {
 				const h4 = x.text.match(/^####\s+(.*)$/);
 				if (h4) {
-					if (sec.lines.join('').trim()) sections.push({ ...(sec.title ? { title: sec.title } : {}), body: html(sec.lines.join('\n')) });
+					if (sec.lines.join('').trim())
+						sections.push({ ...(sec.title ? { title: sec.title } : {}), body: html(sec.lines.join('\n')) });
 					sec = { title: h4[1].trim(), lines: [] };
 				} else sec.lines.push(x.text);
 			}
@@ -337,7 +341,9 @@ function parseQuestion(
 			errors.push({ line: b.line, message: 'chưa tick đáp án đúng: đổi - [ ] thành - [x]' });
 			return null;
 		}
-		return right.length === 1 ? { ...base, options: opts, answer: right[0] } : { ...base, type: 'multi', options: opts, answers: right };
+		return right.length === 1
+			? { ...base, options: opts, answer: right[0] }
+			: { ...base, type: 'multi', options: opts, answers: right };
 	}
 	if (!answer) {
 		errors.push({ line: b.line, message: 'câu chưa có đáp án: thêm các dòng - [x] / - [ ], hoặc một dòng = ...' });
@@ -450,14 +456,19 @@ export function writeMarkdown(p: StudyPack): { md: string; images: Record<string
 		// Markdown exams are self-contained: questions referenced from lessons are copied in.
 		const byRef = new Map<string, PackQuestion>(
 			p.units.flatMap((u) =>
-				u.lessons.flatMap((l) => (l.questions ?? []).map((q, i): [string, PackQuestion] => [`${l.id}.${q.id ?? 'q' + (i + 1)}`, q])),
+				u.lessons.flatMap((l) =>
+					(l.questions ?? []).map((q, i): [string, PackQuestion] => [`${l.id}.${q.id ?? 'q' + (i + 1)}`, q]),
+				),
 			),
 		);
 		out.push('# Đề thi thử', '');
 		for (const ex of p.exams) {
 			const x = {
 				...ex,
-				questions: [...(ex.questionRefs ?? []).map((r) => byRef.get(r)).filter((q): q is PackQuestion => !!q), ...(ex.questions ?? [])],
+				questions: [
+					...(ex.questionRefs ?? []).map((r) => byRef.get(r)).filter((q): q is PackQuestion => !!q),
+					...(ex.questions ?? []),
+				],
 			};
 			const sc = x.scoring ? ` · Đúng: ${+x.scoring.right.toFixed(4)} · Sai: ${+x.scoring.wrong.toFixed(4)}` : '';
 			out.push(`## ${x.title}`, `Thời gian: ${x.minutes} phút${sc}`, '');

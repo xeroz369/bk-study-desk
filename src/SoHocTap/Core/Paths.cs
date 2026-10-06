@@ -1,4 +1,4 @@
-﻿namespace SoHocTap.Core;
+namespace SoHocTap.Core;
 
 /// <summary>
 /// Các thư mục gốc. Thư mục app là folder chứa cả <c>ui/</c> lẫn <c>data/</c>;
