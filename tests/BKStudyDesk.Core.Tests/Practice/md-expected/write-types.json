@@ -1,0 +1,6 @@
+{
+ "md": "---\nid: hcmut-mt1009-chuong-1\ntieu-de: Chương 1\nmon: MT1009 Phương pháp tính\ntac-gia: An, Bình\nphien-ban: 1.0.0\ngiay-phep: CC-BY-SA-4.0\nda-kiem: python\nxao-cau: co\n---\n\n# Chương 1\n\n## Bài một\n\nKiến thức đầu **đậm**.\n\n#### Mục A\nCông thức \\(x^2\\).\n\n### Câu 1 · Slide tr.5 · giữ thứ tự\nĐề một\n- [ ] a\n- [x] b\n- [ ] Cả hai\n> vì b\n\n### Câu 2\nĐề hai\n- [x] a\n- [x] b\n- [ ] c\n> giải 2\n\n### Câu 3 · nhóm: g\nĐề ba\n= Sai\n> giải 3\n\n### Câu 4\nĐề bốn\n= 1.5 ± 0.01 (m/s)\n> giải 4\n\n### Câu 5\nĐề năm\n= Newton | Newton-Raphson\n> giải 5\n\n### Câu 6\nĐề sáu ![](img/1.png)\n= -2\n> dòng hai\n\n# Đề thi thử\n\n## Đề số 1\nThời gian: 45 phút · Đúng: 0.5 · Sai: -0.125\n\n### Câu 1\nĐề thi\n- [x] x\n- [ ] y\n> z\n",
+ "images": {
+  "img/1.png": "data:image/png;base64,AAAA"
+ }
+}

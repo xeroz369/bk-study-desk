@@ -1,0 +1,6 @@
+- [ ] Chỉ có một khối markdown, bắt đầu bằng phần --- có dòng "mon:".
+- [ ] Tên chương (#) và tên bài (##) đúng như ĐẦU VÀO.
+- [ ] Mỗi câu (###) có đề, đáp án, lời giải ">".
+- [ ] Mỗi câu trắc nghiệm có ít nhất một "- [x]".
+- [ ] Đã tự tính lại đáp án các câu tính toán.
+- [ ] Không có HTML lạ, không có link ảnh ngoài.

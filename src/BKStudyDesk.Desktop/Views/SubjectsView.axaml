@@ -43,6 +43,7 @@
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button x:Name="LmsButton" Content="{l:T subjects.openLms}" Click="OnOpenLms" />
                                 <Button x:Name="DownloadButton" Content="{l:T subjects.download}" Click="OnDownload" IsVisible="False" />
+                                <Button x:Name="LibraryButton" Content="{l:T subjects.openLibrary}" Click="OnOpenLibrary" IsVisible="False" />
                             </StackPanel>
                             <StackPanel VerticalAlignment="Center" Spacing="2">
                                 <TextBlock x:Name="SubjectName" Classes="card-title" />
@@ -148,35 +149,6 @@
                                         <DataGridTextColumn Header="{l:T col.score}" Binding="{Binding GradeText}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
                                         <DataGridTextColumn Header="{l:T col.max}" Binding="{Binding MaxText}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
                                         <DataGridTextColumn Header="%" Binding="{Binding Percent}" Width="Auto" MinWidth="72" x:DataType="p:GradeRow" />
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </DockPanel>
-                        </TabItem>
-                        <TabItem x:Name="LibraryTab" Header="{l:T library.tab}">
-                            <DockPanel>
-                                <WrapPanel DockPanel.Dock="Top" Margin="16,8">
-                                    <ComboBox x:Name="TeacherFilter" SelectionChanged="OnLibraryFilter" Margin="0,0,8,8" MinWidth="160" />
-                                    <ComboBox x:Name="TermFilter" SelectionChanged="OnLibraryFilter" Margin="0,0,8,8" MinWidth="120" />
-                                    <ComboBox x:Name="ExamFilter" SelectionChanged="OnLibraryFilter" Margin="0,0,16,8" MinWidth="140" />
-                                    <Button x:Name="LibraryWebButton" Content="{l:T settings.library.open}" Click="OnLibraryWeb" Margin="0,0,8,8" />
-                                    <Button x:Name="ContributeButton" Content="{l:T library.contribute}" Click="OnContribute" Margin="0,0,8,8" />
-                                </WrapPanel>
-                                <TextBlock x:Name="LibraryNote" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
-                                <TextBlock x:Name="LibraryStatus" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
-                                <TextBlock x:Name="LibraryEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
-                                <DataGrid x:Name="LibraryItems" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
-                                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
-                                          BorderThickness="0" SelectionMode="Single" DoubleTapped="OnLibraryOpen">
-                                    <DataGrid.ContextFlyout><MenuFlyout Opening="OnLibraryMenu" /></DataGrid.ContextFlyout>
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Title}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T library.col.course}" Binding="{Binding Edition}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T col.term}" Binding="{Binding Term}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T col.teacher}" Binding="{Binding Teacher}" Width="Auto" MinWidth="100" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T library.col.chapter}" Binding="{Binding Chapter}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T library.col.exam}" Binding="{Binding Exam}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T col.size}" Binding="{Binding SizeText}" Width="Auto" MinWidth="72" SortMemberPath="Size" x:DataType="p:LibraryRow" />
-                                        <DataGridTextColumn Header="{l:T library.col.local}" Binding="{Binding Local}" Width="Auto" MinWidth="96" x:DataType="p:LibraryRow" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>

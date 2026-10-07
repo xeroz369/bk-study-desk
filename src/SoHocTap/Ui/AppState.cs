@@ -239,6 +239,13 @@ public sealed partial class AppState(SourceHub hub)
         catch (ArgumentOutOfRangeException) { return null; }
     }
 
+    /// <summary>
+    /// Nhãn hiện ra của một mốc LMS. Nhãn hạn nộp là chữ của app lưu trong dữ liệu (LmsSource.DueLabel): dịch theo ngôn ngữ đang dùng.
+    /// Nhãn khác là chữ của LMS (tên sự kiện theo ngôn ngữ của trang LMS), giữ nguyên.
+    /// </summary>
+    public static string LmsLabel(LmsEvent e) =>
+        e.Kind == "assign" && e.Label == global::SoHocTap.Sources.Lms.LmsSource.DueLabel ? L.T("timeline.dueLabel") : e.Label;
+
     private List<TimelineItem> BuildTimeline()
     {
         var output = new List<TimelineItem>();
@@ -252,7 +259,7 @@ public sealed partial class AppState(SourceHub hub)
                 var quiz = e.Kind == "quiz" ? lms.Quizzes.FirstOrDefault(q => q.Name == e.Name && q.Course == e.Course) : null;
                 var opens = e.Kind == "quiz" && (e.Phase == "open" || (e.Phase is null && quiz?.Open == e.Time && quiz.Close != e.Time));
                 var due = opens ? lms.Events.FirstOrDefault(x => x.Kind == "quiz" && x.Phase == "close" && x.Name == e.Name && x.Course == e.Course)?.Time ?? quiz?.Close : null;
-                output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, e.Label, e.Url, SourceIds.Lms, Done: e.Done, Course: e.Course, Opens: opens, Due: due,
+                output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, LmsLabel(e), e.Url, SourceIds.Lms, Done: e.Done, Course: e.Course, Opens: opens, Due: due,
                     State: e.Kind == "assign" ? SubmissionStates.Parse(e.State) : SubmissionState.Unknown));
                 seen.Add(e.Name + "|" + e.Time);
             }

@@ -1,0 +1,22 @@
+<!-- XAML-Math cho Avalonia (vendored, tự bảo trì): font Computer Modern, renderer, FormulaBlock. Giữ tên assembly AvaloniaMath vì font nạp qua avares://AvaloniaMath. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8625;CS8765;CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Fonts\*.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="BKStudyDesk.Math.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XamlMath.Shared\XamlMath.Shared.csproj" />
+  </ItemGroup>
+</Project>

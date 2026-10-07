@@ -1,0 +1,28 @@
+<!-- Test cho bộ dựng công thức (src/ThirdParty/XamlMath) và MathView: chạy Avalonia headless với Skia để đo glyph thật. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- Avalonia.Headless.XUnit 12 chạy trên xUnit v3: project test là Exe. -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\ThirdParty\XamlMath\AvaloniaMath\AvaloniaMath.csproj" />
+    <!-- MathView của app: link file thay vì tham chiếu project app (WinExe, 2 TFM, kéo theo Velopack và WebView). -->
+    <Compile Include="..\..\src\BKStudyDesk.Desktop\Views\Practice\MathView.cs" Link="App\MathView.cs" />
+    <Compile Include="..\..\src\BKStudyDesk.Desktop\Views\Practice\ContentRenderer.cs" Link="App\ContentRenderer.cs" />
+    <!-- ContentRenderer đọc HTML bằng Html của lõi. -->
+    <ProjectReference Include="..\..\src\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
+  </ItemGroup>
+</Project>

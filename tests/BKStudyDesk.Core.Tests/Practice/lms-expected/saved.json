@@ -1,0 +1,73 @@
+[
+ {
+  "file": "1-1",
+  "quiz": "Quiz 1 chương 1",
+  "subject": "Giải tích 2",
+  "code": "MT1005",
+  "attempt": 1,
+  "finished": 1759800000,
+  "closesAt": 1700000000,
+  "questions": [
+   {
+    "type": "x",
+    "html": "<div id=\"question-1-1\" class=\"que multichoice deferredfeedback correct\"><div class=\"info\"><h3 class=\"no\">Câu hỏi <span class=\"qno\">1</span></h3><div class=\"state\">Đúng</div><div class=\"grade\">Đạt điểm 1,00 trên 1,00</div></div><div class=\"content\"><div class=\"formulation clearfix\"><h4 class=\"accesshide\">Đoạn văn câu hỏi</h4><div class=\"qtext\"><p>Đạo hàm của \\(x^2\\) là</p></div><div class=\"ablock no-overflow visual-scroll-x\"><div class=\"prompt\">Chọn một:</div><div class=\"answer\"><div class=\"r0 correct\"><input type=\"radio\" name=\"q1:1_answer\" value=\"0\" id=\"q1:1_answer0\" disabled=\"disabled\" checked=\"checked\"><div class=\"d-flex w-auto\" id=\"q1:1_answer0_label\" data-region=\"answer-label\"><span class=\"answernumber\">a. </span><div class=\"flex-fill ms-1\">\\(2x\\)</div></div> <i class=\"icon fa fa-check text-success fa-fw \" title=\"Đúng\"></i></div><div class=\"r1\"><input type=\"radio\" name=\"q1:1_answer\" value=\"1\" id=\"q1:1_answer1\" disabled=\"disabled\"><div class=\"d-flex w-auto\" id=\"q1:1_answer1_label\" data-region=\"answer-label\"><span class=\"answernumber\">b. </span><div class=\"flex-fill ms-1\">\\(x\\)</div></div></div><div class=\"r0\"><input type=\"radio\" name=\"q1:1_answer\" value=\"2\" id=\"q1:1_answer2\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><span class=\"answernumber\">c. </span><div class=\"flex-fill ms-1\">\\(2\\)</div></div></div></div></div></div><div class=\"outcome clearfix\"><h4 class=\"accesshide\">Phản hồi</h4><div class=\"feedback\"><div class=\"generalfeedback\"><p>Công thức \\((x^n)'=nx^{n-1}\\).</p></div><div class=\"rightanswer\">Câu trả lời đúng là: \\(2x\\)</div></div></div></div></div>"
+   },
+   {
+    "type": "x",
+    "html": "<div class=\"que multichoice deferredfeedback partiallycorrect\"><div class=\"info\"><div class=\"state\">Đúng một phần</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Chọn các số chẵn</p></div><div class=\"ablock\"><div class=\"answer\"><div class=\"r0 correct\"><input type=\"checkbox\" name=\"q3:1_choice0\" value=\"1\" checked=\"checked\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><span class=\"answernumber\">a. </span><div class=\"flex-fill ms-1\">2</div></div></div><div class=\"r1\"><input type=\"checkbox\" name=\"q3:1_choice1\" value=\"1\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><span class=\"answernumber\">b. </span><div class=\"flex-fill ms-1\">3</div></div></div><div class=\"r0\"><input type=\"checkbox\" name=\"q3:1_choice2\" value=\"1\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><span class=\"answernumber\">c. </span><div class=\"flex-fill ms-1\">4</div></div></div></div></div></div><div class=\"outcome clearfix\"><div class=\"feedback\"><div class=\"rightanswer\">Các câu trả lời đúng là: 2, 4</div></div></div></div></div>"
+   },
+   {
+    "type": "x",
+    "html": "<div class=\"que multichoice deferredfeedback complete\"><div class=\"info\"><div class=\"state\">Hoàn thành</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Câu giấu đáp án</p></div><div class=\"ablock\"><div class=\"answer\"><div class=\"r0\"><input type=\"radio\" name=\"q7:1_answer\" value=\"0\" checked=\"checked\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><div class=\"flex-fill ms-1\">x</div></div></div><div class=\"r1\"><input type=\"radio\" name=\"q7:1_answer\" value=\"1\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><div class=\"flex-fill ms-1\">y</div></div></div></div></div></div></div></div>"
+   }
+  ]
+ },
+ {
+  "file": "2-1",
+  "quiz": "Quiz 2 (09/10)",
+  "subject": "Giải tích 2",
+  "code": "mt1005",
+  "attempt": 2,
+  "finished": 1759700000,
+  "closesAt": 4102444800,
+  "questions": [
+   {
+    "type": "x",
+    "html": "<div class=\"que numerical deferredfeedback incorrect\"><div class=\"info\"><div class=\"state\">Không đúng</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Gia tốc trọng trường (m/s²)?</p></div><div class=\"ablock\"><label for=\"q5:1_answer\">Câu trả lời:</label><span class=\"answer\"><input type=\"text\" name=\"q5:1_answer\" value=\"9,7\" id=\"q5:1_answer\" size=\"30\" class=\"form-control d-inline incorrect\" readonly=\"readonly\"></span></div></div><div class=\"outcome clearfix\"><div class=\"feedback\"><div class=\"generalfeedback\">Lấy g gần đúng.</div><div class=\"rightanswer\">Câu trả lời đúng là: 9,8 (m/s²)</div></div></div></div></div>"
+   },
+   {
+    "type": "x",
+    "html": "<div class=\"que shortanswer deferredfeedback correct\"><div class=\"info\"><div class=\"state\">Correct</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Tên phương pháp dùng tiếp tuyến?</p></div><div class=\"ablock\"><span class=\"answer\"><input type=\"text\" name=\"q6:1_answer\" value=\"Newton\" readonly=\"readonly\"></span></div></div><div class=\"outcome clearfix\"><div class=\"feedback\"><div class=\"rightanswer\">The correct answer is: Newton-Raphson</div></div></div></div></div>"
+   },
+   {
+    "type": "x",
+    "html": "<div class=\"que truefalse deferredfeedback correct\"><div class=\"info\"><div class=\"state\">Đúng</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Hàm liên tục trên đoạn thì bị chặn.</p></div><div class=\"ablock\"><div class=\"answer\"><div class=\"r0 correct\"><input type=\"radio\" name=\"q4:1_answer\" value=\"1\" checked=\"checked\" disabled=\"disabled\"><label for=\"q4:1_answertrue\" class=\"ms-1\">Đúng</label> <i class=\"icon fa fa-check\"></i></div><div class=\"r1\"><input type=\"radio\" name=\"q4:1_answer\" value=\"0\" disabled=\"disabled\"><label for=\"q4:1_answerfalse\" class=\"ms-1\">Sai</label></div></div></div></div><div class=\"outcome clearfix\"><div class=\"feedback\"><div class=\"rightanswer\">Câu trả lời đúng là 'Đúng'.</div></div></div></div></div>"
+   }
+  ]
+ },
+ {
+  "file": "3-1",
+  "quiz": "Bài kiểm tra Đặc biệt!",
+  "subject": "Vật lý",
+  "code": "PH1003",
+  "attempt": 1,
+  "questions": [
+   {
+    "type": "x",
+    "html": "<div class=\"que multichoice deferredfeedback complete\"><div class=\"info\"><div class=\"state\">Hoàn thành</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Câu giấu đáp án</p></div><div class=\"ablock\"><div class=\"answer\"><div class=\"r0\"><input type=\"radio\" name=\"q7:1_answer\" value=\"0\" checked=\"checked\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><div class=\"flex-fill ms-1\">x</div></div></div><div class=\"r1\"><input type=\"radio\" name=\"q7:1_answer\" value=\"1\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><div class=\"flex-fill ms-1\">y</div></div></div></div></div></div></div></div>"
+   }
+  ]
+ },
+ {
+  "file": "4-1",
+  "quiz": "x",
+  "subject": "Không mã",
+  "attempt": 1,
+  "questions": [
+   {
+    "type": "x",
+    "html": "<div class=\"que multichoice deferredfeedback incorrect\"><div class=\"info\"><div class=\"state\">Không đúng</div></div><div class=\"content\"><div class=\"formulation clearfix\"><div class=\"qtext\"><p>Thủ đô của Việt Nam &amp; nước bạn?</p></div><div class=\"ablock\"><div class=\"answer\"><div class=\"r0 incorrect\"><input type=\"radio\" name=\"q2:1_answer\" value=\"0\" checked=\"checked\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><span class=\"answernumber\">a. </span><div class=\"flex-fill ms-1\">Huế</div></div> <i class=\"icon fa fa-remove text-danger fa-fw \" title=\"Sai\"></i></div><div class=\"r1\"><input type=\"radio\" name=\"q2:1_answer\" value=\"1\" disabled=\"disabled\"><div class=\"d-flex w-auto\" data-region=\"answer-label\"><span class=\"answernumber\">b. </span><div class=\"flex-fill ms-1\">Hà  Nội</div></div></div></div></div></div><div class=\"outcome clearfix\"><div class=\"feedback\"><div class=\"rightanswer\">The correct answer is: Hà Nội</div></div></div></div></div>"
+   }
+  ]
+ }
+]

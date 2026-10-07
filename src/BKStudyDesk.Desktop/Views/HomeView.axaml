@@ -14,7 +14,7 @@
                     <Border Classes="datebox">
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Classes="day" Text="{Binding Day.Day}" />
-                            <TextBlock Classes="month" Text="{Binding Day.Month, StringFormat='th {0}'}" />
+                            <TextBlock Classes="month" Text="{Binding Month}" />
                         </StackPanel>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">

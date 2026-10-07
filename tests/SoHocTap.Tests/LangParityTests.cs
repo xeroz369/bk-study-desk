@@ -30,6 +30,16 @@ public partial class LangParityTests
         Assert.Empty(dup);
     }
 
+    [Theory]
+    [InlineData("vi")]
+    [InlineData("en")]
+    public void NoKeysDifferOnlyInCase(string code)
+    {
+        // "autoLogin.note" và "autologin.note" là hai key khác nhau với Dictionary nhưng dễ nhầm khi sửa: một bản bị bỏ quên mà không ai thấy.
+        var clash = Read(code).Keys.GroupBy(k => k, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => string.Join(" / ", g)).ToList();
+        Assert.Empty(clash);
+    }
+
     [Fact]
     public void SameKeys()
     {

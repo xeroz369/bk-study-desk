@@ -1,0 +1,99 @@
+{
+ "pack": {
+  "format": "studypack/1",
+  "id": "vi-du-quiz",
+  "title": "Ví dụ quiz tự soạn",
+  "version": "1.0.0",
+  "language": "vi",
+  "course": {
+   "code": "MT1003",
+   "name": "Giải tích 1"
+  },
+  "authors": [
+   {
+    "name": "BK Study Desk"
+   }
+  ],
+  "license": "CC-BY-SA-4.0",
+  "verified": {
+   "method": "giải tay"
+  },
+  "settings": {
+   "shuffleQuestions": false,
+   "shuffleOptions": true
+  },
+  "units": [
+   {
+    "title": "Ví dụ · Đạo hàm và tích phân cơ bản",
+    "lessons": [
+     {
+      "id": "dao-ham",
+      "title": "Đạo hàm",
+      "questions": [
+       {
+        "tag": "tự soạn",
+        "prompt": "<p>Đạo hàm của \\(f(x)=x^3\\) tại \\(x=2\\) là</p>",
+        "solution": "<p>\\(f'(x)=3x^2\\), nên \\(f'(2)=12\\).</p>",
+        "options": [
+         "6",
+         "12",
+         "8",
+         "3"
+        ],
+        "answer": 1,
+        "id": "q1"
+       },
+       {
+        "tag": "tự soạn",
+        "prompt": "<p>Hàm nào có đạo hàm bằng chính nó?</p>",
+        "solution": "<p>\\((ce^x)'=ce^x\\) với mọi hằng số \\(c\\).</p>",
+        "type": "multi",
+        "options": [
+         "<div class=\"math\">\\(e^x\\)</div>",
+         "<div class=\"math\">\\(2e^x\\)</div>",
+         "<div class=\"math\">\\(x^2\\)</div>",
+         "<div class=\"math\">\\(\\ln x\\)</div>"
+        ],
+        "answers": [
+         0,
+         1
+        ],
+        "id": "q2"
+       },
+       {
+        "tag": "tự soạn",
+        "prompt": "<p>\\((\\sin x)' = \\cos x\\) với mọi \\(x\\).</p>",
+        "solution": "<p>Công thức đạo hàm cơ bản.</p>",
+        "type": "truefalse",
+        "answer": true,
+        "id": "q3"
+       }
+      ],
+      "sections": [
+       {
+        "body": "<p>Đạo hàm của \\(x^n\\) là \\(n x^{n-1}\\). Quy tắc dây chuyền: \\((f(g(x)))' = f'(g(x))\\,g'(x)\\).</p>"
+       }
+      ]
+     },
+     {
+      "id": "tich-phan",
+      "title": "Tích phân",
+      "questions": [
+       {
+        "tag": "tự soạn",
+        "prompt": "<p>Tính \\(\\int_0^1 2x\\,dx\\).</p>",
+        "solution": "<p>\\(\\int_0^1 2x\\,dx = x^2\\big|_0^1 = 1\\).</p>",
+        "type": "numeric",
+        "answer": 1,
+        "tolerance": 0.001,
+        "id": "q1"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "errors": [],
+ "warnings": []
+}

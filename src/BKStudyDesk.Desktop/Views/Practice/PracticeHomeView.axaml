@@ -1,0 +1,253 @@
+<!-- Trang chính Luyện tập (spec mục 6): đầu trang, 4 tab Hôm nay, Môn học, Quiz của bạn, Kết quả.
+     Dữ liệu: Core/Presentation/Practice/Pages/PracticeHome.cs. Khung, thẻ, dòng: design-system/bk mục 4. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             xmlns:p="clr-namespace:SoHocTap.Presentation.Practice.Pages;assembly=BKStudyDesk.Core"
+             xmlns:pr="clr-namespace:SoHocTap.Presentation.Practice;assembly=BKStudyDesk.Core"
+             x:Class="BKStudyDesk.Desktop.Views.Practice.PracticeHomeView"
+             x:DataType="p:PracticeHomeModel">
+    <UserControl.Resources>
+        <DataTemplate x:Key="LessonRow" x:DataType="p:PracticeLessonRow">
+            <Border Classes="row" Tag="{Binding Id}" Tapped="OnLessonTapped" Cursor="Hand">
+                <Grid ColumnDefinitions="*,12,112">
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="sub" Text="{Binding Sub}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Classes="right" VerticalAlignment="Center" Text="{Binding StatusText}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="UnitBlock" x:DataType="p:PracticeUnitRow">
+            <StackPanel>
+                <Border Classes="group"><TextBlock Classes="group" Text="{Binding Title}" /></Border>
+                <ItemsControl ItemsSource="{Binding Lessons}" ItemTemplate="{StaticResource LessonRow}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="CourseCard" x:DataType="p:PracticeCourseRow">
+            <Border Classes="card">
+                <StackPanel>
+                    <Border Classes="card-head"><DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Button Content="{l:T practice.mix}" IsVisible="{Binding CanMix}" Tag="{Binding Id}" Click="OnMix" />
+                            <Button Content="{l:T practice.randomExam}" IsVisible="{Binding CanRandomExam}" Tag="{Binding Id}" Click="OnRandomExam" />
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Classes="card-title" Text="{Binding Name}" />
+                            <TextBlock Classes="sub" Text="{Binding Sub}" />
+                        </StackPanel>
+                    </DockPanel></Border>
+                    <ItemsControl ItemsSource="{Binding Units}" ItemTemplate="{StaticResource UnitBlock}" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="ExamRow" x:DataType="p:PracticeCourseRow">
+            <Border Classes="row">
+                <Grid ColumnDefinitions="*,12,Auto">
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Name}" />
+                        <TextBlock Classes="sub" Text="{Binding ExamText}" />
+                    </StackPanel>
+                    <Button Grid.Column="2" VerticalAlignment="Center" Content="{l:T practice.randomExam}" IsEnabled="{Binding CanRandomExam}" Tag="{Binding Id}" Click="OnRandomExam" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="QuizRow" x:DataType="p:PracticeQuizRow">
+            <Border Classes="row">
+                <Grid ColumnDefinitions="*,12,Auto">
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="sub" Classes.danger="{Binding Broken}" Text="{Binding Sub}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button Content="{l:T practice.quiz.remove}" IsVisible="{Binding File, Converter={x:Static ObjectConverters.IsNotNull}}" Tag="{Binding File}" Click="OnRemove" />
+                        <Button Content="{l:T practice.open}" IsVisible="{Binding !Broken}" Tag="{Binding}" Click="OnOpenQuiz" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="ArchiveRow" x:DataType="p:PracticeArchiveRow">
+            <Border Classes="row">
+                <Grid ColumnDefinitions="*,12,Auto,12,Auto">
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="sub" Text="{Binding Sub}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Classes="right"
+                               VerticalAlignment="Center" Text="{Binding Status}" Tag="{Binding Tone}" Loaded="OnToneLoaded" />
+                    <Button Grid.Column="4" VerticalAlignment="Center" Tag="{Binding}" Click="OnArchiveOpen" Loaded="OnArchiveButtonLoaded" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="ArchiveGroup" x:DataType="p:PracticeArchiveGroup">
+            <StackPanel>
+                <Border Classes="group"><DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Classes="group" Text="{Binding Meta}" />
+                    <TextBlock Classes="group" Text="{Binding Subject}" />
+                </DockPanel></Border>
+                <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource ArchiveRow}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <StackPanel Spacing="24">
+        <DockPanel>
+            <!-- Trang tĩnh của sổ (ví dụ Lộ trình ôn), mỗi trang một nút. -->
+            <ItemsControl DockPanel.Dock="Right" VerticalAlignment="Top" ItemsSource="{Binding Pages}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="pr:PageEntry"><Button Content="{Binding Title}" Tag="{Binding Id}" Click="OnPage" /></DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel Spacing="2">
+                <TextBlock Classes="title" Text="{l:T practice.title}" />
+                <TextBlock x:Name="MetaText" Classes="meta" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Lỗi nạp (design-system/bk mục 6): vấn đề, cách xử lý, nút Thử lại; phần nạp được vẫn dùng bình thường. -->
+        <Border x:Name="ErrorCard" Classes="card" IsVisible="False">
+            <DockPanel Margin="16,12">
+                <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" Content="{l:T practice.retry}" Click="OnRetry" />
+                <TextBlock x:Name="ErrorText" Classes="danger" TextWrapping="Wrap" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <TabControl x:Name="Tabs" Padding="0">
+            <TabItem Header="{l:T practice.tab.today}">
+                <Grid x:Name="TodayColumns" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="TodayCard" Classes="card" VerticalAlignment="Top">
+                        <StackPanel>
+                            <Border Classes="card-head"><TextBlock Classes="card-title" Text="{l:T practice.today.card}" /></Border>
+                            <Border Classes="row">
+                                <Grid ColumnDefinitions="*,12,Auto">
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Classes="name" Text="{l:T practice.today.due}" />
+                                        <TextBlock x:Name="DueSub" Classes="sub" />
+                                    </StackPanel>
+                                    <Button x:Name="DueButton" Grid.Column="2" Classes="accent" VerticalAlignment="Center" Content="{l:T practice.start}" Click="OnDue" />
+                                </Grid>
+                            </Border>
+                            <Border Classes="row">
+                                <Grid ColumnDefinitions="*,12,Auto">
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Classes="name" Text="{l:T practice.today.review}" />
+                                        <TextBlock x:Name="ReviewSub" Classes="sub" />
+                                    </StackPanel>
+                                    <Button x:Name="ReviewButton" Grid.Column="2" VerticalAlignment="Center" Content="{l:T practice.start}" Click="OnReview" />
+                                </Grid>
+                            </Border>
+                            <Border Classes="row">
+                                <Grid ColumnDefinitions="*,12,Auto">
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Classes="name" Text="{l:T practice.today.next}" />
+                                        <TextBlock x:Name="NextSub" Classes="sub" />
+                                    </StackPanel>
+                                    <Button x:Name="NextButton" Grid.Column="2" VerticalAlignment="Center" Content="{l:T practice.open}" Click="OnNext" />
+                                </Grid>
+                            </Border>
+                            <Border Classes="row">
+                                <Grid ColumnDefinitions="*,12,Auto">
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Classes="name" Text="{l:T practice.today.flagged}" />
+                                        <TextBlock x:Name="FlaggedSub" Classes="sub" />
+                                    </StackPanel>
+                                    <Button x:Name="FlaggedButton" Grid.Column="2" VerticalAlignment="Center" Content="{l:T practice.open}" Click="OnFlagged" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="ExamCard" Grid.Column="2" Classes="card" VerticalAlignment="Top">
+                        <StackPanel>
+                            <Border Classes="card-head"><TextBlock Classes="card-title" Text="{l:T practice.exams.card}" /></Border>
+                            <ItemsControl ItemsSource="{Binding Courses}" ItemTemplate="{StaticResource ExamRow}" />
+                            <TextBlock x:Name="ExamsEmpty" Classes="empty" Text="{l:T practice.exams.empty}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+            <TabItem Header="{l:T practice.tab.courses}">
+                <StackPanel Margin="0,16,0,0" Spacing="24">
+                    <TextBlock x:Name="CoursesEmpty" Classes="empty" Text="{l:T practice.empty.courses}" />
+                    <ItemsControl ItemsSource="{Binding Courses}" ItemTemplate="{StaticResource CourseCard}">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="24" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="{l:T practice.tab.quizzes}">
+                <StackPanel Margin="0,16,0,0" Spacing="24">
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button Content="{l:T practice.quizzes.import}" Click="OnAuthorImport" />
+                                <Button Classes="accent" Content="{l:T practice.quizzes.create}" Click="OnAuthor" />
+                            </StackPanel>
+                            <TextBlock Classes="card-title" Text="{l:T practice.quizzes.card}" />
+                        </DockPanel></Border>
+                        <ItemsControl ItemsSource="{Binding Quizzes}" ItemTemplate="{StaticResource QuizRow}" />
+                        <TextBlock x:Name="QuizzesEmpty" Classes="empty" Text="{l:T practice.empty.quizzes}" />
+                    </StackPanel>
+                </Border>
+                <!-- Kho quiz LMS (port QuizArchive.svelte): quiz đã nộp trên LMS, lưu sau mỗi lần đồng bộ. -->
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <ToggleSwitch x:Name="AutoSave" OnContent="{l:T practice.archive.autoSave}" OffContent="{l:T practice.archive.autoSave}" IsCheckedChanged="OnAutoSave" />
+                                <Button x:Name="SaveNowButton" Content="{l:T practice.archive.saveNow}" Click="OnSaveNow" />
+                            </StackPanel>
+                            <TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.archive.card}" />
+                        </DockPanel></Border>
+                        <TextBlock x:Name="ArchiveNote" Classes="sub" Margin="16,12,16,0" TextWrapping="Wrap" IsVisible="False" />
+                        <TextBlock Classes="sub" Margin="16,12" TextWrapping="Wrap" Text="{l:T practice.archive.hint}" />
+                        <ItemsControl ItemsSource="{Binding Archive}" ItemTemplate="{StaticResource ArchiveGroup}" />
+                        <TextBlock x:Name="ArchiveEmpty" Classes="empty" />
+                    </StackPanel>
+                </Border>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="{l:T practice.tab.results}">
+                <StackPanel Margin="0,16,0,0" Spacing="24">
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><TextBlock Classes="card-title" Text="{l:T practice.progress.card}" /></Border>
+                        <DataGrid x:Name="ProgressGrid" ItemsSource="{Binding Progress}" IsReadOnly="True" AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T practice.col.course}" Binding="{Binding Name}" Width="2*" />
+                                <DataGridTextColumn Header="{l:T practice.col.done}" Binding="{Binding Done}" Width="*" />
+                                <DataGridTextColumn Header="{l:T practice.col.answered}" Binding="{Binding Answered}" Width="*" />
+                                <DataGridTextColumn Header="{l:T practice.col.firstOk}" Binding="{Binding FirstOk}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="ProgressEmpty" Classes="empty" Text="{l:T practice.empty.courses}" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <TextBlock DockPanel.Dock="Right" x:Name="ResultsMeta" Classes="meta" />
+                            <TextBlock Classes="card-title" Text="{l:T practice.results.card}" />
+                        </DockPanel></Border>
+                        <DataGrid x:Name="ResultsGrid" ItemsSource="{Binding Results}" IsReadOnly="True" AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T practice.col.exam}" Binding="{Binding Title}" Width="2*" />
+                                <DataGridTextColumn Header="{l:T practice.col.date}" Binding="{Binding When}" Width="Auto" />
+                                <DataGridTextColumn Header="{l:T practice.col.score}" Binding="{Binding Score}" Width="Auto" />
+                                <DataGridTextColumn Header="{l:T practice.col.detail}" Binding="{Binding Sub}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="ResultsEmpty" Classes="empty" Text="{l:T practice.empty.results}" />
+                    </StackPanel>
+                </Border>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
+</UserControl>

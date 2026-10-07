@@ -1,0 +1,32 @@
+<!-- Bài học: đầu trang (tên bài, môn và chương, trạng thái), nguồn mở được đúng trang, mỗi mục kiến thức (####) một thẻ,
+     nút làm câu hỏi của bài, bài trước và bài sau. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             x:Class="BKStudyDesk.Desktop.Views.Practice.LessonView">
+    <!-- Cột đọc tối đa ReadingMaxWidth, sát lề trái như các trang khác. -->
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="{StaticResource ReadingMaxWidth}" /></Grid.ColumnDefinitions>
+    <StackPanel Spacing="24">
+        <DockPanel>
+            <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T practice.back}" Click="OnBack" />
+            <StackPanel Spacing="2">
+                <TextBlock x:Name="TitleText" Classes="title" TextWrapping="Wrap" />
+                <TextBlock x:Name="MetaText" Classes="meta" />
+            </StackPanel>
+        </DockPanel>
+        <StackPanel x:Name="SourcePanel" Spacing="8">
+            <WrapPanel x:Name="Sources" ItemSpacing="8" LineSpacing="8" />
+            <TextBlock x:Name="SourceMissing" Classes="sub danger" IsVisible="False" />
+        </StackPanel>
+        <Border x:Name="EmptyCard" Classes="card" IsVisible="False">
+            <TextBlock x:Name="EmptyText" Classes="empty" />
+        </Border>
+        <StackPanel x:Name="Sections" Spacing="24" />
+        <Button x:Name="QuestionsButton" Classes="accent" Click="OnQuestions" />
+        <DockPanel>
+            <Button x:Name="NextButton" DockPanel.Dock="Right" Click="OnNext" />
+            <Button x:Name="PrevButton" HorizontalAlignment="Left" Click="OnPrev" />
+        </DockPanel>
+    </StackPanel>
+    </Grid>
+</UserControl>

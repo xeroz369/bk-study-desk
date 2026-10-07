@@ -137,10 +137,11 @@ Màu nằm trong `ThemeDictionaries` của `Styles/Tokens.axaml`; View dùng `Dy
 - Tiếng Việt viết hoa đầu câu. Nút là động từ: "Đăng nhập", "Tải về".
 - Không gạch ngang dài, mũi tên, dấu chấm giữa, dấu ba chấm một ký tự, ngoặc cong, emoji.
 
-## 8. Khung Luyện tập (Svelte)
+## 8. Trang Luyện tập
 
-- Dùng cùng token qua biến CSS (tên giống bảng mục 3).
-- Component có sẵn, chỉ đổi biến giao diện. Định dạng Study Pack v1 và file tiến độ không đổi; đổi cấu trúc thì có bước chuyển đổi.
+- Bản Avalonia: control có sẵn như các trang khác (thẻ, tab, `RadioButton`, `CheckBox`, `DataGrid`, `ProgressBar`). Cột đọc của làm câu và bài học rộng tối đa `ReadingMaxWidth`, sát lề trái. Cỡ chữ đổi bằng Ctrl+cộng, Ctrl+trừ trong khoảng `PracticeZoomMin` đến `PracticeZoomMax`.
+- Bản 1.x (Svelte): dùng cùng token qua biến CSS (tên giống bảng mục 3), component có sẵn, chỉ đổi biến giao diện.
+- Hai bản đọc chung định dạng Study Pack v1 và `ket-qua.json`; đổi cấu trúc thì có bước chuyển đổi.
 
 ## 9. Kiểm trước khi bàn giao một trang
 
@@ -148,3 +149,5 @@ Màu nằm trong `ThemeDictionaries` của `Styles/Tokens.axaml`; View dùng `Dy
 - Không icon, không cỡ chữ ngoài mục 3, không màu ngoài bảng token, không control tự chế.
 - Khung đúng số đo mục 4.
 - Đủ trạng thái trống, đang tải, lỗi.
+- Ảnh chụp cả nền sáng và tối, ở 1296 px và 900 px; trang Luyện tập chụp thêm ở cỡ chữ 130%.
+- Chữ tiếng Việt chuẩn, nhất quán (ứng dụng, tệp, trang), không ký tự kiểu AI.

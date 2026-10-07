@@ -5,6 +5,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             xmlns:v="clr-namespace:BKStudyDesk.Desktop.Views"
              x:Class="BKStudyDesk.Desktop.Views.CalendarView">
     <DockPanel>
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
@@ -50,15 +51,19 @@
                 </TabItem>
                 <TabItem Header="{l:T calendar.tabWeek}">
                     <DockPanel>
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="16,8">
+                        <WrapPanel DockPanel.Dock="Top" ItemSpacing="8" LineSpacing="8" Margin="16,8">
                             <Button Content="{l:T calendar.prevWeek}" Click="OnPrevWeek" />
                             <Button x:Name="ThisWeek" Content="{l:T calendar.thisWeek}" Click="OnThisWeek" />
                             <Button Content="{l:T calendar.nextWeek}" Click="OnNextWeek" />
-                            <TextBlock x:Name="WeekText" Classes="card-title" Margin="8,0,0,0" />
-                        </StackPanel>
-                        <TextBlock DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" Text="{l:T calendar.dimNote}" />
+                            <TextBlock x:Name="WeekText" Classes="card-title" Margin="8,0,16,0" VerticalAlignment="Center" />
+                            <!-- Kiểu xem: lưới tuần (như Google Calendar, mặc định) hay danh sách; nhớ ở app.calendarView như 1.x -->
+                            <ComboBox x:Name="ViewBox" MinWidth="150" SelectionChanged="OnView" />
+                        </WrapPanel>
+                        <TextBlock x:Name="DimNote" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" Text="{l:T calendar.dimNote}" />
                         <TextBlock x:Name="NoSlot" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
                         <TextBlock x:Name="WeekEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <Panel>
+                        <v:WeekGridView x:Name="WeekGrid" Margin="16,0,0,0" IsVisible="False" />
                         <DataGrid x:Name="Week" DoubleTapped="OnWeekOpen">
                             <DataGrid.ContextFlyout><MenuFlyout Opening="OnWeekMenu" /></DataGrid.ContextFlyout>
                             <DataGrid.Columns>
@@ -76,6 +81,7 @@
                                 <DataGridTextColumn Header="{l:T col.teacher}" Binding="{Binding Teacher}" Width="Auto" MinWidth="120" x:DataType="p:WeekRow" />
                             </DataGrid.Columns>
                         </DataGrid>
+                        </Panel>
                     </DockPanel>
                 </TabItem>
                 <TabItem Header="{l:T calendar.tabExams}">

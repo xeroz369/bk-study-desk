@@ -333,6 +333,7 @@
     "calendarView": "grid",
     "practiceReleaseMinutes": 3,
     "practiceFlushMs": 2000,
+    "backHistory": 20,
     "font": {
       "family": "",
       "size": 0

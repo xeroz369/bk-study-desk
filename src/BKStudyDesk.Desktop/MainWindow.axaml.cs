@@ -24,53 +24,49 @@ public partial class MainWindow : Window
     private int _current;
     private int _shownIndex = -1;
     /// <summary>Số mục trang trên thanh trên cùng; trang ngay sau đó là Cài đặt (nút bên phải).</summary>
-    private const int NavCount = 5;
+    private const int NavCount = 6;
     private SubjectsView? _subjects;   // trang Môn học đang hiện: dựng lại (dữ liệu mới) thì giữ môn, tab, thư mục đang xem
-    private PracticeView? _practice;   // giữ một instance: chuyển trang không mất bài đang làm
+    private LibraryView? _library;     // như trên: giữ chữ tìm, khoa, môn đang xem
+    private Views.Practice.PracticeHost? _practice;   // giữ một instance: chuyển trang không mất bài đang làm
 
     public MainWindow()
     {
         InitializeComponent();
+        // Thứ tự theo mức dùng thường ngày (người dùng chốt 07/10): Hôm nay, Môn học, Lịch, Thư viện, Luyện tập, MyBK. Ctrl+số theo thứ tự này.
         _pages =
         [
             (L.T("nav.today"), () => new HomeView(_host.State, () => _host.Login(this))),
-            (L.T("nav.subjects"), () => _subjects = new SubjectsView(_host.State, _host.Library, _subjects, Download)),
+            (L.T("nav.subjects"), () => _subjects = new SubjectsView(_host.State, _subjects, Download, OpenLibrary)),
             (L.T("nav.calendar"), () => new CalendarView(_host.State)),
-            (L.T("nav.practice"), () => _practice ??= new PracticeView(_host.Practice, OnPracticeMessage)),
+            (L.T("nav.library"), () => _library = new LibraryView(_host.State, _host.Library, _library)),
+            (L.T("nav.practice"), () => _practice ??= new Views.Practice.PracticeHost(_host.Router)),
             ("MyBK", () => new MybkView(_host.State)),
-            (L.T("nav.settings"), () => new SettingsView(SettingsActions())),   // nút bên phải thanh trên cùng, Ctrl+6
+            (L.T("nav.settings"), () => new SettingsView(SettingsActions())),   // nút bên phải thanh trên cùng, Ctrl+7
         ];
         for (var i = 0; i < NavCount; i++)
         {
             var index = i;
-            var item = new Button
-            {
-                Classes = { "bar" }, Height = 48,
-                Content = new Grid { Children = { new TextBlock { Text = _pages[i].Title, VerticalAlignment = VerticalAlignment.Center },
-                    new Border { Height = 3, Background = Avalonia.Media.Brushes.White, VerticalAlignment = VerticalAlignment.Bottom, IsVisible = false } } },
-            };
+            var item = new Button { Classes = { "bar" }, Content = new TextBlock { Text = _pages[i].Title } };   // gạch chân mục đang xem: style Button.bar.on
             item.Click += (_, _) => Show(index);
             Nav.Children.Add(item);
             KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + i, KeyModifiers.Control), Command = new Command(() => Show(index)) });
         }
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + NavCount, KeyModifiers.Control), Command = new Command(() => Show(NavCount)) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.F5), Command = new Command(SyncNow) });   // như 1.x
+        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Left, KeyModifiers.Alt), Command = new Command(Back) });
         SettingsButton.Click += (_, _) => Show(NavCount);
         MoreSettings.Click += (_, _) => Show(NavCount);
         // Dữ liệu mới: dựng lại trang đang xem. Cài đặt không vẽ dữ liệu đồng bộ: giữ nguyên (đang gõ dở trong ô thì không mất chữ).
         _host.State.Changed += () => { if (_current != NavCount) Show(_current); ShowSync(); };
         _host.State.StatusChanged += ShowSync;
         _host.State.Progress += ShowSync;
-        var accountMenu = (MenuFlyout)AccountButton.Flyout!;
-        accountMenu.Opening += (_, _) => Fill(accountMenu.Items, AccountItems());
-        MoreAccount.SubmenuOpened += (_, _) => Fill(MoreAccount.Items, AccountItems());
-        MoreAccount.Items.Add(new MenuItem());   // chỗ giữ để mục có mũi tên mở menu con; dựng thật khi mở
         var moreMenu = (MenuFlyout)More.Flyout!;
         moreMenu.Opening += (_, _) => FillMore(moreMenu);
         _host.LoginProgress += (_, _) => ShowSync();
         var statusFlyout = new Flyout { Placement = PlacementMode.BottomEdgeAlignedRight };
         statusFlyout.Opening += (_, _) => statusFlyout.Content = StatusPanelContent(statusFlyout);
-        statusFlyout.Closed += (_, _) => ShowSync();
+        statusFlyout.Opened += (_, _) => StatusButton.Classes.Set("on", true);   // bảng đang mở: gạch chân như mục trang đang xem
+        statusFlyout.Closed += (_, _) => { StatusButton.Classes.Set("on", false); ShowSync(); };
         StatusButton.Flyout = statusFlyout;
         _notices.Changed += ShowSync;
         Bar.SizeChanged += (_, _) => FitBar();
@@ -82,12 +78,21 @@ public partial class MainWindow : Window
         // Lỗi không ai bắt (thường từ việc chạy nền): ghi vào bảng Thông báo, không hiện thông báo hệ điều hành.
         AppEvents.UnhandledError += e => Avalonia.Threading.Dispatcher.UIThread.Post(() => _notices.Add(new Notice(Format.Now, L.T("error.unhandled"), e.Message, "")));
         var args = Environment.GetCommandLineArgs();
-        Show(args.Contains("--lich") ? 2 : args.Contains("--mon") ? 1 : args.Contains("--luyen") ? 3 : args.Contains("--mybk") ? 4 : args.Contains("--cai-dat") ? NavCount : 0);
+        // Trang mở đầu: cờ --mon, --lich, --thu-vien... (chụp kiểm tra), không thì trang đang xem lúc đóng app lần trước.
+        var snapping = args.Any(a => a.StartsWith("--snap=", StringComparison.Ordinal));
+        if (!snapping) _placement.Apply(this);   // ảnh chụp kiểm tra luôn cùng cỡ trong XAML, hay cỡ của --size=RộngxCao (ảnh Store tối thiểu 1366x768)
+        if (args.FirstOrDefault(a => a.StartsWith("--size=", StringComparison.Ordinal))?[7..].Split('x') is [var sw, var sh]
+            && double.TryParse(sw, System.Globalization.CultureInfo.InvariantCulture, out var w) && double.TryParse(sh, System.Globalization.CultureInfo.InvariantCulture, out var h))
+            (Width, Height) = (w, h);
+        _placement.Track(this);
+        var flagged = args.Where(a => a.StartsWith("--", StringComparison.Ordinal)).Select(a => PageOf(a[2..])).FirstOrDefault(i => i != 0);
+        Show(flagged != 0 || snapping ? flagged : PageOf(_placement.Page));
         if (args.FirstOrDefault(a => a.StartsWith("--tab="))?[6..] is { } tab && int.TryParse(tab, out var t))   // chụp kiểm tra
         {
             _subjects?.SelectTab(t);
             if (Page.Child is CalendarView calendar) calendar.SelectTab(t);
             if (Page.Child is MybkView mybk) mybk.Tabs.SelectedIndex = t;
+            if (Page.Child is Views.Practice.PracticeHost practiceTab) practiceTab.Tab = t;
             if (Page.Child is SettingsView settings && t == 1) settings.ExpandAdvanced();
         }
         ShowSync();
@@ -102,16 +107,43 @@ public partial class MainWindow : Window
         if (args.Contains("--webcheck")) Opened += async (_, _) => { Environment.ExitCode = await Web.WebCheck.RunAsync() ? 0 : 1; _exiting = true; Close(); };
     }
 
-    private async void Show(int index)
+    /// <summary>Các trang đã xem trước trang hiện tại (Alt+Mũi tên trái quay lại, như 1.x); giữ tối đa app.backHistory trang.</summary>
+    private readonly List<int> _back = [];
+
+    private void Back()
     {
-        // Rời Luyện tập: khung bị hủy khi gỡ khỏi cửa sổ, nên ghi nốt kết quả đang chờ trước.
-        if (index != _shownIndex && Page.Child is PracticeView practice) await practice.FlushAsync();
+        // Đang ở trong Luyện tập có màn con (làm câu, bài học...): lùi trong Luyện tập trước, như khung Svelte cũ.
+        if (Page.Child is Views.Practice.PracticeHost { CanGoBack: true } practice) { practice.GoBack(); return; }
+        if (_back.Count == 0) return;
+        var to = _back[^1];
+        _back.RemoveAt(_back.Count - 1);
+        Show(to, remember: false);
+    }
+
+    private async void Show(int index, bool remember = true) => await ShowAsync(index, remember);
+
+    private int _navGen;   // lượt chuyển trang mới nhất
+
+    private async Task ShowAsync(int index, bool remember)
+    {
+        var gen = ++_navGen;
+        // Rời Luyện tập: khung bị hủy khi gỡ khỏi cửa sổ, nên ghi nốt kết quả đang chờ trước. Bấm sang trang khác trong lúc chờ thì lượt
+        // này bỏ, lượt bấm sau cùng thắng (không thì lượt nào chờ xong sau sẽ đè, hiện sai trang).
+        if (index != _shownIndex && Page.Child is Views.Practice.PracticeHost practice)
+        {
+            await practice.FlushAsync();
+            if (gen != _navGen) return;
+        }
+        if (remember && _shownIndex >= 0 && index != _shownIndex)
+        {
+            _back.Add(_shownIndex);
+            if (_back.Count > Config.Int("app.backHistory", 20)) _back.RemoveAt(0);
+        }
         _current = index;
         for (var i = 0; i < Nav.Children.Count; i++)
         {
             var b = (Button)Nav.Children[i];
             b.Classes.Set("on", i == index);
-            ((Grid)b.Content!).Children[1].IsVisible = i == index;
         }
         SettingsButton.Classes.Set("on", index == NavCount);
         More.Classes.Set("on", index == NavCount);   // Cài đặt nằm trong nút Thêm khi thanh hẹp
@@ -149,26 +181,40 @@ public partial class MainWindow : Window
     /// </summary>
     private Control StatusPanelContent(Flyout owner)
     {
-        var panel = new StackPanel { Spacing = 12, Width = 380 };
-        panel.Children.Add(new TextBlock { Text = L.T("status.panel.sync"), Classes = { "card-title" } });
-        foreach (var r in Sources())
+        var panel = new StackPanel { Spacing = 12, Width = (double)this.FindResource("PanelWidth")! };
+        // Cùng mẫu với thẻ trong trang: tiêu đề trái, nút phải; mỗi nguồn một hàng, chữ trái, nút phải.
+        static Grid Row(Control left, Control right)
         {
-            var line = new StackPanel { Spacing = 2 };
-            line.Children.Add(new TextBlock { Text = r.State, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontWeight = r.Problem is null ? Avalonia.Media.FontWeight.Normal : Avalonia.Media.FontWeight.SemiBold });
-            if (r.Problem is { } p) line.Children.Add(new TextBlock { Text = p, Classes = { "meta", "danger" } });
-            if (r.Detail is { Length: > 0 } d) line.Children.Add(new TextBlock { Text = d, Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None });
-            if (r.Problem is not null)
-            {
-                var fix = new Button { Content = L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry"), Margin = new Thickness(0, 4, 0, 0) };
-                fix.Click += (_, _) => { owner.Hide(); if (r.NeedsLogin) _host.Login(this); else SyncNow(); };
-                line.Children.Add(fix);
-            }
-            panel.Children.Add(line);
+            var g = new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,Auto") };
+            right.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
+            Grid.SetColumn(right, 2);
+            g.Children.Add(left);
+            g.Children.Add(right);
+            return g;
         }
         var sync = new Button { Content = L.T("status.panel.syncNow") };
         sync.Click += (_, _) => { SyncNow(); owner.Hide(); };
-        panel.Children.Add(sync);
-        panel.Children.Add(new Separator());
+        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.sync"), Classes = { "card-title" } }, sync));
+        // Mỗi nguồn kèm trang chủ của nó (như nút Mở LMS, Mở MyBK ở thanh trạng thái 1.x): mở trong cửa sổ app, dùng chung đăng nhập.
+        foreach (var (r, home) in Sources().Zip([Config.Str("sources.lms.site"), Config.Str("sources.mybk.home")]))
+        {
+            var text = new StackPanel { Spacing = 2, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            text.Children.Add(new TextBlock { Text = r.State, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontWeight = r.Problem is null ? Avalonia.Media.FontWeight.Normal : Avalonia.Media.FontWeight.SemiBold });
+            if (r.Problem is { } p) text.Children.Add(new TextBlock { Text = p, Classes = { "meta", "danger" } });
+            if (r.Detail is { Length: > 0 } d) text.Children.Add(new TextBlock { Text = d, Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None });
+            var actions = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8 };
+            if (r.Problem is not null)
+            {
+                var fix = new Button { Content = L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry") };
+                fix.Click += (_, _) => { owner.Hide(); if (r.NeedsLogin) _host.Login(this); else SyncNow(); };
+                actions.Children.Add(fix);
+            }
+            var open = new Button { Content = L.F("status.panel.open", r.Label) };
+            open.Click += (_, _) => { owner.Hide(); _ = Files.Links.OpenAsync(this, home, r.Label); };
+            actions.Children.Add(open);
+            panel.Children.Add(Row(text, actions));
+        }
+        panel.Children.Add(new Separator { Margin = default });   // hết bề ngang, như vạch kẻ của thẻ
         panel.Children.Add(new TextBlock { Text = L.T("status.panel.notices"), Classes = { "card-title" } });
         if (_notices.Items.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("status.panel.noNotices"), Classes = { "meta" } });
         foreach (var n in _notices.Items.Take(8))
@@ -184,7 +230,7 @@ public partial class MainWindow : Window
             panel.Children.Add(item);
         }
         _notices.MarkRead();
-        return new ScrollViewer { MaxHeight = 560, Content = panel };
+        return new ScrollViewer { MaxHeight = (double)this.FindResource("PanelMaxHeight")!, Content = panel };
     }
 
     private void SyncNow()
@@ -195,25 +241,25 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Thanh trên cùng không đặt mốc độ rộng cứng: đo chữ thật (đổi theo ngôn ngữ, cỡ chữ, chữ đồng bộ) rồi chọn cách đầy đủ nhất còn vừa.
-    /// Thứ tự bỏ bớt: tên app, rồi gom phần phải vào nút Thêm. Mục trang không bao giờ bị giấu.
+    /// Thứ tự bỏ bớt: Cài đặt vào nút Thêm, rồi mục trang từ cuối lên (trang đang xem luôn còn trên thanh).
     /// </summary>
     private void FitBar()
     {
         var room = Bar.Bounds.Width - 32;   // lề hai bên 16
         if (room <= 0) return;
         foreach (var b in Nav.Children) b.IsVisible = true;
-        Tools.IsVisible = true;
+        SettingsButton.IsVisible = true;
         More.IsVisible = false;
         double W(Control c) { c.Measure(Size.Infinity); return c.DesiredSize.Width; }   // DesiredSize đã gồm Margin
-        if (W(Nav) + W(StatusButton) + W(Tools) <= room) return;
-        Tools.IsVisible = false;
+        if (W(Nav) + W(StatusButton) + W(SettingsButton) <= room) return;
+        SettingsButton.IsVisible = false;
         More.IsVisible = true;
         // Vẫn chật: mục trang từ cuối lên (trừ trang đang xem) chuyển vào nút Thêm.
         for (var i = NavCount - 1; i >= 0 && W(Nav) + W(StatusButton) + W(More) > room; i--)
             if (i != _current) Nav.Children[i].IsVisible = false;
     }
 
-    /// <summary>Menu nút Thêm: các trang không vừa thanh (FitBar ẩn), rồi Tài khoản, Cài đặt.</summary>
+    /// <summary>Menu nút Thêm: các trang không vừa thanh (FitBar ẩn), rồi Cài đặt.</summary>
     private void FillMore(MenuFlyout menu)
     {
         menu.Items.Clear();
@@ -226,32 +272,15 @@ public partial class MainWindow : Window
             menu.Items.Add(item);
         }
         if (menu.Items.Count > 0) menu.Items.Add(new Separator());
-        menu.Items.Add(MoreAccount);
         menu.Items.Add(MoreSettings);
     }
 
-    /// <summary>
-    /// Menu Tài khoản: dòng đầu là tình trạng (tên LMS hay "Cần đăng nhập"), rồi Đăng nhập (Đăng nhập lại), Đăng xuất. Đăng xuất
-    /// nằm trong menu con một mục để không bấm nhầm (Avalonia không có hộp thoại xác nhận sẵn).
-    /// </summary>
-    private IEnumerable<MenuItem> AccountItems()
+    /// <summary>Dòng tình trạng ở thẻ Tài khoản của Cài đặt: tên trên LMS, đã đăng nhập, hay cần đăng nhập.</summary>
+    private string AccountText()
     {
         var s = _host.State;
-        var need = s.Account;
-        yield return new MenuItem { IsEnabled = false, Header = need == AccountNeed.None
-            ? (s.Lms?.User is { } u ? L.F("settings.signedInAs", u) : L.T("settings.signedIn")) : L.T("settings.needLogin") };
-        var login = new MenuItem { Header = L.T(need == AccountNeed.None ? "settings.relogin" : "common.loginHcmut") };
-        login.Click += (_, _) => _host.Login(this);
-        yield return login;
-        var confirm = new MenuItem { Header = L.T("account.logoutConfirm") };
-        confirm.Click += async (_, _) => await _host.LogoutAsync();
-        yield return new MenuItem { Header = L.T("settings.logout"), Items = { confirm } };
-    }
-
-    private static void Fill(Avalonia.Controls.ItemCollection items, IEnumerable<MenuItem> fresh)
-    {
-        items.Clear();
-        foreach (var item in fresh) items.Add(item);
+        return s.Account != AccountNeed.None ? L.T("settings.needLogin")
+            : s.Lms?.User is { } u ? L.F("settings.signedInAs", u) : L.T("settings.signedIn");
     }
 
     /// <summary>
@@ -274,6 +303,8 @@ public partial class MainWindow : Window
     }
 
     private bool _exiting;   // Thoát từ khay: đóng thật, không thu xuống khay
+    private bool _trayHintShown;
+    private readonly Platform.WindowPlacement _placement = Platform.WindowPlacement.Load();
     private Platform.Notifier? _notifier;
 
     /// <summary>
@@ -297,10 +328,14 @@ public partial class MainWindow : Window
         TrayIcon.SetIcons(Application.Current!, [tray]);
         Closing += (_, e) =>
         {
+            _placement.Capture(this, Routes[_current]);
+            _placement.Save();
             if (_exiting || !SoHocTap.Core.Settings.App.CloseToTray) return;
             e.Cancel = true;
             Hide();
             _ = SleepAsync();
+            // Lần đầu thu xuống khay trong lần chạy này: báo app vẫn chạy (như 1.x), không thì tưởng đã tắt.
+            if (!_trayHintShown) { _trayHintShown = true; _notifier?.Show(AppInfo.Name, L.T("tray.stillRunning"), ""); }
         };
         _notifier = new Platform.Notifier(this, page => { ShowFromTray(); Show(PageOf(page)); });
         _host.UpdateOffered += v => Notify(L.F("update.available", v), L.T("notice.updateBody"), "cai-dat");
@@ -338,7 +373,7 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task SleepAsync()
     {
-        if (Page.Child is not PracticeView practice) return;
+        if (Page.Child is not Views.Practice.PracticeHost practice) return;
         await practice.FlushAsync();
         if (IsVisible) return;   // đã mở lại trong lúc chờ
         Page.Child = null;
@@ -354,15 +389,26 @@ public partial class MainWindow : Window
         _notifier?.Flush();
     }
 
-    /// <summary>Route của lời nhắc, khung Luyện tập ("lich", "mon/...", "luyen-tap"...) thành số thứ tự trang.</summary>
-    private static int PageOf(string route) => route.Split('/')[0] switch
+    /// <summary>Route của từng trang, cùng thứ tự với _pages (route của 1.x: lời nhắc, khung Luyện tập, data/window.json).</summary>
+    private static readonly string[] Routes = ["hom-nay", "mon", "lich", "thu-vien", "luyen-tap", "mybk", "cai-dat"];
+
+    /// <summary>Route ("lich", "mon/...", "luyen-tap"...) thành số thứ tự trang; tên khác của 1.x cũng nhận; lạ thì Hôm nay.</summary>
+    private static int PageOf(string route)
     {
-        "mon" or "tl" => 1, "lich" => 2, "luyen-tap" => 3, "mybk" or "diem" => 4, "cai-dat" => NavCount, _ => 0,
-    };
+        var key = route.Split('/')[0] switch { "tl" or "mon-hoc" => "mon", "luyen" => "luyen-tap", "diem" or "dich-vu" => "mybk", var k => k };
+        return Math.Max(0, Array.IndexOf(Routes, key));
+    }
+
+    /// <summary>Nút Xem trong Thư viện ở trang Môn học: mở trang Thư viện và chọn môn thư viện khớp môn đó.</summary>
+    private void OpenLibrary(string subject)
+    {
+        Show(PageOf("thu-vien"));
+        _library?.SelectSubject(subject);
+    }
 
     /// <summary>Việc của trang Cài đặt cần tới cửa sổ và phần chạy nền.</summary>
     private SoHocTap.Presentation.SettingsActions SettingsActions() => new(
-        AccountText: () => AccountItems().First().Header as string ?? "",
+        AccountText: AccountText,
         Login: () => _host.Login(this),
         Logout: _host.LogoutAsync,
         SyncNow: SyncNow,
@@ -430,12 +476,4 @@ public partial class MainWindow : Window
         _exiting = true;
         Close();
     };
-
-    /// <summary>ICommand nhỏ cho phím tắt (Avalonia không có sẵn lớp lệnh đơn giản).</summary>
-    private sealed class Command(Action run) : System.Windows.Input.ICommand
-    {
-        public event EventHandler? CanExecuteChanged { add { } remove { } }
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => run();
-    }
 }

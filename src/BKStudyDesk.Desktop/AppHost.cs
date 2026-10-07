@@ -29,16 +29,9 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     public event Action<string>? UpdateOffered;
     private readonly CancellationTokenSource _stop = new();   // dừng các vòng nền (giữ phiên, thư viện, cập nhật) khi đóng app
 
-    /// <summary>Máy chủ cục bộ của khung Luyện tập (mở khi cần lần đầu).</summary>
-    public SoHocTap.Web.LocalServer Practice => _practice ??= StartPractice();
-    private SoHocTap.Web.LocalServer? _practice;
-
-    private SoHocTap.Web.LocalServer StartPractice()
-    {
-        var s = new SoHocTap.Web.LocalServer(new SoHocTap.Api.ApiRouter(this));
-        s.Start();
-        return s;
-    }
+    /// <summary>API của 1.x gọi thẳng (không qua HTTP): trang Luyện tập native đọc ghi kết quả, gói, quiz LMS qua đây.</summary>
+    public SoHocTap.Api.ApiRouter Router => _router ??= new SoHocTap.Api.ApiRouter(this);
+    private SoHocTap.Api.ApiRouter? _router;
 
     /// <summary>Khung Luyện tập nhờ mở web: mở bằng trình duyệt mặc định (nơi người dùng đã đăng nhập trang trường).</summary>
     public bool OpenWeb(string url, string title)
@@ -242,7 +235,6 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         _notifyTimer?.Stop();
         Hub.Dispose();
         Library.Dispose();
-        _practice?.Dispose();
         Updates.ApplyOnExit();   // đã tải bản mới (chế độ tự động): cài khi app thoát
     }
 }

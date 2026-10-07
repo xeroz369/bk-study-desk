@@ -25,7 +25,7 @@ public partial class App : Application
     internal static SoHocTap.Ui.FontChoice Font { get; private set; } = SoHocTap.Ui.FontChoice.Default;
 
     /// <summary>Các vai chữ (cỡ thiết kế ở Tokens.axaml); ApplyFont ghi bản đã giãn đè lên.</summary>
-    private static readonly string[] FontRoles = ["FontBody", "FontTitle", "FontCard", "FontSub", "FontMeta", "FontDay", "FontMonth"];
+    private static readonly string[] FontRoles = ["FontBody", "FontTitle", "FontCard", "FontSub", "FontMeta", "FontDay", "FontMonth", "MathScale", "MathScaleDisplay"];
     private static readonly Dictionary<string, double> DesignSizes = [];
     private static HashSet<string>? _fonts;
 
@@ -86,6 +86,7 @@ public partial class App : Application
             var d = (IResourceDictionary)dict;
             static Avalonia.Media.SolidColorBrush Brush((byte R, byte G, byte B) c) => new(Avalonia.Media.Color.FromRgb(c.R, c.G, c.B));
             d["Bar"] = Brush(SoHocTap.Presentation.AccentColors.Bar(rgb, dark));
+            d["Accent"] = Brush(rgb);   // vạch "bây giờ" của lưới tuần
             // Ô ngày, dòng đang chọn: màu nhấn pha lên nền thẻ (Surface trong Tokens) để đổi theo màu nhấn.
             if (Current.TryGetResource("Surface", variant, out var s) && s is Avalonia.Media.ISolidColorBrush surface)
             {
@@ -102,6 +103,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        Views.Practice.MathView.Warn = SoHocTap.Core.Log.Warn;   // công thức lỗi: ghi vào app.log, mỗi công thức một lần
         ApplyAccent(SoHocTap.Core.Settings.App.Accent);
         ApplyFont(SoHocTap.Presentation.FontConfig.Read(IsFontInstalled));
         // Chế độ màu: cài đặt app.theme (mặc định tối); --theme=light|dark ép riêng lần chạy này (chụp kiểm tra).

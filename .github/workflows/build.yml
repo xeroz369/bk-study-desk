@@ -70,6 +70,8 @@ jobs:
           npm run build
       - name: Core and page tests
         run: dotnet test tests/BKStudyDesk.Core.Tests
+      - name: Math renderer tests
+        run: dotnet test tests/BKStudyDesk.Math.Tests
       - name: Build app (net10.0)
         run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0
       - name: Build app (Windows target)

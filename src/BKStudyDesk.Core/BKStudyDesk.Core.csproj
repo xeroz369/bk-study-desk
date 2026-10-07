@@ -35,8 +35,10 @@
     <Compile Include="$(Src)Shell\AppInfo.cs" Link="Shell\AppInfo.cs" />
     <Compile Include="$(Src)Shell\SsoSession.cs" Link="Shell\SsoSession.cs" />
     <Compile Include="$(Src)Shell\Reminders.cs;$(Src)Shell\DeadlineNotifier.cs" Link="Shell\%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Ui\Lang.cs;$(Src)Ui\AppState.cs;$(Src)Ui\Models.cs;$(Src)Ui\Format.cs;$(Src)Ui\Due.cs;$(Src)Ui\Curriculum.cs;$(Src)Ui\FontChoice.cs" Link="Ui\%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Ui\Lang.cs;$(Src)Ui\AppState.cs;$(Src)Ui\Models.cs;$(Src)Ui\Format.cs;$(Src)Ui\Due.cs;$(Src)Ui\Curriculum.cs;$(Src)Ui\FontChoice.cs;$(Src)Ui\WeekMath.cs;$(Src)Ui\ScreenFit.cs" Link="Ui\%(Filename)%(Extension)" />
     <EmbeddedResource Include="$(Src)Core\DefaultConfig.json" LogicalName="SoHocTap.Core.DefaultConfig.json" />
+    <!-- Khung prompt cho AI (Study Markdown), nguyên văn từ src/ui/src/lib/study/prompts.ts. -->
+    <EmbeddedResource Include="Presentation\Practice\Prompts\*.md" LogicalName="Practice.Prompts.%(Filename).md" />
     <None Include="$(Src)lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 

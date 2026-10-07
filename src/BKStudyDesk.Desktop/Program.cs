@@ -12,10 +12,10 @@ internal static class Program
         // Bản mới đã tải ở lần trước (chế độ tự động): đọc trước khi Velopack chạy, như 1.x. Velopack không tự áp lúc mở (app tự áp ở
         // dưới, có ghi log); gỡ app thì bỏ mục mở cùng hệ điều hành.
         var pending = SoHocTap.Updates.UpdateService.StartupUpdate(args);
-        Velopack.VelopackApp.Build()
-            .SetAutoApplyOnStartup(false)
-            .OnBeforeUninstallFastCallback(_ => Platform.Autostart.Set(false))
-            .Run();
+        var velopack = Velopack.VelopackApp.Build().SetAutoApplyOnStartup(false);
+        // Lệnh gỡ app chỉ có trên Windows (Velopack: OnBeforeUninstallFastCallback là windows-only); macOS, Linux gỡ bằng cách xóa app.
+        if (OperatingSystem.IsWindows()) velopack = velopack.OnBeforeUninstallFastCallback(_ => Platform.Autostart.Set(false));
+        velopack.Run();
         L.Load();   // ngôn ngữ (lang\*.json) theo app.language, trước khi dựng giao diện
         if (pending is not null && SoHocTap.Updates.UpdateService.ApplyAtStartup(pending, args)) return;   // Update.exe đợi app thoát rồi cài
         if (OperatingSystem.IsWindows()) SoHocTap.Updates.UpdateService.EnsureUninstaller();
@@ -35,7 +35,8 @@ internal static class Program
         if (Paths.Kind == InstallKind.Portable)
         {
             SecretStore.Lockdown(Paths.Data);
-            _ = Task.Run(() => { foreach (var d in new[] { AppContext.BaseDirectory, Paths.Ui, Paths.Content }.Distinct()) SecretStore.Lockdown(d); });
+            // Lockdown tạo thư mục nếu chưa có: chỉ khóa content khi có (bản này không còn ui của khung Svelte).
+            _ = Task.Run(() => { foreach (var d in new[] { AppContext.BaseDirectory, Paths.Content }.Distinct().Where(Directory.Exists)) SecretStore.Lockdown(d); });
         }
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

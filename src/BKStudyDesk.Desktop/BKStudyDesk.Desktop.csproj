@@ -36,6 +36,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
+    <!-- Bộ dựng công thức cho Luyện tập (vendored, tự bảo trì). -->
+    <ProjectReference Include="..\ThirdParty\XamlMath\AvaloniaMath\AvaloniaMath.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,10 +56,7 @@
     <Compile Remove="Platform\Windows\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Khung Luyện tập đã build (ui/, từ src/ui) và bài học có sẵn đi kèm app, cùng bản 1.x; LocalServer phục vụ hai thư mục này. -->
-    <None Include="..\..\ui\**" Link="ui\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <None Include="..\SoHocTap\PublicContent\**" Link="content\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
+  <!-- Luyện tập vẽ bằng control Avalonia (Views/Practice), không chép khung Svelte (ui/) hay manifest trống (PublicContent/) của 1.x.
+       Không có content/ cạnh exe thì gói tự soạn, gói nhập ghi vào data/packs (Paths.Packs), không vào thư mục cài. -->
 
 </Project>

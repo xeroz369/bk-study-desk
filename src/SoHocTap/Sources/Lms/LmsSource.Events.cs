@@ -11,6 +11,12 @@ namespace SoHocTap.Sources.Lms;
 // Mốc thời gian: lịch hành động, bài tập, nhóm lớp.
 public sealed partial class LmsSource
 {
+    /// <summary>
+    /// Nhãn của hạn nộp bài tập ghi trong lms.json. Giữ nguyên chữ này để dữ liệu đã đồng bộ (của cả bản cũ) vẫn khớp; lúc hiện ra
+    /// thì AppState dịch qua lang timeline.dueLabel, không hiện thẳng chữ lưu trong dữ liệu.
+    /// </summary>
+    public const string DueLabel = "Hạn nộp";
+
     // ------------------------------------------------------------------ mốc thời gian, quiz
 
     /// <param name="groups">Nhóm của mình trong từng lớp (<see cref="MyGroupsAsync"/>, một bước riêng của lượt đồng bộ): mốc của nhóm khác thì bỏ.
@@ -102,7 +108,7 @@ public sealed partial class LmsSource
                         ["name"] = WebUtility.HtmlDecode(a["name"]!.GetValue<string>()),
                         ["kind"] = "assign",
                         ["time"] = due,
-                        ["label"] = "Hạn nộp",
+                        ["label"] = DueLabel,
                         ["url"] = $"{Site}/mod/assign/view.php?id={a["cmid"]}",
                         // Đề và file đính kèm có sẵn trong kết quả này (không tốn thêm request): để lưu về máy.
                         ["intro"] = a["intro"]?.GetValue<string>(),

@@ -128,7 +128,7 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 			if (m) meta[m[1].toLowerCase()] = m[2];
 		}
 		n++;
-	} else warnings.push({ line: 1, message: 'thiếu phần đầu --- (mon, tac-gia...): app sẽ dùng môn đang chọn khi nhập' });
+	} else warnings.push({ line: 1, message: 'thiếu phần đầu --- (mon, tac-gia...): ứng dụng sẽ dùng môn đang chọn khi nhập' });
 	const pick = (...keys: string[]) => keys.map((k) => meta[k]).find((v) => v !== undefined && v !== '');
 
 	const missingImg = new Set<string>();
@@ -265,7 +265,7 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 		).slice(0, 64);
 	if (!pack.title) pack.title = pack.units.map((u) => u.title).join(', ') || 'Gói luyện tập';
 	if (!pack.settings!.shuffleQuestions && !pack.settings!.shuffleOptions) delete pack.settings;
-	for (const k of missingImg) warnings.push({ line: lineOfText(lines, k), message: `thiếu ảnh ${k} (gửi kèm trong file .zip)` });
+	for (const k of missingImg) warnings.push({ line: lineOfText(lines, k), message: `thiếu ảnh ${k} (gửi kèm trong tệp .zip)` });
 
 	// Deeper checks from the shared validator, mapped back to line numbers when possible.
 	if (pack.course.code) {
@@ -338,7 +338,7 @@ function parseQuestion(
 		const right = options.map((o, i) => (o.right ? i : -1)).filter((i) => i >= 0);
 		const opts = options.map((o) => html(o.text).replace(/^<p>([\s\S]*)<\/p>$/, '$1'));
 		if (!right.length) {
-			errors.push({ line: b.line, message: 'chưa tick đáp án đúng: đổi - [ ] thành - [x]' });
+			errors.push({ line: b.line, message: 'chưa đánh dấu đáp án đúng: đổi - [ ] thành - [x]' });
 			return null;
 		}
 		return right.length === 1

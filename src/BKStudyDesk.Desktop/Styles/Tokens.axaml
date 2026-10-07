@@ -48,12 +48,38 @@
             <x:Double x:Key="DimOpacity">0.55</x:Double>
             <x:Double x:Key="ListMinWidth">220</x:Double>
             <x:Double x:Key="ListMaxWidth">320</x:Double>
+            <!-- Luyện tập: thẻ câu hỏi, bài học rộng tối đa khoảng 80 chữ một dòng ở cỡ chữ thân (đọc dễ hơn dòng dài cả màn hình) -->
+            <x:Double x:Key="ReadingMaxWidth">880</x:Double>
+            <!-- Cỡ chữ trang Luyện tập (Ctrl+cộng, Ctrl+trừ): phần trăm, bước mỗi lần bấm. -->
+            <x:Int32 x:Key="PracticeZoomMin">80</x:Int32>
+            <x:Int32 x:Key="PracticeZoomMax">160</x:Int32>
+            <x:Int32 x:Key="PracticeZoomStep">10</x:Int32>
+            <!-- Bảng Đồng bộ và thông báo (Flyout của nút Đồng bộ trên thanh): rộng cố định, cao hơn thì tự cuộn -->
+            <x:Double x:Key="PanelWidth">400</x:Double>
+            <x:Double x:Key="PanelMaxHeight">560</x:Double>
+            <!-- Cửa sổ hẹp: danh sách (môn học, môn thư viện) lên trên chi tiết, cao tối đa chừng này rồi tự cuộn -->
+            <x:Double x:Key="ListStackedMaxHeight">220</x:Double>
             <x:Double x:Key="DetailMinWidth">480</x:Double>
             <x:Double x:Key="CardHeaderHeight">48</x:Double>
             <x:Double x:Key="RowHeight">64</x:Double>
             <x:Double x:Key="TableHeaderHeight">40</x:Double>
             <x:Double x:Key="TableRowHeight">48</x:Double>
             <x:Double x:Key="DateBoxSize">48</x:Double>
+            <!-- Lưới tuần (Views/WeekGridView): cột giờ, lề trên dưới, tỉ lệ dọc (px mỗi phút: 0,7 là 1 giờ 42 px, buổi 50 phút vừa hai dòng chữ).
+                 Màu môn: CourseN, khối là màu đó pha trong suốt, viền trái đậm; đủ tương phản với chữ ở cả hai chế độ vì nền khối nhạt. -->
+            <x:Double x:Key="WeekGutter">52</x:Double>
+            <x:Double x:Key="WeekPad">10</x:Double>
+            <x:Double x:Key="WeekMinPxPerMin">0.7</x:Double>
+            <x:Double x:Key="WeekMaxPxPerMin">2</x:Double>
+            <x:Byte x:Key="WeekFillAlpha">56</x:Byte>
+            <Color x:Key="Course0">#0078D4</Color>
+            <Color x:Key="Course1">#107C10</Color>
+            <Color x:Key="Course2">#C239B3</Color>
+            <Color x:Key="Course3">#CA5010</Color>
+            <Color x:Key="Course4">#0099BC</Color>
+            <Color x:Key="Course5">#881798</Color>
+            <Color x:Key="Course6">#986F0B</Color>
+            <Color x:Key="Course7">#E74856</Color>
             <!-- Cỡ chữ thiết kế của từng vai chữ (chỉ các cỡ 11, 12, 13, 14, 16, 18, 24). Người dùng đổi cỡ ở Cài đặt thì App.ApplyFont
                  giãn mọi vai theo cùng tỉ lệ; style luôn dùng DynamicResource. -->
             <x:Double x:Key="FontBody">14</x:Double>
@@ -63,6 +89,13 @@
             <x:Double x:Key="FontSub">12</x:Double>
             <x:Double x:Key="FontDay">18</x:Double>
             <x:Double x:Key="FontMonth">11</x:Double>
+            <!-- Cỡ công thức (Views/Practice/MathView): Computer Modern có x-height thấp hơn phông giao diện, nên lớn hơn FontBody
+                 theo tỉ lệ 1,21 như KaTeX (14 x 1,21 = 17). Công thức đứng riêng lớn thêm một bậc. Giãn cùng tỉ lệ với các vai chữ. -->
+            <x:Double x:Key="MathScale">17</x:Double>
+            <x:Double x:Key="MathScaleDisplay">20</x:Double>
+            <!-- Nội dung bài (Views/Practice/ContentRenderer): khoảng cách giữa các khối, phông mã và bấm máy. -->
+            <x:Double x:Key="ContentSpacing">8</x:Double>
+            <FontFamily x:Key="CodeFont">Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, monospace</FontFamily>
         </ResourceDictionary>
     </Styles.Resources>
 
@@ -138,17 +171,80 @@
     <Style Selector="TextBlock.month"><Setter Property="FontSize" Value="{DynamicResource FontMonth}" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
     <Style Selector="TextBlock.start"><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Link}" /></Style>
 
-    <!-- Thanh trên cùng: nút chữ trắng không nền (Button có sẵn, chỉ đổi màu) -->
+    <!-- Dải chương trong thẻ môn (Luyện tập): như dải nhóm của bảng -->
+    <Style Selector="Border.group">
+        <Setter Property="Background" Value="{DynamicResource GroupBg}" />
+        <Setter Property="Padding" Value="16,6" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style Selector="TextBlock.group"><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /></Style>
+    <Style Selector="TextBlock.sub.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <!-- Kết quả chấm một câu: Đúng (Ok), Sai (Danger) -->
+    <Style Selector="TextBlock.verdict"><Setter Property="FontSize" Value="{DynamicResource FontCard}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.verdict.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="TextBlock.verdict.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <!-- Lưới số câu của đề thi thử: câu đã chọn đậm chữ, câu đang xem là nút accent -->
+    <Style Selector="Button.qnum"><Setter Property="MinWidth" Value="40" /><Setter Property="HorizontalContentAlignment" Value="Center" /></Style>
+    <Style Selector="Button.qnum.done"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <!-- Sau khi nộp: số câu đúng, sai theo màu trạng thái (bỏ trống giữ màu thường). -->
+    <Style Selector="Button.qnum.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="Button.qnum.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+
+    <!-- Nội dung bài, câu hỏi (ContentRenderer): đoạn, tiêu đề, khối ghi chú theo class của Study Markdown, bảng, danh sách -->
+    <Style Selector="StackPanel.content"><Setter Property="Spacing" Value="{StaticResource ContentSpacing}" /></Style>
+    <Style Selector="TextBlock.content"><Setter Property="TextWrapping" Value="Wrap" /></Style>
+    <Style Selector="TextBlock.h2"><Setter Property="FontSize" Value="{DynamicResource FontTitle}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.h3"><Setter Property="FontSize" Value="{DynamicResource FontCard}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.pre"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /><Setter Property="TextWrapping" Value="Wrap" /></Style>
+    <Style Selector="TextBlock.marker"><Setter Property="Margin" Value="0,0,8,0" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /></Style>
+    <Style Selector="Span.code"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /></Style>
+    <Style Selector="Span.sub, Span.sup"><Setter Property="FontSize" Value="{DynamicResource FontSub}" /></Style>
+    <Style Selector="Border.callout">
+        <Setter Property="Background" Value="{DynamicResource GroupBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="Border.callout.warn"><Setter Property="BorderBrush" Value="{DynamicResource Warn}" /></Style>
+    <Style Selector="Border.callout.tip"><Setter Property="BorderBrush" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="Border.callout.note"><Setter Property="BorderBrush" Value="{DynamicResource Link}" /></Style>
+    <Style Selector="Border.callout.keys TextBlock"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /></Style>
+    <Style Selector="Border.quote">
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="12,0,0,0" />
+    </Style>
+    <Style Selector="Border.cell">
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0.5" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+    <Style Selector="Border.cell.th"><Setter Property="Background" Value="{DynamicResource GroupBg}" /></Style>
+    <Style Selector="Border.cell.th TextBlock"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+
+    <!-- Thanh trên cùng: nút chữ trắng không nền (Button có sẵn, chỉ đổi màu). Mọi nút trên thanh (mục trang, Đồng bộ, Cài đặt, Thêm)
+         cùng một kiểu: đang chọn (class on) thì chữ đậm và gạch chân trắng 3 px sát đáy thanh, là viền dưới của chính nút. -->
     <Style Selector="Button.bar">
         <Setter Property="Foreground" Value="White" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,3" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="0,3,0,0" />
         <Setter Property="FontSize" Value="{DynamicResource FontBody}" />
+        <!-- Vùng bấm cao bằng thanh, không chỉ bằng dòng chữ -->
+        <Setter Property="MinHeight" Value="{StaticResource BarHeight}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.bar:pointerover /template/ ContentPresenter, Button.bar:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.bar.on /template/ ContentPresenter, Button.bar.on:pointerover /template/ ContentPresenter, Button.bar.on:pressed /template/ ContentPresenter">
+        <Setter Property="BorderBrush" Value="White" />
     </Style>
     <Style Selector="Button.bar TextBlock"><Setter Property="Foreground" Value="White" /><Setter Property="Opacity" Value="0.85" /></Style>
     <Style Selector="Button.bar.on TextBlock"><Setter Property="Opacity" Value="1" /><Setter Property="FontWeight" Value="SemiBold" /></Style>

@@ -1,0 +1,35 @@
+{
+ "pack": {
+  "format": "studypack/1",
+  "id": "hcmut-mt1009-goi",
+  "title": "Gói luyện tập",
+  "version": "1.0.0",
+  "language": "vi",
+  "course": {
+   "code": "MT1009",
+   "name": "X"
+  },
+  "authors": [],
+  "units": []
+ },
+ "errors": [
+  {
+   "line": 4,
+   "message": "bài (##) phải nằm trong một chương (#)"
+  },
+  {
+   "line": 5,
+   "message": "câu (###) phải nằm trong một bài (##) hoặc một đề"
+  },
+  {
+   "line": 0,
+   "message": "cần ít nhất một chương { title, lessons }"
+  }
+ ],
+ "warnings": [
+  {
+   "line": 0,
+   "message": "gói chưa có câu hỏi nào"
+  }
+ ]
+}

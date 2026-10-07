@@ -21,6 +21,7 @@ public partial class SubjectsView : UserControl, IFillPage
 {
     private readonly AppState _state = null!;
     private readonly Action<LmsCourse>? _download;
+    private readonly Action<string>? _openLibrary;
     private IReadOnlyList<SubjectRow> _rows = [];
     private SubjectRow? _subject;
     private string _root = "", _dir = "";
@@ -30,14 +31,16 @@ public partial class SubjectsView : UserControl, IFillPage
     public SubjectsView() => InitializeComponent();
 
     /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ môn, tab, thư mục người dùng đang xem.</param>
-    internal SubjectsView(AppState state, SoHocTap.Library.LibraryService library, SubjectsView? previous, Action<LmsCourse>? download) : this()
+    /// <param name="openLibrary">Mở trang Thư viện đúng môn này (nút Xem trong Thư viện); null thì ẩn nút.</param>
+    internal SubjectsView(AppState state, SubjectsView? previous, Action<LmsCourse>? download, Action<string>? openLibrary) : this()
     {
         _keepDir = previous?._dir;
         if (previous is not null) Tabs.SelectedIndex = previous.Tabs.SelectedIndex;
         _state = state;
-        SetupLibrary(library);
         _download = download;
+        _openLibrary = openLibrary;
         DownloadButton.IsVisible = download is not null;
+        LibraryButton.IsVisible = openLibrary is not null;
         _wanted = previous?.Selected;
         Build(null);
         _ = ScanAsync();
@@ -93,8 +96,6 @@ public partial class SubjectsView : UserControl, IFillPage
         _keepDir = null;
         _filled.Clear();
         DetailCard.IsVisible = true;
-        UpdateLibraryMatches(s);
-        LibraryStatus.IsVisible = false;
         FillTab();
     }
 
@@ -112,7 +113,6 @@ public partial class SubjectsView : UserControl, IFillPage
             if (RecentToggle.IsChecked == true) _ = LoadRecentAsync(s);
             else _ = LoadDirAsync();
         }
-        else if (tab == LibraryTab) _ = LoadLibraryAsync(s);
         else if (tab == DueTab)
             Tables.Show(Due, DueEmpty, SubjectsPresenter.Due(_state.Timeline, s, Format.Now), L.T("subjects.dueEmpty"));
         else if (tab == NewsTab)
@@ -252,6 +252,11 @@ public partial class SubjectsView : UserControl, IFillPage
 
     private void OnDownload(object? sender, RoutedEventArgs e) => PickCourse(DownloadButton, c => _download?.Invoke(c));
 
+    private void OnOpenLibrary(object? sender, RoutedEventArgs e)
+    {
+        if (_subject is { } s) _openLibrary?.Invoke(s.Name);
+    }
+
     /// <summary>Môn một lớp thì làm luôn; nhiều lớp (lý thuyết, thí nghiệm, kỳ khác) thì hiện menu chọn lớp dưới nút.</summary>
     private void PickCourse(Button button, Action<LmsCourse> run)
     {
@@ -284,7 +289,7 @@ public partial class SubjectsView : UserControl, IFillPage
         cols[2].Width = two ? new GridLength(3, GridUnitType.Star) : new GridLength(0);
         Columns.RowDefinitions[0].Height = two ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
         Columns.RowDefinitions[1].Height = two ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
-        ListCard.MaxHeight = two ? double.PositiveInfinity : 220;
+        ListCard.MaxHeight = two ? double.PositiveInfinity : (double)this.FindResource("ListStackedMaxHeight")!;
         Grid.SetColumn(DetailCard, two ? 2 : 0);
         Grid.SetRow(DetailCard, two ? 0 : 1);
         DetailCard.Margin = two ? default : new Thickness(0, 16, 0, 0);

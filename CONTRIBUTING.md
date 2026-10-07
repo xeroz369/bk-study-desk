@@ -18,6 +18,8 @@ Xác định chỗ viết trước khi code, đừng vá tạm vào file gần n
 | Cột hay kiểu hiển thị của bảng sự kiện | `Ui/Controls/TimelineList` |
 | Trang mới | `Ui/Pages/`, đăng ký trong `PageRegistry` |
 | Cửa sổ, khay, đăng nhập, WebView | `Shell/` |
+| Luyện tập bản đa nền tảng: chấm điểm, lịch ôn, gói, nhập xuất | `BKStudyDesk.Core/Presentation/Practice/`, có test |
+| Luyện tập bản đa nền tảng: màn, nút | `BKStudyDesk.Desktop/Views/Practice/` |
 | Chữ hiển thị | `lang/vi.json` và `lang/en.json` |
 
 Chưa có chỗ phù hợp thì tạo file mới nhỏ, một việc, thay vì nhét vào file lớn.
@@ -38,11 +40,12 @@ src/
 │   ├── Ui/              giao diện WPF (Pages/, Controls/)
 │   ├── lang/            chữ giao diện vi.json, en.json
 │   └── tools-dev/       script phát hành, export
-├── ui/                  khung Luyện tập (Svelte), build ra ui/
-├── BKStudyDesk.Core/    lõi đa nền tảng, chỉ link file từ SoHocTap
-├── BKStudyDesk.Desktop/ bản Avalonia thử nghiệm (Linux)
+├── ui/                  khung Luyện tập của app WPF (Svelte), build ra ui/
+├── BKStudyDesk.Core/    lõi đa nền tảng: file link từ SoHocTap và logic Luyện tập
+├── BKStudyDesk.Desktop/ bản Avalonia (Windows, macOS, Linux), Luyện tập vẽ bằng control có sẵn
+├── ThirdParty/XamlMath/ bộ vẽ công thức TeX cho bản Avalonia (MIT, tự bảo trì)
 └── BKStudyDesk.Setup/   bộ cài
-tests/SoHocTap.Tests/    xUnit
+tests/                   xUnit: SoHocTap.Tests, BKStudyDesk.Core.Tests, BKStudyDesk.Math.Tests
 ```
 
 `Ui/Format.cs`, `Ui/AppState.cs`, `Ui/Lang.cs`, `Ui/Models.cs`, `Ui/Curriculum.cs`, `Ui/Due.cs` cũng được biên dịch vào `BKStudyDesk.Core`: giữ chúng không phụ thuộc WPF.

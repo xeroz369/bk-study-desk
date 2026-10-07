@@ -1,0 +1,80 @@
+<!-- Thi thử (spec mục 6): đồng hồ, lưới số câu, nộp bài (bấm hai lần), xem lại từng câu sau khi nộp.
+     Hai cột như trang Hôm nay: câu đang xem, lưới số câu; hẹp thì lưới xuống dưới. Logic ở Core ExamSession. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             x:Class="BKStudyDesk.Desktop.Views.Practice.ExamView">
+    <StackPanel Spacing="24">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12" VerticalAlignment="Top">
+                <TextBlock x:Name="ClockText" Classes="verdict" VerticalAlignment="Center" />
+                <Button x:Name="SubmitButton" Classes="accent" Content="{l:T practice.exam.submit}" Click="OnSubmit" />
+                <Button x:Name="BackButton" Content="{l:T practice.back}" Click="OnBack" />
+            </StackPanel>
+            <StackPanel Spacing="2">
+                <TextBlock x:Name="TitleText" Classes="title" TextWrapping="Wrap" />
+                <TextBlock x:Name="MetaText" Classes="meta" />
+                <TextBlock x:Name="HintText" Classes="meta" Text="{l:T practice.exam.hint}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border x:Name="EmptyCard" Classes="card" IsVisible="False">
+            <TextBlock Classes="empty" Text="{l:T practice.exam.empty}" />
+        </Border>
+
+        <Border x:Name="ResultCard" Classes="card" IsVisible="False">
+            <StackPanel>
+                <Border Classes="card-head"><TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.exam.result}" /></Border>
+                <StackPanel Margin="16" Spacing="8">
+                    <TextBlock x:Name="ScoreText" Classes="verdict" />
+                    <TextBlock x:Name="CountsText" TextWrapping="Wrap" />
+                    <TextBlock x:Name="SlowText" Classes="sub danger" TextWrapping="Wrap" />
+                    <Button Content="{l:T practice.exam.history}" Click="OnHistory" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="Columns">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="QuestionCard" Classes="card" VerticalAlignment="Top">
+                <StackPanel>
+                    <Border Classes="card-head"><DockPanel>
+                        <TextBlock DockPanel.Dock="Right" x:Name="TagText" Classes="meta" VerticalAlignment="Center" />
+                        <TextBlock x:Name="NumberText" Classes="card-title" VerticalAlignment="Center" />
+                    </DockPanel></Border>
+                    <StackPanel Margin="16" Spacing="16">
+                        <TextBlock x:Name="StatusText" Classes="sub" TextWrapping="Wrap" />
+                        <ContentControl x:Name="Prompt" />
+                        <StackPanel x:Name="Options" Spacing="8" />
+                        <StackPanel x:Name="AnswerRow" Orientation="Horizontal" Spacing="8" IsVisible="False">
+                            <TextBox x:Name="AnswerBox" Width="320" TextChanged="OnAnswerText" />
+                            <TextBlock x:Name="UnitText" Classes="sub" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock x:Name="YourAnswer" TextWrapping="Wrap" IsVisible="False" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="PrevButton" Content="{l:T practice.run.prev}" Click="OnPrev" />
+                            <Button x:Name="NextButton" Content="{l:T practice.run.next}" Click="OnNext" />
+                            <Button x:Name="ClearButton" Content="{l:T practice.exam.clear}" Click="OnClear" />
+                        </StackPanel>
+                        <Border x:Name="SolutionBox" Classes="callout note" IsVisible="False">
+                            <ContentControl x:Name="Solution" />
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border x:Name="GridCard" Grid.Column="2" Classes="card" VerticalAlignment="Top">
+                <StackPanel>
+                    <Border Classes="card-head"><DockPanel>
+                        <TextBlock DockPanel.Dock="Right" x:Name="GridMeta" Classes="meta" VerticalAlignment="Center" />
+                        <TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.exam.grid}" />
+                    </DockPanel></Border>
+                    <WrapPanel x:Name="Numbers" Margin="12" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </StackPanel>
+</UserControl>

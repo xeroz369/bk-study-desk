@@ -93,7 +93,8 @@ export function parseReview(html: string): PackQuestion | null {
 				? { type: 'numeric', prompt, answer: n, ...(unit ? { unit } : {}), solution: '' }
 				: { type: 'short', prompt, accept: [rightText], solution: '' };
 	}
-	const result = /incorrect|sai/i.test(state)
+	// Moodle tiếng Việt ghi câu sai là "Không đúng": phải bắt trước "đúng".
+	const result = /incorrect|không đúng|sai/i.test(state)
 		? 'sai'
 		: /partially|một phần/i.test(state)
 			? 'đúng một phần'

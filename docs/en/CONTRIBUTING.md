@@ -20,6 +20,8 @@ Decide where the code goes before you write it; do not patch it into the nearest
 | Column or display style of the event table | `Ui/Controls/TimelineList` |
 | New page | `Ui/Pages/`, registered in `PageRegistry` |
 | Windows, tray, sign-in, WebView | `Shell/` |
+| Practice in the cross-platform app: grading, review schedule, packs, import and export | `BKStudyDesk.Core/Presentation/Practice/`, with tests |
+| Practice in the cross-platform app: screens, buttons | `BKStudyDesk.Desktop/Views/Practice/` |
 | Display text | `lang/vi.json` and `lang/en.json` |
 
 If nothing fits, create a small new file that does one thing instead of growing a large one.
@@ -40,11 +42,12 @@ src/
 │   ├── Ui/              WPF UI (Pages/, Controls/)
 │   ├── lang/            UI text: vi.json, en.json
 │   └── tools-dev/       release and export scripts
-├── ui/                  Practice view (Svelte), built into ui/
-├── BKStudyDesk.Core/    cross-platform core, only links files from SoHocTap
-├── BKStudyDesk.Desktop/ experimental Avalonia app (Linux)
+├── ui/                  Practice view of the WPF app (Svelte), built into ui/
+├── BKStudyDesk.Core/    cross-platform core: files linked from SoHocTap and the Practice logic
+├── BKStudyDesk.Desktop/ Avalonia app (Windows, macOS, Linux); Practice drawn with built-in controls
+├── ThirdParty/XamlMath/ TeX formula renderer for the Avalonia app (MIT, maintained here)
 └── BKStudyDesk.Setup/   installer
-tests/SoHocTap.Tests/    xUnit
+tests/                   xUnit: SoHocTap.Tests, BKStudyDesk.Core.Tests, BKStudyDesk.Math.Tests
 ```
 
 `Ui/Format.cs`, `Ui/AppState.cs`, `Ui/Lang.cs`, `Ui/Models.cs`, `Ui/Curriculum.cs` and `Ui/Due.cs` are also compiled into `BKStudyDesk.Core`, so keep them free of WPF.

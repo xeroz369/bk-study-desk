@@ -27,6 +27,10 @@ public partial class CalendarView : UserControl, IFillPage
         _state = state;
         ShowClasses.IsChecked = _showClasses;
         ShowDone.IsChecked = _showDone;
+        ViewBox.ItemsSource = new[] { L.T("calendar.viewGrid"), L.T("calendar.viewList") };
+        ViewBox.SelectedIndex = Config.Str("app.calendarView", "grid") == "list" ? 1 : 0;
+        WeekGrid.Open = b => { if (b.CustomId is { } id) _ = EditAsync(id); };
+        WeekGrid.FillMenu = (menu, b) => FillMenu(menu, b.CustomId);
         ShowUpcoming();
         ShowWeek();
         var exams = WeekPresenter.Exams(state.Timeline, Format.Now);
@@ -78,8 +82,28 @@ public partial class CalendarView : UserControl, IFillPage
         var noSlot = WeekPresenter.NoSlot(_state.Mybk);
         NoSlot.Text = noSlot.Count == 0 ? "" : L.F("calendar.noSlot", string.Join(", ", noSlot));
         NoSlot.IsVisible = noSlot.Count > 0;
+        var grid = ViewBox.SelectedIndex != 1;
+        DimNote.IsVisible = !grid;   // ghi chú "môn làm nhạt là tuần này không học" chỉ đúng với danh sách
+        if (grid)
+        {
+            Week.IsVisible = false;
+            var blocks = WeekGridPresenter.Blocks(_state.Mybk, CustomEventsData.Store.All(), monday, _state.Courses());
+            WeekGrid.Show(monday, blocks);
+            WeekGrid.IsVisible = true;
+            WeekEmpty.Text = _state.NoDataReason(SourceIds.Mybk, "MyBK") ?? L.T("calendar.weekEmpty");
+            WeekEmpty.IsVisible = blocks.Count == 0;
+            return;
+        }
+        WeekGrid.IsVisible = false;
         var rows = WeekPresenter.Rows(_state.Mybk, CustomEventsData.Store.All(), monday);
         Tables.Show(Week, WeekEmpty, Tables.Grouped(rows, nameof(WeekRow.Group)), _state.NoDataReason(SourceIds.Mybk, "MyBK") ?? L.T("calendar.termEmpty"));
+    }
+
+    private void OnView(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_state is null || ViewBox.SelectedIndex < 0) return;   // lúc dựng XAML, chưa có dữ liệu
+        Config.Set("app.calendarView", ViewBox.SelectedIndex == 1 ? "list" : "grid");
+        ShowWeek();
     }
 
     private void OnPrevWeek(object? sender, RoutedEventArgs e) { _offset--; ShowWeek(); }

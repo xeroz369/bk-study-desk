@@ -16,5 +16,12 @@
     <ProjectReference Include="..\..\src\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
     <!-- Chữ giao diện cho test kiểm chữ (L đọc lang\ cạnh assembly). -->
     <None Include="..\..\src\SoHocTap\lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Prompt cho AI do bản TS sinh, để so với bản C#. -->
+    <None Include="Practice\prompts-expected\*" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Study Markdown: kết quả do markdown.ts sinh, để so với bản C#. -->
+    <None Include="Practice\md-expected\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Quiz LMS, Aiken, GIFT, Moodle XML: mẫu tự soạn và kết quả do bản TS sinh. -->
+    <None Include="Practice\lms-expected\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Practice\fmt-expected\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

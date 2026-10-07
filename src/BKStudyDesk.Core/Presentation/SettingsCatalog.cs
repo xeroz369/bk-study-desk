@@ -131,6 +131,7 @@ public static class SettingsCatalog
         [
             .. a.PageCount > 0 ? new SettingItem[] { new InfoItem(L.T("settings.keys.pages"), L.F("settings.keys.range", "Ctrl+1", $"Ctrl+{a.PageCount}")) } : [],
             new InfoItem(L.T("settings.keys.sync"), "F5"),
+            new InfoItem(L.T("settings.keys.back"), L.T("settings.keys.backKey")),
             new InfoItem(L.T("settings.keys.rows"), L.T("settings.keys.rowsKey")),
             new InfoItem(L.T("settings.keys.sort"), L.T("settings.keys.click")),
             new InfoItem(L.T("settings.keys.up"), "Backspace"),

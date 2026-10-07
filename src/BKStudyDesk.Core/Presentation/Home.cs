@@ -10,6 +10,9 @@ public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub,
     /// <summary>Cột phải màu Danger (quá hạn, rất gấp) hay Warn (gấp): View gắn class theo hai cờ này.</summary>
     public bool IsDanger => Level is Urgency.Overdue or Urgency.Urgent;
     public bool IsSoon => Level == Urgency.Soon;
+
+    /// <summary>Chữ tháng dưới số ngày trong ô ngày: "th 10", "Oct" (lang home.monthOf).</summary>
+    public string Month => L.F("home.monthOf", Day);
 }
 
 /// <summary>Một mốc sắp tới (buổi học, thi): ô giờ bắt đầu và kết thúc, tên, dòng phụ (phòng), cột phải (Hôm nay, còn N ngày).</summary>

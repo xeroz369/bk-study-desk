@@ -1,0 +1,193 @@
+<!-- Soạn (spec mục 8.2): port đủ chức năng của bản Svelte (Soan.svelte, QuestionEditor.svelte) theo bố cục thẻ và tab của bản mới.
+     Thẻ "Đặt câu vào" chọn chỗ (môn, chương, bài) dùng chung cho bốn tab: Tạo câu, Nhập, Xuất, Prompt cho AI.
+     Logic ở Core: Transfer (tạo, nhập, xuất gói), AuthorForm (dựng câu), Prompts. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             x:Class="BKStudyDesk.Desktop.Views.Practice.AuthorView">
+    <StackPanel Spacing="24">
+        <DockPanel>
+            <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T practice.back}" Click="OnBack" />
+            <StackPanel Spacing="2">
+                <TextBlock Classes="title" Text="{l:T practice.author.title}" />
+                <TextBlock Classes="meta" Text="{l:T practice.author.meta}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Classes="card">
+            <StackPanel>
+                <Border Classes="card-head"><TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.author.where}" /></Border>
+                <StackPanel Margin="16" Spacing="12">
+                    <Grid ColumnDefinitions="*,12,*,12,*" RowDefinitions="Auto,4,Auto">
+                        <TextBlock Classes="sub" Text="{l:T practice.author.course}" />
+                        <TextBlock Grid.Column="2" Classes="sub" Text="{l:T practice.author.unit}" />
+                        <TextBlock Grid.Column="4" Classes="sub" Text="{l:T practice.author.lesson}" />
+                        <ComboBox x:Name="CourseBox" Grid.Row="2" HorizontalAlignment="Stretch" SelectionChanged="OnCourse" />
+                        <ComboBox x:Name="UnitBox" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Stretch" SelectionChanged="OnUnit" />
+                        <ComboBox x:Name="LessonBox" Grid.Row="2" Grid.Column="4" HorizontalAlignment="Stretch" SelectionChanged="OnLesson" />
+                    </Grid>
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="sub" Text="{l:T practice.author.author}" />
+                        <TextBox x:Name="AuthorBox" MaxWidth="320" HorizontalAlignment="Left" Width="320" LostFocus="OnAuthorLost" />
+                    </StackPanel>
+                    <TextBlock x:Name="FlashText" Classes="sub" TextWrapping="Wrap" IsVisible="False" />
+                    <TextBlock x:Name="NoCourseText" Classes="sub" TextWrapping="Wrap" IsVisible="False" Text="{l:T practice.author.noCourse}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <TabControl x:Name="Tabs" Padding="0">
+            <TabItem Header="{l:T practice.author.tab.create}">
+                <Grid x:Name="CreateColumns" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="24">
+                        <!-- Câu hỏi mới (khi đã chọn bài) -->
+                        <Border x:Name="QuestionCard" Classes="card">
+                            <StackPanel>
+                                <Border Classes="card-head"><TextBlock x:Name="QuestionHead" Classes="card-title" VerticalAlignment="Center" /></Border>
+                                <StackPanel Margin="16" Spacing="12">
+                                    <TextBlock Classes="sub" Text="{l:T practice.author.type}" />
+                                    <WrapPanel x:Name="Types" />
+                                    <TextBox x:Name="TagBox" PlaceholderText="{l:T practice.author.tag}" />
+                                    <TextBlock Classes="sub" Text="{l:T practice.author.question}" />
+                                    <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" TextChanged="OnFormText" />
+                                    <TextBlock Classes="sub" Text="{l:T practice.author.hint}" />
+                                    <StackPanel x:Name="OptionsPanel" Spacing="8">
+                                        <TextBlock Classes="sub" Text="{l:T practice.author.options}" />
+                                        <StackPanel x:Name="OptionRows" Spacing="8" />
+                                        <StackPanel Orientation="Horizontal" Spacing="16">
+                                            <Button x:Name="AddOptionButton" Content="{l:T practice.author.addOption}" Click="OnAddOption" />
+                                            <CheckBox x:Name="KeepOrderBox" Content="{l:T practice.author.keepOrder}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <CheckBox x:Name="TruthBox" Content="{l:T practice.author.truth}" IsChecked="True" IsCheckedChanged="OnFormCheck" />
+                                    <Grid x:Name="NumericPanel" ColumnDefinitions="*,12,*,12,*" RowDefinitions="Auto,4,Auto">
+                                        <TextBlock Classes="sub" Text="{l:T practice.author.value}" />
+                                        <TextBlock Grid.Column="2" Classes="sub" Text="{l:T practice.author.tolerance}" />
+                                        <TextBlock Grid.Column="4" Classes="sub" Text="{l:T practice.author.unitField}" />
+                                        <TextBox x:Name="ValueBox" Grid.Row="2" TextChanged="OnFormText" />
+                                        <TextBox x:Name="ToleranceBox" Grid.Row="2" Grid.Column="2" />
+                                        <TextBox x:Name="UnitBoxText" Grid.Row="2" Grid.Column="4" />
+                                    </Grid>
+                                    <StackPanel x:Name="ShortPanel" Spacing="4">
+                                        <TextBlock Classes="sub" Text="{l:T practice.author.accept}" />
+                                        <TextBox x:Name="AcceptBox" TextChanged="OnFormText" />
+                                    </StackPanel>
+                                    <TextBlock Classes="sub" Text="{l:T practice.author.solution}" />
+                                    <TextBox x:Name="SolutionBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" TextChanged="OnFormText" />
+                                    <TextBlock x:Name="CreateError" Classes="danger" TextWrapping="Wrap" IsVisible="False" />
+                                    <Button x:Name="SaveButton" Classes="accent" Content="{l:T practice.author.save}" Click="OnSave" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="MineCard" Classes="card">
+                            <StackPanel>
+                                <Border Classes="card-head"><TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.author.mine}" /></Border>
+                                <StackPanel x:Name="MineRows" />
+                            </StackPanel>
+                        </Border>
+                        <!-- Bài mới (khi chưa chọn bài) -->
+                        <Border x:Name="LessonCard" Classes="card">
+                            <StackPanel>
+                                <Border Classes="card-head"><TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.author.newLesson}" /></Border>
+                                <StackPanel Margin="16" Spacing="12">
+                                    <TextBlock Classes="sub" Text="{l:T practice.author.err.noLesson}" TextWrapping="Wrap" />
+                                    <StackPanel x:Name="NewUnitPanel" Spacing="4">
+                                        <TextBlock Classes="sub" Text="{l:T practice.author.newUnit}" />
+                                        <TextBox x:Name="NewUnitBox" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Classes="sub" Text="{l:T practice.author.lessonName}" />
+                                        <TextBox x:Name="NewLessonBox" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Classes="sub" Text="{l:T practice.author.body}" />
+                                        <TextBox x:Name="BodyBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="LessonError" Classes="danger" TextWrapping="Wrap" IsVisible="False" />
+                                    <Button Classes="accent" Content="{l:T practice.author.createLesson}" Click="OnCreateLesson" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    <Border x:Name="PreviewCard" Grid.Column="2" Classes="card" VerticalAlignment="Top">
+                        <StackPanel>
+                            <Border Classes="card-head"><TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.author.preview}" /></Border>
+                            <StackPanel x:Name="Preview" Margin="16" Spacing="12" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{l:T practice.author.tab.import}">
+                <Border Classes="card" Margin="0,16,0,0">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Classes="meta" VerticalAlignment="Center" Text="{l:T practice.author.import.formats}" />
+                            <TextBlock x:Name="ImportHead" Classes="card-title" VerticalAlignment="Center" />
+                        </DockPanel></Border>
+                        <StackPanel Margin="16" Spacing="12">
+                            <TextBox x:Name="RawBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="160" MaxHeight="400" FontFamily="{StaticResource CodeFont}"
+                                     PlaceholderText="{l:T practice.author.import.paste}" TextChanged="OnRawChanged" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="{l:T practice.author.import.pick}" Click="OnPickFile" />
+                                <Button x:Name="ImportButton" Classes="accent" Content="{l:T practice.author.import.go}" Click="OnImport" />
+                            </StackPanel>
+                            <TextBlock x:Name="ImportTitle" Classes="name" TextWrapping="Wrap" />
+                            <TextBlock x:Name="ImportNotes" Classes="sub" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="{l:T practice.author.tab.export}">
+                <Border Classes="card" Margin="0,16,0,0">
+                    <StackPanel>
+                        <Border Classes="card-head"><TextBlock x:Name="ExportHead" Classes="card-title" VerticalAlignment="Center" /></Border>
+                        <StackPanel Margin="16" Spacing="12">
+                            <TextBlock x:Name="ExportStats" TextWrapping="Wrap" />
+                            <TextBlock x:Name="ExportErrors" Classes="danger" TextWrapping="Wrap" IsVisible="False" />
+                            <WrapPanel ItemSpacing="8" LineSpacing="8">
+                                <Button x:Name="ExportMdButton" Classes="accent" Content="{l:T practice.author.export.md}" Click="OnExportMd" />
+                                <Button x:Name="ExportCopyButton" Content="{l:T practice.author.export.copy}" Click="OnExportCopy" />
+                                <Button x:Name="ExportXmlButton" Content="{l:T practice.author.export.xml}" Click="OnExportXml" />
+                                <Button x:Name="ExportGiftButton" Content="{l:T practice.author.export.gift}" Click="OnExportGift" />
+                                <Button x:Name="ExportJsonButton" Content="{l:T practice.author.export.json}" Click="OnExportJson" />
+                            </WrapPanel>
+                            <TextBlock x:Name="ExportDone" Classes="sub" TextWrapping="Wrap" />
+                            <TextBlock Classes="sub" TextWrapping="Wrap" Text="{l:T practice.author.export.hint}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="{l:T practice.author.tab.prompt}">
+                <Border Classes="card" Margin="0,16,0,0">
+                    <StackPanel>
+                        <Border Classes="card-head"><TextBlock x:Name="PromptHead" Classes="card-title" VerticalAlignment="Center" /></Border>
+                        <StackPanel Margin="16" Spacing="12">
+                            <WrapPanel x:Name="Modes" />
+                            <StackPanel x:Name="PickPanel" Spacing="4">
+                                <TextBlock Classes="sub" Text="{l:T practice.author.prompt.pick}" />
+                                <ComboBox x:Name="PickBox" HorizontalAlignment="Stretch" SelectionChanged="OnPickChanged" />
+                            </StackPanel>
+                            <Grid x:Name="CountPanel" ColumnDefinitions="Auto,12,*" RowDefinitions="Auto,4,Auto">
+                                <TextBlock Classes="sub" Text="{l:T practice.author.prompt.count}" />
+                                <TextBlock Grid.Column="2" Classes="sub" Text="{l:T practice.author.prompt.extra}" />
+                                <NumericUpDown x:Name="CountBox" Grid.Row="2" Minimum="1" Maximum="40" Value="10" Increment="1" FormatString="0" Width="140" ValueChanged="OnCount" />
+                                <TextBox x:Name="ExtraBox" Grid.Row="2" Grid.Column="2" TextChanged="OnExtraText" />
+                            </Grid>
+                            <TextBlock x:Name="StepsText" Classes="sub" TextWrapping="Wrap" />
+                            <TextBox x:Name="PromptText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="200" MaxHeight="400" FontFamily="{StaticResource CodeFont}" />
+                            <Button x:Name="CopyPromptButton" Classes="accent" HorizontalAlignment="Left" Content="{l:T practice.author.prompt.copy}" Click="OnCopyPrompt" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
+</UserControl>
