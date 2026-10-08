@@ -43,7 +43,7 @@ jobs:
       - name: Build (Microsoft Store)
         run: dotnet build src/SoHocTap -c Release -p:Store=true -warnaserror
 
-  # Bản đa nền tảng (Avalonia): lõi, trang và app build, test trên Windows, macOS, Linux. Mỗi máy chụp app một lần (--snap, chưa có dữ liệu)
+  # Bản đa nền tảng (Avalonia): lõi, trang và app build, test trên Windows, macOS, Linux. Mỗi máy chụp Hôm nay, Lịch, Luyện tập (--snap, chưa có dữ liệu)
   # và tự kiểm trình duyệt nhúng (--webcheck, trang tĩnh, không gọi web trường); ảnh, log tải về được ở mục Artifacts của lượt chạy.
   v2:
     strategy:
@@ -58,16 +58,6 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: src/ui/package-lock.json
-      - name: Practice UI build
-        working-directory: src/ui
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
       - name: Core and page tests
         run: dotnet test tests/BKStudyDesk.Core.Tests
       - name: Math renderer tests
@@ -91,6 +81,7 @@ jobs:
           mkdir -p out
           run "$exe" --snap="$PWD/out/home-$RUNNER_OS.png" || echo "snap exit $?"
           run "$exe" --lich --theme=light --snap="$PWD/out/lich-$RUNNER_OS.png" || echo "snap exit $?"
+          run "$exe" --luyen --snap="$PWD/out/luyen-tap-$RUNNER_OS.png" || echo "snap exit $?"
           run "$exe" --webcheck || echo "webcheck exit $?"
           cp "$app/data/app.log" "out/app-$RUNNER_OS.log" 2>/dev/null || true
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
