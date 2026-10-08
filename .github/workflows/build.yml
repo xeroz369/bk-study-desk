@@ -90,3 +90,14 @@ jobs:
           name: v2-${{ matrix.os }}
           path: out/
           if-no-files-found: warn
+
+  # Check bắt buộc của nhánh main (tên cross-platform): đạt khi v2 đạt trên cả ba hệ điều hành.
+  cross-platform:
+    needs: v2
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: v2 on Windows, macOS, Linux
+        env:
+          RESULT: ${{ needs.v2.result }}
+        run: test "$RESULT" = "success"
