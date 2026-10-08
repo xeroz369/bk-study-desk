@@ -6,24 +6,12 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.2] - 2026-10-08
+
 ### Thêm
 
-- **Bản đa nền tảng (thử nghiệm)** cho Windows, macOS, Linux, viết bằng Avalonia (`src/BKStudyDesk.Desktop`). Chưa có bộ cài cho macOS, Linux; chạy từ mã nguồn. Bản macOS và Linux chưa ổn định, chưa thử trên máy thật.
+- **Bản đa nền tảng (thử nghiệm)** cho Windows, macOS, Linux, viết bằng Avalonia (`src/BKStudyDesk.Desktop`). Bộ cài: Windows (x64, ARM64), Linux (AppImage), macOS (.pkg, chưa ký). Bản macOS và Linux chưa ổn định, chưa thử trên máy thật; macOS còn lỗi hiện sai một số dấu tiếng Việt.
 - Bản đa nền tảng: trang **Luyện tập** vẽ bằng control có sẵn, không chạy khung web. Đủ việc như bản Windows: ôn hôm nay, ôn câu sai, luyện trộn, bài học, thi thử, đánh dấu, kho quiz LMS, soạn (tạo câu, nhập, xuất, câu lệnh cho AI). Công thức TeX vẽ bằng XAML-Math (MIT). Ctrl+cộng, Ctrl+trừ đổi cỡ chữ.
-
-### Thay đổi
-
-- Bản đa nền tảng: trang Luyện tập dùng ít bộ nhớ hơn, cả app khoảng 200 MB thay vì khoảng 540 MB (không còn 6 tiến trình WebView2).
-- Chữ báo lỗi khi nhập quiz dạng Markdown dùng từ tiếng Việt chuẩn (tệp, đánh dấu đáp án đúng).
-
-### Sửa
-
-- `ket-qua.json` (kết quả luyện tập) bị hỏng: app báo lỗi thay vì coi như chưa có kết quả, và luôn giữ một bản file hỏng trong `data\backup` trước khi ghi đè.
-
-## [1.3.0] - 2026-10-05
-
-### Thêm
-
 - Cột **Nhóm** (L03, L05...) ở mọi bảng hạn nộp.
 - Mức gấp: còn dưới 6 giờ hiện đỏ, dưới 24 giờ hiện vàng, có biểu tượng kèm chữ. Hai mốc chỉnh được.
 - Cột **Trạng thái** lấy thật từ LMS: Chưa nộp, Bản nháp, Đã nộp, Đã chấm. Bài đã nộp không còn bị nhắc.
@@ -35,6 +23,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thay đổi
 
+- Bản đa nền tảng: trang Luyện tập dùng ít bộ nhớ hơn, cả app khoảng 200 MB thay vì khoảng 540 MB (không còn 6 tiến trình WebView2).
+- Chữ báo lỗi khi nhập quiz dạng Markdown dùng từ tiếng Việt chuẩn (tệp, đánh dấu đáp án đúng).
 - Cài đặt lưu ngay khi đổi, bỏ nút Lưu chung. Thẻ hay dùng ở trên, phần còn lại vào mục **Nâng cao** gập sẵn.
 - Trang chủ bỏ 4 ô số (lặp lại các bảng bên dưới); thêm thẻ **Lịch học** hôm nay và ngày mai; Lịch thi ghi ngày giờ và phòng; bảng 7 ngày tới chỉ còn việc phải làm.
 - Bảng hạn nộp gọn hơn và giãn hết cửa sổ: tên kèm dòng phụ (môn, chi tiết) thay cho ba cột Loại, Chi tiết, Môn; cột Nhóm chỉ hiện khi có mã nhóm.
@@ -42,6 +32,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 - Thư viện luôn có tab, bỏ công tắc bật tắt; môn chưa có tài liệu thì ghi rõ kèm nút Đóng góp.
 - MyBK hết phiên mà LMS vẫn chạy: chỉ thanh trạng thái báo, thanh báo đăng nhập lại chỉ hiện khi mở trang Điểm, Dịch vụ, sắp tới đợt đăng ký môn hay dữ liệu MyBK cũ quá 3 ngày.
 - Người đóng góp: CONTRIBUTING có bảng **Viết vào đâu**, mỗi thẻ Cài đặt và bảng sự kiện nằm ở một chỗ.
+
+### Sửa lỗi
+
+- `ket-qua.json` (kết quả luyện tập) bị hỏng: app báo lỗi thay vì coi như chưa có kết quả, và luôn giữ một bản file hỏng trong `data\backup` trước khi ghi đè.
 
 ## [1.2.1] - 2026-10-05
 
@@ -311,7 +305,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...v1.2.0
 [1.1.11]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...v1.1.11

@@ -44,7 +44,11 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
 
 ## Bản cho macOS và Linux (thử nghiệm)
 
-**Chưa ổn định.** Bản đa nền tảng (thư mục `src/BKStudyDesk.Desktop`, viết bằng Avalonia) dùng chung lõi với bản Windows, nhưng chưa có bộ cài cho macOS, Linux và chưa được thử trên máy Mac hay máy Linux thật.
+**Chưa ổn định.** Bản đa nền tảng (thư mục `src/BKStudyDesk.Desktop`, viết bằng Avalonia) dùng chung lõi với bản Windows. Từ 1.2.2 có bộ cài ở [Releases](../../releases/latest), nhưng chưa được thử trên máy Mac hay máy Linux thật.
+
+Cài:
+- Linux (x64): tải `BKStudyDesk-x.y.z-linux-x64.AppImage`, chạy `chmod +x` cho tệp rồi mở. Cần gói `libwebkit2gtk-4.1-0`.
+- macOS: tải `BKStudyDesk-x.y.z-Setup-osx-arm64.pkg` (chip Apple) hoặc `-osx-x64.pkg` (chip Intel). Bộ cài chưa ký số nên macOS chặn lần đầu: vào **Cài đặt hệ thống** > **Quyền riêng tư và bảo mật**, chọn **Vẫn mở**.
 
 Mỗi lần đổi mã, CI build app, chạy test lõi, test bộ vẽ công thức và mở app chụp trang Hôm nay, Lịch, Luyện tập trên Windows, macOS, Linux (kết quả ở tab Actions). Chưa kiểm trên máy thật:
 - đăng nhập SSO trong trình duyệt nhúng (WKWebView trên macOS, WebKitGTK trên Linux), MyBK chạy ẩn;
@@ -55,7 +59,7 @@ Khác với bản Windows:
 - **Tự đăng nhập lại khi hết phiên** dùng `secret-tool` (libsecret) trên Linux nếu máy có; macOS chưa hỗ trợ.
 - Lỗi đã biết trên macOS: vài chữ có dấu hiện sai (ví dụ "để" thành "đế", "chỗ" thành "chô", "Ôn" thành "On"), thấy trên ảnh chụp của CI.
 
-Chạy từ mã nguồn (cần .NET 10 SDK; Linux cần thêm gói `libwebkit2gtk-4.1-0` và `libicu`, thường có sẵn):
+Hoặc chạy từ mã nguồn (cần .NET 10 SDK; Linux cần thêm gói `libwebkit2gtk-4.1-0` và `libicu`, thường có sẵn):
 
 ```bash
 dotnet run --project src/BKStudyDesk.Desktop -c Release -f net10.0
