@@ -54,7 +54,7 @@ Khác với bản Windows:
 - token LMS lưu thành tệp chỉ tài khoản của bạn đọc được (quyền 600), chưa mã hóa như DPAPI trên Windows;
 - **Tự đăng nhập lại khi hết phiên** dùng `secret-tool` (libsecret) trên Linux nếu máy có; macOS chưa hỗ trợ.
 
-Chạy từ mã nguồn (cần .NET 10 SDK; Linux cần thêm gói `libwebkit2gtk-4.1-0`):
+Chạy từ mã nguồn (cần .NET 10 SDK; Linux cần thêm gói `libwebkit2gtk-4.1-0` và `libicu`, thường có sẵn):
 
 ```bash
 dotnet run --project src/BKStudyDesk.Desktop -c Release -f net10.0

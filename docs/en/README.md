@@ -50,7 +50,7 @@ Differences from the Windows app:
 - the LMS token is saved as a file only your account can read (mode 600), not encrypted like DPAPI on Windows;
 - **Sign in again when the session ends** uses `secret-tool` (libsecret) on Linux if available; not supported on macOS yet.
 
-Run from source (needs the .NET 10 SDK; Linux also needs `libwebkit2gtk-4.1-0`):
+Run from source (needs the .NET 10 SDK; Linux also needs `libwebkit2gtk-4.1-0` and `libicu`, usually installed already):
 
 ```bash
 dotnet run --project src/BKStudyDesk.Desktop -c Release -f net10.0
