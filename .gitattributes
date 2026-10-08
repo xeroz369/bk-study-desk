@@ -1,0 +1,10 @@
+# Mã nguồn luôn xuống dòng LF, kể cả khi checkout trên Windows (.editorconfig đặt end_of_line = lf, dotnet format kiểm ở CI).
+* text=auto eol=lf
+# Tệp nhị phân: không đổi xuống dòng.
+*.png binary
+*.jpg binary
+*.ico binary
+*.otf binary
+*.ttf binary
+*.zip binary
+*.pdf binary
