@@ -18,7 +18,7 @@ No. The app only calls **read** APIs. It never submits work, registers for or ca
 It has no server of its own and no analytics. It only talks to the university's servers, and to GitHub to check for new versions if you allow it. See [Security and privacy](Security-and-privacy).
 
 **Is there a macOS or Linux version?**
-Not yet. A cross-platform version is in progress; it will appear on the Releases page when it's stable.
+There is an experimental version, **not stable yet**, with no installer: run it from source as described in [Installation](Installation#macos-and-linux-experimental). An installer will appear on the Releases page once it is stable.
 
 **Does it work on ARM (Snapdragon) laptops?**
 Yes. Download `-Setup-arm64.exe`.

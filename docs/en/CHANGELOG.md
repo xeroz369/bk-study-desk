@@ -8,6 +8,20 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Added
+
+- **Cross-platform app (experimental)** for Windows, macOS and Linux, built with Avalonia (`src/BKStudyDesk.Desktop`). No installer for macOS or Linux yet; run from source. The macOS and Linux versions are not stable yet and have not been tried on real machines.
+- Cross-platform app: the **Practice** page is drawn with built-in controls instead of a web view. Same features as the Windows app: today's review, wrong-answer review, mixed practice, lessons, mock exams, flagged questions, LMS quiz archive, author (create, import, export, AI prompts). TeX formulas drawn with XAML-Math (MIT). Ctrl+plus, Ctrl+minus change the text size.
+
+### Changed
+
+- Cross-platform app: the Practice page uses less memory, about 200 MB for the whole app instead of about 540 MB (no more 6 WebView2 processes).
+- Error messages when importing a Markdown quiz use clearer Vietnamese wording.
+
+### Fixed
+
+- A corrupted `ket-qua.json` (practice results): the app reports an error instead of treating it as empty, and always keeps a copy of the broken file in `data\backup` before overwriting it.
+
 ## [1.3.0] - 2026-10-05
 
 ### Added

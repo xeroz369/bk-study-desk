@@ -2,11 +2,11 @@
 
 [![Tiếng Việt](https://img.shields.io/badge/lang-Ti%E1%BA%BFng%20Vi%E1%BB%87t-red.svg)](../../README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md)
 
-> Translated from README.md (Vietnamese) for BK Study Desk 1.1.10.
+> Translated from README.md (Vietnamese), updated 08/10/2026.
 
 ![BK Study Desk](../hero.png)
 
-A Windows app for HCMUT students: BK-LMS and MyBK in one place, plus a few extras.
+A Windows app for HCMUT students: BK-LMS and MyBK in one place, plus a few extras. Versions for macOS and Linux are experimental and not stable yet (see [below](#macos-and-linux-experimental)).
 - Deadlines, quizzes, timetable, exam schedule, grades.
 - Course documents, download only the parts you pick.
 - Practice: write your own quizzes, review LMS quizzes, mock exams.
@@ -37,6 +37,26 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
 - Windows 10 1809 or later, or Windows 11 (x64 or ARM64).
 - Microsoft Edge WebView2 Runtime (included in Windows 11).
 - No .NET installation needed.
+
+## macOS and Linux (experimental)
+
+**Not stable yet.** The cross-platform app (`src/BKStudyDesk.Desktop`, built with Avalonia) shares its core with the Windows app, but there is no installer for macOS or Linux yet and it has not been tried on a real Mac or Linux PC.
+
+On every change, CI builds the app, runs the core and formula renderer tests, and opens the app to take screenshots of Today, Calendar and Practice on Windows, macOS and Linux (results in the Actions tab). Not checked on a real machine yet:
+- SSO sign-in in the embedded browser (WKWebView on macOS, WebKitGTK on Linux) and the hidden MyBK browser;
+- notifications, tray icon, start with the computer, automatic updates.
+
+Differences from the Windows app:
+- the LMS token is saved as a file only your account can read (mode 600), not encrypted like DPAPI on Windows;
+- **Sign in again when the session ends** uses `secret-tool` (libsecret) on Linux if available; not supported on macOS yet.
+
+Run from source (needs the .NET 10 SDK; Linux also needs `libwebkit2gtk-4.1-0`):
+
+```bash
+dotnet run --project src/BKStudyDesk.Desktop -c Release -f net10.0
+```
+
+Report problems in [Issues](https://github.com/xeroz369/bk-study-desk/issues) with your OS and version; `app.log` in the app's `data` folder helps (read it first, never paste your student ID or tokens).
 
 ## Features
 
@@ -104,7 +124,15 @@ dotnet build src/SoHocTap -c Release
 dotnet publish src/SoHocTap -c Release -r win-x64 --self-contained -o publish
 ```
 
-Needs the .NET 10 SDK, Node 24 and Windows. Code layout:
+Needs the .NET 10 SDK, Node 24 and Windows. The cross-platform app (Avalonia) needs no Node and builds on Windows, macOS and Linux:
+
+```bash
+dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0
+dotnet test tests/BKStudyDesk.Core.Tests
+dotnet test tests/BKStudyDesk.Math.Tests
+```
+
+Code layout:
 
 | Folder | Contents |
 |---|---|
@@ -116,8 +144,12 @@ Needs the .NET 10 SDK, Node 24 and Windows. Code layout:
 | `src/SoHocTap/lang` | language packs (`vi.json`, `en.json`) |
 | `src/SoHocTap/Updates` | update check and install (Velopack), per the user's choice |
 | `src/BKStudyDesk.Setup` | Vietnamese installer and uninstaller (.NET Framework 4.8) |
-| `src/ui` | Practice view (Svelte) |
+| `src/ui` | Practice view of the Windows app (Svelte) |
+| `src/BKStudyDesk.Core` | cross-platform core: reuses code from `src/SoHocTap`, Practice logic (grading, review schedule, packs, import and export) |
+| `src/BKStudyDesk.Desktop` | cross-platform app (Avalonia); Practice drawn with built-in controls |
+| `src/ThirdParty/XamlMath` | TeX formula renderer for the cross-platform app (XAML-Math, MIT) |
 | `tests/SoHocTap.Tests` | unit tests |
+| `tests/BKStudyDesk.Core.Tests`, `tests/BKStudyDesk.Math.Tests` | core, page and formula renderer tests (run on three OSes in CI) |
 
 University URLs, API paths, folder names and sync intervals live in config (`Core/DefaultConfig.json`), not scattered in code. `data\config.json` stores only what you changed from the defaults.
 
@@ -139,4 +171,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 
 By contributing code (a pull request) you agree to license your contribution under AGPL-3.0.
 
-Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included).
+Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included), XAML-Math in `src/ThirdParty/XamlMath` (MIT, `LICENSE.md`; Computer Modern fonts under `fonts/LICENSES.md`; changes listed in that folder's README).

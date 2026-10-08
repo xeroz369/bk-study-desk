@@ -43,3 +43,6 @@ Kiểm kỹ hơn (cần cài [GitHub CLI](https://cli.github.com)): xác nhận 
 ```powershell
 gh attestation verify .\BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
 ```
+## macOS và Linux (thử nghiệm)
+
+Bản cho macOS và Linux **chưa ổn định** và chưa có bộ cài. Muốn thử thì chạy từ mã nguồn, xem mục [Bản cho macOS và Linux](https://github.com/xeroz369/bk-study-desk#bản-cho-macos-và-linux-thử-nghiệm) trong README: cách chạy, phần đã và chưa kiểm, chỗ khác với bản Windows.

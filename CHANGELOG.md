@@ -6,6 +6,20 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- **Bản đa nền tảng (thử nghiệm)** cho Windows, macOS, Linux, viết bằng Avalonia (`src/BKStudyDesk.Desktop`). Chưa có bộ cài cho macOS, Linux; chạy từ mã nguồn. Bản macOS và Linux chưa ổn định, chưa thử trên máy thật.
+- Bản đa nền tảng: trang **Luyện tập** vẽ bằng control có sẵn, không chạy khung web. Đủ việc như bản Windows: ôn hôm nay, ôn câu sai, luyện trộn, bài học, thi thử, đánh dấu, kho quiz LMS, soạn (tạo câu, nhập, xuất, câu lệnh cho AI). Công thức TeX vẽ bằng XAML-Math (MIT). Ctrl+cộng, Ctrl+trừ đổi cỡ chữ.
+
+### Thay đổi
+
+- Bản đa nền tảng: trang Luyện tập dùng ít bộ nhớ hơn, cả app khoảng 200 MB thay vì khoảng 540 MB (không còn 6 tiến trình WebView2).
+- Chữ báo lỗi khi nhập quiz dạng Markdown dùng từ tiếng Việt chuẩn (tệp, đánh dấu đáp án đúng).
+
+### Sửa
+
+- `ket-qua.json` (kết quả luyện tập) bị hỏng: app báo lỗi thay vì coi như chưa có kết quả, và luôn giữ một bản file hỏng trong `data\backup` trước khi ghi đè.
+
 ## [1.3.0] - 2026-10-05
 
 ### Thêm
