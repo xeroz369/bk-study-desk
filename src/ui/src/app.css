@@ -145,6 +145,56 @@
 	--input: rgb(255 255 255 / 0.14);
 }
 
+/* Nhúng trong bản đa nền tảng (Avalonia, ?host=2): cùng bộ màu, viền, bo góc với Styles/Tokens.axaml của app (design-system/bk mục 3)
+   để khung Luyện tập trông như một trang của app; bỏ icon trang trí (nút chỉ có icon vẫn giữ để bấm được). Màu nhấn đặt từ main.ts. */
+:root.embed.host2 {
+	--radius: 0.5rem;
+	--background: #f4f6f8;
+	--foreground: #1f2328;
+	--card: #ffffff;
+	--card-foreground: #1f2328;
+	--popover: #ffffff;
+	--popover-foreground: #1f2328;
+	--muted: #eef1f4;
+	--muted-foreground: #59636e;
+	--secondary: #eef1f4;
+	--secondary-foreground: #1f2328;
+	--accent: #eef6f9;
+	--accent-foreground: #1f2328;
+	--border: #e3e7eb;
+	--input: #d0d7de;
+	--destructive: #c4314b;
+	--bad: #c4314b;
+	--ok: #1a7f37;
+	--warn: #8a5c00;
+}
+:root.embed.host2.dark {
+	--background: #14181d;
+	--foreground: #e6edf3;
+	--card: #1e232a;
+	--card-foreground: #e6edf3;
+	--popover: #1e232a;
+	--popover-foreground: #e6edf3;
+	--muted: #262c34;
+	--muted-foreground: #9aa4af;
+	--secondary: #262c34;
+	--secondary-foreground: #e6edf3;
+	--accent: #0f3142;
+	--accent-foreground: #e6edf3;
+	--border: #2f363f;
+	--input: #3d4550;
+	--destructive: #ff6b7a;
+	--bad: #ff6b7a;
+	--ok: #3fb950;
+	--warn: #d29922;
+}
+:root.host2 svg.lucide-icon {
+	display: none;
+}
+:root.host2 button > svg.lucide-icon:only-child {
+	display: inline-block;
+}
+
 @theme inline {
 	/* Phông hệ thống của Windows 11/10: đủ dấu tiếng Việt, khớp với thanh tiêu đề, menu, hộp thoại.
 	   --app-font: phông người dùng chọn trong Cài đặt của app (main.ts đặt trên :root), không có thì dùng Segoe UI Variable. */

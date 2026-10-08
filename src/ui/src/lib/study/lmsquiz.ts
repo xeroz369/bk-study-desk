@@ -67,7 +67,8 @@ export function parseReview(html: string): PackQuestion | null {
 	if (rows.length) {
 		const label = (r: Element) =>
 			(r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r.querySelector('label') ?? r).innerHTML.trim();
-		const text = (r: Element) => normText((r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r).textContent ?? '');
+		const text = (r: Element) =>
+			normText((r.querySelector('[data-region="answer-label"] .flex-fill, .flex-fill') ?? r).textContent ?? '');
 		const options = rows.map(label);
 		const multi = !!rows[0].querySelector('input[type="checkbox"]');
 		const picked = rows.map((r, i) => (r.querySelector('input')?.hasAttribute('checked') ? i : -1)).filter((i) => i >= 0);
@@ -92,7 +93,8 @@ export function parseReview(html: string): PackQuestion | null {
 				? { type: 'numeric', prompt, answer: n, ...(unit ? { unit } : {}), solution: '' }
 				: { type: 'short', prompt, accept: [rightText], solution: '' };
 	}
-	const result = /incorrect|sai/i.test(state)
+	// Moodle tiếng Việt ghi câu sai là "Không đúng": phải bắt trước "đúng".
+	const result = /incorrect|không đúng|sai/i.test(state)
 		? 'sai'
 		: /partially|một phần/i.test(state)
 			? 'đúng một phần'

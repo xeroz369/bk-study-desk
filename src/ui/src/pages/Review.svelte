@@ -30,7 +30,8 @@
 <Panel pad>
 	{#each questions as q, k (q.id)}
 		{@const e = Study.entry(q.lessonId ?? '')}
-		{#if e}<a class="link mt-2 flex min-h-6 items-center text-xs text-muted-foreground" href={'#bai/' + e.id}>{e.courseName}, {e.title}</a
+		{#if e}<a class="link mt-2 flex min-h-6 items-center text-xs text-muted-foreground" href={'#bai/' + e.id}
+				>{e.courseName}, {e.title}</a
 			>{/if}
 		<QuestionCard
 			question={q}

@@ -1,4 +1,4 @@
-﻿using SoHocTap.Core;
+using SoHocTap.Core;
 
 namespace SoHocTap.Shell;
 

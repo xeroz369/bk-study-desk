@@ -6,6 +6,76 @@
 
 Issues and pull requests are very welcome, especially when the university changes its pages or APIs. You can write issues in Vietnamese or English; keep technical terms in English.
 
+## Where to write it
+
+Decide where the code goes before you write it; do not patch it into the nearest file.
+
+| Task | Write it in |
+|---|---|
+| Read new data from LMS or MyBK | `Sources/Lms`, `Sources/Mybk` (one file per API group) |
+| Records, saving data files | `Data/` |
+| Pure rules (Vietnam time, urgency level, splitting group codes) | `Core/` or `Ui/Due.cs`, with tests |
+| New config key | `Core/DefaultConfig.json` and one property in `Core/Settings.cs` |
+| Settings card | one file in `Ui/Settings/`, one line in `SettingsSections.cs` |
+| Column or display style of the event table | `Ui/Controls/TimelineList` |
+| New page | `Ui/Pages/`, registered in `PageRegistry` |
+| Windows, tray, sign-in, WebView | `Shell/` |
+| Practice in the cross-platform app: grading, review schedule, packs, import and export | `BKStudyDesk.Core/Presentation/Practice/`, with tests |
+| Practice in the cross-platform app: screens, buttons | `BKStudyDesk.Desktop/Views/Practice/` |
+| Display text | `lang/vi.json` and `lang/en.json` |
+
+If nothing fits, create a small new file that does one thing instead of growing a large one.
+
+## Folder layout
+
+```
+src/
+├── SoHocTap/            WPF app (.NET 10, Fluent theme)
+│   ├── Core/            config, paths, log, pure rules
+│   ├── Data/            records and saving data files
+│   ├── Sources/         reading LMS (Lms/) and MyBK (Mybk/)
+│   ├── Library/         document library
+│   ├── Files/           sorting and naming downloaded files
+│   ├── Updates/         checking for and downloading updates
+│   ├── Api/             internal API for the Practice view
+│   ├── Shell/           windows, tray, reminders, sign-in
+│   ├── Ui/              WPF UI (Pages/, Controls/)
+│   ├── lang/            UI text: vi.json, en.json
+│   └── tools-dev/       release and export scripts
+├── ui/                  Practice view of the WPF app (Svelte), built into ui/
+├── BKStudyDesk.Core/    cross-platform core: files linked from SoHocTap and the Practice logic
+├── BKStudyDesk.Desktop/ Avalonia app (Windows, macOS, Linux); Practice drawn with built-in controls
+├── ThirdParty/XamlMath/ TeX formula renderer for the Avalonia app (MIT, maintained here)
+└── BKStudyDesk.Setup/   installer
+tests/                   xUnit: SoHocTap.Tests, BKStudyDesk.Core.Tests, BKStudyDesk.Math.Tests
+```
+
+`Ui/Format.cs`, `Ui/AppState.cs`, `Ui/Lang.cs`, `Ui/Models.cs`, `Ui/Curriculum.cs` and `Ui/Due.cs` are also compiled into `BKStudyDesk.Core`, so keep them free of WPF.
+
+## Layers
+
+- `Core/`, `Data/`, `Sources/`, `Library/`, `Files/` and `Updates/` do not use WPF.
+- `Ui/` does not call the network directly: it goes through `AppHost` and the services.
+- `Shell/` does not depend on concrete pages: pages register through `PageRegistry`.
+- This is the target rule. Where code still breaks it, do not make it worse.
+- Tests pick up every file in `Core/`, `Data/`, `Sources/` and `Library/` by themselves. A file that needs `Config`, `Paths` or WPF goes into `LogicExclude` in `SoHocTap.Tests.csproj` with a reason.
+
+## Add a Settings card
+
+1. Add the key to `Core/DefaultConfig.json` and a property to `Core/Settings.cs`.
+2. Create `Ui/Settings/<Name>Section.xaml` and `.xaml.cs`, implementing `ISettingsSection`.
+3. The card reads and writes only through `Settings`, never `Config` directly.
+4. Add one line to `Ui/Settings/SettingsSections.cs`: `Common` if people need it often, `Advanced` (the collapsed Advanced section) if rarely.
+5. Add the display text to `lang/vi.json`, then `lang/en.json`.
+
+## Add a column to the event table
+
+1. The column lives in `Ui/Controls/TimelineList`, shared by every event table.
+2. The column reads a property of `TimelineItem` (`Ui/AppState.cs`), built from the records in `Data/Models.cs`; add a new field to both.
+3. Write the rule that computes the value (urgency, group split) as pure code in `Core/` or `Ui/Due.cs`, with tests.
+4. Add the column header to `lang/vi.json`, then `lang/en.json`.
+5. Create the column with `Grids.Text`, `Grids.Flex` or `Grids.Right` so the width scales with the chosen font size; never set a fixed width that hides text (DESIGN 6b-3).
+
 ## Before you open a pull request
 
 ```powershell

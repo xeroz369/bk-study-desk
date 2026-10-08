@@ -21,7 +21,12 @@
 		reg: 'text-kind-reg border-kind-reg/30',
 		event: 'text-kind-event border-kind-event/30',
 	};
-	let { tone = 'muted', text, title = '', class: className = '' }: { tone?: Tone; text: string; title?: string; class?: string } = $props();
+	let {
+		tone = 'muted',
+		text,
+		title = '',
+		class: className = '',
+	}: { tone?: Tone; text: string; title?: string; class?: string } = $props();
 </script>
 
 <Badge variant="outline" {title} class={cn('h-[18px] rounded-md px-1.5 text-xs font-medium', TONE[tone], className)}>{text}</Badge>

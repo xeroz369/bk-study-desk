@@ -231,7 +231,8 @@
 		</div>
 	{:else}
 		<p class="text-sm">
-			Bạn trả lời: <b class={isCorrect(q, picked) ? 'text-ok' : 'text-bad'}>{isBlank(picked) ? '(trống)' : String(picked)}</b>. Đáp án:
+			Bạn trả lời: <b class={isCorrect(q, picked) ? 'text-ok' : 'text-bad'}>{isBlank(picked) ? '(trống)' : String(picked)}</b>. Đáp
+			án:
 			<b>{answerText(q)}</b>
 		</p>
 	{/if}
@@ -282,7 +283,8 @@
 					class={note?.flag ? 'text-warn' : ''}
 					aria-pressed={!!note?.flag}
 					title="Đánh dấu khi nghĩ đáp án/lời giải sai; xem lại ở trang Đánh dấu"
-					onclick={() => Progress.setNote(q.fp, { flag: !note?.flag })}><Flag />{note?.flag ? 'Bỏ cờ nghi sai' : 'Nghi đáp án sai'}</Button
+					onclick={() => Progress.setNote(q.fp, { flag: !note?.flag })}
+					><Flag />{note?.flag ? 'Bỏ cờ nghi sai' : 'Nghi đáp án sai'}</Button
 				>
 			</div>
 		{/if}

@@ -31,16 +31,8 @@ public static class Format
     /// <summary>Số ngày lịch từ hôm nay: hôm nay = 0, ngày mai = 1.</summary>
     public static int DayDiff(long sec) => Core.VnTime.DayDiff(sec, Now);
 
-    /// <summary>còn 3 giờ · ngày mai · còn 5 ngày · đã qua</summary>
-    public static string Until(long sec)
-    {
-        var s = sec - Now;
-        if (s < 0) return L.T("format.until.passed");
-        if (s < 3600) return L.F("format.until.minutes", Math.Max(1, s / 60));
-        var d = DayDiff(sec);
-        if (d == 0) return L.F("format.until.hours", Math.Round(s / 3600.0));
-        return d == 1 ? L.T("format.until.tomorrow") : L.F("format.until.days", d);
-    }
+    /// <summary>Chữ đếm ngược tới <paramref name="sec"/>, xem <see cref="Due.LeftText"/>.</summary>
+    public static string Until(long sec) => Due.LeftText(sec, Now);
 
     /// <summary>2 giờ trước · hôm qua · 3 ngày trước · 12/09</summary>
     public static string Ago(long sec)

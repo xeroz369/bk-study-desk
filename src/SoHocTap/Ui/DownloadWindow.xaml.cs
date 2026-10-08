@@ -55,7 +55,7 @@ public partial class DownloadWindow : Window
         Title = L.T("download.title");
         Heading.Text = course.Subject + (course.Part is null ? "" : ", " + course.Part) + ", " + course.Term;
         Sub.Text = L.F("download.saveTo", $"{Config.Str("folders.subjects", "Môn học")}\\{course.Subject}");
-        Extract.IsChecked = Config.Bool("archives.extract", true);
+        Extract.IsChecked = Core.Settings.Archives.Extract;
         Start.IsEnabled = false;
         Loaded += async (_, _) => await LoadAsync();
         Closing += (_, e) =>

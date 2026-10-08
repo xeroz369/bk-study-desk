@@ -6,6 +6,43 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- **Bản đa nền tảng (thử nghiệm)** cho Windows, macOS, Linux, viết bằng Avalonia (`src/BKStudyDesk.Desktop`). Chưa có bộ cài cho macOS, Linux; chạy từ mã nguồn. Bản macOS và Linux chưa ổn định, chưa thử trên máy thật.
+- Bản đa nền tảng: trang **Luyện tập** vẽ bằng control có sẵn, không chạy khung web. Đủ việc như bản Windows: ôn hôm nay, ôn câu sai, luyện trộn, bài học, thi thử, đánh dấu, kho quiz LMS, soạn (tạo câu, nhập, xuất, câu lệnh cho AI). Công thức TeX vẽ bằng XAML-Math (MIT). Ctrl+cộng, Ctrl+trừ đổi cỡ chữ.
+
+### Thay đổi
+
+- Bản đa nền tảng: trang Luyện tập dùng ít bộ nhớ hơn, cả app khoảng 200 MB thay vì khoảng 540 MB (không còn 6 tiến trình WebView2).
+- Chữ báo lỗi khi nhập quiz dạng Markdown dùng từ tiếng Việt chuẩn (tệp, đánh dấu đáp án đúng).
+
+### Sửa
+
+- `ket-qua.json` (kết quả luyện tập) bị hỏng: app báo lỗi thay vì coi như chưa có kết quả, và luôn giữ một bản file hỏng trong `data\backup` trước khi ghi đè.
+
+## [1.3.0] - 2026-10-05
+
+### Thêm
+
+- Cột **Nhóm** (L03, L05...) ở mọi bảng hạn nộp.
+- Mức gấp: còn dưới 6 giờ hiện đỏ, dưới 24 giờ hiện vàng, có biểu tượng kèm chữ. Hai mốc chỉnh được.
+- Cột **Trạng thái** lấy thật từ LMS: Chưa nộp, Bản nháp, Đã nộp, Đã chấm. Bài đã nộp không còn bị nhắc.
+- Thẻ **Nhắc hạn** riêng trong Cài đặt: nhắc lần 1 (mặc định 1 ngày trước), lần 2, hai mốc màu gấp.
+- Nhắc hạn gom vào 07:00, 12:00, 19:00 (chỉnh được, để trống là báo ngay); bài sắp tới hạn vẫn báo ngay.
+- **Tự đăng nhập lại khi hết phiên** (mặc định tắt, cần bật Giữ đăng nhập): tài khoản lưu ở Windows Credential Manager, app hỏi một lần sau khi cập nhật.
+- Thẻ **Đăng ký môn** ở trang chủ: đợt đang mở (kèm giờ đóng) và đợt sắp mở gần nhất (kèm giờ mở, còn bao lâu).
+- **Luyện trộn** trong Luyện tập: câu các chương đan xen, giúp nhận ra dạng bài khi thi.
+
+### Thay đổi
+
+- Cài đặt lưu ngay khi đổi, bỏ nút Lưu chung. Thẻ hay dùng ở trên, phần còn lại vào mục **Nâng cao** gập sẵn.
+- Trang chủ bỏ 4 ô số (lặp lại các bảng bên dưới); thêm thẻ **Lịch học** hôm nay và ngày mai; Lịch thi ghi ngày giờ và phòng; bảng 7 ngày tới chỉ còn việc phải làm.
+- Bảng hạn nộp gọn hơn và giãn hết cửa sổ: tên kèm dòng phụ (môn, chi tiết) thay cho ba cột Loại, Chi tiết, Môn; cột Nhóm chỉ hiện khi có mã nhóm.
+- Trang Môn học gọn còn 5 tab: Tài liệu (nút **Mới cập nhật** ngay trong tab), Thư viện, Sắp tới, Thông báo, Điểm. Tab Lớp trên LMS bỏ, dùng nút **Mở LMS**.
+- Thư viện luôn có tab, bỏ công tắc bật tắt; môn chưa có tài liệu thì ghi rõ kèm nút Đóng góp.
+- MyBK hết phiên mà LMS vẫn chạy: chỉ thanh trạng thái báo, thanh báo đăng nhập lại chỉ hiện khi mở trang Điểm, Dịch vụ, sắp tới đợt đăng ký môn hay dữ liệu MyBK cũ quá 3 ngày.
+- Người đóng góp: CONTRIBUTING có bảng **Viết vào đâu**, mỗi thẻ Cài đặt và bảng sự kiện nằm ở một chỗ.
+
 ## [1.2.1] - 2026-10-05
 
 ### Thay đổi

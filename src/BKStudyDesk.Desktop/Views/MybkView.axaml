@@ -1,0 +1,155 @@
+<!-- Trang MyBK: gom mọi mục học vụ của MyBK một chỗ, mỗi mục một tab, mỗi tab một bảng (kiểu bảng chung ở Tokens.axaml).
+     Dòng nào hiện, thứ tự, chữ: BKStudyDesk.Core/Presentation/Mybk.cs. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
+             x:Class="BKStudyDesk.Desktop.Views.MybkView">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
+            <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T mybk.openWeb}" Click="OnOpenWeb" />
+            <StackPanel Spacing="2">
+                <TextBlock Classes="title" Text="MyBK" />
+                <TextBlock x:Name="Subtitle" Classes="meta" />
+                <!-- Số liệu học vụ: từng cặp nhãn, số xếp hàng ngang (không khung); dòng phụ là kỳ, tín chỉ còn thiếu -->
+                <ItemsControl x:Name="Stats" Margin="0,12,0,0">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="p:MybkStat">
+                            <StackPanel Spacing="2" Margin="0,0,32,8" MaxWidth="240">
+                                <TextBlock Classes="sub" Text="{Binding Label}" />
+                                <TextBlock Classes="card-title" Text="{Binding Value}" />
+                                <TextBlock Classes="sub" Text="{Binding Tip}" IsVisible="{Binding Tip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DockPanel>
+        <Border Classes="card">
+            <TabControl x:Name="Tabs" Padding="0">
+                <TabItem Header="{l:T grades.tabGrades}">
+                    <DockPanel>
+                        <TextBlock x:Name="GradesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Grades">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.code}" Binding="{Binding Code}" Width="Auto" MinWidth="80" x:DataType="p:MybkGradeRow" />
+                                <DataGridTextColumn Header="{l:T col.subject}" Binding="{Binding Name}" Width="*" MinWidth="180" FontWeight="SemiBold" x:DataType="p:MybkGradeRow" />
+                                <DataGridTextColumn Header="{l:T col.parts}" Binding="{Binding Parts}" Width="2*" MinWidth="140" x:DataType="p:MybkGradeRow" />
+                                <DataGridTextColumn Header="{l:T col.credits}" Binding="{Binding Credits}" Width="Auto" MinWidth="48" x:DataType="p:MybkGradeRow" />
+                                <DataGridTextColumn Header="{l:T col.score}" Binding="{Binding Score}" Width="Auto" MinWidth="64" SortMemberPath="SortScore" x:DataType="p:MybkGradeRow" />
+                                <DataGridTextColumn Header="{l:T col.letter}" Binding="{Binding Letter}" Width="Auto" MinWidth="56" x:DataType="p:MybkGradeRow" />
+                                <DataGridTemplateColumn Header="{l:T col.result}" Width="Auto" MinWidth="96">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="p:MybkGradeRow">
+                                            <TextBlock Classes.danger="{Binding Fail}" Text="{Binding Result}" VerticalAlignment="Center" Margin="12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T grades.tabProgram}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="16,8">
+                            <ComboBox x:Name="ProgramFilter" SelectionChanged="OnProgramFilter" MinWidth="180" />
+                            <TextBlock x:Name="ProgramNote" Classes="meta" />
+                        </StackPanel>
+                        <TextBlock x:Name="ProgramEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Program">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.code}" Binding="{Binding Code}" Width="Auto" MinWidth="80" x:DataType="p:ProgramRow" />
+                                <DataGridTextColumn Header="{l:T col.subject}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:ProgramRow" />
+                                <DataGridTextColumn Header="{l:T col.credits}" Binding="{Binding Credits}" Width="Auto" MinWidth="48" x:DataType="p:ProgramRow" />
+                                <DataGridTextColumn Header="{l:T col.score}" Binding="{Binding Score}" Width="Auto" MinWidth="64" x:DataType="p:ProgramRow" />
+                                <DataGridTextColumn Header="{l:T col.letter}" Binding="{Binding Letter}" Width="Auto" MinWidth="56" x:DataType="p:ProgramRow" />
+                                <DataGridTextColumn Header="{l:T col.status}" Binding="{Binding Status}" Width="Auto" MinWidth="120" x:DataType="p:ProgramRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T home.reg}">
+                    <DockPanel>
+                        <TextBlock x:Name="RegisteredEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Registered">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.code}" Binding="{Binding Code}" Width="Auto" MinWidth="80" x:DataType="p:RegisteredRow" />
+                                <DataGridTextColumn Header="{l:T col.subject}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:RegisteredRow" />
+                                <DataGridTextColumn Header="{l:T col.group}" Binding="{Binding ClassGroup}" Width="Auto" MinWidth="96" x:DataType="p:RegisteredRow" />
+                                <DataGridTextColumn Header="{l:T col.round}" Binding="{Binding Round}" Width="Auto" MinWidth="80" x:DataType="p:RegisteredRow" />
+                                <DataGridTextColumn Header="{l:T col.result}" Binding="{Binding Result}" Width="Auto" MinWidth="96" x:DataType="p:RegisteredRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T mybk.tabTeachers}">
+                    <DockPanel>
+                        <TextBlock x:Name="TeachersEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Teachers">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.subject}" Binding="{Binding Name}" Width="*" MinWidth="180" FontWeight="SemiBold" x:DataType="p:TeacherRow" />
+                                <DataGridTextColumn Header="{l:T col.code}" Binding="{Binding Code}" Width="Auto" MinWidth="80" x:DataType="p:TeacherRow" />
+                                <DataGridTextColumn Header="{l:T col.group}" Binding="{Binding Group}" Width="Auto" MinWidth="64" x:DataType="p:TeacherRow" />
+                                <DataGridTextColumn Header="{l:T col.day}" Binding="{Binding Day}" Width="Auto" MinWidth="80" SortMemberPath="DaySort" x:DataType="p:TeacherRow" />
+                                <DataGridTextColumn Header="{l:T col.time}" Binding="{Binding Time}" Width="Auto" MinWidth="96" x:DataType="p:TeacherRow" />
+                                <DataGridTextColumn Header="{l:T col.room}" Binding="{Binding Room}" Width="Auto" MinWidth="80" x:DataType="p:TeacherRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T mybk.tabFees}">
+                    <DockPanel>
+                        <TextBlock x:Name="FeesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Fees">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.content}" Binding="{Binding Content}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:FeeRow" />
+                                <DataGridTextColumn Header="{l:T col.remaining}" Binding="{Binding Remaining}" Width="Auto" MinWidth="120" SortMemberPath="RemainingValue" x:DataType="p:FeeRow" />
+                                <DataGridTextColumn Header="{l:T col.due}" Binding="{Binding Due}" Width="Auto" MinWidth="110" x:DataType="p:FeeRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T mybk.tabSocial}">
+                    <DockPanel>
+                        <TextBlock x:Name="SocialTitle" DockPanel.Dock="Top" Classes="meta" Margin="16,8" />
+                        <TextBlock x:Name="SocialEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Social">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.activity}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:ActivityRow" />
+                                <DataGridTextColumn Header="{l:T col.date}" Binding="{Binding Date}" Width="Auto" MinWidth="100" x:DataType="p:ActivityRow" />
+                                <DataGridTextColumn Header="{l:T col.daysConverted}" Binding="{Binding Days}" Width="Auto" MinWidth="80" x:DataType="p:ActivityRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T mybk.tabDecisions}">
+                    <DockPanel>
+                        <TextBlock x:Name="DecisionsEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Decisions">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.date}" Binding="{Binding Date}" Width="Auto" MinWidth="100" x:DataType="p:DecisionRow" />
+                                <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding Kind}" Width="Auto" MinWidth="96" x:DataType="p:DecisionRow" />
+                                <DataGridTextColumn Header="{l:T col.reason}" Binding="{Binding Reason}" Width="*" MinWidth="200" x:DataType="p:DecisionRow" />
+                                <DataGridTextColumn Header="{l:T col.term}" Binding="{Binding Term}" Width="Auto" MinWidth="96" x:DataType="p:DecisionRow" />
+                                <DataGridTextColumn Header="{l:T col.state}" Binding="{Binding Status}" Width="Auto" MinWidth="96" x:DataType="p:DecisionRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="{l:T nav.services}">
+                    <DockPanel>
+                        <TextBox x:Name="ServiceFilter" DockPanel.Dock="Top" Margin="16,8" PlaceholderText="{l:T mybk.servicesFilter}" TextChanged="OnServiceFilter" />
+                        <TextBlock x:Name="ServicesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                        <DataGrid x:Name="Services" DoubleTapped="OnServiceOpen">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T col.service}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:ServiceRow" />
+                                <DataGridTextColumn Header="{l:T col.site}" Binding="{Binding Site}" Width="Auto" MinWidth="100" x:DataType="p:ServiceRow" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+            </TabControl>
+        </Border>
+    </DockPanel>
+</UserControl>

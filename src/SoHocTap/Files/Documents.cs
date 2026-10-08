@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
 
@@ -46,7 +46,7 @@ public static class Documents
         if (Directory.Exists(full)) { Process.Start(new ProcessStartInfo(Explorer) { ArgumentList = { full } }); return true; }
         // File chạy được (exe, lnk, hta, script…) trong tài liệu tải về: không chạy, chỉ chỉ ra trong Explorer cho người dùng tự quyết.
         if (Runnable.Contains(Path.GetExtension(full))) return Reveal(rel);
-        var pdfApp = Environment.ExpandEnvironmentVariables(Config.Str("viewer.pdfApp"));
+        var pdfApp = Environment.ExpandEnvironmentVariables(Settings.OpenDocs.PdfApp);
         if (full.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && pdfApp.Length > 0 && File.Exists(pdfApp))
             Process.Start(new ProcessStartInfo(pdfApp) { ArgumentList = { full }, UseShellExecute = false });
         else
@@ -93,7 +93,7 @@ public static class Documents
         var full = Paths.StudyPath(rel);
         if (full is null || !File.Exists(full)) return false;
         if (page <= 1 || !full.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) return Open(rel);
-        var pdfApp = Environment.ExpandEnvironmentVariables(Config.Str("viewer.pdfApp"));
+        var pdfApp = Environment.ExpandEnvironmentVariables(Settings.OpenDocs.PdfApp);
         if (pdfApp.Length > 0 && File.Exists(pdfApp))
             Process.Start(new ProcessStartInfo(pdfApp) { ArgumentList = { "-page", page.ToString(), full }, UseShellExecute = false });
         else
@@ -114,6 +114,9 @@ public static class Documents
     private static string Explorer => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
 
     /// <summary>Đuôi file Windows chạy được hoặc tự thực thi khi mở: không mở trực tiếp từ app.</summary>
+    /// <summary>File chạy được (không mở thẳng, chỉ chỉ ra thư mục chứa); bản đa nền tảng dùng khi tự mở file bằng Launcher.</summary>
+    public static bool IsRunnable(string path) => Runnable.Contains(Path.GetExtension(path));
+
     private static readonly HashSet<string> Runnable = new(StringComparer.OrdinalIgnoreCase)
     {
         ".exe", ".com", ".scr", ".pif", ".bat", ".cmd", ".ps1", ".psm1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh", ".hta",

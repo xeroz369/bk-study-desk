@@ -12,7 +12,7 @@ namespace SoHocTap.Data;
 
 public sealed record LmsCourse(long Id, string Name, string Subject, string Code, string? Part, string Term, string Teacher, string Url, string Folder);
 /// <summary>Done: bài tập đã nộp (Moodle không còn mốc trên lịch hành động), không đếm và không nhắc.</summary>
-public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url, string? Phase = null, bool Done = false);
+public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url, string? Phase = null, bool Done = false, string? State = null);
 public sealed record LmsAttempt(long Id, long Finished, double? Grade);
 public sealed record LmsQuiz(long Id, long Course, string Subject, string Name, long? Open, long? Close, List<LmsAttempt> Attempts, string Url);
 public sealed record LmsNewFile(string Name, string Path, string Subject, long At, bool? Updated);

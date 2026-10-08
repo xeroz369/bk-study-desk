@@ -1,0 +1,66 @@
+[
+ {
+  "md": "Đoạn văn **đậm** và *nghiêng* và `mã <x>`.",
+  "html": "<p>Đoạn văn <b>đậm</b> và <i>nghiêng</i> và <code>mã &lt;x&gt;</code>.</p>"
+ },
+ {
+  "md": "Dòng một  \nDòng hai",
+  "html": "<p>Dòng một<br>\nDòng hai</p>"
+ },
+ {
+  "md": "- một\n- hai **b**\n\n1. a\n2) b",
+  "html": "<ul><li>một</li><li>hai <b>b</b></li></ul><ol><li>a</li><li>b</li></ol>"
+ },
+ {
+  "md": "| a | b |\n|---|:-:|\n| 1 | \\(x|y\\) |\n| *i* | 2 |",
+  "html": "<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>\\(x|y\\)</td></tr><tr><td><i>i</i></td><td>2</td></tr></tbody></table>"
+ },
+ {
+  "md": "Ảnh ![mô tả \"x\"](img/a.webp) đây",
+  "html": "<p>Ảnh <img src=\"data:img/a.webp\" alt=\"mô tả &quot;x&quot;\"> đây</p>"
+ },
+ {
+  "md": "TeX \\(a*b*c\\) và \\(\\lvert x \\rvert\\) và $$x_1*y$$ giữa dòng",
+  "html": "<p>TeX \\(a*b*c\\) và \\(\\lvert x \\rvert\\) và $$x_1*y$$ giữa dòng</p>"
+ },
+ {
+  "md": "\\[\\int_0^1 f(x)\\,dx\\]",
+  "html": "<div class=\"math\">\\[\\int_0^1 f(x)\\,dx\\]</div>"
+ },
+ {
+  "md": "trên\n\n\\[x=1\\]\n\ndưới",
+  "html": "<p>trên</p><div class=\"math\">\\[x=1\\]</div><p>dưới</p>"
+ },
+ {
+  "md": "<div class=\"warn\">Lưu ý **x**\nhai dòng</div>\n\nsau",
+  "html": "<div class=\"warn\">Lưu ý **x**\nhai dòng</div><p>sau</p>"
+ },
+ {
+  "md": "Hai đoạn\n\nđoạn hai\nvẫn đoạn hai",
+  "html": "<p>Hai đoạn</p><p>đoạn hai\nvẫn đoạn hai</p>"
+ },
+ {
+  "md": "a*b c*d và 2*3=6 và **x*y**",
+  "html": "<p>a*b c*d và 2*3=6 và **x*y**</p>"
+ },
+ {
+  "md": "<table class=\"x\"><tr><td>1</td></tr></table>",
+  "html": "<table class=\"x\"><tr><td>1</td></tr></table>"
+ },
+ {
+  "md": "- [ ] không phải danh sách\n- [x] cũng không",
+  "html": "<p>- [ ] không phải danh sách\n- [x] cũng không</p>"
+ },
+ {
+  "md": "## Tiêu đề\nchữ",
+  "html": "<p>## Tiêu đề\nchữ</p>"
+ },
+ {
+  "md": "\\(f(0)<0\\) & x<10",
+  "html": "<p>\\(f(0)<0\\) & x<10</p>"
+ },
+ {
+  "md": "Câu \\(\\begin{pmatrix}1\\\\2\\end{pmatrix}\\) xong",
+  "html": "<p>Câu \\(\\begin{pmatrix}1\\\\2\\end{pmatrix}\\) xong</p>"
+ }
+]

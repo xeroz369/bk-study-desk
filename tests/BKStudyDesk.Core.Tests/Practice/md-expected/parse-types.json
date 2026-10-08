@@ -1,0 +1,152 @@
+{
+ "pack": {
+  "format": "studypack/1",
+  "id": "hcmut-mt1009-chuong-1",
+  "title": "Chương 1",
+  "version": "1.0.0",
+  "language": "vi",
+  "course": {
+   "code": "MT1009",
+   "name": "Phương pháp tính"
+  },
+  "authors": [
+   {
+    "name": "An"
+   },
+   {
+    "name": "Bình"
+   }
+  ],
+  "license": "CC-BY-SA-4.0",
+  "verified": {
+   "method": "python"
+  },
+  "sources": [
+   {
+    "title": "Slide 1"
+   },
+   {
+    "title": "GK251"
+   }
+  ],
+  "settings": {
+   "shuffleQuestions": true,
+   "shuffleOptions": false
+  },
+  "units": [
+   {
+    "title": "Chương 1",
+    "lessons": [
+     {
+      "id": "bai-mot",
+      "title": "Bài một",
+      "questions": [
+       {
+        "tag": "Slide tr.5",
+        "prompt": "<p>Đề một</p>",
+        "solution": "<p>vì b</p>",
+        "keepOrder": true,
+        "options": [
+         "a",
+         "b",
+         "Cả hai"
+        ],
+        "answer": 1,
+        "id": "q1"
+       },
+       {
+        "prompt": "<p>Đề hai</p>",
+        "solution": "<p>giải 2</p>",
+        "type": "multi",
+        "options": [
+         "a",
+         "b",
+         "c"
+        ],
+        "answers": [
+         0,
+         1
+        ],
+        "id": "q2"
+       },
+       {
+        "prompt": "<p>Đề ba</p>",
+        "solution": "<p>giải 3</p>",
+        "group": "g",
+        "type": "truefalse",
+        "answer": false,
+        "id": "q3"
+       },
+       {
+        "prompt": "<p>Đề bốn</p>",
+        "solution": "<p>giải 4</p>",
+        "type": "numeric",
+        "answer": 1.5,
+        "tolerance": 0.01,
+        "unit": "m/s",
+        "id": "q4"
+       },
+       {
+        "prompt": "<p>Đề năm</p>",
+        "solution": "<p>giải 5</p>",
+        "type": "short",
+        "accept": [
+         "Newton",
+         "Newton-Raphson"
+        ],
+        "id": "q5"
+       },
+       {
+        "prompt": "<p>Đề sáu <img src=\"data:image/png;base64,AAAA\" alt=\"hình\"></p>",
+        "solution": "<p>dòng hai</p>",
+        "type": "numeric",
+        "answer": -2,
+        "id": "q6"
+       }
+      ],
+      "sections": [
+       {
+        "body": "<p>Kiến thức đầu <b>đậm</b>.</p>"
+       },
+       {
+        "title": "Mục A",
+        "body": "<p>Công thức \\(x^2\\).</p>"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "exams": [
+   {
+    "id": "de-so-1",
+    "title": "Đề số 1",
+    "minutes": 45,
+    "questions": [
+     {
+      "prompt": "<p>Đề thi</p>",
+      "solution": "<p>z</p>",
+      "options": [
+       "x",
+       "y"
+      ],
+      "answer": 0,
+      "id": "q1"
+     }
+    ],
+    "scoring": {
+     "count": 1,
+     "right": 0.5,
+     "wrong": -0.125
+    }
+   }
+  ]
+ },
+ "errors": [],
+ "warnings": [
+  {
+   "line": 9,
+   "message": "chữ nằm trước chương (#) đầu tiên, bị bỏ qua"
+  }
+ ]
+}

@@ -1,0 +1,257 @@
+<!-- Token giao diện BK (design-system/bk/README.md mục 3, 4). File này chỉ chứa giá trị và vài class kiểu chữ, khung;
+     muốn đổi màu, cỡ chữ, khoảng cách thì sửa ở đây, không đặt màu hay cỡ trực tiếp trong View. -->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <!-- Màu theo chế độ sáng, tối (design-system/bk mục 3). Mọi màu chữ đạt tương phản 4,5:1 trên Surface, PageBg, RowSelected
+                 của chế độ mình; Bar đạt 5:1 với chữ trắng. View luôn dùng DynamicResource để đổi chế độ không cần mở lại.
+                 Màu suy ra từ màu nhấn (Bar, DateBox, RowSelected và dòng chọn của DataGrid) do App.ApplyAccent đặt, không ở đây. -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="Link" Color="#044CC8" />
+                    <SolidColorBrush x:Key="PageBg" Color="#F4F6F8" />
+                    <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="Line" Color="#E3E7EB" />
+                    <SolidColorBrush x:Key="Text" Color="#1F2328" />
+                    <SolidColorBrush x:Key="Sub" Color="#59636E" />
+                    <SolidColorBrush x:Key="Danger" Color="#C4314B" />
+                    <SolidColorBrush x:Key="Warn" Color="#8A5C00" />
+                    <SolidColorBrush x:Key="Ok" Color="#1A7F37" />
+                    <SolidColorBrush x:Key="GroupBg" Color="#F4F6F8" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="Link" Color="#6CB6FF" />
+                    <SolidColorBrush x:Key="PageBg" Color="#14181D" />
+                    <SolidColorBrush x:Key="Surface" Color="#1E232A" />
+                    <SolidColorBrush x:Key="Line" Color="#2F363F" />
+                    <SolidColorBrush x:Key="Text" Color="#E6EDF3" />
+                    <SolidColorBrush x:Key="Sub" Color="#9AA4AF" />
+                    <SolidColorBrush x:Key="Danger" Color="#FF6B7A" />
+                    <SolidColorBrush x:Key="Warn" Color="#D29922" />
+                    <SolidColorBrush x:Key="Ok" Color="#3FB950" />
+                    <!-- Dải nhóm của bảng: sáng hơn nền bảng một bậc (tối hơn thì trông như một lỗ trên bảng) -->
+                    <SolidColorBrush x:Key="GroupBg" Color="#262C34" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <x:Double x:Key="DataGridRowSelectedBackgroundOpacity">1</x:Double>
+            <x:Double x:Key="DataGridRowSelectedUnfocusedBackgroundOpacity">1</x:Double>
+            <x:Double x:Key="DataGridRowSelectedHoveredBackgroundOpacity">1</x:Double>
+            <x:Double x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundOpacity">1</x:Double>
+            <!-- Số đo khung (mục 4). Chiều cao là mức tối thiểu (MinHeight): chữ to hơn thì khung cao theo, không cắt;
+                 riêng dòng bảng là RowHeight của DataGrid (DataGrid tự đặt chiều cao dòng). -->
+            <x:Double x:Key="BarHeight">48</x:Double>
+            <x:Double x:Key="ContentMaxWidth">1440</x:Double>
+            <x:Double x:Key="MainMinWidth">560</x:Double>
+            <x:Double x:Key="SideMinWidth">320</x:Double>
+            <x:Double x:Key="SideMaxWidth">400</x:Double>
+            <x:Double x:Key="DimOpacity">0.55</x:Double>
+            <x:Double x:Key="ListMinWidth">220</x:Double>
+            <x:Double x:Key="ListMaxWidth">320</x:Double>
+            <!-- Luyện tập: thẻ câu hỏi, bài học rộng tối đa khoảng 80 chữ một dòng ở cỡ chữ thân (đọc dễ hơn dòng dài cả màn hình) -->
+            <x:Double x:Key="ReadingMaxWidth">880</x:Double>
+            <!-- Cỡ chữ trang Luyện tập (Ctrl+cộng, Ctrl+trừ): phần trăm, bước mỗi lần bấm. -->
+            <x:Int32 x:Key="PracticeZoomMin">80</x:Int32>
+            <x:Int32 x:Key="PracticeZoomMax">160</x:Int32>
+            <x:Int32 x:Key="PracticeZoomStep">10</x:Int32>
+            <!-- Bảng Đồng bộ và thông báo (Flyout của nút Đồng bộ trên thanh): rộng cố định, cao hơn thì tự cuộn -->
+            <x:Double x:Key="PanelWidth">400</x:Double>
+            <x:Double x:Key="PanelMaxHeight">560</x:Double>
+            <!-- Cửa sổ hẹp: danh sách (môn học, môn thư viện) lên trên chi tiết, cao tối đa chừng này rồi tự cuộn -->
+            <x:Double x:Key="ListStackedMaxHeight">220</x:Double>
+            <x:Double x:Key="DetailMinWidth">480</x:Double>
+            <x:Double x:Key="CardHeaderHeight">48</x:Double>
+            <x:Double x:Key="RowHeight">64</x:Double>
+            <x:Double x:Key="TableHeaderHeight">40</x:Double>
+            <x:Double x:Key="TableRowHeight">48</x:Double>
+            <x:Double x:Key="DateBoxSize">48</x:Double>
+            <!-- Lưới tuần (Views/WeekGridView): cột giờ, lề trên dưới, tỉ lệ dọc (px mỗi phút: 0,7 là 1 giờ 42 px, buổi 50 phút vừa hai dòng chữ).
+                 Màu môn: CourseN, khối là màu đó pha trong suốt, viền trái đậm; đủ tương phản với chữ ở cả hai chế độ vì nền khối nhạt. -->
+            <x:Double x:Key="WeekGutter">52</x:Double>
+            <x:Double x:Key="WeekPad">10</x:Double>
+            <x:Double x:Key="WeekMinPxPerMin">0.7</x:Double>
+            <x:Double x:Key="WeekMaxPxPerMin">2</x:Double>
+            <x:Byte x:Key="WeekFillAlpha">56</x:Byte>
+            <Color x:Key="Course0">#0078D4</Color>
+            <Color x:Key="Course1">#107C10</Color>
+            <Color x:Key="Course2">#C239B3</Color>
+            <Color x:Key="Course3">#CA5010</Color>
+            <Color x:Key="Course4">#0099BC</Color>
+            <Color x:Key="Course5">#881798</Color>
+            <Color x:Key="Course6">#986F0B</Color>
+            <Color x:Key="Course7">#E74856</Color>
+            <!-- Cỡ chữ thiết kế của từng vai chữ (chỉ các cỡ 11, 12, 13, 14, 16, 18, 24). Người dùng đổi cỡ ở Cài đặt thì App.ApplyFont
+                 giãn mọi vai theo cùng tỉ lệ; style luôn dùng DynamicResource. -->
+            <x:Double x:Key="FontBody">14</x:Double>
+            <x:Double x:Key="FontTitle">24</x:Double>
+            <x:Double x:Key="FontCard">16</x:Double>
+            <x:Double x:Key="FontMeta">13</x:Double>
+            <x:Double x:Key="FontSub">12</x:Double>
+            <x:Double x:Key="FontDay">18</x:Double>
+            <x:Double x:Key="FontMonth">11</x:Double>
+            <!-- Cỡ công thức (Views/Practice/MathView): Computer Modern có x-height thấp hơn phông giao diện, nên lớn hơn FontBody
+                 theo tỉ lệ 1,21 như KaTeX (14 x 1,21 = 17). Công thức đứng riêng lớn thêm một bậc. Giãn cùng tỉ lệ với các vai chữ. -->
+            <x:Double x:Key="MathScale">17</x:Double>
+            <x:Double x:Key="MathScaleDisplay">20</x:Double>
+            <!-- Nội dung bài (Views/Practice/ContentRenderer): khoảng cách giữa các khối, phông mã và bấm máy. -->
+            <x:Double x:Key="ContentSpacing">8</x:Double>
+            <FontFamily x:Key="CodeFont">Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, monospace</FontFamily>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- Chữ: cỡ theo vai (FontBody...), không viết số -->
+    <Style Selector="TextBlock"><Setter Property="Foreground" Value="{DynamicResource Text}" /><Setter Property="FontSize" Value="{DynamicResource FontBody}" /></Style>
+    <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="{DynamicResource FontTitle}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.card-title"><Setter Property="FontSize" Value="{DynamicResource FontCard}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+    <!-- Tên dài bị rút gọn thì rê chuột thấy đủ (không cắt mất dữ liệu). -->
+    <Style Selector="TextBlock.name"><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="TextTrimming" Value="CharacterEllipsis" /><Setter Property="ToolTip.Tip" Value="{Binding $self.Text}" /></Style>
+    <Style Selector="TextBlock.sub"><Setter Property="FontSize" Value="{DynamicResource FontSub}" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
+    <Style Selector="TextBlock.meta"><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /><Setter Property="TextWrapping" Value="Wrap" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+    <Style Selector="TextBlock.right"><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+    <Style Selector="TextBlock.right.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <Style Selector="TextBlock.right.soon"><Setter Property="Foreground" Value="{DynamicResource Warn}" /></Style>
+    <Style Selector="TextBlock.right.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /></Style>
+    <!-- Tab (TabControl có sẵn): chữ thân 14 thay cỡ 24 mặc định của Fluent, để tab không lấn nội dung -->
+    <Style Selector="TabItem"><Setter Property="FontSize" Value="{DynamicResource FontBody}" /><Setter Property="MinHeight" Value="40" /><Setter Property="Padding" Value="16,0" /></Style>
+    <!-- ListBox: mục chọn cùng nền với dòng bảng đang chọn (chỉ đổi màu phần trình bày của template có sẵn) -->
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter, ListBoxItem:selected:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource RowSelected}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+    <!-- Mọi bảng của app (design-system/bk mục 4, Bảng): chỉ đọc, chỉ kẻ ngang, đầu cột, dòng cao theo token, nền Surface, không viền riêng -->
+    <Style Selector="DataGrid">
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="RowHeight" Value="{StaticResource TableRowHeight}" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource Line}" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="CanUserReorderColumns" Value="False" />
+        <Setter Property="RowHeaderWidth" Value="0" />
+    </Style>
+    <!-- Dòng làm nhạt: môn không học trong tuần đang xem, buổi thi đã qua -->
+    <Style Selector="TextBlock.dim"><Setter Property="Opacity" Value="{StaticResource DimOpacity}" /></Style>
+    <Style Selector="TextBlock.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <Style Selector="TextBlock.total"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.empty"><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="Margin" Value="16,20" /><Setter Property="TextWrapping" Value="Wrap" /></Style>
+
+    <!-- Khung: thẻ, đầu thẻ, dòng, ô ngày -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="Border.card-head">
+        <Setter Property="MinHeight" Value="{StaticResource CardHeaderHeight}" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style Selector="Border.row">
+        <Setter Property="MinHeight" Value="{StaticResource RowHeight}" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="{DynamicResource PageBg}" /></Style>
+    <Style Selector="Border.datebox">
+        <Setter Property="Width" Value="{StaticResource DateBoxSize}" />
+        <Setter Property="Height" Value="{StaticResource DateBoxSize}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="{DynamicResource DateBox}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.day"><Setter Property="FontSize" Value="{DynamicResource FontDay}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Link}" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
+    <Style Selector="TextBlock.month"><Setter Property="FontSize" Value="{DynamicResource FontMonth}" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
+    <Style Selector="TextBlock.start"><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Link}" /></Style>
+
+    <!-- Dải chương trong thẻ môn (Luyện tập): như dải nhóm của bảng -->
+    <Style Selector="Border.group">
+        <Setter Property="Background" Value="{DynamicResource GroupBg}" />
+        <Setter Property="Padding" Value="16,6" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style Selector="TextBlock.group"><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /></Style>
+    <Style Selector="TextBlock.sub.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <!-- Kết quả chấm một câu: Đúng (Ok), Sai (Danger) -->
+    <Style Selector="TextBlock.verdict"><Setter Property="FontSize" Value="{DynamicResource FontCard}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.verdict.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="TextBlock.verdict.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <!-- Lưới số câu của đề thi thử: câu đã chọn đậm chữ, câu đang xem là nút accent -->
+    <Style Selector="Button.qnum"><Setter Property="MinWidth" Value="40" /><Setter Property="HorizontalContentAlignment" Value="Center" /></Style>
+    <Style Selector="Button.qnum.done"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <!-- Sau khi nộp: số câu đúng, sai theo màu trạng thái (bỏ trống giữ màu thường). -->
+    <Style Selector="Button.qnum.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="Button.qnum.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+
+    <!-- Nội dung bài, câu hỏi (ContentRenderer): đoạn, tiêu đề, khối ghi chú theo class của Study Markdown, bảng, danh sách -->
+    <Style Selector="StackPanel.content"><Setter Property="Spacing" Value="{StaticResource ContentSpacing}" /></Style>
+    <Style Selector="TextBlock.content"><Setter Property="TextWrapping" Value="Wrap" /></Style>
+    <Style Selector="TextBlock.h2"><Setter Property="FontSize" Value="{DynamicResource FontTitle}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.h3"><Setter Property="FontSize" Value="{DynamicResource FontCard}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.pre"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /><Setter Property="TextWrapping" Value="Wrap" /></Style>
+    <Style Selector="TextBlock.marker"><Setter Property="Margin" Value="0,0,8,0" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /></Style>
+    <Style Selector="Span.code"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /></Style>
+    <Style Selector="Span.sub, Span.sup"><Setter Property="FontSize" Value="{DynamicResource FontSub}" /></Style>
+    <Style Selector="Border.callout">
+        <Setter Property="Background" Value="{DynamicResource GroupBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="Border.callout.warn"><Setter Property="BorderBrush" Value="{DynamicResource Warn}" /></Style>
+    <Style Selector="Border.callout.tip"><Setter Property="BorderBrush" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="Border.callout.note"><Setter Property="BorderBrush" Value="{DynamicResource Link}" /></Style>
+    <Style Selector="Border.callout.keys TextBlock"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /></Style>
+    <Style Selector="Border.quote">
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="12,0,0,0" />
+    </Style>
+    <Style Selector="Border.cell">
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0.5" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+    <Style Selector="Border.cell.th"><Setter Property="Background" Value="{DynamicResource GroupBg}" /></Style>
+    <Style Selector="Border.cell.th TextBlock"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+
+    <!-- Thanh trên cùng: nút chữ trắng không nền (Button có sẵn, chỉ đổi màu). Mọi nút trên thanh (mục trang, Đồng bộ, Cài đặt, Thêm)
+         cùng một kiểu: đang chọn (class on) thì chữ đậm và gạch chân trắng 3 px sát đáy thanh, là viền dưới của chính nút. -->
+    <Style Selector="Button.bar">
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,3" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="0,3,0,0" />
+        <Setter Property="FontSize" Value="{DynamicResource FontBody}" />
+        <!-- Vùng bấm cao bằng thanh, không chỉ bằng dòng chữ -->
+        <Setter Property="MinHeight" Value="{StaticResource BarHeight}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.bar:pointerover /template/ ContentPresenter, Button.bar:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.bar.on /template/ ContentPresenter, Button.bar.on:pointerover /template/ ContentPresenter, Button.bar.on:pressed /template/ ContentPresenter">
+        <Setter Property="BorderBrush" Value="White" />
+    </Style>
+    <Style Selector="Button.bar TextBlock"><Setter Property="Foreground" Value="White" /><Setter Property="Opacity" Value="0.85" /></Style>
+    <Style Selector="Button.bar.on TextBlock"><Setter Property="Opacity" Value="1" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+
+    <!-- Bảng (DataGrid chính thức, chỉ đổi màu và canh): dải nhóm nền nhạt, tiêu đề cột cho phép canh phải -->
+    <Style Selector="DataGridColumnHeader"><Setter Property="AreSeparatorsVisible" Value="False" /><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="MinHeight" Value="{StaticResource TableHeaderHeight}" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /></Style>
+    <!-- Chữ dài hơn cột thì cắt có dấu ba chấm, không cụt giữa chữ -->
+    <Style Selector="DataGridCell TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
+    <Style Selector="DataGridRowGroupHeader"><Setter Property="Background" Value="{DynamicResource GroupBg}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="SublevelIndent" Value="0" /></Style>
+</Styles>

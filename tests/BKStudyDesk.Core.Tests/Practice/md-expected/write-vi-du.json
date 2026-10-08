@@ -1,0 +1,4 @@
+{
+ "md": "---\nid: vi-du-quiz\ntieu-de: Ví dụ quiz tự soạn\nmon: MT1003 Giải tích 1\ntac-gia: BK Study Desk\nphien-ban: 1.0.0\ngiay-phep: CC-BY-SA-4.0\nda-kiem: giải tay\nxao-dap-an: co\n---\n\n# Ví dụ · Đạo hàm và tích phân cơ bản\n\n## Đạo hàm\n\nĐạo hàm của \\(x^n\\) là \\(n x^{n-1}\\). Quy tắc dây chuyền: \\((f(g(x)))' = f'(g(x))\\,g'(x)\\).\n\n### Câu 1 · tự soạn\nĐạo hàm của \\(f(x)=x^3\\) tại \\(x=2\\) là\n- [ ] 6\n- [x] 12\n- [ ] 8\n- [ ] 3\n> \\(f'(x)=3x^2\\), nên \\(f'(2)=12\\).\n\n### Câu 2 · tự soạn\nHàm nào có đạo hàm bằng chính nó?\n- [x] \\(e^x\\)\n- [x] \\(2e^x\\)\n- [ ] \\(x^2\\)\n- [ ] \\(\\ln x\\)\n> \\((ce^x)'=ce^x\\) với mọi hằng số \\(c\\).\n\n### Câu 3 · tự soạn\n\\((\\sin x)' = \\cos x\\) với mọi \\(x\\).\n= Đúng\n> Công thức đạo hàm cơ bản.\n\n## Tích phân\n\n### Câu 1 · tự soạn\nTính \\(\\int_0^1 2x\\,dx\\).\n= 1 ± 0.001\n> \\(\\int_0^1 2x\\,dx = x^2\\big|_0^1 = 1\\).\n",
+ "images": {}
+}

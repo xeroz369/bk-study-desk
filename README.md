@@ -4,7 +4,7 @@
 
 ![BK Study Desk](docs/hero.png)
 
-App Windows cho sinh viên Bách Khoa TP.HCM: kết hợp BK-LMS và MyBK và vài tính năng khác.
+App Windows cho sinh viên Bách Khoa TP.HCM: kết hợp BK-LMS và MyBK và vài tính năng khác. Bản cho macOS và Linux đang thử nghiệm, chưa ổn định (xem [mục bên dưới](#bản-cho-macos-và-linux-thử-nghiệm)).
 - Deadline, quiz, thời khóa biểu, lịch thi, điểm.
 - Tài liệu từng môn, chọn mục nào tải mục đó.
 - Luyện tập: tự soạn quiz, ôn quiz LMS, thi thử.
@@ -41,6 +41,27 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
 - Windows 10 1809 trở lên, hoặc Windows 11 (x64 hoặc ARM64).
 - Microsoft Edge WebView2 Runtime (Windows 11 có sẵn).
 - Không cần cài .NET.
+
+## Bản cho macOS và Linux (thử nghiệm)
+
+**Chưa ổn định.** Bản đa nền tảng (thư mục `src/BKStudyDesk.Desktop`, viết bằng Avalonia) dùng chung lõi với bản Windows, nhưng chưa có bộ cài cho macOS, Linux và chưa được thử trên máy Mac hay máy Linux thật.
+
+Mỗi lần đổi mã, CI build app, chạy test lõi, test bộ vẽ công thức và mở app chụp trang Hôm nay, Lịch, Luyện tập trên Windows, macOS, Linux (kết quả ở tab Actions). Chưa kiểm trên máy thật:
+- đăng nhập SSO trong trình duyệt nhúng (WKWebView trên macOS, WebKitGTK trên Linux), MyBK chạy ẩn;
+- thông báo, biểu tượng ở khay, tự chạy cùng máy, tự cập nhật.
+
+Khác với bản Windows:
+- token LMS lưu thành tệp chỉ tài khoản của bạn đọc được (quyền 600), chưa mã hóa như DPAPI trên Windows;
+- **Tự đăng nhập lại khi hết phiên** dùng `secret-tool` (libsecret) trên Linux nếu máy có; macOS chưa hỗ trợ.
+- Lỗi đã biết trên macOS: vài chữ có dấu hiện sai (ví dụ "để" thành "đế", "chỗ" thành "chô", "Ôn" thành "On"), thấy trên ảnh chụp của CI.
+
+Chạy từ mã nguồn (cần .NET 10 SDK; Linux cần thêm gói `libwebkit2gtk-4.1-0` và `libicu`, thường có sẵn):
+
+```bash
+dotnet run --project src/BKStudyDesk.Desktop -c Release -f net10.0
+```
+
+Gặp lỗi thì báo ở [Issues](https://github.com/xeroz369/bk-study-desk/issues), ghi hệ điều hành và phiên bản; tệp `app.log` trong thư mục `data` của app giúp tìm lỗi nhanh (đọc qua trước khi gửi, đừng dán MSSV hay token).
 
 ## Tính năng
 
@@ -83,7 +104,7 @@ Mở app, chọn **Đăng nhập HCMUT**, rồi đăng nhập trên trang SSO c�
 
 Chính sách đầy đủ: [PRIVACY.md](PRIVACY.md).
 
-- Mật khẩu chỉ gõ trên trang SSO của trường. App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, trình duyệt trong app (WebView2) sẽ lưu mật khẩu (mã hóa trên máy, giống Edge) để tự điền lần sau; không chọn **Lưu** thì không lưu.
+- Mật khẩu chỉ gõ trên trang SSO của trường. App không đọc mật khẩu. Nếu bạn chọn **Lưu** khi cửa sổ đăng nhập hỏi, trình duyệt trong app (WebView2) sẽ lưu mật khẩu (mã hóa trên máy, giống Edge) để tự điền lần sau; không chọn **Lưu** thì không lưu. Ngoại lệ duy nhất: nếu bạn tự bật **Tự đăng nhập lại khi hết phiên** (mặc định tắt), bạn nhập tài khoản vào app; app lưu trong Windows Credential Manager (không nằm trong thư mục dữ liệu) và chỉ điền vào trang SSO của trường. Tắt tính năng hay đăng xuất thì xóa.
 - Mọi thứ nằm trong thư mục dữ liệu `%LOCALAPPDATA%\BKStudyDesk.Data\data`, không nằm trong thư mục cài:
   - cookie trong `data\webview`, do WebView2 tự mã hóa;
   - token LMS trong `data\secrets\`, **mã hóa bằng Windows DPAPI**. Chép sang máy khác hay tài khoản Windows khác thì không dùng được.
@@ -108,7 +129,15 @@ dotnet build src/SoHocTap -c Release
 dotnet publish src/SoHocTap -c Release -r win-x64 --self-contained -o publish
 ```
 
-Cần .NET 10 SDK, Node 24 và Windows. Cấu trúc code:
+Cần .NET 10 SDK, Node 24 và Windows. Bản đa nền tảng (Avalonia) không cần Node, build được trên Windows, macOS, Linux:
+
+```bash
+dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0
+dotnet test tests/BKStudyDesk.Core.Tests
+dotnet test tests/BKStudyDesk.Math.Tests
+```
+
+Cấu trúc code:
 
 | Thư mục | Nội dung |
 |---|---|
@@ -120,8 +149,12 @@ Cần .NET 10 SDK, Node 24 và Windows. Cấu trúc code:
 | `src/SoHocTap/lang` | language pack (`vi.json`, `en.json`) |
 | `src/SoHocTap/Updates` | kiểm tra và cài bản mới (Velopack), theo chế độ người dùng chọn |
 | `src/BKStudyDesk.Setup` | bộ cài và bộ gỡ tiếng Việt (.NET Framework 4.8) |
-| `src/ui` | khung Luyện tập (Svelte) |
+| `src/ui` | khung Luyện tập của bản Windows (Svelte) |
+| `src/BKStudyDesk.Core` | lõi đa nền tảng: dùng lại code của `src/SoHocTap`, logic Luyện tập (chấm điểm, lịch ôn, gói, nhập xuất) |
+| `src/BKStudyDesk.Desktop` | bản đa nền tảng (Avalonia), Luyện tập vẽ bằng control có sẵn |
+| `src/ThirdParty/XamlMath` | bộ vẽ công thức TeX cho bản đa nền tảng (XAML-Math, MIT) |
 | `tests/SoHocTap.Tests` | unit test (thư mục app, chính sách cập nhật, chọn thư mục cài) |
+| `tests/BKStudyDesk.Core.Tests`, `tests/BKStudyDesk.Math.Tests` | test lõi, trang và bộ vẽ công thức (chạy trên ba hệ điều hành ở CI) |
 
 URL của trường, API path, tên thư mục và chu kỳ đồng bộ nằm trong config (`Core/DefaultConfig.json`), không rải trong code. `data\config.json` chỉ lưu những gì bạn đổi so với mặc định.
 
@@ -143,4 +176,4 @@ Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [quy tắc ứng xử](CODE_OF_CONDUC
 
 Đóng góp code (PR) nghĩa là bạn đồng ý phần đóng góp theo AGPL-3.0.
 
-Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE).
+Thư viện bên thứ ba giữ giấy phép riêng của chúng: gói NuGet trong các file `.csproj`, gói npm trong `src/ui/package.json` (phần lớn MIT), MathJax đi kèm sẵn ở `src/ui/public/vendor/mathjax` (Apache-2.0, có file LICENSE), XAML-Math ở `src/ThirdParty/XamlMath` (MIT, có `LICENSE.md`; phông Computer Modern theo `fonts/LICENSES.md`; các chỗ đã sửa ghi trong README của thư mục đó).

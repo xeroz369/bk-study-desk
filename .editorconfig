@@ -1,0 +1,18 @@
+# Quy ước soạn thảo. Không định dạng lại file cũ chỉ vì file này.
+# Repo lưu LF (xem git ls-files --eol), nên mọi file dùng LF; dotnet format kiểm tra đúng điều này.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+
+# Khung Luyện tập (Svelte/TS) theo prettier: thụt lề bằng tab (xem src/ui/.prettierrc).
+[src/ui/**]
+indent_style = tab
+
+[src/ui/**/package*.json]
+indent_style = space
+indent_size = 2

@@ -1,0 +1,27 @@
+<!-- Test cho lõi đa nền tảng (BKStudyDesk.Core): ranh giới lõi và logic từng trang (Presentation). Tham chiếu thẳng project lõi, không link file. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
+    <!-- Chữ giao diện cho test kiểm chữ (L đọc lang\ cạnh assembly). -->
+    <None Include="..\..\src\SoHocTap\lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Prompt cho AI do bản TS sinh, để so với bản C#. -->
+    <None Include="Practice\prompts-expected\*" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Study Markdown: kết quả do markdown.ts sinh, để so với bản C#. -->
+    <None Include="Practice\md-expected\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Quiz LMS, Aiken, GIFT, Moodle XML: mẫu tự soạn và kết quả do bản TS sinh. -->
+    <None Include="Practice\lms-expected\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Practice\fmt-expected\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+<!-- Chuyển file trong Tải xuống vào đúng môn: xem trước danh sách rồi mới chuyển (Organizer.ImportDownloads). -->
+<UserControl x:Class="SoHocTap.Ui.SettingsCards.OrganizeSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui">
+    <Border Style="{StaticResource Card}">
+        <StackPanel>
+            <TextBlock Text="{ui:T settings.organize}" Style="{StaticResource SectionTitle}" />
+            <WrapPanel>
+                <Button Content="{ui:T settings.preview}" Click="OnPlan" />
+                <Button x:Name="ApplyButton" Content="{ui:T settings.apply}" Margin="8,0,0,0" Click="OnApply" IsEnabled="False" />
+            </WrapPanel>
+            <TextBox x:Name="PlanText" Margin="0,8,0,0" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" MaxHeight="200"
+                     VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Visibility="Collapsed" />
+        </StackPanel>
+    </Border>
+</UserControl>

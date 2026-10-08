@@ -18,7 +18,7 @@ The app connects only to the HCMUT sites you already use:
 - `mybk.hcmut.edu.vn`: MyBK;
 - other university services you open yourself;
 - `github.com` / `api.github.com`: **only if you allow** update checks (**Settings** > **Updates**; nothing is checked until you choose). The app only asks for the latest version and downloads the update package; it sends no account information. As with any network connection, GitHub (servers in the US) sees your IP address, under [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). Choose **Don't check** and the app does not contact GitHub.
-- the shared study library site (BK Study Library): on by default, turn it off in **Settings** > **Library**. When on, the app downloads the library list (`index.json`, about once a day and when you open the **Library** tab), the material list of the course you are viewing, and the files you choose to **Download**, from the addresses the library lists for each item (possibly GitHub Pages or `raw.githubusercontent.com`). The app only sends ordinary download requests (HTTP GET): no student ID, name or course codes of yours, no cookies, no identifiers. As with any network connection, the server sees your IP address. Turn **Library** off and the app does not contact that site.
+- the shared study library site (BK Study Library): always on (the **Library** tab on the Subjects page). The app downloads the library list (`index.json`, about once a day and when you open the **Library** tab), the material list of the course you are viewing, and the files you choose to **Download**, from the addresses the library lists for each item (possibly GitHub Pages or `raw.githubusercontent.com`). The app only sends ordinary download requests (HTTP GET): no student ID, name or course codes of yours, no cookies, no identifiers. As with any network connection, the server sees your IP address.
 
 ## Data stored on your PC
 
@@ -62,7 +62,7 @@ Downloaded data may contain other people's information (lecturers' names, classm
 
 ## Sign-in and security
 
-- Your password is typed only on the university SSO page, inside the in-app browser (WebView2). The app never reads it. If you choose **Save** when the sign-in window asks, WebView2 stores the password encrypted on your PC to fill it in next time.
+- Your password is typed only on the university SSO page, inside the in-app browser (WebView2). The app never reads it. If you choose **Save** when the sign-in window asks, WebView2 stores the password encrypted on your PC to fill it in next time. The only exception: if you turn on **Sign in again automatically** (off by default), you type your account into the app; it is stored in Windows Credential Manager (not in the data folder) and only filled into the university SSO page. Turning it off or signing out deletes it.
 - Sign-in cookies live in the WebView2 profile, encrypted by WebView2.
 - The BK-LMS token is encrypted with Windows DPAPI; only your Windows account can decrypt it.
 - The app only **reads** data. It never submits work, registers for or cancels courses, makes payments or takes quizzes for you.

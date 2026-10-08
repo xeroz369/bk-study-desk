@@ -42,6 +42,7 @@ function hash(s: string): string {
 /** Options are sorted so a shuffled copy of the same question still matches. */
 export function fingerprint(q: Hashable): string {
 	const opts = (q.options ?? []).map(fpText).sort();
-	const key = q.type === 'numeric' ? String(q.value ?? q.answer) : q.type === 'short' ? (q.accept ?? []).map(fpText).sort().join('|') : '';
+	const key =
+		q.type === 'numeric' ? String(q.value ?? q.answer) : q.type === 'short' ? (q.accept ?? []).map(fpText).sort().join('|') : '';
 	return hash([fpText(q.prompt), ...opts, key].join('\u0001'));
 }

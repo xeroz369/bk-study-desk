@@ -87,6 +87,23 @@ Nằm giữa hai dòng `---` ở đầu file, mỗi dòng có dạng `khóa: gi�
 - Trong `.zip`, ảnh nằm ở `img/` và được tham chiếu đúng đường dẫn đó. Thiếu ảnh chỉ là cảnh báo: chỗ ảnh hiện "[thiếu ảnh]".
 - App tự nén ảnh khi soạn: cạnh dài tối đa 1200 px, WebP. Mỗi ảnh nên dưới 1 MB; cả gói tối đa 20 MB.
 
+### 2.6 Id và câu tham chiếu (mở rộng, không bắt buộc)
+
+Dùng khi cần giữ id cố định, ví dụ bài học có sẵn của app đã có kết quả luyện tập lưu theo id câu.
+
+```
+## Phương pháp chia đôi
+id: ppt-02                     : dòng đầu dưới ##: id bài (hay id đề trong phần Đề thi thử)
+### Câu 1 · Slide tr.36
+id: q1                         : dòng đầu dưới ###: id câu
+# Đề thi thử
+## GK251 cụm chia đôi
+Thời gian: 12 phút
+Câu: ppt-02.q3, ppt-02.q4      : câu lấy từ bài (id bài.id câu), không chép lại câu
+```
+
+Không có dòng `id:` thì id tự đặt như cũ (bài theo tên, câu là `q1`, `q2`...). Bộ đọc chưa biết hai dòng này sẽ coi chúng là chữ của bài hay đề, gói vẫn đọc được.
+
 ## 3. Luật nội dung
 
 1. Mỗi câu có đề, đáp án và **lời giải đủ để tự làm lại**.

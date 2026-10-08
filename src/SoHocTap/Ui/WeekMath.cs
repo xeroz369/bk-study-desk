@@ -1,4 +1,4 @@
-﻿namespace SoHocTap.Ui;
+namespace SoHocTap.Ui;
 
 /// <summary>Phép tính vị trí trên lưới tuần, tách khỏi WPF để unit test được.</summary>
 public static class WeekMath

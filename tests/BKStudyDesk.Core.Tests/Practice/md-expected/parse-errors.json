@@ -1,0 +1,82 @@
+{
+ "pack": {
+  "format": "studypack/1",
+  "id": "hcmut-c",
+  "title": "C",
+  "version": "1.0.0",
+  "language": "vi",
+  "course": {
+   "code": "",
+   "name": ""
+  },
+  "authors": [],
+  "units": [
+   {
+    "title": "C",
+    "lessons": [
+     {
+      "id": "bai",
+      "title": "B",
+      "questions": [
+       {
+        "prompt": "<p>Đề</p>",
+        "solution": "",
+        "options": [
+         "a",
+         "b"
+        ],
+        "answer": 0,
+        "id": "q1"
+       }
+      ]
+     },
+     {
+      "id": "bai-ngoai",
+      "title": "Bài ngoài",
+      "questions": [
+       {
+        "prompt": "<p>Đề <i>[thiếu ảnh]</i></p>",
+        "solution": "<p>g</p>",
+        "type": "numeric",
+        "answer": 2,
+        "id": "q1"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "errors": [
+  {
+   "line": 3,
+   "message": "câu chưa có lời giải (dòng bắt đầu bằng >)"
+  },
+  {
+   "line": 7,
+   "message": "câu chưa có đề"
+  },
+  {
+   "line": 10,
+   "message": "chưa đánh dấu đáp án đúng: đổi - [ ] thành - [x]"
+  },
+  {
+   "line": 15,
+   "message": "câu chưa có đáp án: thêm các dòng - [x] / - [ ], hoặc một dòng = ..."
+  },
+  {
+   "line": 20,
+   "message": "không đọc được số \"1.2.3\""
+  }
+ ],
+ "warnings": [
+  {
+   "line": 1,
+   "message": "thiếu phần đầu --- (mon, tac-gia...): ứng dụng sẽ dùng môn đang chọn khi nhập"
+  },
+  {
+   "line": 24,
+   "message": "thiếu ảnh img/khong.png (gửi kèm trong tệp .zip)"
+  }
+ ]
+}

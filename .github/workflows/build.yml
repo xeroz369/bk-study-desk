@@ -43,9 +43,14 @@ jobs:
       - name: Build (Microsoft Store)
         run: dotnet build src/SoHocTap -c Release -p:Store=true -warnaserror
 
-  # Bản đa nền tảng (Avalonia, thử nghiệm): lõi chung + app phải build được trên Linux.
-  cross-platform:
-    runs-on: ubuntu-latest
+  # Bản đa nền tảng (Avalonia): lõi, trang và app build, test trên Windows, macOS, Linux. Mỗi máy chụp Hôm nay, Lịch, Luyện tập (--snap, chưa có dữ liệu)
+  # và tự kiểm trình duyệt nhúng (--webcheck, trang tĩnh, không gọi web trường); ảnh, log tải về được ở mục Artifacts của lượt chạy.
+  v2:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -53,5 +58,46 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
-      - name: Build core + Avalonia app (Linux)
-        run: dotnet build src/BKStudyDesk.Desktop -c Release
+      - name: Core and page tests
+        run: dotnet test tests/BKStudyDesk.Core.Tests
+      - name: Math renderer tests
+        run: dotnet test tests/BKStudyDesk.Math.Tests
+      - name: Build app (net10.0)
+        run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0
+      - name: Build app (Windows target)
+        if: runner.os == 'Windows'
+        run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0
+      - name: Linux packages (display, WebKitGTK)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libwebkit2gtk-4.1-0
+      - name: Snapshot and web check
+        continue-on-error: true
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          app=src/BKStudyDesk.Desktop/bin/Release/net10.0
+          if [ "$RUNNER_OS" = "Windows" ]; then exe="$app/BKStudyDesk.exe"; else exe="$app/BKStudyDesk"; chmod +x "$exe"; fi
+          run() { if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a "$@"; else "$@"; fi; }
+          mkdir -p out
+          run "$exe" --snap="$PWD/out/home-$RUNNER_OS.png" || echo "snap exit $?"
+          run "$exe" --lich --theme=light --snap="$PWD/out/lich-$RUNNER_OS.png" || echo "snap exit $?"
+          run "$exe" --luyen --snap="$PWD/out/luyen-tap-$RUNNER_OS.png" || echo "snap exit $?"
+          run "$exe" --webcheck || echo "webcheck exit $?"
+          cp "$app/data/app.log" "out/app-$RUNNER_OS.log" 2>/dev/null || true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: v2-${{ matrix.os }}
+          path: out/
+          if-no-files-found: warn
+
+  # Check bắt buộc của nhánh main (tên cross-platform): đạt khi v2 đạt trên cả ba hệ điều hành.
+  cross-platform:
+    needs: v2
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: v2 on Windows, macOS, Linux
+        env:
+          RESULT: ${{ needs.v2.result }}
+        run: test "$RESULT" = "success"

@@ -1,0 +1,237 @@
+{
+ "aiken": {
+  "lessons": [
+   {
+    "id": "aiken",
+    "title": "Câu nhập từ Aiken",
+    "questions": [
+     {
+      "prompt": "<p>Thủ đô của Việt Nam?</p>",
+      "options": [
+       "Hà Nội",
+       "Huế"
+      ],
+      "answer": 0,
+      "solution": "<p>Đáp án đúng: A.</p>"
+     },
+     {
+      "prompt": "<p>Hai dòng đề<br>dòng hai &lt;b&gt;</p>",
+      "options": [
+       "x &lt; y",
+       "y",
+       "z"
+      ],
+      "answer": 2,
+      "solution": "<p>Đáp án đúng: C.</p>"
+     }
+    ]
+   }
+  ],
+  "notes": [
+   "Bỏ một câu Aiken không đủ đề/phương án: \"Câu lỗi...\"",
+   "Aiken không có lời giải: nên bổ sung lời giải để tự học được."
+  ]
+ },
+ "gift": {
+  "lessons": [
+   {
+    "id": "gift-1",
+    "title": "Chia đôi",
+    "questions": [
+     {
+      "tag": "c1",
+      "prompt": "<p>2 + 2 = ?</p>",
+      "options": [
+       "4",
+       "3",
+       "5"
+      ],
+      "answer": 0,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "type": "truefalse",
+      "prompt": "<p>Trái đất tròn.</p>",
+      "answer": true,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "type": "numeric",
+      "prompt": "<p>Căn bậc hai của 2</p>",
+      "answer": 1.414,
+      "tolerance": 0.001,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "type": "numeric",
+      "prompt": "<p>Khoảng</p>",
+      "answer": 1.5,
+      "tolerance": 0.5,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "type": "numeric",
+      "prompt": "<p>Trọng số</p>",
+      "answer": 3.14,
+      "tolerance": 0.01,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "type": "short",
+      "prompt": "<p>Tên phương pháp lặp có đạo hàm?</p>",
+      "accept": [
+       "Newton",
+       "Newton-Raphson"
+      ],
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "tag": "đa",
+      "type": "multi",
+      "prompt": "<p>Chọn số chẵn</p>",
+      "options": [
+       "2",
+       "4",
+       "3"
+      ],
+      "answers": [
+       0,
+       1
+      ],
+      "solution": "<p>Vì 2 và 4 chia hết cho 2.</p><ul><li>3: sai rồi</li></ul>"
+     },
+     {
+      "tag": "tex",
+      "prompt": "<p>Tính {a} và = dấu</p>",
+      "options": [
+       "1",
+       "2"
+      ],
+      "answer": 0,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p><ul><li>2: không phải</li></ul>"
+     },
+     {
+      "prompt": "<p>Câu <b>HTML</b></p>",
+      "options": [
+       "<i>đúng</i>",
+       "sai"
+      ],
+      "answer": 0,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     },
+     {
+      "type": "short",
+      "prompt": "<p>Điền ____ vào ____ trống nhé</p>",
+      "accept": [
+       "chỗ"
+      ],
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     }
+    ]
+   },
+   {
+    "id": "gift-2",
+    "title": "Lặp",
+    "questions": [
+     {
+      "prompt": "<p>Câu sau category</p>",
+      "options": [
+       "x",
+       "y"
+      ],
+      "answer": 0,
+      "solution": "<p>(Chưa có lời giải trong file GIFT.)</p>"
+     }
+    ]
+   }
+  ],
+  "notes": [
+   "Bỏ câu ghép cặp (matching), chưa hỗ trợ: \"Ghép...\"",
+   "Bỏ câu tự luận (essay): \"Tự luận...\"",
+   "Bỏ câu GIFT không có {...}: \"Không có ngoặc...\"",
+   "Bỏ câu số không đọc được: \"#abc\"",
+   "Bỏ câu không có đáp án đúng: \"Không đúng...\""
+  ]
+ },
+ "xml": {
+  "lessons": [
+   {
+    "id": "moodle-1",
+    "title": "Chương 1",
+    "questions": [
+     {
+      "tag": "Câu 1",
+      "prompt": "<p>Hình <img src=\"data:image/png;base64,iVBORw0K\"> và \\(x^2\\)</p>",
+      "solution": "<p>Giải</p><ul><li>đúng: tốt</li></ul>",
+      "options": [
+       "đúng",
+       "sai"
+      ],
+      "answer": 0
+     },
+     {
+      "tag": "Nhiều",
+      "prompt": "<p>Chọn hai</p>",
+      "solution": "<p>(Chưa có lời giải trong ngân hàng câu hỏi.)</p>",
+      "type": "multi",
+      "options": [
+       "a",
+       "b",
+       "c"
+      ],
+      "answers": [
+       0,
+       1
+      ]
+     },
+     {
+      "tag": "TF",
+      "prompt": "<p>Đúng không?</p>",
+      "solution": "<p>(Chưa có lời giải trong ngân hàng câu hỏi.)</p>",
+      "type": "truefalse",
+      "answer": false
+     },
+     {
+      "tag": "Số",
+      "prompt": "<p>g = ?</p>",
+      "solution": "<p>(Chưa có lời giải trong ngân hàng câu hỏi.)</p>",
+      "type": "numeric",
+      "answer": 9.8,
+      "tolerance": 0.1
+     },
+     {
+      "tag": "Chữ",
+      "prompt": "<p>Tên?</p>",
+      "solution": "<p>(Chưa có lời giải trong ngân hàng câu hỏi.)</p>",
+      "type": "short",
+      "accept": [
+       "Newton"
+      ]
+     }
+    ]
+   }
+  ],
+  "notes": [
+   "Bỏ câu \"Rỗng\": không có đáp án đúng.",
+   "Bỏ 1 câu loại ghép cặp (chưa hỗ trợ).",
+   "Bỏ 2 câu loại tự luận (chưa hỗ trợ)."
+  ]
+ },
+ "broken": {
+  "lessons": [],
+  "notes": [
+   "File XML lỗi, không đọc được."
+  ]
+ },
+ "detect": {
+  "viDu": "markdown",
+  "json": "studypack",
+  "gift": "gift",
+  "xml": "moodlexml",
+  "aiken": "aiken",
+  "plain": null,
+  "fenced": "markdown"
+ },
+ "toGift": "// Ví dụ quiz tự soạn · Study Pack vi-du-quiz v1.0.0\n\n$CATEGORY: $course$/top/Giải tích 1/Ví dụ · Đạo hàm và tích phân cơ bản/Đạo hàm\n\n::tự soạn::[html]<p>Đạo hàm của \\\\(f(x)\\=x^3\\\\) tại \\\\(x\\=2\\\\) là</p> {~6 =12 ~8 ~3 ####<p>\\\\(f'(x)\\=3x^2\\\\), nên \\\\(f'(2)\\=12\\\\).</p>}\n\n::tự soạn::[html]<p>Hàm nào có đạo hàm bằng chính nó?</p> {~%50%<div class\\=\"math\">\\\\(e^x\\\\)</div> ~%50%<div class\\=\"math\">\\\\(2e^x\\\\)</div> ~%-50%<div class\\=\"math\">\\\\(x^2\\\\)</div> ~%-50%<div class\\=\"math\">\\\\(\\\\ln x\\\\)</div> ####<p>\\\\((ce^x)'\\=ce^x\\\\) với mọi hằng số \\\\(c\\\\).</p>}\n\n::tự soạn::[html]<p>\\\\((\\\\sin x)' \\= \\\\cos x\\\\) với mọi \\\\(x\\\\).</p> {T ####<p>Công thức đạo hàm cơ bản.</p>}\n\n\n$CATEGORY: $course$/top/Giải tích 1/Ví dụ · Đạo hàm và tích phân cơ bản/Tích phân\n\n::tự soạn::[html]<p>Tính \\\\(\\\\int_0^1 2x\\\\,dx\\\\).</p> {#1:0.001 ####<p>\\\\(\\\\int_0^1 2x\\\\,dx \\= x^2\\\\big|_0^1 \\= 1\\\\).</p>}\n",
+ "toMoodleXml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<quiz>\n<question type=\"category\"><category><text>$course$/top/Giải tích 1/Ví dụ · Đạo hàm và tích phân cơ bản/Đạo hàm</text></category></question>\n<question type=\"multichoice\"><name><text>tự soạn</text></name><questiontext format=\"html\"><text><![CDATA[<p>Đạo hàm của \\(f(x)=x^3\\) tại \\(x=2\\) là</p>]]></text></questiontext><generalfeedback format=\"html\"><text><![CDATA[<p>\\(f'(x)=3x^2\\), nên \\(f'(2)=12\\).</p>]]></text></generalfeedback><defaultgrade>1</defaultgrade><penalty>0.3333333</penalty><hidden>0</hidden><single>true</single><shuffleanswers>true</shuffleanswers><answernumbering>ABCD</answernumbering><answer fraction=\"0\" format=\"html\"><text><![CDATA[6]]></text><feedback format=\"html\"><text></text></feedback></answer><answer fraction=\"100\" format=\"html\"><text><![CDATA[12]]></text><feedback format=\"html\"><text></text></feedback></answer><answer fraction=\"0\" format=\"html\"><text><![CDATA[8]]></text><feedback format=\"html\"><text></text></feedback></answer><answer fraction=\"0\" format=\"html\"><text><![CDATA[3]]></text><feedback format=\"html\"><text></text></feedback></answer></question>\n<question type=\"multichoice\"><name><text>tự soạn</text></name><questiontext format=\"html\"><text><![CDATA[<p>Hàm nào có đạo hàm bằng chính nó?</p>]]></text></questiontext><generalfeedback format=\"html\"><text><![CDATA[<p>\\((ce^x)'=ce^x\\) với mọi hằng số \\(c\\).</p>]]></text></generalfeedback><defaultgrade>1</defaultgrade><penalty>0.3333333</penalty><hidden>0</hidden><single>false</single><shuffleanswers>true</shuffleanswers><answernumbering>ABCD</answernumbering><answer fraction=\"50\" format=\"html\"><text><![CDATA[<div class=\"math\">\\(e^x\\)</div>]]></text><feedback format=\"html\"><text></text></feedback></answer><answer fraction=\"50\" format=\"html\"><text><![CDATA[<div class=\"math\">\\(2e^x\\)</div>]]></text><feedback format=\"html\"><text></text></feedback></answer><answer fraction=\"-50\" format=\"html\"><text><![CDATA[<div class=\"math\">\\(x^2\\)</div>]]></text><feedback format=\"html\"><text></text></feedback></answer><answer fraction=\"-50\" format=\"html\"><text><![CDATA[<div class=\"math\">\\(\\ln x\\)</div>]]></text><feedback format=\"html\"><text></text></feedback></answer></question>\n<question type=\"truefalse\"><name><text>tự soạn</text></name><questiontext format=\"html\"><text><![CDATA[<p>\\((\\sin x)' = \\cos x\\) với mọi \\(x\\).</p>]]></text></questiontext><generalfeedback format=\"html\"><text><![CDATA[<p>Công thức đạo hàm cơ bản.</p>]]></text></generalfeedback><defaultgrade>1</defaultgrade><penalty>0.3333333</penalty><hidden>0</hidden><answer fraction=\"100\" format=\"moodle_auto_format\"><text>true</text></answer><answer fraction=\"0\" format=\"moodle_auto_format\"><text>false</text></answer></question>\n<question type=\"category\"><category><text>$course$/top/Giải tích 1/Ví dụ · Đạo hàm và tích phân cơ bản/Tích phân</text></category></question>\n<question type=\"numerical\"><name><text>tự soạn</text></name><questiontext format=\"html\"><text><![CDATA[<p>Tính \\(\\int_0^1 2x\\,dx\\).</p>]]></text></questiontext><generalfeedback format=\"html\"><text><![CDATA[<p>\\(\\int_0^1 2x\\,dx = x^2\\big|_0^1 = 1\\).</p>]]></text></generalfeedback><defaultgrade>1</defaultgrade><penalty>0.3333333</penalty><hidden>0</hidden><answer fraction=\"100\" format=\"moodle_auto_format\"><text>1</text><tolerance>0.001</tolerance></answer></question>\n</quiz>"
+}

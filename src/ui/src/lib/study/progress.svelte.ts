@@ -109,9 +109,14 @@ class ProgressStore {
 			: 'Không ghi được vào data\\ket-qua.json. Kết quả vẫn được giữ và sẽ ghi lại ở lần lưu sau.';
 	}
 
+	/** Còn thay đổi chưa gửi (save() đang gom): app hỏi trước khi gỡ khung, không có thì khỏi chờ. */
+	get pending() {
+		return this.timer !== undefined;
+	}
+
 	/** Chỉ ghi khi còn thay đổi chưa lưu (app gọi trước khi đóng khung Luyện tập để giải phóng bộ nhớ). */
 	async flushPending() {
-		if (this.timer !== undefined) await this.flush();
+		if (this.pending) await this.flush();
 	}
 
 	q(id: string): QuestionRecord | undefined {

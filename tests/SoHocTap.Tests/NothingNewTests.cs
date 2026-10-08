@@ -123,7 +123,7 @@ public class NothingNewTests : IDisposable
 }
 
 /// <summary>Nhắc hạn chống trùng qua lần khởi động lại (sổ notified.json), gộp, mốc nước.</summary>
-public class RemindersTests
+public partial class RemindersTests
 {
     private const long Now = 1_800_000_000;
     private static readonly int[] Stages = [24, 2];

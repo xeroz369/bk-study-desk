@@ -1,0 +1,83 @@
+<!-- Trang Thư viện (design-system/bk mục 4, cùng bố cục với Môn học): trái là mọi môn của thư viện (tìm, lọc khoa), phải là tài liệu của môn
+     đang chọn. Hẹp thì danh sách lên trên (LibraryView.OnSizeChanged). Môn nào, xếp, lọc: Presentation/LibraryPage.cs; bảng: LibraryTab.cs. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
+             x:Class="BKStudyDesk.Desktop.Views.LibraryView">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,24">
+            <TextBlock Classes="title" Text="{l:T nav.library}" />
+            <TextBlock Classes="meta" Text="{l:T library.subtitle}" />
+        </StackPanel>
+        <Grid x:Name="Columns" RowDefinitions="*,Auto">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="{StaticResource ListMinWidth}" MaxWidth="{StaticResource ListMaxWidth}" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Danh sách môn của thư viện -->
+            <Border x:Name="ListCard" Classes="card">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="12" Spacing="8">
+                        <TextBox x:Name="Search" PlaceholderText="{l:T library.search}" TextChanged="OnSearch" />
+                        <ComboBox x:Name="FacultyFilter" HorizontalAlignment="Stretch" SelectionChanged="OnFaculty" IsVisible="False" />
+                    </StackPanel>
+                    <StackPanel x:Name="ListState" DockPanel.Dock="Top" IsVisible="False">
+                        <TextBlock x:Name="ListEmpty" Classes="empty" />
+                        <Button x:Name="RetryButton" Content="{l:T library.retry}" Click="OnRetry" Margin="16,0,16,16" IsVisible="False" />
+                    </StackPanel>
+                    <ListBox x:Name="Courses" SelectionChanged="OnPick" Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="p:LibraryCourseRow">
+                                <StackPanel Spacing="2" Margin="0,4">
+                                    <TextBlock Classes="name" Text="{Binding Title}" />
+                                    <TextBlock Classes="sub" Text="{Binding Sub}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- Tài liệu của môn đang chọn -->
+            <Border x:Name="DetailCard" Classes="card" Grid.Column="2" IsVisible="False">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Classes="card-head">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button x:Name="WebButton" Content="{l:T library.openCourseWeb}" Click="OnWeb" />
+                                <Button x:Name="ContributeButton" Content="{l:T library.contribute}" Click="OnContribute" />
+                            </StackPanel>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock x:Name="CourseName" Classes="card-title" />
+                                <TextBlock x:Name="CourseMeta" Classes="meta" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <WrapPanel DockPanel.Dock="Top" Margin="16,8,16,0">
+                        <ComboBox x:Name="TeacherFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="160" />
+                        <ComboBox x:Name="TermFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="120" />
+                        <ComboBox x:Name="ExamFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="140" />
+                    </WrapPanel>
+                    <TextBlock x:Name="Note" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
+                    <TextBlock x:Name="StatusLine" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
+                    <TextBlock x:Name="ItemsEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                    <DataGrid x:Name="Items" DoubleTapped="OnItemOpen">
+                        <DataGrid.ContextFlyout><MenuFlyout Opening="OnItemMenu" /></DataGrid.ContextFlyout>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Title}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:LibraryRow" />
+                            <DataGridTextColumn Header="{l:T col.term}" Binding="{Binding Term}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                            <DataGridTextColumn Header="{l:T col.teacher}" Binding="{Binding Teacher}" Width="Auto" MinWidth="100" x:DataType="p:LibraryRow" />
+                            <DataGridTextColumn Header="{l:T library.col.chapter}" Binding="{Binding Chapter}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                            <DataGridTextColumn Header="{l:T library.col.exam}" Binding="{Binding Exam}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
+                            <DataGridTextColumn Header="{l:T col.size}" Binding="{Binding SizeText}" Width="Auto" MinWidth="72" SortMemberPath="Size" x:DataType="p:LibraryRow" />
+                            <DataGridTextColumn Header="{l:T library.col.local}" Binding="{Binding Local}" Width="Auto" MinWidth="96" x:DataType="p:LibraryRow" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

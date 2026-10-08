@@ -67,7 +67,11 @@
 	<div id="toolbar" class="shrink-0 border-b {reading ? 'reading' : ''}"></div>
 	{#if Desktop.infos.length}
 		<div class="shrink-0 px-3 pt-2">
-			{#each Desktop.infos as m (m.id)}<InfoBar tone={m.tone} text={m.text} onclose={() => (m.onclose?.(), Desktop.dismiss(m.id))} />{/each}
+			{#each Desktop.infos as m (m.id)}<InfoBar
+					tone={m.tone}
+					text={m.text}
+					onclose={() => (m.onclose?.(), Desktop.dismiss(m.id))}
+				/>{/each}
 		</div>
 	{/if}
 	{#if Desktop.findOpen}<FindBar />{/if}

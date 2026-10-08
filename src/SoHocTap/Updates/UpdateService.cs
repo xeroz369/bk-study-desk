@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
@@ -47,7 +47,7 @@ public sealed class UpdateService
     /// <summary>Lần trước cài bản mới không thành (Velopack giữ bản cũ): câu báo cho thanh trạng thái, null nếu không có.</summary>
     public static string? StartupNotice { get; private set; }
 
-    public static UpdateMode Mode => UpdatePolicy.ParseMode(Config.Str("app.update.mode", "ask"));
+    public static UpdateMode Mode => UpdatePolicy.ParseMode(Settings.Update.Mode);
 
     /// <summary>Bản này có phần cập nhật không (bản public, không phải Store).</summary>
     public static bool Supported =>
@@ -73,12 +73,13 @@ public sealed class UpdateService
 
     /// <summary>Tới hạn kiểm tra tự động chưa (chế độ, kiểu bản, chu kỳ).</summary>
     public bool Due() => Supported && UpdatePolicy.ShouldCheck(Mode, Paths.Kind, DateTimeOffset.UtcNow, LastCheck,
-        Config.Int("app.update.checkHours", 6));
+        Settings.Update.CheckHours);
 
     /// <summary>
     /// Bản cài có bộ gỡ tiếng Việt (Uninstall.exe cạnh Update.exe) thì mục gỡ cài đặt trong Windows trỏ tới nó.
     /// Velopack có thể ghi lại khóa này khi cập nhật, nên mỗi lần mở app kiểm lại.
     /// </summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]   // registry gỡ cài của Windows; bản đa nền tảng chỉ gọi trên Windows
     public static void EnsureUninstaller()
     {
         if (!CanSelfUpdate) return;
@@ -423,5 +424,5 @@ internal static class Power
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetSystemPowerStatus(out SystemPowerStatus s);
 
-    public static bool BatterySaverOn => GetSystemPowerStatus(out var s) && s.SystemStatusFlag == 1;
+    public static bool BatterySaverOn => OperatingSystem.IsWindows() && GetSystemPowerStatus(out var s) && s.SystemStatusFlag == 1;   // bản đa nền tảng chạy cả macOS, Linux
 }

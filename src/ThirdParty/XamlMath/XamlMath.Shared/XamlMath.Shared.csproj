@@ -1,0 +1,19 @@
+<!-- XAML-Math (vendored, tự bảo trì): parser, atom, box. Không phụ thuộc UI. Nguồn và danh sách thay đổi: ../README.md -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>XamlMath</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <!-- Cảnh báo của mã upstream: không sửa hàng loạt, chỉ sửa khi đụng tới. -->
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8625;CS8765;CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Data\*.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AvaloniaMath" />
+    <InternalsVisibleTo Include="BKStudyDesk.Math.Tests" />
+  </ItemGroup>
+</Project>

@@ -43,7 +43,7 @@ public sealed partial class ApiRouter(IShellActions shell)
             var seg = r.Path.Trim('/').Split('/');   // ["api", ...]
             return Task.FromResult((r.Method, seg.Length > 1 ? seg[1] : "") switch
             {
-                ("GET", "state") => ApiResponse.Json(JsonStore.Read(StateFile) ?? EmptyState()),
+                ("GET", "state") => ReadState(StateFile),
                 ("PUT", "state") => PutState(r.Body),
                 // Nguồn của bài học (môn + tên file như trong content/), mở đúng trang nếu là PDF.
                 ("POST", "source") => Ok(Documents.Open(
@@ -180,19 +180,42 @@ public sealed partial class ApiRouter(IShellActions shell)
 
     private static JsonObject EmptyState() => new() { ["version"] = 1, ["questions"] = new JsonObject(), ["lessons"] = new JsonObject(), ["exams"] = new JsonArray() };
 
-    /// <summary>Lưu kết quả luyện tập; lần ghi đầu tiên mỗi ngày thì backup một bản vào data/backup.</summary>
-    private static ApiResponse PutState(string? body)
+    private static ApiResponse PutState(string? body) => WriteState(StateFile, Paths.DataFile("backup"), body, DateTime.Now);
+
+    /// <summary>
+    /// Đọc kết quả luyện tập. Chưa có file thì trạng thái rỗng; có mà không đọc được (hỏng, đang bị khóa) thì báo lỗi,
+    /// không trả trạng thái rỗng, để giao diện báo người học thay vì lặng lẽ bắt đầu lại.
+    /// </summary>
+    public static ApiResponse ReadState(string file)
+    {
+        if (!File.Exists(file)) return ApiResponse.Json(EmptyState());
+        return JsonStore.Read(file) is JsonObject state
+            ? ApiResponse.Json(state)
+            : ApiResponse.Error(500, "không đọc được data/ket-qua.json; file giữ nguyên, bản sao lưu ở data/backup");
+    }
+
+    /// <summary>
+    /// Lưu kết quả luyện tập; lần ghi đầu tiên mỗi ngày thì sao lưu một bản vào backupDir. File cũ không đọc được thì luôn giữ
+    /// một bản (ket-qua-hong-thời điểm.json) trước khi ghi đè, để không mất kết quả đã có.
+    /// </summary>
+    public static ApiResponse WriteState(string file, string backupDir, string? body, DateTime now)
     {
         if ((body?.Length ?? 0) > 10_000_000) return ApiResponse.Error(413, "kết quả luyện tập quá lớn");
         if (JsonNode.Parse(body ?? "") is not JsonObject state || state["questions"] is not JsonObject) return ApiResponse.Error(400, "sai định dạng");
-        var backup = Paths.DataFile(Path.Combine("backup", $"ket-qua-{DateTime.Now:yyyy-MM-dd}.json"));
-        if (File.Exists(StateFile) && !File.Exists(backup))
+        if (File.Exists(file))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(backup)!);
-            File.Copy(StateFile, backup);
+            var daily = Path.Combine(backupDir, $"ket-qua-{now:yyyy-MM-dd}.json");
+            var corrupt = JsonStore.Read(file) is not JsonObject;
+            var copy = corrupt ? Path.Combine(backupDir, $"ket-qua-hong-{now:yyyyMMdd-HHmmss}.json") : daily;
+            if (corrupt || !File.Exists(daily))
+            {
+                Directory.CreateDirectory(backupDir);
+                File.Copy(file, copy, overwrite: corrupt);
+                if (corrupt) Log.Warn($"ket-qua.json không đọc được, đã giữ bản cũ ở {copy} trước khi ghi");
+            }
         }
-        state["updatedAt"] = DateTime.Now.ToString("s");
-        JsonStore.Write(StateFile, state);
+        state["updatedAt"] = now.ToString("s", System.Globalization.CultureInfo.InvariantCulture);
+        JsonStore.Write(file, state);
         return ApiResponse.Json(new JsonObject { ["ok"] = true, ["updatedAt"] = state["updatedAt"]!.DeepClone() });
     }
 }

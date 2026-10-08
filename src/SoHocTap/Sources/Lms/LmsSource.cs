@@ -18,8 +18,8 @@ namespace SoHocTap.Sources.Lms;
 /// </summary>
 public sealed partial class LmsSource : ISource
 {
-    public string Name => "lms";
-    public TimeSpan Interval => TimeSpan.FromHours(Config.Int("sources.lms.syncHours", 3));
+    public string Name => SourceIds.Lms;
+    public TimeSpan Interval => TimeSpan.FromHours(Settings.Sync.LmsHours);
 
     private static string LmsFile => Paths.DataFile("lms.json");
     private static string FilesIndex => Paths.DataFile("lms-files.json");

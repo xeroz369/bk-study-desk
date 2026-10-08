@@ -21,7 +21,7 @@ Only the latest version on [Releases](https://github.com/xeroz369/bk-study-desk/
 
 ## How the app protects you
 
-- Your password is typed only on the university SSO page; the app never reads it. If you choose **Save** when asked, WebView2 stores it encrypted on your PC for autofill.
+- Your password is typed only on the university SSO page; the app never reads it. If you choose **Save** when asked, WebView2 stores it encrypted on your PC for autofill. The only exception: if you turn on **Sign in again automatically** (off by default), you type your account into the app; it is stored in Windows Credential Manager (not in the data folder) and only filled into the university SSO page. Turning it off or signing out deletes it.
 - The LMS token is encrypted with Windows DPAPI; data lives in `%LOCALAPPDATA%`, readable only by your Windows account (plus SYSTEM and Administrators).
 - The app only calls **read** APIs; it never submits, registers, cancels or pays.
 - Update packages are verified with SHA-256 before installing; the update source must be the GitHub repository over https (a local folder is accepted only in test installs).

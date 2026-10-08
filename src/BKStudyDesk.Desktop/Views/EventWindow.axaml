@@ -1,0 +1,35 @@
+<!-- Thêm, sửa sự kiện tự thêm (bản 1.x: Ui/EventWindow): ô nhập nhanh điền dần các ô bên dưới; kiểm và báo lỗi từng ô (QuickEntry.Validate).
+     Chỉ lưu trên máy (CustomEventsData). Chữ: lang/*.json. -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+        x:Class="BKStudyDesk.Desktop.Views.EventWindow"
+        Width="520" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock x:Name="Heading" Classes="card-title" />
+        <TextBlock Classes="meta" Text="{l:T events.localNote}" />
+        <TextBox x:Name="Quick" PlaceholderText="{l:T events.quickHint}" TextChanged="OnQuick" />
+        <TextBlock x:Name="QuickError" Classes="meta danger" IsVisible="False" />
+        <Separator />
+        <TextBox x:Name="TitleBox" PlaceholderText="{l:T events.fTitle}" TextChanged="OnField" />
+        <TextBlock x:Name="TitleError" Classes="meta danger" IsVisible="False" />
+        <Grid ColumnDefinitions="*,12,*,12,*">
+            <CalendarDatePicker x:Name="DateBox" PlaceholderText="{l:T events.fDate}" HorizontalAlignment="Stretch" SelectedDateChanged="OnDate" />
+            <TextBox x:Name="StartBox" Grid.Column="2" PlaceholderText="{l:T events.fStart}" TextChanged="OnField" />
+            <TextBox x:Name="EndBox" Grid.Column="4" PlaceholderText="{l:T events.fEndHint}" TextChanged="OnField" />
+        </Grid>
+        <TextBlock x:Name="DateError" Classes="meta danger" IsVisible="False" />
+        <TextBlock x:Name="StartError" Classes="meta danger" IsVisible="False" />
+        <TextBlock x:Name="EndError" Classes="meta danger" IsVisible="False" />
+        <Grid ColumnDefinitions="*,12,180">
+            <TextBox x:Name="LocationBox" PlaceholderText="{l:T events.fLocation}" />
+            <ComboBox x:Name="KindBox" Grid.Column="2" HorizontalAlignment="Stretch" />
+        </Grid>
+        <TextBox x:Name="NoteBox" PlaceholderText="{l:T events.fNote}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Classes="accent" Content="{l:T events.save}" Click="OnSave" IsDefault="True" />
+            <Button Content="{l:T events.cancel}" Click="OnCancel" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

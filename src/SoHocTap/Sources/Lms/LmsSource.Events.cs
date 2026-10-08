@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -11,6 +11,12 @@ namespace SoHocTap.Sources.Lms;
 // Mốc thời gian: lịch hành động, bài tập, nhóm lớp.
 public sealed partial class LmsSource
 {
+    /// <summary>
+    /// Nhãn của hạn nộp bài tập ghi trong lms.json. Giữ nguyên chữ này để dữ liệu đã đồng bộ (của cả bản cũ) vẫn khớp; lúc hiện ra
+    /// thì AppState dịch qua lang timeline.dueLabel, không hiện thẳng chữ lưu trong dữ liệu.
+    /// </summary>
+    public const string DueLabel = "Hạn nộp";
+
     // ------------------------------------------------------------------ mốc thời gian, quiz
 
     /// <param name="groups">Nhóm của mình trong từng lớp (<see cref="MyGroupsAsync"/>, một bước riêng của lượt đồng bộ): mốc của nhóm khác thì bỏ.
@@ -74,6 +80,7 @@ public sealed partial class LmsSource
         {
             var res = await CallAsync("mod_assign_get_assignments", Arr("courseids", courses.Select(c => (object)c.Id)), ct);
             var instances = assignEvents.Keys.ToHashSet();
+            var toAsk = new List<(SubmissionAsk Ask, JsonObject Item)>();
             foreach (var c in res["courses"]!.AsArray().OfType<JsonObject>())
                 foreach (var a in c["assignments"]!.AsArray().OfType<JsonObject>())
                 {
@@ -88,11 +95,12 @@ public sealed partial class LmsSource
                     {
                         ev["intro"] = a["intro"]?.GetValue<string>();
                         ev["files"] = AttachmentFiles(a);
+                        toAsk.Add((new SubmissionAsk(aid, a["cmid"]?.GetValue<long>(), due), ev));
                         continue;
                     }
                     // Không có mốc trên lịch: giữ để lưu đề, nhưng nếu suy ra được là đã nộp thì đánh dấu done (không đếm, không nhắc).
                     var done = AssignPairing.InferDone(due, Now(), calendarComplete);
-                    outMap.TryAdd("as" + aid, new JsonObject
+                    var asItem = new JsonObject
                     {
                         ["id"] = "as" + a["id"],
                         ["course"] = cid,
@@ -100,14 +108,16 @@ public sealed partial class LmsSource
                         ["name"] = WebUtility.HtmlDecode(a["name"]!.GetValue<string>()),
                         ["kind"] = "assign",
                         ["time"] = due,
-                        ["label"] = "Hạn nộp",
+                        ["label"] = DueLabel,
                         ["url"] = $"{Site}/mod/assign/view.php?id={a["cmid"]}",
                         // Đề và file đính kèm có sẵn trong kết quả này (không tốn thêm request): để lưu về máy.
                         ["intro"] = a["intro"]?.GetValue<string>(),
                         ["files"] = AttachmentFiles(a),
                         ["done"] = done ? true : null,
-                    });
+                    };
+                    if (outMap.TryAdd("as" + aid, asItem)) toAsk.Add((new SubmissionAsk(aid, a["cmid"]?.GetValue<long>(), due), asItem));
                 }
+            await ApplySubmissionStatesAsync(toAsk, ct);
         }
         catch (Exception ex) when (Recoverable(ex, ct)) { Warn("bài tập LMS", ex); }
         foreach (var e in outMap.Values.Where(e => e["done"] is null).ToList()) e.Remove("done");
@@ -159,7 +169,7 @@ public sealed partial class LmsSource
     /// </summary>
     private static bool ForMyGroup(string name, long cid, Dictionary<long, HashSet<string>> groups, Dictionary<long, string>? subj = null, HashSet<long>? warned = null)
     {
-        var pattern = Config.Str("sources.lms.groupPattern");
+        var pattern = Settings.Lms.GroupPattern;
         if (pattern.Length == 0) return true;
         var codes = Regex.Matches(name, pattern).Select(x => x.Value).ToHashSet();
         var mine = groups.GetValueOrDefault(cid);

@@ -193,7 +193,7 @@ public sealed partial class LmsSource
         hashes[h] = dest;
         var entry = (JsonObject)index[url]!;
         log($"  {(known is not null ? "cập nhật" : "mới")}: {Paths.RelativeToStudy(dest)}");
-        if ((extract ?? Config.Bool("archives.extract", true)) && Organizer.IsArchive(dest) && Organizer.ExtractArchive(dest, hashes, log) is { } x)
+        if ((extract ?? Settings.Archives.Extract) && Organizer.IsArchive(dest) && Organizer.ExtractArchive(dest, hashes, log) is { } x)
         {
             entry["path"] = x.Archived;
             entry["extractedTo"] = x.Folder;

@@ -1,0 +1,28 @@
+<!-- Tài khoản HCMUT: trạng thái LMS/MyBK, đăng nhập lại, đăng xuất, ghi nhớ đăng nhập, giữ phiên SSO. -->
+<UserControl x:Class="SoHocTap.Ui.SettingsCards.AccountSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SoHocTap.Ui">
+    <Border Style="{StaticResource Card}">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button x:Name="LoginButton" Click="OnLogin" Margin="0,0,8,0" />
+                <Button x:Name="LogoutButton" Content="{ui:T settings.logout}" Click="OnLogout" />
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="{ui:T settings.account}" Style="{StaticResource SectionTitle}" />
+                <TextBlock x:Name="AccountText" />
+                <TextBlock x:Name="AccountDetail" Style="{StaticResource Muted}" Margin="0,2,0,0" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0"
+                           Text="{ui:T settings.accountNote}" />
+                <CheckBox x:Name="Remember" Margin="0,10,0,0" Content="{ui:T settings.remember}" Click="OnRemember" Style="{StaticResource WrapCheck}" />
+                <CheckBox x:Name="KeepAlive" Margin="0,6,0,0" Content="{ui:T settings.keepAlive}" Click="OnKeepAlive" Style="{StaticResource WrapCheck}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.keepAlive.note}" />
+                <!-- Tự đăng nhập lại (sso.autoLogin): chỉ dùng được khi đang Ghi nhớ đăng nhập; bật thì hỏi tài khoản (AutoLoginWindow). -->
+                <CheckBox x:Name="AutoLogin" Margin="0,6,0,0" Content="{ui:T settings.autoLogin}" Click="OnAutoLogin" Style="{StaticResource WrapCheck}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="28,2,0,0" Text="{ui:T settings.autoLogin.note}" />
+                <TextBlock x:Name="Error" AutomationProperties.LiveSetting="Assertive" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using SoHocTap.Core;
 using SoHocTap.Data;
 using SoHocTap.Shell;
 using SoHocTap.Ui.Controls;
@@ -13,6 +14,7 @@ public partial class CalendarPage : UserControl, IPage
 {
     private readonly AppHost _host;
     private readonly MainWindow _main;
+    private readonly TimelineList Upcoming;
     private int _offset;
     private bool _ready;
 
@@ -22,21 +24,8 @@ public partial class CalendarPage : UserControl, IPage
         _host = host;
         _main = main;
 
-        var up = Upcoming.Grid;
-        // Nhóm gom nhiều ngày ("Trong 7 ngày", "Quá hạn") nên cột giờ ghi cả ngày.
-        up.Columns.Add(Grids.Text(L.T("col.when"), nameof(TimelineItem.When), 130, sortPath: nameof(TimelineItem.Time)));
-        up.Columns.Add(Grids.Text(L.T("col.name"), nameof(TimelineItem.Name), star: true));
-        up.Columns.Add(Grids.Text(L.T("col.kind"), nameof(TimelineItem.KindName), 90));
-        up.Columns.Add(Grids.Flex(L.T("col.detail"), nameof(TimelineItem.Label), 1, 100));
-        up.Columns.Add(Grids.Flex(L.T("col.subject"), nameof(TimelineItem.Subject), 1, 100));
-        up.Columns.Add(Grids.Right(L.T("col.left"), nameof(TimelineItem.Left), 100, nameof(TimelineItem.Time)));
-        up.GroupStyle.Add((GroupStyle)FindResource("ExplorerGroup"));
-        Upcoming.KeyOf = o => ((TimelineItem)o).Id;
-        Grids.Setup<TimelineItem>(up, e =>
-        {
-            if (e.CustomId is { } id) EditEvent(id);
-            else if (e.Url is { } u) _host.OpenWeb(u, e.Name);
-        }, Menu, e => e.CustomId is not null);
+        Upcoming = new TimelineList(TimelineView.Upcoming, host, main) { Custom = new(EditEvent, CustomMenu) };
+        UpcomingHost.Child = Upcoming;
 
         var week = Week.Grid;
         week.Columns.Add(Grids.Text(L.T("col.time"), nameof(ClassRow.Time), 110, sortPath: nameof(ClassRow.StartMin)));
@@ -75,13 +64,6 @@ public partial class CalendarPage : UserControl, IPage
     public string Subtitle => _host.State.Mybk?.Term.Name ?? "";
 
     public void Open(string arg) => Tabs.SelectedIndex = arg switch { "tuan" => 1, "thi" => 2, _ => 0 };
-
-    private IEnumerable<MenuEntry> Menu(TimelineItem e)
-    {
-        if (e.CustomId is { } id) return CustomMenu(id);
-        // "Mở" (mở trên web) đã có sẵn ở đầu menu do Grids.Setup thêm, không lặp lại.
-        return [new(L.T("common.copy"), () => Grids.Copy($"{e.Name}, {e.When}, {e.Label}", _main))];
-    }
 
     // ------------------------------------------------------------------ sự kiện tự thêm (issue #22)
 
@@ -222,9 +204,7 @@ public partial class CalendarPage : UserControl, IPage
         var list = s.Timeline.Where(e => (e.Time >= start || e.Overdue)
                                          && (ShowClasses.IsChecked == true || e.Kind != "class")
                                          && (ShowDone.IsChecked == true || !e.Done || e.Kind == "class")).ToList();
-        var view = Grids.Grouped(list, nameof(TimelineItem.Group), nameof(TimelineItem.GroupRank));
-        view.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(TimelineItem.Time), System.ComponentModel.ListSortDirection.Ascending));
-        Upcoming.Show(view, L.T("calendar.upcomingEmpty"), s, Src.Lms, Src.Mybk);
+        Upcoming.Show(list, L.T("calendar.upcomingEmpty"), s, Src.Lms, Src.Mybk);
         Exams.Show(s.Timeline.Where(e => e.Kind == "exam").ToList(), L.T("calendar.examsEmpty"), s, Src.Mybk);
         RefreshWeek();
     }
@@ -248,7 +228,7 @@ public partial class CalendarPage : UserControl, IPage
         var thisWeek = slotted.Where(c => c.Weeks.Contains(week)).ToList();
         var placeable = thisWeek.Where(Timed).ToList();
         var custom = CustomInWeek(monday);
-        WeekEmpty.Text = _host.State.NoDataReason("mybk", "MyBK") ?? L.T("calendar.weekEmpty");
+        WeekEmpty.Text = _host.State.NoDataReason(SourceIds.Mybk, "MyBK") ?? L.T("calendar.weekEmpty");
         WeekEmpty.Visibility = grid && placeable.Count == 0 && custom.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         DimNote.Visibility = grid ? Visibility.Collapsed : Visibility.Visible;
         Grid.Visibility = grid ? Visibility.Visible : Visibility.Collapsed;

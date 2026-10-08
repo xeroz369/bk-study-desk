@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Web.WebView2.Core;
@@ -131,8 +131,15 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 var core = await CoreAsync();
                 _onApp = false;
                 var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
-                await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u => u.Host == mybkHost, ct,
-                    failAt: u => WebHost.IsSsoLogin(u.AbsoluteUri));
+                try
+                {
+                    await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u => u.Host == mybkHost, ct,
+                        failAt: u => WebHost.IsSsoLogin(u.AbsoluteUri));
+                }
+                catch (SessionExpiredException) when (SsoCredentials.Usable() is not null)
+                {
+                    if (!await TryAutoLoginAsync(core, ct)) return false;
+                }
                 SsoSession.MarkAlive();
                 await SessionKeeper.PersistAsync(core);
                 return true;
@@ -235,9 +242,7 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         var appLogin = Config.Str("sources.mybk.appLogin");
         var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
         var ssoHost = WebHost.Host(Config.Str("sources.mybk.casLogin"));
-        try
-        {
-            await NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u =>
+        Task ViaSsoAsync() => NavigateUntilAsync(core, Config.Str("sources.mybk.casLogin"), u =>
             {
                 if (u.Host != mybkHost) return false;
                 if (u.AbsolutePath.StartsWith("/my/", StringComparison.Ordinal) || u.AbsolutePath.TrimEnd('/') == "/app/login")
@@ -247,12 +252,16 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
                 }
                 return u.AbsolutePath.StartsWith("/app", StringComparison.Ordinal) && !u.AbsolutePath.Contains("/login") && !u.AbsolutePath.Contains("/401");
             }, ct, failAt: u => u.Host == ssoHost && u.AbsolutePath.Contains("/login", StringComparison.Ordinal));
-        }
+        try { await ViaSsoAsync(); }
         catch (SessionExpiredException)
         {
             // Chỉ trang nhập mật khẩu của SSO dừng lượt này: chính phiên SSO đã hết trên server (đo thời gian sống thật).
-            SsoSession.Expired();
-            throw;
+            if (!await TryAutoLoginAsync(core, ct))
+            {
+                SsoSession.Expired();
+                throw;
+            }
+            await ViaSsoAsync();   // vừa có phiên SSO mới: đi lại đường cũ
         }
         Log.Debug("MyBK: vào lại qua SSO");
         _onApp = true;
@@ -265,7 +274,9 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
     /// session đã hết (<see cref="SessionExpiredException"/>); mất mạng hoặc server lỗi thì báo <see cref="HttpRequestException"/>;
     /// quá sources.mybk.timeoutSeconds giây thì báo trang trường phản hồi chậm. Không để người dùng chờ mà không biết vì sao.
     /// </summary>
-    private async Task NavigateUntilAsync(CoreWebView2 core, string url, Func<Uri, bool> arrived, CancellationToken ct, Func<Uri, bool>? failAt = null)
+    /// <param name="begin">Thay cho mở <paramref name="url"/>: việc làm trang tự chuyển (gửi form đăng nhập), rồi chờ như thường.</param>
+    private async Task NavigateUntilAsync(CoreWebView2 core, string? url, Func<Uri, bool> arrived, CancellationToken ct, Func<Uri, bool>? failAt = null,
+        Func<Task>? begin = null)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         string last = "";
@@ -299,7 +310,8 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
         var seconds = Config.Int("sources.mybk.timeoutSeconds", 45);
         try
         {
-            core.Navigate(url);
+            if (begin is null) core.Navigate(url);
+            else await begin();
             var timeout = Task.Delay(TimeSpan.FromSeconds(seconds), ct);
             if (await Task.WhenAny(done.Task, timeout) == done.Task) await done.Task;   // có lỗi thì throw ra luôn
             else
@@ -310,6 +322,37 @@ internal sealed class MybkRunner(Dispatcher owner, Func<IntPtr> hwnd) : IBrowser
             }
         }
         finally { core.NavigationCompleted -= OnCompleted; }
+    }
+
+    private bool _autoLoginTried;
+
+    /// <summary>
+    /// SSO vừa đòi mật khẩu (trang đăng nhập đang mở trong WebView ẩn): người dùng cho phép (<see cref="SsoCredentials.Usable"/>) thì điền
+    /// tài khoản đã lưu và gửi. Chỉ một lần mỗi lần chạy app cho tới khi thành công: sai mật khẩu, có captcha hay trang đổi thì không thử
+    /// lại, tránh bị trường khóa tài khoản; người dùng thấy thanh "đăng nhập lại" như khi tắt tính năng này.
+    /// </summary>
+    private async Task<bool> TryAutoLoginAsync(CoreWebView2 core, CancellationToken ct)
+    {
+        if (_autoLoginTried || SsoCredentials.Usable() is not { } c) return false;
+        _autoLoginTried = true;
+        var mybkHost = WebHost.Host(Config.Str("sources.mybk.site"));
+        try
+        {
+            await NavigateUntilAsync(core, null, u => u.Host == mybkHost, ct, failAt: u => WebHost.IsSsoLogin(u.AbsoluteUri), begin: async () =>
+            {
+                if (await EvaluateAsync(SsoForm.FillScript(c.User, c.Password)) != "true")
+                    throw new SessionExpiredException("Trang đăng nhập không có form như mong đợi (captcha hay đổi giao diện).");
+            });
+        }
+        catch (SessionExpiredException e)
+        {
+            Log.Info($"Tự đăng nhập lại: không được ({e.Message}), cần đăng nhập trong app");
+            return false;
+        }
+        _autoLoginTried = false;
+        SsoSession.MarkLogin();
+        Log.Info("Tự đăng nhập lại: xong");
+        return true;
     }
 
     private async Task<string?> EvaluateAsync(string expression)

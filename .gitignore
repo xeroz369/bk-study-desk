@@ -15,6 +15,7 @@ data/
 **/data/
 # Mã nguồn tầng dữ liệu (Windows không phân biệt hoa thường nên **/data/ cũng khớp thư mục này).
 !src/SoHocTap/Data/
+!src/ThirdParty/XamlMath/XamlMath.Shared/Data/
 Môn học/
 _Lưu trữ/
 *.log

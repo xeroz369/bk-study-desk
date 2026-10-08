@@ -179,7 +179,13 @@ export function parseGift(raw: string): Converted {
 			const range = first.match(/^(-?[\d.]+)\.\.(-?[\d.]+)$/);
 			const tol = first.match(/^(-?[\d.eE+-]+):([\d.eE+-]+)$/);
 			if (range)
-				push({ type: 'numeric', prompt, answer: (+range[1] + +range[2]) / 2, tolerance: Math.abs(+range[2] - +range[1]) / 2, solution });
+				push({
+					type: 'numeric',
+					prompt,
+					answer: (+range[1] + +range[2]) / 2,
+					tolerance: Math.abs(+range[2] - +range[1]) / 2,
+					solution,
+				});
 			else if (tol) push({ type: 'numeric', prompt, answer: +tol[1], tolerance: +tol[2], solution });
 			else if (Number.isFinite(+first)) push({ type: 'numeric', prompt, answer: +first, solution });
 			else notes.push(`Bỏ câu số không đọc được: "${inner.slice(0, 30)}"`);

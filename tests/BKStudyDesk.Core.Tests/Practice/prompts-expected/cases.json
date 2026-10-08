@@ -1,0 +1,62 @@
+{
+ "soan-course": [
+  "soan",
+  {
+   "course": "MT1009 Phương pháp tính",
+   "count": 5,
+   "extra": "",
+   "units": [
+    "Chương 1",
+    "Chương 2"
+   ]
+  }
+ ],
+ "soan-empty": [
+  "soan",
+  {
+   "course": "MT1009 Phương pháp tính",
+   "count": 5,
+   "extra": ""
+  }
+ ],
+ "soan-unit": [
+  "soan",
+  {
+   "course": "MT1009 Phương pháp tính",
+   "count": 5,
+   "extra": "  ít lý thuyết  ",
+   "unit": "Chương 1"
+  }
+ ],
+ "tuong-tu": [
+  "tuong-tu",
+  {
+   "course": "MT1009 Phương pháp tính",
+   "count": 3,
+   "extra": "",
+   "unit": "Chương 1",
+   "lesson": "Chia đôi",
+   "question": "### Câu 1\nx\n- [x] a\n- [ ] b"
+  }
+ ],
+ "soat": [
+  "soat",
+  {
+   "course": "MT1009 Phương pháp tính",
+   "count": 5,
+   "extra": "",
+   "pack": "# C1\n## B1"
+  }
+ ],
+ "giai-thich": [
+  "giai-thich",
+  {
+   "course": "MT1009 Phương pháp tính",
+   "count": 5,
+   "extra": "",
+   "unit": "Chương 1",
+   "lesson": "Chia đôi",
+   "question": "### Câu 1\ny"
+  }
+ ]
+}

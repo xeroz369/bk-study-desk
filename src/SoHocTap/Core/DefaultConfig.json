@@ -208,6 +208,7 @@
         "registered": "v1/course-register-results/by-student-code/{mssv}"
       },
       "syncHours": 12,
+      "minSyncHours": 6,
       "gapMs": 300,
       "timeoutSeconds": 45,
       "specialScores": {
@@ -219,6 +220,8 @@
     }
   },
   "sso": {
+    "autoLogin": false,
+    "autoLoginAsked": false,
     "hosts": [
       "sso.hcmut.edu.vn",
       "lms.hcmut.edu.vn",
@@ -241,7 +244,6 @@
     "librarySubfolder": "Thư viện"
   },
   "library": {
-    "enabled": true,
     "baseUrl": "https://bk-study-library.github.io/hcmut-library/",
     "contributePath": "gui-tai-lieu/",
     "refreshHours": 24,
@@ -283,10 +285,14 @@
   },
   "notify": {
     "hoursBefore": 24,
-    "lastHours": 2
+    "lastHours": 2,
+    "urgentHours": 6,
+    "soonHours": 24,
+    "digestTimes": "07:00, 12:00, 19:00"
   },
   "archives": {
     "extract": true,
+    "maxMB": 2048,
     "extensions": [
       ".zip",
       ".rar",
@@ -311,8 +317,23 @@
     "schedulerMinutes": 10,
     "language": "vi",
     "closeToTray": true,
+    "theme": "dark",
+    "webSlowSeconds": 10,
+    "home": { "todoDays": 14, "examDays": 14, "newsDays": 7 },
+    "accent": "#0388B4",
+    "accentChoices": [
+      { "key": "bk", "color": "#0388B4" },
+      { "key": "blue", "color": "#0969DA" },
+      { "key": "green", "color": "#1A7F37" },
+      { "key": "purple", "color": "#8250DF" },
+      { "key": "orange", "color": "#BC4C00" },
+      { "key": "pink", "color": "#BF3989" },
+      { "key": "system", "color": "system" }
+    ],
     "calendarView": "grid",
     "practiceReleaseMinutes": 3,
+    "practiceFlushMs": 2000,
+    "backHistory": 20,
     "font": {
       "family": "",
       "size": 0

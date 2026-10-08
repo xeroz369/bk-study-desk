@@ -149,7 +149,8 @@
 				...options
 					.filter((o) => o.text.trim())
 					.map(
-						(o, i) => `<p>${o.right ? '<b>' : ''}${L[i]}. ${render(o.text).replace(/^<p>|<\/p>$/g, '')}${o.right ? ' (đúng)</b>' : ''}</p>`,
+						(o, i) =>
+							`<p>${o.right ? '<b>' : ''}${L[i]}. ${render(o.text).replace(/^<p>|<\/p>$/g, '')}${o.right ? ' (đúng)</b>' : ''}</p>`,
 					),
 			);
 		else if (type === 'truefalse') parts.push(`<p><b>Đáp án: ${truth ? 'Đúng' : 'Sai'}</b></p>`);
@@ -176,7 +177,8 @@
 		{/each}
 	</div>
 	<label class="flex flex-col gap-1">
-		<span>Đề bài <span class="text-xs text-muted-foreground">Markdown; công thức \( ... \); dán (Ctrl+V) hoặc kéo ảnh vào ô</span></span>
+		<span>Đề bài <span class="text-xs text-muted-foreground">Markdown; công thức \( ... \); dán (Ctrl+V) hoặc kéo ảnh vào ô</span></span
+		>
 		<Textarea
 			id="qe-prompt"
 			bind:value={prompt}
@@ -210,8 +212,11 @@
 				{#if options.length < 8}<Button size="xs" variant="ghost" onclick={() => options.push({ text: '', right: false })}
 						>Thêm phương án</Button
 					>{/if}
-				<Button size="xs" variant={keepOrder ? 'default' : 'ghost'} aria-pressed={keepOrder} onclick={() => (keepOrder = !keepOrder)}
-					>Giữ thứ tự khi xáo</Button
+				<Button
+					size="xs"
+					variant={keepOrder ? 'default' : 'ghost'}
+					aria-pressed={keepOrder}
+					onclick={() => (keepOrder = !keepOrder)}>Giữ thứ tự khi xáo</Button
 				>
 			</div>
 		</div>
@@ -234,7 +239,9 @@
 		</div>
 	{:else}
 		<label class="flex flex-col gap-1"
-			>Đáp án chữ <span class="text-xs text-muted-foreground">nhiều cách viết đúng thì ngăn bằng dấu |, không phân biệt hoa thường</span>
+			>Đáp án chữ <span class="text-xs text-muted-foreground"
+				>nhiều cách viết đúng thì ngăn bằng dấu |, không phân biệt hoa thường</span
+			>
 			<Input bind:value={accept} placeholder="Newton | Newton-Raphson" />
 		</label>
 	{/if}

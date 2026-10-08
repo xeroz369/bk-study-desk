@@ -1,0 +1,33 @@
+<!-- Câu hỏi lần đầu mở app (bản 1.x: Ui/FolderSetupWindow, phần hỏi chế độ của Ui/UpdateWindow). Một cửa sổ, hai dạng: chọn nơi lưu tài liệu,
+     hay chọn chế độ cập nhật. Logic ở Presentation/FirstRun.cs; chữ ở lang/*.json. -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+        x:Class="BKStudyDesk.Desktop.Views.FirstRunWindow"
+        Width="560" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
+    <StackPanel Margin="24" Spacing="12">
+        <StackPanel x:Name="FolderPanel" Spacing="12" IsVisible="False">
+            <TextBlock Classes="card-title" Text="{l:T setup.title}" />
+            <TextBlock Text="{l:T setup.text}" TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="*,8,Auto">
+                <TextBox x:Name="Folder" TextChanged="OnFolderChanged" />
+                <Button Grid.Column="2" Content="{l:T settings.browse}" Click="OnBrowse" />
+            </Grid>
+            <TextBlock x:Name="Note" Classes="meta" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Classes="accent" Content="{l:T setup.ok}" Click="OnSaveFolder" IsDefault="True" />
+            </StackPanel>
+        </StackPanel>
+        <StackPanel x:Name="UpdatePanel" Spacing="12" IsVisible="False">
+            <TextBlock Classes="card-title" Text="{l:T update.title}" />
+            <TextBlock Text="{l:T update.askText}" TextWrapping="Wrap" />
+            <RadioButton x:Name="ModeNotify" Content="{l:T update.mode.notify}" IsChecked="True" />
+            <RadioButton x:Name="ModeAuto" Content="{l:T update.mode.auto}" />
+            <RadioButton x:Name="ModeOff" Content="{l:T update.mode.off}" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Classes="accent" Content="{l:T update.save}" Click="OnSaveMode" IsDefault="True" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</Window>

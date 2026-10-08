@@ -1,0 +1,137 @@
+<!-- Trang Hôm nay (design-system/bk mục 4): đầu trang; hai cột 2:1 cách 24 khi đủ chỗ, không thì một cột.
+     Trái: Cần làm, Thông báo mới. Phải: Sắp tới, Đăng ký môn. Mục nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Home.cs. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
+             x:Class="BKStudyDesk.Desktop.Views.HomeView"
+             x:DataType="p:HomeModel">
+    <UserControl.Resources>
+        <!-- Dòng 64, lưới 48,12,*,12,112: ô ngày | tên và dòng phụ | còn bao lâu và trạng thái -->
+        <DataTemplate x:Key="TodoRow" x:DataType="p:TodoItem">
+            <Border Classes="row" Tapped="OnRowTapped" Cursor="Hand">
+                <Grid ColumnDefinitions="48,12,*,12,112">
+                    <Border Classes="datebox">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Classes="day" Text="{Binding Day.Day}" />
+                            <TextBlock Classes="month" Text="{Binding Month}" />
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="sub" Text="{Binding Sub}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="right" Classes.danger="{Binding IsDanger}" Classes.soon="{Binding IsSoon}" Text="{Binding Left}" />
+                        <TextBlock Classes="sub" HorizontalAlignment="Right" Text="{Binding State}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <!-- Ô giờ thay ô ngày: giờ bắt đầu (màu Link), giờ kết thúc -->
+        <DataTemplate x:Key="AgendaRow" x:DataType="p:AgendaItem">
+            <Border Classes="row">
+                <Grid ColumnDefinitions="48,12,*,12,112">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Classes="start" Text="{Binding Start}" />
+                        <TextBlock Classes="sub" Text="{Binding End}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="sub" Text="{Binding Sub}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="4" Classes="right" VerticalAlignment="Center" Text="{Binding Right}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="NewsRow" x:DataType="p:NewsItem">
+            <Border Classes="row" Tapped="OnRowTapped" Cursor="Hand">
+                <Grid ColumnDefinitions="*,12,112">
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="sub" Text="{Binding Sub}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Classes="right" VerticalAlignment="Center" Text="{Binding Ago}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="RegRow" x:DataType="p:RegItem">
+            <Border Classes="row">
+                <Grid ColumnDefinitions="*,12,112">
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="name" Text="{Binding Name}" />
+                        <TextBlock Classes="sub" Text="{Binding When}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Classes="right" Classes.ok="{Binding Open}" VerticalAlignment="Center" Text="{Binding Status}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <StackPanel Spacing="24">
+        <StackPanel Spacing="2">
+            <TextBlock Classes="title" Text="{l:T nav.today}" />
+            <TextBlock x:Name="DateText" Classes="meta" />
+        </StackPanel>
+
+        <!-- Chưa có dữ liệu nào: một khối giới thiệu thay cho bốn thẻ trống -->
+        <Border x:Name="Intro" Classes="card" Padding="24" IsVisible="False">
+            <StackPanel Spacing="12">
+                <TextBlock Classes="card-title" Text="{l:T home.noData}" />
+                <TextBlock TextWrapping="Wrap" Text="{l:T home.intro}" />
+                <Button x:Name="LoginButton" Classes="accent" Content="{l:T common.loginHcmut}" Click="OnLogin" />
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="Columns" RowDefinitions="Auto,Auto">
+            <!-- Trái 2 phần, phải 1 phần (320 tới 400); HomeView đổi sang một cột khi không đủ chỗ cho cả hai mức tối thiểu. -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
+            </Grid.ColumnDefinitions>
+            <StackPanel x:Name="Main" Spacing="24">
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="TodoMeta" />
+                            <TextBlock Classes="card-title" Text="{l:T home.todo}" />
+                        </DockPanel></Border>
+                        <ItemsControl ItemsSource="{Binding Todo}" ItemTemplate="{StaticResource TodoRow}" />
+                        <TextBlock x:Name="TodoEmpty" Classes="empty" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="NewsMeta" />
+                            <TextBlock Classes="card-title" Text="{l:T home.news}" />
+                        </DockPanel></Border>
+                        <ItemsControl ItemsSource="{Binding News}" ItemTemplate="{StaticResource NewsRow}" />
+                        <TextBlock x:Name="NewsEmpty" Classes="empty" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel x:Name="Side" Grid.Column="2" Spacing="24">
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <TextBlock Classes="card-title" Text="{l:T calendar.tabUpcoming}" />
+                        </DockPanel></Border>
+                        <ItemsControl ItemsSource="{Binding Upcoming}" ItemTemplate="{StaticResource AgendaRow}" />
+                        <TextBlock x:Name="UpcomingEmpty" Classes="empty" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="card">
+                    <StackPanel>
+                        <Border Classes="card-head"><DockPanel>
+                            <TextBlock Classes="card-title" Text="{l:T home.reg}" />
+                        </DockPanel></Border>
+                        <ItemsControl ItemsSource="{Binding Registrations}" ItemTemplate="{StaticResource RegRow}" />
+                        <TextBlock x:Name="RegEmpty" Classes="empty" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

@@ -35,7 +35,9 @@
 						<Table.Cell><a class="link inline-flex min-h-6 items-center" href={'#luyen-tap/' + c.id}>{c.name}</a></Table.Cell>
 						<Table.Cell class="text-right tabular-nums">{s.done}/{s.total}</Table.Cell>
 						<Table.Cell class="text-right tabular-nums">{s.answered}</Table.Cell>
-						<Table.Cell class="text-right tabular-nums">{s.answered ? Math.round((s.firstOk / s.answered) * 100) + '%' : '–'}</Table.Cell>
+						<Table.Cell class="text-right tabular-nums"
+							>{s.answered ? Math.round((s.firstOk / s.answered) * 100) + '%' : '–'}</Table.Cell
+						>
 					</Table.Row>
 				{/each}
 			</Table.Body>

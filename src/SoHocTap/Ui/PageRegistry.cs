@@ -15,18 +15,25 @@ internal sealed record PageEntry(string Key, string LabelKey, string TipKey, str
 internal static class PageRegistry
 {
     public const string Home = "hom-nay";
+    public const string Calendar = "lich";
+    public const string Subjects = "mon";
+    public const string Practice = "luyen-tap";
+    public const string Grades = "diem";
+    public const string Services = "dich-vu";
+    public const string Settings = "cai-dat";
+    public const string About = "gioi-thieu";
 
     public static readonly IReadOnlyList<PageEntry> All =
     [
         new(Home, "nav.today", "nav.today.tip", "", (h, m) => new HomePage(h, m), InNav: true, Hotkey: true),
-        new("lich", "nav.calendar", "nav.calendar.tip", "", (h, m) => new CalendarPage(h, m), InNav: true, Hotkey: true),
-        new("mon", "nav.subjects", "nav.subjects.tip", "", (h, m) => new SubjectsPage(h, m), InNav: true, Hotkey: true),
-        new("luyen-tap", "nav.practice", "nav.practice.tip", "", (h, m) => new PracticePage(h, m), InNav: true, Hotkey: true),
-        new("diem", "nav.grades", "nav.grades.tip", "", (h, m) => new GradesPage(h, m), InNav: true, Hotkey: true),
-        new("dich-vu", "nav.services", "nav.services.tip", "", (h, m) => new ServicesPage(h, m), InNav: true, Hotkey: true),
+        new(Calendar, "nav.calendar", "nav.calendar.tip", "", (h, m) => new CalendarPage(h, m), InNav: true, Hotkey: true),
+        new(Subjects, "nav.subjects", "nav.subjects.tip", "", (h, m) => new SubjectsPage(h, m), InNav: true, Hotkey: true),
+        new(Practice, "nav.practice", "nav.practice.tip", "", (h, m) => new PracticePage(h, m), InNav: true, Hotkey: true),
+        new(Grades, "nav.grades", "nav.grades.tip", "", (h, m) => new GradesPage(h, m), InNav: true, Hotkey: true),
+        new(Services, "nav.services", "nav.services.tip", "", (h, m) => new ServicesPage(h, m), InNav: true, Hotkey: true),
         // Cài đặt, Giới thiệu là nút bên phải thanh trên cùng; Cài đặt vẫn có phím Ctrl+số ngay sau các mục điều hướng.
-        new("cai-dat", "nav.settings", "nav.settings.tip", "", (h, _) => new SettingsPage(h), InNav: false, Hotkey: true),
-        new("gioi-thieu", "about.title", "about.tip", "", (_, _) => new AboutPage(), InNav: false, Hotkey: false),
+        new(Settings, "nav.settings", "nav.settings.tip", "", (h, _) => new SettingsPage(h), InNav: false, Hotkey: true),
+        new(About, "about.title", "about.tip", "", (_, _) => new AboutPage(), InNav: false, Hotkey: false),
     ];
 
     /// <summary>Tên khác của trang: route cũ, route của khung Luyện tập ("tl" là tài liệu, "mybk" là trang MyBK cũ). KeepArg: giữ phần sau "/".</summary>

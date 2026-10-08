@@ -1,0 +1,61 @@
+{
+ "single-right": {
+  "prompt": "<p>Đạo hàm của \\(x^2\\) là</p>",
+  "options": [
+   "\\(2x\\)",
+   "\\(x\\)",
+   "\\(2\\)"
+  ],
+  "answer": 0,
+  "solution": "<p><b>Đáp án đúng:</b> \\(2x\\)</p><p>Công thức \\((x^n)'=nx^{n-1}\\).</p><p><small>Lần làm trên LMS: bạn chọn A (đúng).</small></p>"
+ },
+ "single-wrong": {
+  "prompt": "<p>Thủ đô của Việt Nam &amp; nước bạn?</p>",
+  "options": [
+   "Huế",
+   "Hà  Nội"
+  ],
+  "answer": 1,
+  "solution": "<p><b>Đáp án đúng:</b> Hà Nội</p><p><small>Lần làm trên LMS: bạn chọn A (sai).</small></p>"
+ },
+ "multi": {
+  "type": "multi",
+  "prompt": "<p>Chọn các số chẵn</p>",
+  "options": [
+   "2",
+   "3",
+   "4"
+  ],
+  "answers": [
+   0,
+   2
+  ],
+  "solution": "<p><b>Đáp án đúng:</b> 2, 4</p><p><small>Lần làm trên LMS: bạn chọn A (đúng một phần).</small></p>"
+ },
+ "truefalse": {
+  "prompt": "<p>Hàm liên tục trên đoạn thì bị chặn.</p>",
+  "options": [
+   "Đúng",
+   "Sai"
+  ],
+  "answer": 0,
+  "solution": "<p><b>Đáp án đúng:</b> Câu trả lời đúng là 'Đúng'.</p><p><small>Lần làm trên LMS: bạn chọn A (đúng).</small></p>"
+ },
+ "numeric": {
+  "type": "numeric",
+  "prompt": "<p>Gia tốc trọng trường (m/s²)?</p>",
+  "answer": 9.8,
+  "unit": "m/s²",
+  "solution": "<p><b>Đáp án đúng:</b> 9,8 (m/s²)</p>Lấy g gần đúng.<p><small>Lần làm trên LMS: bạn chọn 9,7 (sai).</small></p>"
+ },
+ "short": {
+  "type": "short",
+  "prompt": "<p>Tên phương pháp dùng tiếp tuyến?</p>",
+  "accept": [
+   "Newton-Raphson"
+  ],
+  "solution": "<p><b>Đáp án đúng:</b> Newton-Raphson</p><p><small>Lần làm trên LMS: bạn chọn Newton (đúng).</small></p>"
+ },
+ "hidden": null,
+ "no-text": null
+}

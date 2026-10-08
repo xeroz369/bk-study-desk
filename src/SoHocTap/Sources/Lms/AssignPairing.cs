@@ -1,4 +1,4 @@
-﻿namespace SoHocTap.Sources.Lms;
+namespace SoHocTap.Sources.Lms;
 
 /// <summary>
 /// Ghép bài tập (mod_assign_get_assignments) với mốc của nó trên lịch hành động (core_calendar_get_action_events_by_timesort),

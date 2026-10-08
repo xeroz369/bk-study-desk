@@ -83,7 +83,8 @@
 			{/if}
 		{/if}
 		<div class="flex justify-between gap-2">
-			{#if prev}<Button size="sm" variant="outline" href={'#bai/' + prev.id}><ArrowLeft />{prev.title}</Button>{:else}<span></span>{/if}
+			{#if prev}<Button size="sm" variant="outline" href={'#bai/' + prev.id}><ArrowLeft />{prev.title}</Button>{:else}<span
+				></span>{/if}
 			{#if next}<Button size="sm" variant="outline" href={'#bai/' + next.id}>{next.title}<ArrowRight /></Button>{/if}
 		</div>
 	</div>

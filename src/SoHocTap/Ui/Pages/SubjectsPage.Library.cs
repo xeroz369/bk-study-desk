@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using SoHocTap.Api;
@@ -36,7 +36,6 @@ internal sealed record FilterOption(string? Value, string Label)
 /// </summary>
 public partial class SubjectsPage
 {
-    private const int LibraryTabIndex = 6;
     private static readonly StringComparer ViOrder = StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true);
 
     private List<LibraryRow> _libRows = [];
@@ -78,26 +77,23 @@ public partial class SubjectsPage
             if (NameMatch.Same(r.Name, s.Name)) yield return r.Code;
     }
 
-    /// <summary>Tab chỉ hiện khi đã bật thư viện và môn khớp ít nhất một môn của thư viện. Index chưa đọc thì đọc nền (cache trước).</summary>
+    /// <summary>Môn nào khớp với môn nào của thư viện (tab luôn có; không khớp thì tab nói rõ). Index chưa đọc thì đọc nền (cache trước).</summary>
     private void UpdateLibraryTab(SubjectRow? s)
     {
         var lib = _host.Library;
-        _libMatches = s is not null && LibraryService.Enabled ? lib.Match(LibraryCodes(s)) : [];
-        var show = _libMatches.Count > 0;
-        LibraryTab.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        if (!show && Tabs.SelectedIndex == LibraryTabIndex) Tabs.SelectedIndex = 0;
-        if (s is not null && LibraryService.Enabled && lib.Index is null) _ = lib.RefreshAsync(LibraryRefresh.IfDue);
+        _libMatches = s is not null ? lib.Match(LibraryCodes(s)) : [];
+        if (s is not null && lib.Index is null) _ = lib.RefreshAsync(LibraryRefresh.IfDue);
     }
 
     private void OnLibraryChanged()
     {
         var before = _libMatches;
         UpdateLibraryTab(_subject);
-        // Index mới (hoặc vừa tắt/bật): tab đang mở thì dựng lại; tab khác thì lần mở sau tự dựng.
-        if (!before.SequenceEqual(_libMatches) || Tabs.SelectedIndex == LibraryTabIndex)
+        // Index mới: tab đang mở thì dựng lại; tab khác thì lần mở sau tự dựng.
+        if (!before.SequenceEqual(_libMatches) || Tabs.SelectedItem == LibraryTab)
         {
-            _filled.Remove(LibraryTabIndex);
-            if (Tabs.SelectedIndex == LibraryTabIndex) FillTab();
+            _filled.Remove(LibraryTab);
+            if (Tabs.SelectedItem == LibraryTab) FillTab();
         }
     }
 
@@ -105,8 +101,12 @@ public partial class SubjectsPage
     {
         var gen = ++_libGen;
         var matches = _libMatches;
-        if (matches.Count == 0) return;
         _ = _host.Library.RefreshAsync(LibraryRefresh.Tab);   // index đổi thì Changed dựng lại tab
+        if (matches.Count == 0)
+        {
+            ShowNoMatch();
+            return;
+        }
         if (_libRows.Count == 0 || !ReferenceEquals(_libShownFor, s)) LibraryItems.ShowStatus(DataState.Loading, L.T("library.loading"));
         var multi = matches.Count > 1;
         var rows = new List<LibraryRow>();
@@ -152,6 +152,23 @@ public partial class SubjectsPage
     }
 
     private SubjectRow? _libShownFor;
+
+    /// <summary>
+    /// Môn không khớp môn nào của thư viện: đang đọc danh sách môn thì báo đang tải, đọc lỗi thì báo lỗi, đọc xong mà không có thì nói rõ
+    /// môn chưa có tài liệu và để nút Đóng góp (tab không ẩn đi, người dùng biết là có thư viện).
+    /// </summary>
+    private void ShowNoMatch()
+    {
+        var lib = _host.Library;
+        _libRows = [];
+        FillFilters();
+        LibraryNote.Visibility = Visibility.Collapsed;
+        LibraryWebButton.Visibility = Visibility.Collapsed;
+        ContributeButton.Visibility = ContributeUrl() is null ? Visibility.Collapsed : Visibility.Visible;
+        if (lib.Index is null && lib.LastError is { } err) LibraryItems.ShowStatus(DataState.Error, L.F("library.error", err));
+        else if (lib.Index is null) LibraryItems.ShowStatus(DataState.Loading, L.T("library.loading"));
+        else LibraryItems.Show(null, L.T("library.notInLibrary"));
+    }
 
     /// <summary>Dựng một dòng: chạy trên thread pool (LocalState đọc manifest và kiểm file trên đĩa).</summary>
     private LibraryRow Row(CourseRef course, LibraryItem i, bool multi)
@@ -354,13 +371,13 @@ public partial class SubjectsPage
                     return;
                 }
                 _main.Say(L.F("library.installed", r.Title));
-                _main.Go("luyen-tap/luyen-tap");   // có tham số thì khung Luyện tập nạp lại, thấy gói mới
+                _main.Go(Routes.Practice + "/luyen-tap");   // có tham số thì khung Luyện tập nạp lại, thấy gói mới
                 break;
             case HandOffKind.PracticeImport:
                 Grids.Copy(path);
                 Reveal(path);
                 MessageBox.Show(owner, L.F("library.installManual", r.Title), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Information);
-                _main.Go("luyen-tap/luyen-tap");
+                _main.Go(Routes.Practice + "/luyen-tap");
                 break;
             default:
                 MessageBox.Show(owner, L.F("library.installInvalid", Path.GetFileName(path), h.Error ?? ""), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -392,7 +409,7 @@ public partial class SubjectsPage
         if (LibraryWeb() is { } u) Links.Open(u.AbsoluteUri);
     }
 
-    private Uri? ContributeUrl() => LibraryClient.ContributeUrl(_host.Library.Index, Config.Str("library.contributePath", "gui-tai-lieu/"));
+    private Uri? ContributeUrl() => LibraryClient.ContributeUrl(_host.Library.Index, Core.Settings.Library.ContributePath);
 
     private void OnContribute(object sender, RoutedEventArgs e)
     {

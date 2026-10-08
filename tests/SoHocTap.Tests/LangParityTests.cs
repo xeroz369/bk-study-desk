@@ -16,6 +16,30 @@ public partial class LangParityTests
 
     private static string Holes(string s) => string.Join(",", Placeholder().Matches(s).Select(m => m.Groups[1].Value).Distinct().Order(StringComparer.Ordinal));
 
+    [Theory]
+    [InlineData("vi")]
+    [InlineData("en")]
+    public void NoDuplicateKeys(string code)
+    {
+        // Dictionary đọc im lặng ghi đè key trùng, nên đọc thẳng token để bắt.
+        var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "lang", code + ".json"))));
+        var seen = new HashSet<string>();
+        var dup = new List<string>();
+        while (reader.Read())
+            if (reader.TokenType == JsonTokenType.PropertyName && reader.CurrentDepth == 1 && !seen.Add(reader.GetString()!)) dup.Add(reader.GetString()!);
+        Assert.Empty(dup);
+    }
+
+    [Theory]
+    [InlineData("vi")]
+    [InlineData("en")]
+    public void NoKeysDifferOnlyInCase(string code)
+    {
+        // "autoLogin.note" và "autologin.note" là hai key khác nhau với Dictionary nhưng dễ nhầm khi sửa: một bản bị bỏ quên mà không ai thấy.
+        var clash = Read(code).Keys.GroupBy(k => k, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => string.Join(" / ", g)).ToList();
+        Assert.Empty(clash);
+    }
+
     [Fact]
     public void SameKeys()
     {
