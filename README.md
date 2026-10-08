@@ -53,6 +53,7 @@ Mỗi lần đổi mã, CI build app, chạy test lõi, test bộ vẽ công th�
 Khác với bản Windows:
 - token LMS lưu thành tệp chỉ tài khoản của bạn đọc được (quyền 600), chưa mã hóa như DPAPI trên Windows;
 - **Tự đăng nhập lại khi hết phiên** dùng `secret-tool` (libsecret) trên Linux nếu máy có; macOS chưa hỗ trợ.
+- Lỗi đã biết trên macOS: vài chữ có dấu hiện sai (ví dụ "để" thành "đế", "chỗ" thành "chô", "Ôn" thành "On"), thấy trên ảnh chụp của CI.
 
 Chạy từ mã nguồn (cần .NET 10 SDK; Linux cần thêm gói `libwebkit2gtk-4.1-0` và `libicu`, thường có sẵn):
 

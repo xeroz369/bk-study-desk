@@ -49,6 +49,7 @@ On every change, CI builds the app, runs the core and formula renderer tests, an
 Differences from the Windows app:
 - the LMS token is saved as a file only your account can read (mode 600), not encrypted like DPAPI on Windows;
 - **Sign in again when the session ends** uses `secret-tool` (libsecret) on Linux if available; not supported on macOS yet.
+- Known issue on macOS: some Vietnamese letters with stacked or capital diacritics show the wrong mark (for example "để" shows as "đế", "Ôn" as "On"), seen in CI screenshots.
 
 Run from source (needs the .NET 10 SDK; Linux also needs `libwebkit2gtk-4.1-0` and `libicu`, usually installed already):
 
