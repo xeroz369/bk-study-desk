@@ -58,15 +58,17 @@ public class MathViewTests
         Assert.Contains(warnings, w => w.Contains(tex));
     }
 
-    // U+0378 chưa được gán trong Unicode: không font nào có, kể cả font dự phòng. Upstream đo được (FormattedText)
-    // nhưng ném lỗi trong Render, làm sập cửa sổ.
+    // U+0378 chưa được gán trong Unicode. Upstream đo được (FormattedText) nhưng ném lỗi trong Render, làm sập cửa sổ.
+    // Windows, Linux: không font nào có ký tự này, MathView phải đổi sang chữ thường trước khi vẽ.
+    // macOS: font LastResort có glyph cho mọi mã (cả mã chưa gán), công thức vẽ được một ô thay thế; chỉ cần vẽ xong không lỗi.
     [AvaloniaFact]
     public void Glyph_missing_everywhere_falls_back_before_render()
     {
         var view = new MathView { Tex = "\\text{a\u0378}" };
         var window = Host(view);
         window.CaptureRenderedFrame();
-        Assert.IsType<TextBlock>(view.Content);
+        if (OperatingSystem.IsMacOS()) Assert.NotNull(view.Content);
+        else Assert.IsType<TextBlock>(view.Content);
     }
 
     // Input dị dạng hay gặp khi người dùng tự soạn: không được ném lỗi ở bất kỳ bước nào.

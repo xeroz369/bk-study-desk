@@ -6,6 +6,8 @@
     <OutputType>WinExe</OutputType>
     <!-- net10.0: macOS, Linux (và chạy được trên Windows). net10.0-windows10.0.19041.0: bản Windows, thêm thông báo hệ thống (WinRT). -->
     <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <!-- Restore trên macOS, Linux cũng phải tải gói của target Windows (dù chỉ build -f net10.0); thiếu dòng này thì báo NETSDK1100. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BKStudyDesk.Desktop</RootNamespace>
