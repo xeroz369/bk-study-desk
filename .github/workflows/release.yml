@@ -1,7 +1,9 @@
 name: release
 
-# Build bộ cài Windows (x64, ARM64), gói tự cập nhật và gói MSIX cho Microsoft Store.
-# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt; gói cập nhật và MSIX để ở artifact.
+# Build bộ cài bản đa nền tảng (Avalonia, src/BKStudyDesk.Desktop): Windows x64, ARM64 (bộ cài tiếng Việt bọc Velopack),
+# Linux x64 (AppImage), macOS Apple Silicon, Intel (.pkg, chưa ký số); gói tự cập nhật cho từng kênh; gói MSIX cho Microsoft Store
+# (MSIX vẫn đóng từ bản WPF src/SoHocTap cho tới khi bản Avalonia được thử trong MSIX).
+# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt (job checksums); gói cập nhật và MSIX để ở artifact.
 # - Bấm Publish release: job publish-feed mới đưa gói cập nhật lên release cố định "updates",
 #   nên app của người dùng chỉ thấy bản mới sau khi người làm app đã duyệt bản nháp.
 # - Cùng lúc đó job publish-store nộp MSIX lên Microsoft Store (chờ người làm app duyệt ở environment "microsoft-store").
@@ -67,7 +69,11 @@ jobs:
           "version=$v" >> $env:GITHUB_OUTPUT
           "tag=$tag" >> $env:GITHUB_OUTPUT
       - name: Unit tests
-        run: dotnet test tests/SoHocTap.Tests
+        run: |
+          dotnet test tests/SoHocTap.Tests
+          dotnet test tests/BKStudyDesk.Core.Tests
+          dotnet test tests/BKStudyDesk.Math.Tests
+      # Khung Luyện tập Svelte chỉ còn cho gói MSIX (bản WPF) ở bước Store package.
       - name: Practice UI
         working-directory: src/ui
         run: |
@@ -89,17 +95,17 @@ jobs:
             # Lấy bản trước từ release "updates" (nếu có) để vpk tạo gói delta nhỏ cho người đang dùng bản cũ.
             vpk download http --url "https://github.com/$env:GITHUB_REPOSITORY/releases/download/updates" -c $rid -o "feed/$rid" --allowEmptyChannel
             if ($LASTEXITCODE) { Write-Host "Chưa có bản trước cho $rid, chỉ tạo gói đầy đủ."; $global:LASTEXITCODE = 0 }
-            dotnet publish src/SoHocTap -c Release -r $rid --self-contained true -o "stage/$rid" @common
+            dotnet publish src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -r $rid --self-contained true -o "stage/$rid" @common
+            if ($LASTEXITCODE) { throw "publish $rid lỗi" }
             vpk pack -u $env:PACK_ID -v $v -r $rid -c $rid -p "stage/$rid" -e BKStudyDesk.exe --packTitle 'BK Study Desk' --packAuthors xeroz369 `
-              -i src/SoHocTap/app.ico --aumid $env:PACK_ID --releaseNotes notes.md --noPortable -o "feed/$rid"
+              -i src/BKStudyDesk.Desktop/Assets/app.ico --aumid $env:PACK_ID --releaseNotes notes.md --noPortable -o "feed/$rid"
+            if ($LASTEXITCODE) { throw "vpk pack $rid lỗi" }
             dotnet build src/BKStudyDesk.Setup -c Release -o "uninstall-$rid" "-p:PackId=$env:PACK_ID" "-p:Version=$v"
             dotnet build src/BKStudyDesk.Setup -c Release -o "setup-$rid" "-p:PackId=$env:PACK_ID" "-p:Version=$v" `
               "-p:VelopackSetup=$PWD/feed/$rid/$env:PACK_ID-$rid-Setup.exe" "-p:UninstallerExe=$PWD/uninstall-$rid/BKStudyDesk-Setup.exe"
             Copy-Item "setup-$rid/BKStudyDesk-Setup.exe" "dist/$env:PACK_ID-$v-Setup-$($rid.Split('-')[1]).exe"
             Remove-Item "feed/$rid/$env:PACK_ID-$rid-Setup.exe"
           }
-          $sums = Get-ChildItem dist -File | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)" }
-          [IO.File]::WriteAllText("$PWD/dist/SHA256SUMS.txt", ($sums -join "`n") + "`n")   # xuống dòng kiểu Unix: sha256sum -c đọc được
       # Attestation: chứng minh bộ cài được build từ đúng mã nguồn này trên GitHub Actions (chỉ repo public có tính năng này).
       # Người dùng kiểm: gh attestation verify BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study-desk
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -133,6 +139,96 @@ jobs:
         run: |
           $tag = $env:TAG
           gh release create $tag --draft --target $env:GITHUB_SHA --title "BK Study Desk $env:V" --notes "Bản nháp do CI tạo. Kiểm tra bộ cài rồi bấm Publish." (Get-ChildItem dist -File | ForEach-Object FullName)
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+
+  # Linux, macOS (bản đa nền tảng, thử nghiệm): đóng gói rồi đưa bộ cài lên bản nháp release do job build tạo.
+  build-unix:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: macos-latest
+            rid: osx-x64
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write       # đưa bộ cài lên bản nháp release
+      id-token: write       # attestation cho bộ cài
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+      - name: Package
+        shell: bash
+        env:
+          V: ${{ needs.build.outputs.version }}
+          RID: ${{ matrix.rid }}
+        run: |
+          set -euo pipefail
+          dotnet tool install -g vpk --version "$VPK_VERSION"
+          export VPK_SKIP_UPDATES=true
+          mkdir -p dist "feed/$RID"
+          printf 'BK Study Desk %s' "$V" > notes.md
+          vpk download http --url "https://github.com/$GITHUB_REPOSITORY/releases/download/updates" -c "$RID" -o "feed/$RID" --allowEmptyChannel \
+            || echo "Chưa có bản trước cho $RID, chỉ tạo gói đầy đủ."
+          dotnet publish src/BKStudyDesk.Desktop -c Release -f net10.0 -r "$RID" --self-contained true -o "stage/$RID" \
+            "-p:Version=$V" -p:DebugType=none -p:DebugSymbols=false -p:ContinuousIntegrationBuild=true -p:Deterministic=true
+          vpk pack -u "$PACK_ID" -v "$V" -r "$RID" -c "$RID" -p "stage/$RID" -e BKStudyDesk \
+            --packTitle 'BK Study Desk' --packAuthors xeroz369 --releaseNotes notes.md -o "feed/$RID"
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            mv "feed/$RID/$PACK_ID-$RID.AppImage" "dist/$PACK_ID-$V-$RID.AppImage"
+          else
+            mv "feed/$RID/$PACK_ID-$RID-Setup.pkg" "dist/$PACK_ID-$V-Setup-$RID.pkg"
+          fi
+          rm -f feed/"$RID"/*-Portable.zip
+          ls -la dist "feed/$RID"
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-path: 'dist/*'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: feed-${{ matrix.rid }}-${{ needs.build.outputs.tag }}
+          path: |
+            feed/**/*.nupkg
+            feed/**/releases.*.json
+          retention-days: 90
+      - name: Upload to draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber dist/*
+
+  # SHA256SUMS.txt cho mọi bộ cài của bản nháp (Windows từ job build, Linux, macOS từ build-unix).
+  checksums:
+    needs: [build, build-unix]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: SHA256SUMS
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir dl && cd dl
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" --pattern 'BKStudyDesk-*'
+          sha256sum BKStudyDesk-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber SHA256SUMS.txt
 
   publish-feed:
     if: github.event_name == 'release' && !github.event.release.prerelease
@@ -152,6 +248,9 @@ jobs:
             --jq "[.[] | select(.conclusion==\"success\" and .event!=\"release\" and .headBranch==\"$TAG\")][0].databaseId")
           [ -n "$run" ] || { echo "Không tìm thấy lần build của $TAG"; exit 1; }
           gh run download "$run" -R "$REPO" -n "feed-$TAG" -D feed
+          for rid in linux-x64 osx-arm64 osx-x64; do
+            gh run download "$run" -R "$REPO" -n "feed-$rid-$TAG" -D feed || echo "Không có gói cập nhật $rid"
+          done
           gh release view updates -R "$REPO" >/dev/null 2>&1 || \
             gh release create updates -R "$REPO" --prerelease --title "Gói tự cập nhật (không cần tải)" \
               --notes "App tự tải các file ở đây khi bạn cho phép cập nhật. Muốn cài app thì tải bộ cài ở bản phát hành mới nhất."

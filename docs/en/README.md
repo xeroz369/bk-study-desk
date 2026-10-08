@@ -40,7 +40,11 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
 
 ## macOS and Linux (experimental)
 
-**Not stable yet.** The cross-platform app (`src/BKStudyDesk.Desktop`, built with Avalonia) shares its core with the Windows app, but there is no installer for macOS or Linux yet and it has not been tried on a real Mac or Linux PC.
+**Not stable yet.** The cross-platform app (`src/BKStudyDesk.Desktop`, built with Avalonia) shares its core with the Windows app. Since 1.2.2 there are installers on [Releases](../../releases/latest), but it has not been tried on a real Mac or Linux PC.
+
+Install:
+- Linux (x64): download `BKStudyDesk-x.y.z-linux-x64.AppImage`, run `chmod +x` on it, then open it. Needs the `libwebkit2gtk-4.1-0` package.
+- macOS: download `BKStudyDesk-x.y.z-Setup-osx-arm64.pkg` (Apple chip) or `-osx-x64.pkg` (Intel chip). The installer is not signed, so macOS blocks it the first time: go to **System Settings** > **Privacy & Security** and choose **Open Anyway**.
 
 On every change, CI builds the app, runs the core and formula renderer tests, and opens the app to take screenshots of Today, Calendar and Practice on Windows, macOS and Linux (results in the Actions tab). Not checked on a real machine yet:
 - SSO sign-in in the embedded browser (WKWebView on macOS, WebKitGTK on Linux) and the hidden MyBK browser;
@@ -51,7 +55,7 @@ Differences from the Windows app:
 - **Sign in again when the session ends** uses `secret-tool` (libsecret) on Linux if available; not supported on macOS yet.
 - Known issue on macOS: some Vietnamese letters with stacked or capital diacritics show the wrong mark (for example "để" shows as "đế", "Ôn" as "On"), seen in CI screenshots.
 
-Run from source (needs the .NET 10 SDK; Linux also needs `libwebkit2gtk-4.1-0` and `libicu`, usually installed already):
+Or run from source (needs the .NET 10 SDK; Linux also needs `libwebkit2gtk-4.1-0` and `libicu`, usually installed already):
 
 ```bash
 dotnet run --project src/BKStudyDesk.Desktop -c Release -f net10.0

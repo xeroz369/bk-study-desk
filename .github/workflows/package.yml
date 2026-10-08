@@ -1,0 +1,95 @@
+name: package
+
+# Đóng gói thử bản đa nền tảng (Avalonia, src/BKStudyDesk.Desktop) bằng Velopack trên Windows, Linux, macOS.
+# Chỉ để kiểm build và đóng gói được: gói nằm ở mục Artifacts của lượt chạy, KHÔNG tạo release, KHÔNG đẩy lên kênh cập nhật.
+# Phát hành thật vẫn đi qua release.yml.
+on:
+  pull_request:
+    paths:
+      - 'src/BKStudyDesk.Core/**'
+      - 'src/BKStudyDesk.Desktop/**'
+      - 'src/ThirdParty/**'
+      - 'src/SoHocTap/**'
+      - '.github/workflows/package.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Phiên bản ghi vào gói (vd. 1.2.2)'
+        required: false
+        default: '1.2.2'
+
+permissions:
+  contents: read
+
+env:
+  VPK_VERSION: '1.2.161'
+  PACK_ID: BKStudyDesk
+
+jobs:
+  pack:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            tfm: net10.0-windows10.0.19041.0
+          - os: windows-latest
+            rid: win-arm64
+            tfm: net10.0-windows10.0.19041.0
+          - os: ubuntu-latest
+            rid: linux-x64
+            tfm: net10.0
+          - os: macos-latest
+            rid: osx-arm64
+            tfm: net10.0
+          - os: macos-latest
+            rid: osx-x64
+            tfm: net10.0
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+      # Input chạy tay đi qua biến môi trường rồi kiểm định dạng, không chèn thẳng vào script (zizmor template-injection).
+      - name: Version
+        id: v
+        shell: bash
+        env:
+          IN_VERSION: ${{ inputs.version }}
+        run: |
+          v="${IN_VERSION:-1.2.2}"
+          if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "Phiên bản không hợp lệ: $v"; exit 1; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Publish
+        shell: bash
+        env:
+          V: ${{ steps.v.outputs.version }}
+          RID: ${{ matrix.rid }}
+          TFM: ${{ matrix.tfm }}
+        run: |
+          dotnet publish src/BKStudyDesk.Desktop -c Release -f "$TFM" -r "$RID" --self-contained true -o "stage/$RID" \
+            "-p:Version=$V" -p:DebugType=none -p:DebugSymbols=false -p:ContinuousIntegrationBuild=true -p:Deterministic=true
+      - name: Package (Velopack)
+        shell: bash
+        env:
+          V: ${{ steps.v.outputs.version }}
+          RID: ${{ matrix.rid }}
+        run: |
+          dotnet tool install -g vpk --version "$VPK_VERSION"
+          export VPK_SKIP_UPDATES=true
+          exe=BKStudyDesk
+          if [ "$RUNNER_OS" = "Windows" ]; then exe=BKStudyDesk.exe; fi
+          printf 'BK Study Desk %s (đóng gói thử)' "$V" > notes.md
+          vpk pack -u "$PACK_ID" -v "$V" -r "$RID" -c "$RID" -p "stage/$RID" -e "$exe" \
+            --packTitle 'BK Study Desk' --packAuthors xeroz369 --releaseNotes notes.md -o "out/$RID"
+          ls -la "out/$RID"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-${{ matrix.rid }}
+          path: out/${{ matrix.rid }}/
+          if-no-files-found: error
+          retention-days: 7

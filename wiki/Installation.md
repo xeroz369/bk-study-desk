@@ -48,4 +48,4 @@ gh attestation verify .\BKStudyDesk-x.y.z-Setup-x64.exe --repo xeroz369/bk-study
 
 ## macOS and Linux (experimental)
 
-The macOS and Linux versions are **not stable yet** and have no installer. To try them, run from source; see [macOS and Linux](https://github.com/xeroz369/bk-study-desk/blob/main/docs/en/README.md#macos-and-linux-experimental) in the README for how to run it, what is and is not checked, and how it differs from the Windows app.
+The macOS and Linux versions are **not stable yet**. Since 1.2.2 there are installers on [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest): an AppImage for Linux and a `.pkg` for macOS (unsigned). For how to install or run from source, see [macOS and Linux](https://github.com/xeroz369/bk-study-desk/blob/main/docs/en/README.md#macos-and-linux-experimental) in the README for how to run it, what is and is not checked, and how it differs from the Windows app.

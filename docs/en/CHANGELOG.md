@@ -8,24 +8,12 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-10-08
+
 ### Added
 
-- **Cross-platform app (experimental)** for Windows, macOS and Linux, built with Avalonia (`src/BKStudyDesk.Desktop`). No installer for macOS or Linux yet; run from source. The macOS and Linux versions are not stable yet and have not been tried on real machines.
+- **Cross-platform app (experimental)** for Windows, macOS and Linux, built with Avalonia (`src/BKStudyDesk.Desktop`). Installers: Windows (x64, ARM64), Linux (AppImage), macOS (.pkg, unsigned). The macOS and Linux versions are not stable yet and have not been tried on real machines; macOS still shows some Vietnamese diacritics wrong.
 - Cross-platform app: the **Practice** page is drawn with built-in controls instead of a web view. Same features as the Windows app: today's review, wrong-answer review, mixed practice, lessons, mock exams, flagged questions, LMS quiz archive, author (create, import, export, AI prompts). TeX formulas drawn with XAML-Math (MIT). Ctrl+plus, Ctrl+minus change the text size.
-
-### Changed
-
-- Cross-platform app: the Practice page uses less memory, about 200 MB for the whole app instead of about 540 MB (no more 6 WebView2 processes).
-- Error messages when importing a Markdown quiz use clearer Vietnamese wording.
-
-### Fixed
-
-- A corrupted `ket-qua.json` (practice results): the app reports an error instead of treating it as empty, and always keeps a copy of the broken file in `data\backup` before overwriting it.
-
-## [1.3.0] - 2026-10-05
-
-### Added
-
 - **Group** column (L03, L05...) in every deadline table.
 - Urgency: under 6 hours left shows red, under 24 hours shows yellow, with an icon and text. Both thresholds are adjustable.
 - **Status** column read from LMS: Not submitted, Draft, Submitted, Graded. Submitted work is no longer reminded.
@@ -37,6 +25,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Changed
 
+- Cross-platform app: the Practice page uses less memory, about 200 MB for the whole app instead of about 540 MB (no more 6 WebView2 processes).
+- Error messages when importing a Markdown quiz use clearer Vietnamese wording.
 - Settings save as soon as you change them; the shared Save button is gone. Frequently used cards come first, the rest sit in a collapsed **Advanced** section.
 - The home page drops the 4 number tiles (they repeated the lists below); adds a **Classes** card for today and tomorrow; exams show date, time and room; the next 7 days list only holds things to do.
 - Deadline tables are leaner and fill the window: the name has a second line (course, detail) instead of the separate Type, Detail and Course columns; the Group column only shows when an item has a group code.
@@ -44,6 +34,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 - The library always has its tab and can no longer be switched off; a course with no materials says so and offers Contribute.
 - When only the MyBK session ends while LMS keeps working, just the status bar shows it; the sign-in bar appears only on the Grades or Services pages, close to a course registration period, or when MyBK data is more than 3 days old.
 - Contributors: CONTRIBUTING has a **Where to write** table; each Settings card and the event table live in one place.
+
+### Fixed
+
+- A corrupted `ket-qua.json` (practice results): the app reports an error instead of treating it as empty, and always keeps a copy of the broken file in `data\backup` before overwriting it.
 
 ## [1.2.1] - 2026-10-05
 
@@ -314,7 +308,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...v1.2.0
 [1.1.11]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.10...v1.1.11

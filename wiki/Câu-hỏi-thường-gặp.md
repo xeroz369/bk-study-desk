@@ -16,7 +16,7 @@ Không. App chỉ gọi API **đọc**. Không nộp bài, không đăng ký/h�
 Không có server riêng, không analytics. App chỉ nói chuyện với server của trường và với GitHub để hỏi bản mới nếu bạn cho phép. Xem [[Bảo mật và quyền riêng tư]].
 
 **Có bản cho macOS, Linux không?**
-Có bản thử nghiệm, **chưa ổn định**, chưa có bộ cài: chạy từ mã nguồn theo [Cài đặt](Cài-đặt#macos-và-linux-thử-nghiệm). Khi ổn định sẽ có bộ cài ở trang Releases.
+Có bản thử nghiệm, **chưa ổn định**: bộ cài ở trang Releases từ 1.2.2, xem [Cài đặt](Cài-đặt#macos-và-linux-thử-nghiệm).
 
 **Máy chip ARM (Snapdragon) dùng được không?**
 Được, tải bản `-Setup-arm64.exe`.
