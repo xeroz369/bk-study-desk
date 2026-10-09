@@ -8,6 +8,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-10-09
+
 ### Changed
 
 - HCMUT sign-in no longer opens a separate window: the university sign-in page shows inside the app window, and after signing in the app returns to the page you were on and syncs.
@@ -325,7 +327,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...v1.2.0

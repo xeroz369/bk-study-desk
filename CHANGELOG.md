@@ -6,6 +6,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.3] - 2026-10-09
+
 ### Thay đổi
 
 - Đăng nhập HCMUT không mở cửa sổ riêng nữa: trang đăng nhập của trường hiện ngay trong cửa sổ app, đăng nhập xong tự quay lại trang đang xem và đồng bộ.
@@ -322,7 +324,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.1.11...v1.2.0
