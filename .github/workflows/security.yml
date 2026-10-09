@@ -141,6 +141,9 @@ jobs:
           & $exe.FullName analyze out/BKStudyDesk.exe out/BKStudyDesk.dll --output binskim.sarif --sarif-output-version Current --ignorePdbLoadError --insert FlattenedMessages
           # Exit code khác 0 khi có lỗi mức error: vẫn tải SARIF lên trước, bước sau mới quyết định đỏ.
           "BINSKIM_EXIT=$LASTEXITCODE" >> $env:GITHUB_ENV
+          # Tóm tắt từng kết quả ra log (đọc được cả khi Code scanning không nhận file).
+          $sarif = Get-Content binskim.sarif -Raw | ConvertFrom-Json
+          foreach ($r in $sarif.runs[0].results) { "$($r.ruleId) level=$($r.level) kind=$($r.kind) text=[$($r.message.text)] id=[$($r.message.id)] file=$($r.locations[0].physicalLocation.artifactLocation.uri)" }
       - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         if: always() && !github.event.repository.private && hashFiles('binskim.sarif') != ''
         with:
