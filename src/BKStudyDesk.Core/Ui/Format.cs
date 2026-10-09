@@ -57,7 +57,8 @@ public static class Format
     public static string Score(double? x) => x is null ? "-" : Math.Abs(x.Value % 1) < 1e-9 ? x.Value.ToString(CultureInfo.InvariantCulture) : Num(x.Value);
     public static string Money(long n) => L.F("format.money", n);
 
-    public static string Size(long b) => b < 1024 ? $"{b} B" : b < 1048576 ? $"{b / 1024} KB" : $"{(b / 1048576.0).ToString("0.0", L.Culture)} MB";
+    public static string Size(long b) => b < 1024 ? $"{b} B" : b < 1048576 ? $"{b / 1024} KB"
+        : b < 1073741824 ? $"{(b / 1048576.0).ToString("0.0", L.Culture)} MB" : $"{(b / 1073741824.0).ToString("0.0", L.Culture)} GB";
 
     // Tên riêng (PDF, Word…) giữ nguyên; value bắt đầu bằng "files." là key trong file ngôn ngữ.
     private static readonly Dictionary<string, string> Kinds = new(StringComparer.OrdinalIgnoreCase)

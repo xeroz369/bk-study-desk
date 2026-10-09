@@ -528,10 +528,10 @@ public partial class MainWindow : Window
             FitBar();   // chữ to hơn: thanh trên cùng đo lại
         });
 
-    /// <summary>Cửa sổ Tải tài liệu của một lớp; tải xong thì trang Môn học đọc lại thư mục.</summary>
-    private void Download(SoHocTap.Data.LmsCourse course)
+    /// <summary>Cửa sổ Tải tài liệu (các lớp <paramref name="pick"/> tích sẵn, null: học kỳ đang học); đóng thì trang Môn học đọc lại thư mục.</summary>
+    private void Download(IReadOnlyCollection<long>? pick)
     {
-        var w = new DownloadWindow(course);
+        var w = new DownloadWindow(pick);
         w.Closed += (_, _) => Show(_current);
         w.ShowDialog(this);
     }
