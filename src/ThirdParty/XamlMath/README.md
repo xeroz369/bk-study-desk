@@ -28,4 +28,4 @@ Từ đây repo tự bảo trì, không theo upstream. Lý do chọn và số li
 ## Kiểm tra
 
 - `dotnet test tests/BKStudyDesk.Math.Tests`: lệnh, môi trường, lỗi vẽ, `MathView`, `ContentRenderer`, cả bộ công thức của `studypack/examples`.
-- `powershell -File src\SoHocTap\tools-dev\math-corpus.ps1`: cả bộ công thức của `content/` (nội dung riêng), chạy trước mỗi release.
+- `powershell -File tools-dev\math-corpus.ps1`: cả bộ công thức của `content/` (nội dung riêng), chạy trước mỗi release.

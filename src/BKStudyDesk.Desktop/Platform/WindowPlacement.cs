@@ -35,6 +35,22 @@ internal sealed class WindowPlacement
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Lưu vị trí cửa sổ: {e.Message}"); }
     }
 
+    /// <summary>
+    /// Cửa sổ phụ (Đăng nhập, Tải tài liệu, Sự kiện...) lúc vừa mở: cỡ trong XAML là cỡ mong muốn, kẹp vào vùng làm việc của màn hình
+    /// đang chứa nó (DIP, theo tỉ lệ phóng của màn hình đó) như cửa sổ chính, không để mép dưới lọt khỏi màn hình nhỏ hay phóng to.
+    /// </summary>
+    public static void FitDialog(Window w)
+    {
+        if ((w.Screens.ScreenFromWindow(w) ?? w.Screens.Primary) is not { } screen) return;
+        var (s, area) = (screen.Scaling, screen.WorkingArea);
+        var now = new Box(w.Position.X / s, w.Position.Y / s, w.Bounds.Width, w.Bounds.Height);
+        var fit = ScreenFit.Clamp(now, new Box(area.X / s, area.Y / s, area.Width / s, area.Height / s), w.MinWidth, w.MinHeight);
+        if (fit == now) return;
+        if (fit.Width < now.Width) w.Width = fit.Width;
+        if (fit.Height < now.Height) w.Height = fit.Height;
+        w.Position = new PixelPoint((int)Math.Round(fit.X * s), (int)Math.Round(fit.Y * s));
+    }
+
     /// <summary>Trước khi hiện cửa sổ. Lần đầu (chưa lưu) thì giữ cỡ trong XAML, căn giữa màn hình, không lớn hơn vùng làm việc.</summary>
     public void Apply(Window w)
     {

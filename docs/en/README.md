@@ -40,7 +40,7 @@ Open the app, choose **Sign in to HCMUT** and sign in on the university SSO page
 
 ## macOS and Linux (experimental)
 
-**Not stable yet.** The cross-platform app (`src/BKStudyDesk.Desktop`, built with Avalonia) shares its core with the Windows app. Since 1.2.2 there are installers on [Releases](../../releases/latest), but it has not been tried on a real Mac or Linux PC.
+**Not stable yet.** The macOS and Linux versions are the same app as the Windows one (`src/BKStudyDesk.Desktop`, built with Avalonia). Since 1.2.2 there are installers on [Releases](../../releases/latest), but it has not been tried on a real Mac or Linux PC.
 
 Install:
 - Linux (x64): download `BKStudyDesk-x.y.z-linux-x64.AppImage`, run `chmod +x` on it, then open it. Needs the `libwebkit2gtk-4.1-0` package.
@@ -98,13 +98,13 @@ Report problems in [Issues](https://github.com/xeroz369/bk-study-desk/issues) wi
   - start with Windows;
   - the close button minimizes to the tray or exits, your choice.
 - **Choose the documents folder** in Settings.
-- **Languages**: Vietnamese (source) and English. To add one, drop a JSON file into `lang\`; see [`src/SoHocTap/lang/README.md`](lang/README.md).
+- **Languages**: Vietnamese (source) and English. To add one, drop a JSON file into `lang\`; see [`src/BKStudyDesk.Core/lang/README.md`](lang/README.md).
 
 ## Security and privacy
 
 Full policy: [PRIVACY.md](PRIVACY.md).
 
-- Your password is typed only on the university SSO page. The app never reads it. If you choose **Save** when the sign-in window asks, the in-app browser (WebView2) stores the password encrypted on your PC, like Edge, to fill it in next time; otherwise nothing is saved. The only exception: if you turn on **Sign in again automatically** (off by default), you type your account into the app; it is stored in Windows Credential Manager (not in the data folder) and only filled into the university SSO page. Turning it off or signing out deletes it.
+- Your password is typed only on the university SSO page. The app never reads it. If you choose **Save** when the sign-in page asks, the in-app browser (WebView2) stores the password encrypted on your PC, like Edge, to fill it in next time; otherwise nothing is saved. The only exception: if you turn on **Sign in again automatically** (off by default), you type your account into the app; it is stored in Windows Credential Manager (not in the data folder) and only filled into the university SSO page. Turning it off or signing out deletes it.
 - Everything lives in the data folder `%LOCALAPPDATA%\BKStudyDesk.Data\data`, not in the install folder:
   - cookies in `data\webview`, encrypted by WebView2;
   - the LMS token in `data\secrets\`, **encrypted with Windows DPAPI**, so it does not work on another PC or Windows account.
@@ -123,16 +123,12 @@ Full policy: [PRIVACY.md](PRIVACY.md).
 
 ## Build from source
 
-```powershell
-cd src/ui; npm ci; npm run build; cd ../..     # Practice view (Svelte), builds into ui/
-dotnet build src/SoHocTap -c Release
-dotnet publish src/SoHocTap -c Release -r win-x64 --self-contained -o publish
-```
-
-Needs the .NET 10 SDK, Node 24 and Windows. The cross-platform app (Avalonia) needs no Node and builds on Windows, macOS and Linux:
+Needs the .NET 10 SDK. Builds on Windows, macOS and Linux:
 
 ```bash
-dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0
+dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0                      # any OS
+dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0   # Windows build (system notifications, Store package)
+dotnet test tests/BKStudyDesk.Logic.Tests
 dotnet test tests/BKStudyDesk.Core.Tests
 dotnet test tests/BKStudyDesk.Math.Tests
 ```
@@ -141,20 +137,17 @@ Code layout:
 
 | Folder | Contents |
 |---|---|
-| `src/SoHocTap/Core` | paths, config (`Core/DefaultConfig.json`), JSON storage, log, credential encryption, .ics export |
-| `src/SoHocTap/Sources` | LMS connector (Moodle mobile web service), MyBK, sync scheduler |
-| `src/SoHocTap/Files` | subject folders, duplicate detection, archive extraction |
-| `src/SoHocTap/Shell` | sign-in, hidden WebView for MyBK, tray, notifications, autostart |
-| `src/SoHocTap/Ui` | WPF UI (`MainWindow`, `Pages/`), language packs |
-| `src/SoHocTap/lang` | language packs (`vi.json`, `en.json`) |
-| `src/SoHocTap/Updates` | update check and install (Velopack), per the user's choice |
+| `src/BKStudyDesk.Desktop` | the app (Avalonia 12, built-in Fluent theme): window, pages (`Views/`), sign-in and WebView (`Web/`), tray, start with the computer, password store, Store package (`Platform/`), Velopack updates (`Updates/`) |
+| `src/BKStudyDesk.Core/Core` | paths, config (`Core/DefaultConfig.json`), JSON storage, log, credential encryption, .ics export |
+| `src/BKStudyDesk.Core/Sources` | LMS connector (Moodle mobile web service), MyBK, sync scheduler |
+| `src/BKStudyDesk.Core/Files` | subject folders, duplicate detection, archive extraction |
+| `src/BKStudyDesk.Core/Presentation` | logic of each page and of Practice (grading, review schedule, packs, import and export), info bar; pure, with tests |
+| `src/BKStudyDesk.Core/lang` | language packs (`vi.json`, `en.json`) |
 | `src/BKStudyDesk.Setup` | Vietnamese installer and uninstaller (.NET Framework 4.8) |
-| `src/ui` | Practice view of the Windows app (Svelte) |
-| `src/BKStudyDesk.Core` | cross-platform core: reuses code from `src/SoHocTap`, Practice logic (grading, review schedule, packs, import and export) |
-| `src/BKStudyDesk.Desktop` | cross-platform app (Avalonia); Practice drawn with built-in controls |
-| `src/ThirdParty/XamlMath` | TeX formula renderer for the cross-platform app (XAML-Math, MIT) |
-| `tests/SoHocTap.Tests` | unit tests |
-| `tests/BKStudyDesk.Core.Tests`, `tests/BKStudyDesk.Math.Tests` | core, page and formula renderer tests (run on three OSes in CI) |
+| `src/ThirdParty/XamlMath` | TeX formula renderer (XAML-Math, MIT) |
+| `studypack` | Study Pack v1 spec, tools to check packs and convert Markdown to JSON |
+| `tests/BKStudyDesk.Logic.Tests` | pure logic tests (app folder, update policy, sync, file placement, library) |
+| `tests/BKStudyDesk.Core.Tests`, `tests/BKStudyDesk.Math.Tests` | page, Practice and formula renderer tests (run on three OSes in CI) |
 
 University URLs, API paths, folder names and sync intervals live in config (`Core/DefaultConfig.json`), not scattered in code. `data\config.json` stores only what you changed from the defaults.
 
@@ -176,4 +169,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT
 
 By contributing code (a pull request) you agree to license your contribution under AGPL-3.0.
 
-Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, npm packages in `src/ui/package.json` (mostly MIT), MathJax bundled in `src/ui/public/vendor/mathjax` (Apache-2.0, LICENSE included), XAML-Math in `src/ThirdParty/XamlMath` (MIT, `LICENSE.md`; Computer Modern fonts under `fonts/LICENSES.md`; changes listed in that folder's README).
+Third-party libraries keep their own licenses: NuGet packages in the `.csproj` files, the npm package of the studypack tools in `studypack/package.json` (MIT), XAML-Math in `src/ThirdParty/XamlMath` (MIT, `LICENSE.md`; Computer Modern fonts under `fonts/LICENSES.md`; changes listed in that folder's README).

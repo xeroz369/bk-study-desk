@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Unit test cho logic thuần của lõi (không giao diện, không mạng): tìm thư mục app, chính sách cập nhật, normalizer MyBK, ChangeSet,
+       giờ VN, xếp file, thư viện. Link file nguồn từ src\BKStudyDesk.Core (không tham chiếu cả project: Config, Paths đọc data thật). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Src>..\..\src\BKStudyDesk.Core\</Src>
+    <!-- File trong Core, Data, Sources, Library không biên dịch được trong project test (cần Config, Paths hay gói Windows):
+           Core/Config.cs: đọc config người dùng, test dùng ISettingsStore giả
+           Core/Paths.cs: Paths.AppRoot đi ngược lên tìm thư mục data thật, không được chạm trong test
+           Core/SettingsConfigStore.cs: cài CreateDefaultStore bằng Config; test tự cài bản giả
+           Core/Log.cs: gọi Paths và Config
+           Core/AppEvents.cs, Core/JsonStore.cs: gọi Log
+           Core/SecretStore.cs: cần gói ProtectedData (DPAPI)
+           Data/Stores.cs: gọi Paths
+           Library/LibraryService.cs: gọi Config, Paths, Organizer
+           Sources/SourceHub.cs: kéo theo LmsSource và MybkSource
+           Sources/Lms/LmsClient.cs: gọi Config, Paths
+           Sources/Lms/LmsSource*.cs: gọi Config, Paths, Organizer
+           Sources/Mybk/MybkSource.cs: gọi Config, Paths
+         Thêm file mới vào đây chỉ khi nó thật sự cần Config/Paths. -->
+    <LogicExclude>
+      $(Src)Core\Config.cs;
+      $(Src)Core\Paths.cs;
+      $(Src)Core\SettingsConfigStore.cs;
+      $(Src)Core\Log.cs;
+      $(Src)Core\AppEvents.cs;
+      $(Src)Core\JsonStore.cs;
+      $(Src)Core\SecretStore.cs;
+      $(Src)Data\Stores.cs;
+      $(Src)Library\LibraryService.cs;
+      $(Src)Sources\SourceHub.cs;
+      $(Src)Sources\Lms\LmsClient.cs;
+      $(Src)Sources\Lms\LmsSource*.cs;
+      $(Src)Sources\Mybk\MybkSource.cs;
+    </LogicExclude>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <!-- File logic thuần tự được lấy theo thư mục: file mới trong Core, Data, Sources, Library có test ngay, không cần sửa csproj.
+         Chỉ loại file không biên dịch được trong project test (danh sách và lý do ở LogicExclude). -->
+    <Compile Include="$(Src)Core\**\*.cs;$(Src)Data\**\*.cs;$(Src)Sources\**\*.cs;$(Src)Library\**\*.cs" Exclude="$(LogicExclude)" Link="Linked\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\..\src\BKStudyDesk.Desktop\Updates\DownloadProgress.cs" Link="Linked\DownloadProgress.cs" />
+    <Compile Include="$(Src)Ui\Due.cs;$(Src)Ui\ScreenFit.cs;$(Src)Ui\WeekMath.cs;$(Src)Ui\FontChoice.cs;$(Src)Shell\Reminders.cs" Link="Linked\%(Filename)%(Extension)" />
+    <Compile Include="..\..\src\BKStudyDesk.Setup\InstallTarget.cs" Link="Linked\InstallTarget.cs" />
+    <!-- Phần Files không phụ thuộc config: test trên thư mục tạm. Không link Paths/Config: Paths.AppRoot đi ngược từ thư mục test
+         lên tới thư mục có data\, trong worktree dưới "Sổ học tập" đó là data thật của người dùng. -->
+    <Compile Include="$(Src)Files\FileOps.cs;$(Src)Files\JunkFilter.cs;$(Src)Files\NameMatch.cs;$(Src)Files\LmsPlacement.cs;$(Src)Files\DocumentScan.cs" Link="Linked\Files\%(Filename)%(Extension)" />
+    <Compile Include="$(Src)Api\PackImport.cs" Link="Linked\Api\PackImport.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- File ngôn ngữ (test parity) và fixture viết tay (không có dữ liệu thật) chép ra thư mục output. -->
+    <None Include="$(Src)lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(Src)Core\DefaultConfig.json" Link="DefaultConfig.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

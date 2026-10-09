@@ -2,9 +2,9 @@
 //   node studypack/convert.ts <in.studypack.json> [out.md|out.zip]
 //   node studypack/convert.ts <in.md|in.zip> [out.studypack.json]
 import { readFileSync, writeFileSync } from 'node:fs';
-import { strToU8, unzipSync, zipSync, strFromU8 } from '../src/ui/node_modules/fflate/esm/index.mjs';
-import { parseMarkdown, writeMarkdown } from '../src/ui/src/lib/study/markdown.ts';
-import type { StudyPack } from '../src/ui/src/lib/study/pack.ts';
+import { strToU8, unzipSync, zipSync, strFromU8 } from 'fflate';
+import { parseMarkdown, writeMarkdown } from './lib/markdown.ts';
+import type { StudyPack } from './lib/pack.ts';
 
 const [input, output] = process.argv.slice(2);
 if (!input) {

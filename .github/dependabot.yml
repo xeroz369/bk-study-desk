@@ -3,21 +3,15 @@
 version: 2
 updates:
   - package-ecosystem: nuget
-    directories: ['/src/SoHocTap', '/src/BKStudyDesk.Core', '/src/BKStudyDesk.Desktop', '/src/BKStudyDesk.Setup', '/tests/SoHocTap.Tests']
+    directories: ['/src/BKStudyDesk.Core', '/src/BKStudyDesk.Desktop', '/src/BKStudyDesk.Setup', '/tests/BKStudyDesk.Logic.Tests', '/tests/BKStudyDesk.Core.Tests', '/tests/BKStudyDesk.Math.Tests']
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
     groups:
       nuget: { patterns: ['*'] }
   - package-ecosystem: npm
-    directory: /src/ui
+    directory: /studypack
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
-    ignore:
-      # svelte-check chưa chạy được với TypeScript 7; prettier-plugin-svelte 4 đổi cách định dạng. Xem lại khi svelte-check hỗ trợ.
-      - dependency-name: typescript
-        update-types: ['version-update:semver-major']
-      - dependency-name: prettier-plugin-svelte
-        update-types: ['version-update:semver-major']
     groups:
       npm: { patterns: ['*'] }
   - package-ecosystem: github-actions

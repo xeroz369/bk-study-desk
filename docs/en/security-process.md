@@ -22,7 +22,7 @@ Principle: use existing, maintained tools (no home-made scanners), run them auto
 
 | Surface | Control |
 |---|---|
-| Practice frame (WebView2, virtual host `sohoc.example`) | no network port; `/api` only answers requests with the `X-App` header from the app's host; host objects, DevTools and file drops are off; external links open in the browser |
+| Practice (Avalonia controls, no web page) | no network port, no browser; results and packs go through `ApiRouter` called directly in the app; external links open in the browser |
 | Messages from the Practice frame to the app (`postMessage`) | accepted only from the app's host, only shortcut and page-open commands |
 | Quiz packs from others (Study Pack, Markdown, Moodle XML, GIFT, Aiken) | `validatePack` blocks scripts, event attributes and external images; pack ids use safe characters only and can't write outside the packs folder |
 | File paths sent by the page | `Paths.StudyPath` only allows paths inside the study folder |
@@ -35,7 +35,7 @@ Principle: use existing, maintained tools (no home-made scanners), run them auto
 
 | Tool | Checks | Every PR | Weekly | File |
 |---|---|---|---|---|
-| CodeQL | security bugs in C#, TypeScript/Svelte and workflows | yes | yes | `codeql.yml` |
+| CodeQL | security bugs in C#, TypeScript (studypack tools) and workflows | yes | yes | `codeql.yml` |
 | NuGet advisories (`dotnet list package --vulnerable --include-transitive`) | .NET packages with published vulnerabilities, including transitive ones | yes | yes | `security.yml` (deps) |
 | npm audit | npm packages with vulnerabilities (moderate or higher fails) | yes | yes | `security.yml` (deps) |
 | OSV-Scanner (Google) | every lockfile against OSV.dev | yes | yes | `security.yml` (osv) |

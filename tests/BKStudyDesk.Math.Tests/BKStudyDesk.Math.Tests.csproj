@@ -14,6 +14,7 @@
     <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.3" />
     <PackageReference Include="Avalonia.Skia" Version="12.1.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
   </ItemGroup>
   <ItemGroup>
@@ -22,6 +23,8 @@
     <!-- MathView của app: link file thay vì tham chiếu project app (WinExe, 2 TFM, kéo theo Velopack và WebView). -->
     <Compile Include="..\..\src\BKStudyDesk.Desktop\Views\Practice\MathView.cs" Link="App\MathView.cs" />
     <Compile Include="..\..\src\BKStudyDesk.Desktop\Views\Practice\ContentRenderer.cs" Link="App\ContentRenderer.cs" />
+    <!-- Bảng có nhóm của các trang (issue #43): cũng cần Avalonia headless nên ở chung project này. -->
+    <Compile Include="..\..\src\BKStudyDesk.Desktop\Views\Tables.cs" Link="App\Tables.cs" />
     <!-- ContentRenderer đọc HTML bằng Html của lõi. -->
     <ProjectReference Include="..\..\src\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
   </ItemGroup>

@@ -23,7 +23,7 @@ App soạn sẵn prompt: vào môn, chọn **Tạo**, chọn bài, rồi chọn 
 # VÍ DỤ        Một câu mẫu đúng định dạng
 ```
 
-Bản đầy đủ nằm trong `src/ui/src/lib/study/prompts.ts`. Sửa ở đó thì app đổi theo.
+Bản đầy đủ nằm trong `src/BKStudyDesk.Core/Presentation/Practice/Prompts/`. Sửa ở đó thì app đổi theo.
 
 ## Mẹo dùng
 

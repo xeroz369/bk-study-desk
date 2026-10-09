@@ -2,7 +2,7 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Port src/ui/src/lib/study/exam.test.ts và interleave.test.ts.
+// Port từ khung Svelte của bản 1.x, src/ui/src/lib/study/exam.test.ts và interleave.test.ts.
 internal static class Fake
 {
     /// <summary>Câu giả: id "u.l.q", fp duy nhất trừ khi truyền fp.</summary>

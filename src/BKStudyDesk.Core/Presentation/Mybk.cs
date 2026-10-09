@@ -32,7 +32,12 @@ public sealed record ServiceRow(string Group, string Name, string Url)
 {
     public string Site => Uri.TryCreate(Url, UriKind.Absolute, out var u) ? u.Host.Split('.')[0].ToLowerInvariant() switch
     {
-        "mybk" => "MyBK", "lms" => "BK-LMS", "bkpay" => "BKPay", "account" => L.T("services.siteAccount"), "wiki" => "Wiki", var h => h,
+        "mybk" => "MyBK",
+        "lms" => "BK-LMS",
+        "bkpay" => "BKPay",
+        "account" => L.T("services.siteAccount"),
+        "wiki" => "Wiki",
+        var h => h,
     } : "";
 }
 

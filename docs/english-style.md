@@ -2,7 +2,7 @@
 
 [Văn phong tiếng Việt](van-phong.md) | **English**
 
-How to write the English documents (everything in `docs/en/`, English Wiki pages, the English half of release notes) and the English UI (`src/SoHocTap/lang/en.json`). Vietnamese is the source language; English documents are complete translations, not summaries.
+How to write the English documents (everything in `docs/en/`, English Wiki pages, the English half of release notes) and the English UI (`src/BKStudyDesk.Core/lang/en.json`). Vietnamese is the source language; English documents are complete translations, not summaries.
 
 The main reference is the **Microsoft Writing Style Guide**, because this is a Windows app and Windows uses its terms. The Google developer documentation style guide fills gaps.
 

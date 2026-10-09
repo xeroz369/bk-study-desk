@@ -5,8 +5,6 @@ publish/
 # MSIX bản Store (store/package-msix.ps1).
 /dist/
 node_modules/
-# Khung Luyện tập đã build (npm run build trong src/ui), không commit.
-/ui/
 *.user
 .vs/
 
@@ -14,7 +12,7 @@ node_modules/
 data/
 **/data/
 # Mã nguồn tầng dữ liệu (Windows không phân biệt hoa thường nên **/data/ cũng khớp thư mục này).
-!src/SoHocTap/Data/
+!src/BKStudyDesk.Core/Data/
 !src/ThirdParty/XamlMath/XamlMath.Shared/Data/
 Môn học/
 _Lưu trữ/

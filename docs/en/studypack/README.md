@@ -17,10 +17,10 @@ Write quizzes to revise and share with friends: type them in the app, ask AI, or
 | `test-roundtrip.ts` | Test: the sample packs converted to Markdown and back must keep every question unchanged |
 | `examples/` | Sample quizzes; start with `vi-du.md` |
 
-The tools run on Node 23.6+ (on Node 22.6+ add `--experimental-strip-types`) and share code with the app (`src/ui/src/lib/study/`), so any file that passes `validate.ts` can be imported by the app.
+Run `npm ci` in the `studypack` folder once (it installs `fflate` to read zip files). The tools run on Node 23.6+ (on Node 22.6+ add `--experimental-strip-types`) and use the reader and checker in `studypack/lib/` (same rules as the app, checked by tests), so any file that passes `validate.ts` can be imported by the app.
 
 ## Safety
 
-- A pack contains only text and images; the app runs no code from it. HTML is sanitized again when displayed (`sanitize.ts`).
+- A pack contains only text and images; the app runs no code from it. HTML never runs in a browser: the app reads it with its own parser (`Presentation/Practice/Html.cs`) and draws only known tags as controls.
 - Images must be embedded PNG, JPEG, WebP or GIF; no SVG, no external links.
 - Saved LMS quizzes can be exported only after the quiz has closed.

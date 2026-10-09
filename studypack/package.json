@@ -1,0 +1,9 @@
+{
+  "name": "bk-studypack-tools",
+  "private": true,
+  "type": "module",
+  "description": "Công cụ Study Pack v1: kiểm, đổi Markdown sang JSON. Bộ đọc, kiểm gói ở lib/ (cùng quy tắc với BKStudyDesk.Core/Presentation/Practice).",
+  "dependencies": {
+    "fflate": "^0.8.3"
+  }
+}

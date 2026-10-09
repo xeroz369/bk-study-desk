@@ -29,6 +29,12 @@ public sealed record ActionItem(string Label, string? Note, string Button, Func<
 /// <summary>Dòng chỉ đọc: tên bên trái, giá trị bên phải (bảng phím tắt).</summary>
 public sealed record InfoItem(string Label, string Value) : SettingItem(Label, null);
 
+/// <summary>
+/// Tài khoản cho tự đăng nhập lại: đang tắt thì nút Bật mở ô tên đăng nhập, mật khẩu ngay dưới dòng (không mở cửa sổ riêng).
+/// Save trả lỗi để hiện, null là đã bật; Off tắt và xóa tài khoản đã lưu, trả câu báo.
+/// </summary>
+public sealed record CredentialItem(string Label, string? Note, Func<bool> IsOn, Func<string, string, string?> Save, Func<string> Off) : SettingItem(Label, Note);
+
 /// <summary>Một thẻ của trang Cài đặt. Advanced: nằm trong phần Nâng cao (đóng sẵn).</summary>
 public sealed record SettingGroup(string Title, string? Note, IReadOnlyList<SettingItem> Items, bool Advanced = false);
 
@@ -39,7 +45,7 @@ public sealed record SettingsActions(
     Func<bool> AutostartGet, Func<bool, bool> AutostartSet,
     Func<Task<string?>> PickRoot, Func<string, Task> OpenLink, Func<Task> OpenLog,
     Action<string> SetLibraryUrl, Action ClearLibrary,
-    bool AutoLoginSupported = false, Func<Task<string?>>? AutoLoginToggle = null, Action? ForgetCredentials = null,
+    bool AutoLoginSupported = false, Func<string, string, string?>? AutoLoginSave = null, Action? ForgetCredentials = null,
     bool UpdateSupported = false, Func<Task<string?>>? UpdateCheck = null, Func<Task<string?>>? UpdateInstall = null,
     int PageCount = 0, Action? Refresh = null, Action? Restart = null,
     Func<IReadOnlyList<string>>? Fonts = null, Action<string, double>? ApplyFont = null);
@@ -84,9 +90,9 @@ public static class SettingsCatalog
                 }),
             new ToggleItem(L.T("settings.keepAlive"), null, () => Settings.Sso.KeepAliveMinutes > 0,
                 on => Settings.Sso.KeepAliveMinutes = on ? Settings.Sso.DefaultKeepAliveMinutes : 0),
-            .. a.AutoLoginSupported && a.AutoLoginToggle is { } toggle
-                ? new SettingItem[] { new ActionItem(L.T("set.autoLogin"), L.T(Settings.Sso.AutoLogin ? "set.autoLoginOn" : "set.autoLoginOff"),
-                    L.T(Settings.Sso.AutoLogin ? "set.turnOff" : "set.turnOn"), toggle) }
+            .. a.AutoLoginSupported && a.AutoLoginSave is { } save
+                ? new SettingItem[] { new CredentialItem(L.T("set.autoLogin"), L.T(Settings.Sso.AutoLogin ? "set.autoLoginOn" : "set.autoLoginOff"),
+                    () => Settings.Sso.AutoLogin, save, () => { a.ForgetCredentials?.Invoke(); return L.T("set.autoLoginOffDone"); }) }
                 : [],
             new ActionItem(L.T("settings.logout"), L.T("set.logoutNote"), L.T("settings.logout"), async () => { await a.Logout(); return L.T("set.loggedOut"); }),
         ]),

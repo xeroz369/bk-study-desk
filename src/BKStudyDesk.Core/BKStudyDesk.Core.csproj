@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Lõi chung của BK Study Desk, không phụ thuộc Windows (bước 1 của PLAN-DA-NEN-TANG.md).
-    Project này chỉ LINK tới file nguồn của src\SoHocTap (không di chuyển file), nên app WPF hiện tại vẫn build như cũ.
-    Gồm: config, log, đường dẫn, lưu JSON/secret, xếp file, đồng bộ LMS/MyBK, API nội bộ, mô hình dữ liệu, chuỗi ngôn ngữ.
+    Lõi của BK Study Desk, không phụ thuộc giao diện hay hệ điều hành: config, log, đường dẫn, lưu JSON/secret, xếp file, đồng bộ
+    LMS/MyBK, API nội bộ, mô hình dữ liệu, chuỗi ngôn ngữ (lang/), logic từng trang (Presentation/, có test).
     Phần Windows (DPAPI, ACL, tên 8.3, MSIX) có nhánh OperatingSystem.IsWindows(); Linux/macOS có nhánh riêng.
+    Namespace giữ SoHocTap.* như bản 1.x (đổi tên chỉ là hình thức, làm diff khó rà).
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -15,31 +15,13 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <!-- Bản đa nền tảng là bản public. -->
     <DefineConstants>$(DefineConstants);PUBLIC_EDITION</DefineConstants>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <Src>..\SoHocTap\</Src>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Chỉ của bản đa nền tảng, đặt thật trong project này: logic từng trang (thuần, có test ở tests/BKStudyDesk.Core.Tests). -->
-    <Compile Include="Presentation\**\*.cs" />
-    <Compile Include="Web\**\*.cs" />
-    <Compile Include="$(Src)Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Files\**\*.cs" Link="Files\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Data\**\*.cs" Link="Data\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Sources\**\*.cs" Link="Sources\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Api\**\*.cs" Link="Api\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Library\**\*.cs" Link="Library\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Shell\AppInfo.cs" Link="Shell\AppInfo.cs" />
-    <Compile Include="$(Src)Shell\SsoSession.cs" Link="Shell\SsoSession.cs" />
-    <Compile Include="$(Src)Shell\Reminders.cs;$(Src)Shell\DeadlineNotifier.cs" Link="Shell\%(Filename)%(Extension)" />
-    <Compile Include="$(Src)Ui\Lang.cs;$(Src)Ui\AppState.cs;$(Src)Ui\Models.cs;$(Src)Ui\Format.cs;$(Src)Ui\Due.cs;$(Src)Ui\Curriculum.cs;$(Src)Ui\FontChoice.cs;$(Src)Ui\WeekMath.cs;$(Src)Ui\ScreenFit.cs" Link="Ui\%(Filename)%(Extension)" />
-    <EmbeddedResource Include="$(Src)Core\DefaultConfig.json" LogicalName="SoHocTap.Core.DefaultConfig.json" />
-    <!-- Khung prompt cho AI (Study Markdown), nguyên văn từ src/ui/src/lib/study/prompts.ts. -->
+    <EmbeddedResource Include="Core\DefaultConfig.json" LogicalName="SoHocTap.Core.DefaultConfig.json" />
+    <!-- Khung prompt cho AI (Study Markdown). -->
     <EmbeddedResource Include="Presentation\Practice\Prompts\*.md" LogicalName="Practice.Prompts.%(Filename).md" />
-    <None Include="$(Src)lang\*.json" Link="lang\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="lang\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

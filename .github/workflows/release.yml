@@ -2,7 +2,7 @@ name: release
 
 # Build bộ cài bản đa nền tảng (Avalonia, src/BKStudyDesk.Desktop): Windows x64, ARM64 (bộ cài tiếng Việt bọc Velopack),
 # Linux x64 (AppImage), macOS Apple Silicon, Intel (.pkg, chưa ký số); gói tự cập nhật cho từng kênh; gói MSIX cho Microsoft Store
-# (MSIX vẫn đóng từ bản WPF src/SoHocTap cho tới khi bản Avalonia được thử trong MSIX).
+# (cùng app, target Windows).
 # - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt (job checksums); gói cập nhật và MSIX để ở artifact.
 # - Bấm Publish release: job publish-feed mới đưa gói cập nhật lên release cố định "updates",
 #   nên app của người dùng chỉ thấy bản mới sau khi người làm app đã duyệt bản nháp.
@@ -47,11 +47,6 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
-      # Không dùng cache npm ở workflow phát hành: cache dùng chung với nhánh khác có thể bị đầu độc (zizmor cache-poisoning).
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-          package-manager-cache: false   # v7 tự bật cache khi package.json có packageManager
       # Input chạy tay và tên tag đi qua biến môi trường rồi kiểm định dạng, không chèn thẳng vào script (zizmor template-injection).
       - name: Version
         id: v
@@ -70,15 +65,9 @@ jobs:
           "tag=$tag" >> $env:GITHUB_OUTPUT
       - name: Unit tests
         run: |
-          dotnet test tests/SoHocTap.Tests
+          dotnet test tests/BKStudyDesk.Logic.Tests
           dotnet test tests/BKStudyDesk.Core.Tests
           dotnet test tests/BKStudyDesk.Math.Tests
-      # Khung Luyện tập Svelte chỉ còn cho gói MSIX (bản WPF) ở bước Store package.
-      - name: Practice UI
-        working-directory: src/ui
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
       - name: Package
         shell: pwsh
         env:
@@ -117,7 +106,7 @@ jobs:
         shell: pwsh
         env:
           V: ${{ steps.v.outputs.version }}
-        run: ./store/package-msix.ps1 -Version $env:V -Out msix -SkipUi
+        run: ./store/package-msix.ps1 -Version $env:V -Out msix
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: store-${{ steps.v.outputs.tag }}

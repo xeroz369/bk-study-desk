@@ -23,25 +23,21 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/ui/package-lock.json
-      - name: Practice UI (svelte-check, Prettier, vitest, build)
-        working-directory: src/ui
+          cache-dependency-path: studypack/package-lock.json
+      - name: Study Pack tools (round-trip test)
+        working-directory: studypack
         run: |
           npm ci --no-audit --no-fund
-          npm run check
-          npx prettier --check src
-          npm test
-          npm run build
-      - name: Study Pack tools (round-trip test)
-        run: node studypack/test-roundtrip.ts
-      - name: Unit tests
-        run: dotnet test tests/SoHocTap.Tests
+          node test-roundtrip.ts
+      - name: Logic tests
+        run: dotnet test tests/BKStudyDesk.Logic.Tests
       - name: Check code style (dotnet format)
-        run: dotnet format src/SoHocTap --verify-no-changes --severity warn
-      - name: Build
-        run: dotnet build src/SoHocTap -c Release -warnaserror
-      - name: Build (Microsoft Store)
-        run: dotnet build src/SoHocTap -c Release -p:Store=true -warnaserror
+        run: |
+          dotnet format src/BKStudyDesk.Core/BKStudyDesk.Core.csproj --verify-no-changes --severity warn
+          dotnet format src/BKStudyDesk.Desktop/BKStudyDesk.Desktop.csproj --verify-no-changes --severity warn
+      # Bản Windows (cũng là bản đóng MSIX cho Microsoft Store): không được có cảnh báo.
+      - name: Build (Windows target)
+        run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -warnaserror
 
   # Bản đa nền tảng (Avalonia): lõi, trang và app build, test trên Windows, macOS, Linux. Mỗi máy chụp Hôm nay, Lịch, Luyện tập (--snap, chưa có dữ liệu)
   # và tự kiểm trình duyệt nhúng (--webcheck, trang tĩnh, không gọi web trường); ảnh, log tải về được ở mục Artifacts của lượt chạy.

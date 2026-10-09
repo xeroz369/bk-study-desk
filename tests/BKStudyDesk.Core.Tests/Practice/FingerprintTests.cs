@@ -4,7 +4,7 @@ using SoHocTap.Presentation.Practice;
 namespace BKStudyDesk.Core.Tests.Practice;
 
 // Fingerprint là khóa của lịch ôn, ghi chú, thời gian làm câu trong ket-qua.json: đổi giá trị là mất tiến độ đã lưu.
-// Giá trị chụp từ bản 1.1.6 (src/ui/src/lib/study/fingerprint.test.ts), chỉ sửa khi cố ý đổi cách tính (kèm migrate dữ liệu).
+// Giá trị chụp từ bản 1.1.6 (khung Svelte, src/ui/src/lib/study/fingerprint.test.ts), chỉ sửa khi cố ý đổi cách tính (kèm migrate dữ liệu).
 public class FingerprintTests
 {
     private static Question Q(string prompt, string[] options, int answer = -1, string? type = null, double? value = null, string[]? accept = null, int[]? answers = null) =>

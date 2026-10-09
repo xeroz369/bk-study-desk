@@ -46,14 +46,10 @@ jobs:
           build-mode: ${{ matrix.build-mode }}
           # Chỉ luật bảo mật: bộ "quality" báo hàng trăm nhắc kiểu code (Path.Combine, catch rỗng...) làm chìm cảnh báo thật.
           queries: security-extended
-          # Script kiểm thử chạy trên máy dev (nối DevTools cục bộ), không nằm trong app phát hành.
-          config: |
-            paths-ignore:
-              - src/ui/scripts
       - name: Build
         if: matrix.build-mode == 'manual'
         run: |
-          dotnet build src/SoHocTap -c Release
+          dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0
           dotnet build src/BKStudyDesk.Setup -c Release
       # Repo private (bản xem trước) không có Code scanning miễn phí: vẫn quét, lưu kết quả SARIF làm artifact thay vì gửi lên.
       - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2

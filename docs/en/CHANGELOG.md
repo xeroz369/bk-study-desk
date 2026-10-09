@@ -8,6 +8,23 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Changed
+
+- HCMUT sign-in no longer opens a separate window: the university sign-in page shows inside the app window, and after signing in the app returns to the page you were on and syncs.
+- An info bar under the top bar: signing in, session ended, sync failed (with Retry, Open LMS or MyBK), as in 1.x.
+- When the LMS token expires but the HCMUT session is still alive, the app gets a new token by itself instead of asking you to sign in.
+- Turn on automatic sign-in right in Settings, without a dialog.
+- Notifications panel: shows every notification (scrollable), has Clear all, and shows a fix button only when a source has a problem.
+- The WPF app and the Svelte Practice view are gone: the Microsoft Store package is now built from the cross-platform app too (starts with Windows through StartupTask, system notifications use the package identity). Shared code moved into `src/BKStudyDesk.Core`, logic tests into `tests/BKStudyDesk.Logic.Tests`; the studypack tools carry their own reader (`studypack/lib`).
+- CI builds the Windows target with `-warnaserror` and checks `dotnet format` for both the core and the app.
+
+### Fixed
+
+- The app closed when you clicked "Show classes" or "Show completed" on the Upcoming tab of Calendar (#43).
+- A UI error no longer closes the app: it is logged, reported in the Notifications panel, and the app keeps running.
+- The Download and Event windows no longer go off a small or scaled screen.
+- The unread count can no longer exceed the number of notifications kept.
+
 ## [1.2.2] - 2026-10-08
 
 ### Added

@@ -3,9 +3,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { strFromU8, unzipSync } from '../src/ui/node_modules/fflate/esm/index.mjs';
-import { parseMarkdown, writeMarkdown } from '../src/ui/src/lib/study/markdown.ts';
-import type { PackQuestion, StudyPack } from '../src/ui/src/lib/study/pack.ts';
+import { strFromU8, unzipSync } from 'fflate';
+import { parseMarkdown, writeMarkdown } from './lib/markdown.ts';
+import type { PackQuestion, StudyPack } from './lib/pack.ts';
 
 const dir = fileURLToPath(new URL('./examples/', import.meta.url));
 const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };

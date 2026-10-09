@@ -19,6 +19,8 @@ internal static class Tables
     public static void Show(DataGrid grid, TextBlock empty, IEnumerable rows, string emptyText)
     {
         var any = rows.Cast<object>().Any();
+        grid.LoadingRowGroup -= FlatGroup;
+        grid.LoadingRowGroup += FlatGroup;
         grid.ItemsSource = rows;
         // DataGridCollectionView đặt CurrentItem là dòng đầu, DataGrid theo đó tô sẵn dòng đầu như đã chọn: bỏ để bảng mở ra không có dòng chọn.
         if (rows is DataGridCollectionView view) view.MoveCurrentToPosition(-1);
@@ -27,4 +29,9 @@ internal static class Tables
         empty.Text = emptyText;
         empty.IsVisible = !any;
     }
+
+    // Dòng dưới dải nhóm không thụt lề (mặc định 20). Đặt giá trị local lúc DataGrid dựng dải nhóm, KHÔNG đặt bằng style: khi bảng đổi
+    // ItemsSource (bấm công tắc ở tab Sắp tới), dải nhóm cũ được tính lại style, SublevelIndent trả về mặc định và DataGrid 12.1.2
+    // xử lý thay đổi đó lúc bảng thụt lề đang null, ném NullReferenceException làm app tắt (issue #43). Giá trị local không bị style đổi.
+    private static void FlatGroup(object? sender, DataGridRowGroupHeaderEventArgs e) => e.RowGroupHeader.SublevelIndent = 0;
 }

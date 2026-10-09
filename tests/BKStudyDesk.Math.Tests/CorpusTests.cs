@@ -23,7 +23,7 @@ public class CorpusTests
         AssertRenders(formulas);
     }
 
-    // Nội dung riêng (content/ của người dùng, không vào repo công khai): chạy qua src/SoHocTap/tools-dev/math-corpus.ps1.
+    // Nội dung riêng (content/ của người dùng, không vào repo công khai): chạy qua tools-dev/math-corpus.ps1.
     // xUnit không có skip động, nên không đặt biến BK_MATH_CORPUS thì test kết thúc ngay.
     [AvaloniaFact]
     public void Private_corpus_when_configured()

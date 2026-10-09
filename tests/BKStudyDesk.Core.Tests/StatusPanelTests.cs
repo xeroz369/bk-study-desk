@@ -34,7 +34,7 @@ public class StatusPanelTests
         for (var i = 0; i < 25; i++) log.Add(new Notice(i, "t" + i, "", ""));
         Assert.Equal(20, log.Items.Count);
         Assert.Equal("t24", log.Items[0].Title);
-        Assert.Equal(25, log.Unread);
+        Assert.Equal(20, log.Unread);   // chỉ đếm thông báo còn trong danh sách
         log.MarkRead();
         Assert.Equal(0, log.Unread);
     }

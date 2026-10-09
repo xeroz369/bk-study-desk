@@ -1,0 +1,18 @@
+<!-- Đăng nhập HCMUT ngay trong cửa sổ chính (MainWindow phủ lên vùng nội dung, không mở cửa sổ riêng): tiêu đề, nút Hủy, trang SSO thật
+     của trường. Người dùng tự gõ mật khẩu trong trang; app không đọc mật khẩu. Trạng thái, lỗi, Thử lại: dải báo của MainWindow
+     (Presentation/InfoBar). Lượt đăng nhập: Web/LoginFlow.cs. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             x:Class="BKStudyDesk.Desktop.Views.LoginView">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1"
+                MinHeight="{StaticResource CardHeaderHeight}" Padding="16,8">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="{l:T login.cancel}" Click="OnCancel" />
+                <TextBlock Classes="card-title" Text="{l:T login.title}" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+        <Border x:Name="Host" />
+    </DockPanel>
+</UserControl>

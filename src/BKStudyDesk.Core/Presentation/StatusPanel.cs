@@ -65,7 +65,7 @@ public sealed class NoticeLog
     {
         _items.Insert(0, n);
         if (_items.Count > Max) _items.RemoveAt(_items.Count - 1);
-        Unread++;
+        Unread = Math.Min(Unread + 1, _items.Count);   // không đếm thông báo đã rơi khỏi danh sách
         Changed?.Invoke();
     }
 

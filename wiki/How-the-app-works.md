@@ -2,7 +2,7 @@
 
 > Translated from Cách-app-hoạt-động (Vietnamese) for BK Study Desk 1.1.4.
 
-This page lists exactly what the app sends to the university's servers, so anyone can check it. The matching source code is in `src/SoHocTap/Shell` and `src/SoHocTap/Sources`; addresses and APIs are in `src/SoHocTap/Core/DefaultConfig.json`.
+This page lists exactly what the app sends to the university's servers, so anyone can check it. The matching source code is in `src/BKStudyDesk.Desktop/Web` and `src/BKStudyDesk.Core/Sources`; addresses and APIs are in `src/BKStudyDesk.Core/Core/DefaultConfig.json`.
 
 > BK Study Desk is **unofficial**: it isn't endorsed by HCMUT or Moodle HQ. The app uses only your own account and only reads. If the university asks, the project will change or remove the feature concerned.
 

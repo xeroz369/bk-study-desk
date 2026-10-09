@@ -2,7 +2,7 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Port phần thuần của src/ui/src/lib/study/shuffle.test.ts. Giá trị "từ TS" chạy bằng Node trên shuffle.ts lúc viết test (07/10/2026).
+// Port phần thuần của khung Svelte bản 1.x, src/ui/src/lib/study/shuffle.test.ts. Giá trị "từ TS" chạy bằng Node trên shuffle.ts lúc viết test (07/10/2026).
 public class ShuffleTests
 {
     private static Question Q(string[] options, bool? keepOrder = null) =>
