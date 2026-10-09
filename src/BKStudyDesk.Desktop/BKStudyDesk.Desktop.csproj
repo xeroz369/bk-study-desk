@@ -13,7 +13,7 @@
     <RootNamespace>BKStudyDesk.Desktop</RootNamespace>
     <AssemblyName>BKStudyDesk</AssemblyName>
     <Product>BK Study Desk</Product>
-    <Version Condition="'$(Version)' == ''">1.2.2</Version>
+    <Version Condition="'$(Version)' == ''">1.2.3</Version>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Khai báo Windows 10/11: thiếu thì NativeWebView không tạo được cửa sổ con (thử 06/10/2026). -->
