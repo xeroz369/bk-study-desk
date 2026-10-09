@@ -23,6 +23,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- No more white window flashing in the corner of the screen on every MyBK sync or session keep-alive: the background page stays fully off-screen and transparent.
 - MyBK sync no longer stops halfway with "Unable to invoke script before any page was loaded": if the hidden browser is destroyed during a sync, the app reopens the MyBK page and carries on, and logs the cause.
 - The download window no longer says "No new files" when downloads failed: failed files are counted separately, with details in the log.
 

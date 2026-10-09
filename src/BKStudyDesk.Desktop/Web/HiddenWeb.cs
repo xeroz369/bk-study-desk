@@ -24,9 +24,13 @@ internal sealed class HiddenWeb
         var window = _window = new Window
         {
             Title = "BK Study Desk (nền)", Width = 1024, Height = 768, ShowInTaskbar = false, ShowActivated = false,
-            WindowStartupLocation = WindowStartupLocation.Manual, Position = new PixelPoint(-30000, -30000), Content = page.View,
+            WindowStartupLocation = WindowStartupLocation.Manual, Content = page.View,
+            Opacity = 0,   // trong suốt: dù nằm đâu cũng không thấy
             Classes = { "offscreen" },   // App: không kẹp vào màn hình như cửa sổ phụ
         };
+        // Avalonia 12 bỏ qua Position đặt trước Show (cửa sổ hiện ở góc 0,0: người dùng thấy cửa sổ trắng lóe lên mỗi lượt
+        // MyBK, giữ phiên; đo 10/10/2026). Đặt ra ngoài màn hình ngay khi mở; Opacity 0 che khung hình đầu.
+        window.Opened += (_, _) => window.Position = new PixelPoint(-30000, -30000);
         // Rời cửa sổ báo ngay trong lời gọi gây ra (stack có người gọi); hủy trình duyệt thì Avalonia làm sau, qua dispatcher.
         page.View.DetachedFromVisualTree += (_, _) => Lost(page, "trình duyệt nhúng rời cửa sổ", closeWindow: true);
         page.View.AdapterDestroyed += (_, _) => Lost(page, "trình duyệt nhúng bị hủy", closeWindow: true);
