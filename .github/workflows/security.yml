@@ -137,7 +137,8 @@ jobs:
           Expand-Archive binskim.zip binskim
           $exe = Get-ChildItem binskim -Recurse -Filter BinSkim.exe | Where-Object FullName -match 'win-x64' | Select-Object -First 1
           if (!$exe) { $exe = Get-ChildItem binskim -Recurse -Filter BinSkim.exe | Select-Object -First 1 }
-          & $exe.FullName analyze out/BKStudyDesk.exe out/BKStudyDesk.dll --output binskim.sarif --sarif-output-version Current --ignorePdbLoadError
+          # FlattenedMessages: ghi chữ vào từng kết quả (message.text). Thiếu thì Code scanning từ chối SARIF ("expected a result message").
+          & $exe.FullName analyze out/BKStudyDesk.exe out/BKStudyDesk.dll --output binskim.sarif --sarif-output-version Current --ignorePdbLoadError --insert FlattenedMessages
           # Exit code khác 0 khi có lỗi mức error: vẫn tải SARIF lên trước, bước sau mới quyết định đỏ.
           "BINSKIM_EXIT=$LASTEXITCODE" >> $env:GITHUB_ENV
       - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
