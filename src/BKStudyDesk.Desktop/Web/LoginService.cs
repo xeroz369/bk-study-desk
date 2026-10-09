@@ -52,7 +52,9 @@ internal sealed class LoginService(Action<LoginView?> present, Action<string, st
             if (!silent) { Show(); return; }
             if (filled || Platform.Credentials.Usable() is not { } c) { Fallback(silent, "cần mật khẩu"); return; }
             filled = true;   // một lần: sai mật khẩu, captcha thì trang mật khẩu hiện lại và dừng, tránh bị trường khóa tài khoản
-            if (await page.EvalAsync(SsoForm.FillScript(c.User, c.Password)) != "true") Fallback(silent, "trang đăng nhập không có form như mong đợi");
+            // Handler của event (async void): lỗi script phải bắt ở đây, không thì lọt ra UI thread.
+            try { if (await page.EvalAsync(SsoForm.FillScript(c.User, c.Password)) != "true") Fallback(silent, "trang đăng nhập không có form như mong đợi"); }
+            catch (Exception e) when (e is not OutOfMemoryException) { Fallback(silent, e.Message); }
         };
         flow.Finished += StopHidden;
         flow.Start();
