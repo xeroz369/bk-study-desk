@@ -127,7 +127,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Build (Release, win-x64)
-        run: dotnet publish src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained false -o out -p:DebugType=pdbonly
+        # PDB portable mặc định (như bản phát hành): có SourceLink trỏ về đúng commit. DebugType=pdbonly ra PDB Windows kiểu cũ,
+        # không có SourceLink, nên BinSkim báo BA2027 (thử 10/10/2026).
+        run: dotnet publish src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained false -o out
       - name: BinSkim
         shell: pwsh
         run: |
