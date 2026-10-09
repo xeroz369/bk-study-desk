@@ -141,9 +141,19 @@ jobs:
           & $exe.FullName analyze out/BKStudyDesk.exe out/BKStudyDesk.dll --output binskim.sarif --sarif-output-version Current --ignorePdbLoadError --insert FlattenedMessages
           # Exit code khác 0 khi có lỗi mức error: vẫn tải SARIF lên trước, bước sau mới quyết định đỏ.
           "BINSKIM_EXIT=$LASTEXITCODE" >> $env:GITHUB_ENV
-          # Tóm tắt từng kết quả ra log (đọc được cả khi Code scanning không nhận file).
+          # Kết quả chỉ có message.id mà quy tắc không có câu tương ứng (thấy ở BA2027) thì Code scanning từ chối cả file
+          # ("expected a result message"): điền chữ từ mô tả của chính quy tắc, giữ nguyên kết quả. In tóm tắt ra log.
           $sarif = Get-Content binskim.sarif -Raw | ConvertFrom-Json
-          foreach ($r in $sarif.runs[0].results) { "$($r.ruleId) level=$($r.level) kind=$($r.kind) text=[$($r.message.text)] id=[$($r.message.id)] file=$($r.locations[0].physicalLocation.artifactLocation.uri)" }
+          $rules = @{}; foreach ($u in $sarif.runs[0].tool.driver.rules) { $rules[$u.id] = $u }
+          foreach ($r in $sarif.runs[0].results) {
+            if (-not $r.message.text) {
+              $u = $rules[$r.ruleId]
+              $text = if ($u.shortDescription.text) { $u.shortDescription.text } elseif ($u.fullDescription.text) { $u.fullDescription.text } else { "$($r.ruleId) ($($r.message.id))" }
+              $r.message | Add-Member -NotePropertyName text -NotePropertyValue $text -Force
+            }
+            "$($r.ruleId) level=$($r.level) $($r.message.text) file=$($r.locations[0].physicalLocation.artifactLocation.uri)"
+          }
+          $sarif | ConvertTo-Json -Depth 100 | Set-Content binskim.sarif -Encoding utf8
       - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         if: always() && !github.event.repository.private && hashFiles('binskim.sarif') != ''
         with:
