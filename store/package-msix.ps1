@@ -49,5 +49,5 @@ if ($LASTEXITCODE -ne 0) { throw 'makepri lỗi' }
 $msix = Join-Path $Out "BKStudyDesk-$v-x64.msix"
 & $makeappx pack /d $layout /p $msix /o | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'makeappx lỗi' }
-Write-Host "MSIX: $msix ($([math]::Round((Get-Item $msix).Length / 1MB, 1)) MB) · identity $IdentityName"
+Write-Host "MSIX: $msix ($([math]::Round((Get-Item $msix).Length / 1MB, 1)) MB), identity $IdentityName"
 $msix
