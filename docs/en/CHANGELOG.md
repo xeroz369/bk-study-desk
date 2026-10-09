@@ -8,6 +8,24 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-10-09
+
+### Added
+
+- **Download documents from several courses at once** (#42): the "Download from several courses..." button on the Subjects page opens a tree of terms, courses and sections, with the current term ticked. Older terms are read only when you tick or open them. Only files you do not have yet, or that have a newer version on LMS, are downloaded, into each subject folder as before.
+- The download window has a progress bar and a status line: how many courses are being read, which file is downloading, how many files finished and how many failed; there is a Stop button.
+- A large download (500 MB or 200 files and up) asks once more inside the window; if the drive does not have enough space, downloading is blocked.
+
+### Changed
+
+- A subject's Download button opens the same window with every course of that subject ticked (theory, lab, other terms), without the course menu.
+- Sizes of 1 GB and up are shown in GB.
+
+### Fixed
+
+- MyBK sync no longer stops halfway with "Unable to invoke script before any page was loaded": if the hidden browser is destroyed during a sync, the app reopens the MyBK page and carries on, and logs the cause.
+- The download window no longer says "No new files" when downloads failed: failed files are counted separately, with details in the log.
+
 ## [1.2.3] - 2026-10-09
 
 ### Changed
