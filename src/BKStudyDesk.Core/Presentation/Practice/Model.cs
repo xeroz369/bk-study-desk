@@ -1,6 +1,6 @@
 namespace SoHocTap.Presentation.Practice;
 
-// Nội dung học và đề thi (port src/ui/src/lib/study/types.ts). Chữ là HTML đơn giản có TeX \( \) \[ \].
+// Nội dung học và đề thi (port từ khung Svelte của bản 1.x, src/ui/src/lib/study/types.ts). Chữ là HTML đơn giản có TeX \( \) \[ \].
 
 public sealed record SourceRef(string File, string? Pages = null);
 

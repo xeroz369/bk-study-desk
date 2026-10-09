@@ -22,6 +22,7 @@ internal sealed class HiddenWeb
         {
             Title = "BK Study Desk (nền)", Width = 1024, Height = 768, ShowInTaskbar = false, ShowActivated = false,
             WindowStartupLocation = WindowStartupLocation.Manual, Position = new PixelPoint(-30000, -30000), Content = _page.View,
+            Classes = { "offscreen" },   // App: không kẹp vào màn hình như cửa sổ phụ
         };
         _window.Show();
         return _page;

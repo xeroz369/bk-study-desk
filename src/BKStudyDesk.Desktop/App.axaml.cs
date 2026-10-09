@@ -104,6 +104,19 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         Views.Practice.MathView.Warn = SoHocTap.Core.Log.Warn;   // công thức lỗi: ghi vào app.log, mỗi công thức một lần
+        // Lỗi trên luồng giao diện (như 1.x App.xaml.cs): ghi log, báo trong bảng Thông báo, app chạy tiếp thay vì tắt hẳn (issue #43).
+        Avalonia.Threading.Dispatcher.UIThread.UnhandledException += (_, e) =>
+        {
+            SoHocTap.Core.Log.Error("Lỗi giao diện không bắt được", e.Exception);
+            e.Handled = true;
+            SoHocTap.Core.AppEvents.RaiseUnhandled(e.Exception);
+        };
+        // Mọi cửa sổ phụ mở ra đều vừa màn hình (một chỗ cho cả app, cửa sổ mới thêm sau không cần nhớ gọi); cửa sổ chính kẹp riêng
+        // lúc khôi phục vị trí đã lưu (WindowPlacement.Apply); WebView chạy nền (class offscreen, Web/HiddenWeb) cố ý nằm ngoài màn hình.
+        Window.WindowOpenedEvent.AddClassHandler<Window>((w, _) =>
+        {
+            if (w is not MainWindow && !w.Classes.Contains("offscreen")) Platform.WindowPlacement.FitDialog(w);
+        });
         ApplyAccent(SoHocTap.Core.Settings.App.Accent);
         ApplyFont(SoHocTap.Presentation.FontConfig.Read(IsFontInstalled));
         // Chế độ màu: cài đặt app.theme (mặc định tối); --theme=light|dark ép riêng lần chạy này (chụp kiểm tra).

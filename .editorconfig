@@ -9,10 +9,16 @@ indent_style = space
 indent_size = 4
 insert_final_newline = true
 
-# Khung Luyện tập (Svelte/TS) theo prettier: thụt lề bằng tab (xem src/ui/.prettierrc).
-[src/ui/**]
-indent_style = tab
+# Khởi tạo đối tượng ngắn viết trên một dòng (new TextBlock { Text = ..., Classes = { ... } }), như code giao diện dựng bằng C#.
+[*.cs]
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_members_in_anonymous_types = false
+# Config.Int, Config.Bool, MybkNormalize.Long: đọc theo kiểu, tên ngắn có chủ ý và dùng ở rất nhiều chỗ.
+dotnet_diagnostic.CA1720.severity = none
 
-[src/ui/**/package*.json]
-indent_style = space
+[{*.json,*.yml}]
 indent_size = 2
+
+# Công cụ studypack (TS): thụt lề bằng tab, như lúc còn dùng chung với khung Svelte.
+[studypack/**.ts]
+indent_style = tab

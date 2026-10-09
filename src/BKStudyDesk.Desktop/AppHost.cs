@@ -10,7 +10,7 @@ using SoHocTap.Ui;
 namespace BKStudyDesk.Desktop;
 
 /// <summary>
-/// Phần chạy nền của app Äa ná»n táº£ng, sống cùng cửa sổ chính: nguồn dữ liệu (SourceHub), trạng thái (AppState), lịch đồng bộ,
+/// Phần chạy nền của app đa nền tảng, sống cùng cửa sổ chính: nguồn dữ liệu (SourceHub), trạng thái (AppState), lịch đồng bộ,
 /// MyBK chạy ẩn và giữ phiên SSO.
 /// Không có giao diện; trang nào cũng đọc State, nghe State.Changed (dữ liệu đổi) và State.StatusChanged (chỉ trạng thái đồng bộ đổi).
 /// </summary>
@@ -95,6 +95,12 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         else if (stage == "start" && State.SyncedAt(name) is not null) State.RefreshStatusOnly();
         else State.RefreshStatus();
         if (name == SourceIds.Lms && stage == "done") _notifier?.Check();
+        // Token LMS hết hạn: phiên SSO còn thì trường tự cấp vé mới, lấy lại token ngầm (một lần), không bắt người dùng đăng nhập.
+        if (name == SourceIds.Lms && stage == "done" && Hub.ErrorKind(SourceIds.Lms) == SoHocTap.Data.SyncErrorKind.SessionExpired && !_lmsRefreshTried)
+        {
+            _lmsRefreshTried = true;
+            Service.Refresh();
+        }
         if (name == SourceIds.Mybk && stage == "done")
         {
             _mybk.Release();
@@ -107,10 +113,17 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     /// <summary>Các bước của lượt đăng nhập (check, password, mybk, lms, done, cancel, error, logout) cho giao diện.</summary>
     public event Action<string, string>? LoginProgress;
 
+    private Action<Views.LoginView?>? _present;   // chỗ hiện trang đăng nhập (cửa sổ chính đưa vào lần bấm Đăng nhập đầu tiên)
+    private LoginService Service => _login ??= new LoginService(v => _present?.Invoke(v), OnLogin);
     private LoginService? _login;
+    private bool _lmsRefreshTried;   // token LMS hết hạn: đã thử làm mới ngầm một lần, chờ đăng nhập xong mới thử lại
 
-    /// <summary>Đăng nhập HCMUT (thử ngầm trước, cần mật khẩu thì mở cửa sổ trên <paramref name="owner"/>).</summary>
-    public void Login(Avalonia.Controls.Window owner) => (_login ??= new LoginService(owner, OnLogin)).Start();
+    /// <summary>Đăng nhập HCMUT: thử ngầm trước, cần mật khẩu thì đưa trang đăng nhập cho <paramref name="present"/> (null: gỡ).</summary>
+    public void Login(Action<Views.LoginView?> present)
+    {
+        _present = present;
+        Service.Start();
+    }
 
     /// <summary>Đăng xuất HCMUT khỏi app: xóa token LMS và mọi cookie của trình duyệt nhúng (phiên SSO, MyBK).</summary>
     public async Task LogoutAsync()
@@ -134,9 +147,10 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     private void OnLogin(string stage, string message)
     {
         Log.Info($"Đăng nhập: {stage}");   // chỉ tên bước, để biết lần đăng nhập dừng ở đâu
-        if (stage is "done" or "logout") MybkSource.SetSignedIn(stage == "done");
-        if (stage == "done")
+        if (stage is "done" or "refresh" or "logout") MybkSource.SetSignedIn(stage != "logout");
+        if (stage is "done" or "refresh")   // refresh: lượt làm mới ngầm (LoginService.Refresh) xong, như đăng nhập xong
         {
+            _lmsRefreshTried = false;
             _ssoAliveAt = DateTime.UtcNow;
             _ssoExpired = false;
             Hub.Start(SourceIds.Lms, force: true);

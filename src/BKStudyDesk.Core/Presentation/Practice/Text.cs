@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>Chữ thuần để so sánh (port <c>src/ui/src/lib/study/text.ts</c>). Không dùng để hiển thị.</summary>
+/// <summary>Chữ thuần để so sánh (port từ khung Svelte của bản 1.x, <c>src/ui/src/lib/study/text.ts</c>). Không dùng để hiển thị.</summary>
 public static partial class Text
 {
     /// <summary>

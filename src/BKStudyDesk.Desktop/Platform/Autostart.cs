@@ -23,12 +23,19 @@ internal static class Autostart
     private static string AppleFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "LaunchAgents", AppleLabel + ".plist");
 
     /// <summary>App vừa được hệ điều hành mở lúc đăng nhập: chạy ở khay.</summary>
-    public static bool LaunchedAtLogin => Environment.GetCommandLineArgs().Contains(AutostartFiles.TrayArg);
+    public static bool LaunchedAtLogin => Environment.GetCommandLineArgs().Contains(AutostartFiles.TrayArg)
+#if WINDOWS
+        || (AppPackage.IsPackaged && Windows.StoreStartup.LaunchedAtLogin)   // bản Store: StartupTask, không có --tray
+#endif
+        ;
 
     public static bool Enabled
     {
         get
         {
+#if WINDOWS
+            if (AppPackage.IsPackaged) return Windows.StoreStartup.Enabled;
+#endif
             try
             {
                 if (OperatingSystem.IsWindows())
@@ -45,6 +52,9 @@ internal static class Autostart
     /// <summary>Bật, tắt; trả trạng thái thật sau khi đổi.</summary>
     public static bool Set(bool on)
     {
+#if WINDOWS
+        if (AppPackage.IsPackaged) return Windows.StoreStartup.Set(on);
+#endif
         try
         {
             if (OperatingSystem.IsWindows())

@@ -52,7 +52,7 @@
 
   <Capabilities>
     <Capability Name="internetClient" />
-    <!-- App desktop (WPF) chạy full trust. Partner Center sẽ hỏi lý do: "Desktop WPF app, needs full trust to run." -->
+    <!-- App desktop (Avalonia, .NET) chạy full trust. Partner Center sẽ hỏi lý do: "Desktop .NET app, needs full trust to run." -->
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 </Package>

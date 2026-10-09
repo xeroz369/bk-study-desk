@@ -81,6 +81,13 @@ Màu nằm trong `ThemeDictionaries` của `Styles/Tokens.axaml`; View dùng `Dy
   - Trang chữ (Hôm nay): rộng tối đa **1440**, căn giữa, cả vùng cuộn dọc.
   - Trang bảng (`IFillPage`, như Lịch): lấp đầy cửa sổ, bảng tự cuộn dọc và ngang, thanh cuộn luôn thấy được.
 
+### Dải báo, đăng nhập, bảng Thông báo
+
+- **Dải báo** ngay dưới thanh trên cùng (`MainWindow.Info`, style `Border.info`): nền `Surface`, viền trái 4 theo mức độ (`Link` đang làm, `Ok` xong, `Warn` cần làm gì đó, `Danger` lỗi), kẻ dưới 1, đệm 16, 8, cao tối thiểu 48. Chữ trái (xuống dòng, không cắt), nút chính accent và nút phụ bên phải, Đóng cuối. Hiện gì, khi nào: `BKStudyDesk.Core/Presentation/InfoBar.cs` (cùng quy tắc 1.x). Báo xong việc tự ẩn sau 6 giây; Đóng thì dải cùng nội dung không hiện lại.
+- **Đăng nhập** không mở cửa sổ riêng: thử ngầm trước, cần mật khẩu thì `Views/LoginView` phủ lên vùng nội dung (đầu khung cao 48: tiêu đề, nút Hủy đăng nhập), trạng thái và lỗi ở dải báo. Token LMS hết hạn: app tự làm mới ngầm một lần trước khi báo.
+- **Bảng Thông báo** (nút trạng thái): Đồng bộ ngay; mỗi nguồn một dòng, nút sửa chỉ khi có vấn đề; hàng Mở LMS, Mở MyBK; mọi thông báo đang giữ, cuộn trong bảng, Xóa hết. Thông báo không có trang đích không bấm được.
+- Cửa sổ phụ (Tải tài liệu, Sự kiện) giữ cỡ trong XAML làm cỡ mong muốn, lúc mở được kẹp vào vùng làm việc của màn hình đang chứa nó (`WindowPlacement.FitDialog`).
+
 ### Trang
 
 - Đầu trang: tiêu đề 24 SemiBold, dưới là một câu mô tả hay ngày (13, `Sub`), cách 2. Cách khối đầu 24.
@@ -118,6 +125,7 @@ Màu nằm trong `ThemeDictionaries` của `Styles/Tokens.axaml`; View dùng `Dy
 | Chia nhóm trong trang | `TabControl` (tối đa 5 tab) |
 | Thông báo ngắn sau thao tác | `WindowNotificationManager` (có sẵn của Avalonia) |
 | Thông báo lỗi trên trang | `Border` nền nhạt màu `Danger` + một câu + một `Button` |
+| Báo trạng thái chung của app (đăng nhập, hết phiên, lỗi đồng bộ) | dải báo `Border.info` dưới thanh trên cùng, không mở hộp thoại |
 | Hộp thoại | `Window` hộp thoại hai nút, hành động chính bên phải |
 | Khay hệ thống | `TrayIcon` (có sẵn của Avalonia) |
 | Trang web trường, Luyện tập | `NativeWebView` |

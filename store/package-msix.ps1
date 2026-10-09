@@ -11,12 +11,11 @@ param(
     [string]$IdentityName = 'xeroz369.BKStudyDesk',
     [string]$Publisher = 'CN=FF5F6ECE-F76F-4FE9-BCC4-9236BBA4C0DE',
     [string]$PublisherDisplayName = 'xeroz369',
-    [switch]$Dev,
-    [switch]$SkipUi
+    [switch]$Dev
 )
 $ErrorActionPreference = 'Stop'
 if ($Dev) { $IdentityName = 'BKStudyDesk.Dev'; $Publisher = 'CN=BKStudyDeskDev' }
-$src = Join-Path $Root 'src\SoHocTap'
+$src = Join-Path $Root 'src\BKStudyDesk.Desktop'   # bản Avalonia, target Windows (StartupTask, toast qua WinRT)
 
 $sdk = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object FullName | Select-Object -Last 1
 if (!$sdk) { throw 'Không tìm thấy makeappx.exe (Windows SDK).' }
@@ -28,13 +27,8 @@ if (Test-Path $layout) { Remove-Item $layout -Recurse -Force }
 New-Item -ItemType Directory -Force $layout | Out-Null
 
 # ---------------------------------------------------------------- 1. publish (self-contained, không pdb, ẩn path build)
-# Khung Luyện tập build ra ui\ ở gốc repo, csproj chép vào cạnh exe. CI đã build ở bước trước thì truyền -SkipUi.
-if (!$SkipUi) {
-    Push-Location (Join-Path $Root 'src\ui'); npm ci --no-audit --no-fund | Out-Host; npm run build | Out-Host; $ok = $LASTEXITCODE -eq 0; Pop-Location
-    if (!$ok) { throw 'npm run build lỗi' }
-}
-dotnet publish $src -c Release -r win-x64 --self-contained true -o $layout `
-    -p:Store=true -p:Version=$Version -p:DebugType=none -p:DebugSymbols=false -p:ContinuousIntegrationBuild=true -p:Deterministic=true `
+dotnet publish $src -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained true -o $layout `
+    -p:Version=$Version -p:DebugType=none -p:DebugSymbols=false -p:ContinuousIntegrationBuild=true -p:Deterministic=true `
     "-p:PathMap=$src=src" -p:SatelliteResourceLanguages=en%3Bvi | Out-Host
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish lỗi' }
 
@@ -55,5 +49,5 @@ if ($LASTEXITCODE -ne 0) { throw 'makepri lỗi' }
 $msix = Join-Path $Out "BKStudyDesk-$v-x64.msix"
 & $makeappx pack /d $layout /p $msix /o | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'makeappx lỗi' }
-Write-Host "MSIX: $msix ($([math]::Round((Get-Item $msix).Length / 1MB, 1)) MB) · identity $IdentityName"
+Write-Host "MSIX: $msix ($([math]::Round((Get-Item $msix).Length / 1MB, 1)) MB), identity $IdentityName"
 $msix

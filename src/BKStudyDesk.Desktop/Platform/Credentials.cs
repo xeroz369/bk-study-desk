@@ -15,7 +15,9 @@ internal static class Credentials
 {
     private static readonly string[] Attrs = ["app", AppInfo.Id, "target", AppInfo.InstanceKey + "/sso"];
 
-    public static bool Supported => OperatingSystem.IsWindows() || (OperatingSystem.IsLinux() && Run("secret-tool", null, ["--version"]) is not null);
+    /// <summary>Máy có kho mật khẩu dùng được. Dò một lần mỗi lần chạy app (Linux chạy secret-tool; dải báo đọc ở mỗi lần đổi trạng thái).</summary>
+    public static bool Supported => _supported.Value;
+    private static readonly Lazy<bool> _supported = new(() => OperatingSystem.IsWindows() || (OperatingSystem.IsLinux() && Run("secret-tool", null, ["--version"]) is not null));
 
     /// <summary>Được tự đăng nhập không: người dùng đã bật, đang ghi nhớ đăng nhập, và có tài khoản đã lưu.</summary>
     public static (string User, string Password)? Usable() =>
@@ -26,6 +28,23 @@ internal static class Credentials
         if (OperatingSystem.IsWindows()) SsoCredentials.Save(user, password);
         else if (Run("secret-tool", JsonSerializer.Serialize(new[] { user, password }), ["store", "--label", AppInfo.Name, .. Attrs]) is null)
             throw new IOException("Không lưu được vào kho mật khẩu (secret-tool).");
+    }
+
+    /// <summary>Lưu tài khoản rồi bật sso.autoLogin (form ở trang Cài đặt). Trả câu lỗi để hiện, null là đã bật.</summary>
+    public static string? Enable(string user, string password)
+    {
+        if (user.Trim().Length == 0 || password.Length == 0) return SoHocTap.Ui.L.T("autologin.missing");
+        try
+        {
+            Save(user.Trim(), password);
+            Settings.Sso.AutoLogin = true;
+            return null;
+        }
+        catch (Exception x) when (x is not OutOfMemoryException)
+        {
+            Log.Warn($"Tự đăng nhập lại: không lưu được tài khoản: {x.Message}");
+            return SoHocTap.Ui.L.T("autologin.saveFailed");
+        }
     }
 
     public static (string User, string Password)? Read()

@@ -20,7 +20,7 @@ Nguyên tắc: dùng công cụ có sẵn, được duy trì (không tự viết
 
 | Bề mặt | Chặn bằng |
 |---|---|
-| Khung Luyện tập (WebView2, host ảo `sohoc.example`) | không mở port mạng; `/api` chỉ nhận request có header `X-App` từ host của app; tắt host object, DevTools, thả file; link ngoài mở bằng trình duyệt |
+| Luyện tập (control Avalonia, không chạy trang web) | không mở port mạng, không có trình duyệt; đọc ghi kết quả, gói qua `ApiRouter` gọi thẳng trong app; link ngoài mở bằng trình duyệt |
 | Tin nhắn từ khung Luyện tập lên app (`postMessage`) | chỉ nhận từ host của app, chỉ các lệnh phím tắt và mở trang |
 | Gói quiz từ người khác (Study Pack, Markdown, Moodle XML, GIFT, Aiken) | `validatePack`: chặn script, thuộc tính sự kiện, ảnh ngoài; id gói chỉ gồm ký tự an toàn, không ghi ra ngoài thư mục gói |
 | Đường dẫn file do trang gửi lên | `Paths.StudyPath` chỉ cho đường dẫn bên trong thư mục học tập |
@@ -33,7 +33,7 @@ Nguyên tắc: dùng công cụ có sẵn, được duy trì (không tự viết
 
 | Công cụ | Kiểm gì | Mỗi PR | Hằng tuần | File |
 |---|---|---|---|---|
-| CodeQL | lỗi bảo mật trong mã C#, TypeScript/Svelte, workflow | có | có | `codeql.yml` |
+| CodeQL | lỗi bảo mật trong mã C#, TypeScript (công cụ studypack), workflow | có | có | `codeql.yml` |
 | NuGet advisory (`dotnet list package --vulnerable --include-transitive`) | thư viện .NET có lỗ hổng đã công bố, kể cả thư viện gián tiếp | có | có | `security.yml` (deps) |
 | npm audit | thư viện npm có lỗ hổng (mức moderate trở lên thì đỏ) | có | có | `security.yml` (deps) |
 | OSV-Scanner (Google) | đối chiếu mọi lockfile với OSV.dev | có | có | `security.yml` (osv) |

@@ -208,6 +208,17 @@
         <Setter Property="Padding" Value="12,8" />
     </Style>
     <Style Selector="Border.callout.warn"><Setter Property="BorderBrush" Value="{DynamicResource Warn}" /></Style>
+    <!-- Dải báo dưới thanh trên cùng (MainWindow.Info): nền thẻ, viền trái theo mức độ như callout, kẻ dưới ngăn với trang -->
+    <Style Selector="Border.info">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Link}" />
+        <Setter Property="BorderThickness" Value="4,0,0,1" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="MinHeight" Value="{StaticResource CardHeaderHeight}" />
+    </Style>
+    <Style Selector="Border.info.success"><Setter Property="BorderBrush" Value="{DynamicResource Ok}" /></Style>
+    <Style Selector="Border.info.warning"><Setter Property="BorderBrush" Value="{DynamicResource Warn}" /></Style>
+    <Style Selector="Border.info.error"><Setter Property="BorderBrush" Value="{DynamicResource Danger}" /></Style>
     <Style Selector="Border.callout.tip"><Setter Property="BorderBrush" Value="{DynamicResource Ok}" /></Style>
     <Style Selector="Border.callout.note"><Setter Property="BorderBrush" Value="{DynamicResource Link}" /></Style>
     <Style Selector="Border.callout.keys TextBlock"><Setter Property="FontFamily" Value="{StaticResource CodeFont}" /></Style>
@@ -253,5 +264,6 @@
     <Style Selector="DataGridColumnHeader"><Setter Property="AreSeparatorsVisible" Value="False" /><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="MinHeight" Value="{StaticResource TableHeaderHeight}" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /></Style>
     <!-- Chữ dài hơn cột thì cắt có dấu ba chấm, không cụt giữa chữ -->
     <Style Selector="DataGridCell TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
-    <Style Selector="DataGridRowGroupHeader"><Setter Property="Background" Value="{DynamicResource GroupBg}" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="SublevelIndent" Value="0" /></Style>
+    <Style Selector="DataGridRowGroupHeader"><Setter Property="Background" Value="{DynamicResource GroupBg}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <!-- SublevelIndent (thụt lề dòng dưới dải nhóm) đặt ở Tables.Show, không đặt ở style: style tính lại lúc bảng đổi dữ liệu làm DataGrid ném NullReferenceException (issue #43). -->
 </Styles>

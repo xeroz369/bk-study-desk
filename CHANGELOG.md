@@ -6,6 +6,23 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Đăng nhập HCMUT không mở cửa sổ riêng nữa: trang đăng nhập của trường hiện ngay trong cửa sổ app, đăng nhập xong tự quay lại trang đang xem và đồng bộ.
+- Dải báo dưới thanh trên cùng: đang đăng nhập, hết phiên, lỗi đồng bộ (kèm Thử lại, Mở LMS hay MyBK), như bản 1.x.
+- Token LMS hết hạn mà phiên HCMUT vẫn còn: app tự lấy token mới, không bắt đăng nhập lại.
+- Bật Tự đăng nhập lại ngay trong trang Cài đặt, không mở hộp thoại.
+- Bảng Thông báo: hiện đủ mọi thông báo (cuộn được), có nút Xóa hết, chỉ hiện nút sửa khi nguồn có lỗi.
+- Bỏ hẳn bản WPF và khung Luyện tập Svelte: bản Microsoft Store cũng đóng gói từ app đa nền tảng (tự chạy cùng Windows qua StartupTask, thông báo hệ thống dùng định danh của gói). Mã dùng chung chuyển vào `src/BKStudyDesk.Core`, test logic ở `tests/BKStudyDesk.Logic.Tests`; công cụ studypack mang theo bộ đọc riêng (`studypack/lib`).
+- CI build bản Windows với `-warnaserror` và kiểm `dotnet format` cho cả lõi lẫn app.
+
+### Sửa lỗi
+
+- App tự tắt khi bấm "Hiện buổi học" hay "Hiện việc đã làm" ở tab Sắp tới của trang Lịch (#43).
+- Lỗi trên giao diện không còn làm tắt app: app ghi log, báo trong bảng Thông báo rồi chạy tiếp.
+- Cửa sổ Tải tài liệu, Sự kiện không còn tràn khỏi màn hình nhỏ hay màn hình đặt phóng to.
+- Số thông báo chưa xem không còn lớn hơn số thông báo đang giữ.
+
 ## [1.2.2] - 2026-10-08
 
 ### Thêm

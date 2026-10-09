@@ -15,16 +15,14 @@ namespace BKStudyDesk.Desktop.Views;
 /// </summary>
 public partial class DownloadWindow : Window
 {
-    private readonly LmsSource _lms = null!;
     private readonly LmsCourse _course = null!;
     private List<SectionRow> _rows = [];
     private CancellationTokenSource? _run;
 
     public DownloadWindow() => InitializeComponent();
 
-    internal DownloadWindow(LmsSource lms, LmsCourse course) : this()
+    internal DownloadWindow(LmsCourse course) : this()
     {
-        _lms = lms;
         _course = course;
         Heading.Text = course.Subject + (course.Part is null ? "" : ", " + course.Part) + ", " + course.Term;
         Sub.Text = L.F("download.saveTo", $"{Config.Str("folders.subjects")}/{course.Subject}");
@@ -106,7 +104,7 @@ public partial class DownloadWindow : Window
         try
         {
             var token = _run.Token;
-            var n = await Task.Run(() => _lms.DownloadSectionsAsync(_course.Id, picked, extract, line => Dispatcher.UIThread.Post(() => Write(line)), token, kinds));
+            var n = await Task.Run(() => LmsSource.DownloadSectionsAsync(_course.Id, picked, extract, line => Dispatcher.UIThread.Post(() => Write(line)), token, kinds));
             Write(n == 0 ? L.T("download.doneNone") : L.F("download.done", n));
             Downloaded?.Invoke();
         }

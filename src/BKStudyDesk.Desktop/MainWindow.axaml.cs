@@ -35,7 +35,7 @@ public partial class MainWindow : Window
         // Thứ tự theo mức dùng thường ngày (người dùng chốt 07/10): Hôm nay, Môn học, Lịch, Thư viện, Luyện tập, MyBK. Ctrl+số theo thứ tự này.
         _pages =
         [
-            (L.T("nav.today"), () => new HomeView(_host.State, () => _host.Login(this))),
+            (L.T("nav.today"), () => new HomeView(_host.State, Login)),
             (L.T("nav.subjects"), () => _subjects = new SubjectsView(_host.State, _subjects, Download, OpenLibrary)),
             (L.T("nav.calendar"), () => new CalendarView(_host.State)),
             (L.T("nav.library"), () => _library = new LibraryView(_host.State, _host.Library, _library)),
@@ -62,7 +62,13 @@ public partial class MainWindow : Window
         _host.State.Progress += ShowSync;
         var moreMenu = (MenuFlyout)More.Flyout!;
         moreMenu.Opening += (_, _) => FillMore(moreMenu);
-        _host.LoginProgress += (_, _) => ShowSync();
+        _host.LoginProgress += OnLoginProgress;
+        _host.State.Changed += ShowInfo;
+        _host.State.StatusChanged += ShowInfo;
+        InfoClose.Click += (_, _) => { _infoClosed = _info?.Key; _loginStage = ""; ShowInfo(); };
+        InfoPrimary.Click += (_, _) => Run(_info?.Primary ?? InfoAction.None);
+        InfoSecondary.Click += (_, _) => Run(_info?.Secondary ?? InfoAction.None);
+        _infoHide.Tick += OnInfoHide;
         var statusFlyout = new Flyout { Placement = PlacementMode.BottomEdgeAlignedRight };
         statusFlyout.Opening += (_, _) => statusFlyout.Content = StatusPanelContent(statusFlyout);
         statusFlyout.Opened += (_, _) => StatusButton.Classes.Set("on", true);   // bảng đang mở: gạch chân như mục trang đang xem
@@ -101,7 +107,7 @@ public partial class MainWindow : Window
         if (args.Contains("--toastcheck")) { Log.Info($"Toastcheck: {Platform.Windows.Toast.Setting()}"); Environment.Exit(0); }   // không gửi thông báo
 #endif
         if (args.Contains("--panel")) Opened += (_, _) => StatusButton.Flyout?.ShowAt(StatusButton);   // chụp kiểm tra bảng Thông báo
-        if (args.Contains("--login")) Opened += (_, _) => _host.Login(this);
+        if (args.Contains("--login")) Opened += (_, _) => Login();
         if (args.Contains("--event")) Opened += async (_, _) => await new EventWindow(null, null).ShowDialog(this);   // chụp kiểm tra hộp thoại Thêm sự kiện
         if (args.Contains("--setup")) Opened += (_, _) => { var (f, u) = FirstRunWindow.Both(); f.Show(this); u.Show(this); };   // chụp kiểm tra câu hỏi lần đầu
         if (args.Contains("--webcheck")) Opened += async (_, _) => { Environment.ExitCode = await Web.WebCheck.RunAsync() ? 0 : 1; _exiting = true; Close(); };
@@ -156,6 +162,7 @@ public partial class MainWindow : Window
         Page.Child = page;
         if (changed) Scroller.Offset = default;   // trang khác: về đầu trang (dựng lại cùng trang vì dữ liệu mới thì giữ chỗ đang xem)
         _shownIndex = index;
+        if (changed) ShowInfo();   // MyBK hết phiên chỉ bật dải khi đang ở trang MyBK (MybkLoginPrompt)
     }
 
     private readonly NoticeLog _notices = new();
@@ -176,58 +183,67 @@ public partial class MainWindow : Window
         [StatusPanel.Source(_host.State, SourceIds.Lms, "LMS"), StatusPanel.Source(_host.State, SourceIds.Mybk, "MyBK")];
 
     /// <summary>
-    /// Bảng của nút Thông báo (Flyout có sẵn): từng nguồn một dòng (trạng thái, vấn đề nếu có, nút Đăng nhập lại hay Thử lại),
-    /// nút Đồng bộ ngay, rồi các thông báo gần đây (bấm để mở trang). Mở bảng là đã xem các thông báo.
+    /// Bảng của nút Thông báo (Flyout có sẵn): Đồng bộ ngay; từng nguồn một dòng (trạng thái, vấn đề, nút sửa chỉ khi có vấn đề);
+    /// hàng Mở LMS, Mở MyBK; rồi mọi thông báo đang giữ (NoticeLog), cuộn trong bảng, Xóa hết. Thông báo có trang thì bấm để mở trang,
+    /// không có trang thì chỉ để đọc. Mở bảng là đã xem các thông báo.
     /// </summary>
     private Control StatusPanelContent(Flyout owner)
     {
         var panel = new StackPanel { Spacing = 12, Width = (double)this.FindResource("PanelWidth")! };
         // Cùng mẫu với thẻ trong trang: tiêu đề trái, nút phải; mỗi nguồn một hàng, chữ trái, nút phải.
-        static Grid Row(Control left, Control right)
+        static Grid Row(Control left, Control? right)
         {
-            var g = new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,Auto") };
+            var g = new Grid { ColumnDefinitions = new ColumnDefinitions("*,12,Auto"), Children = { left } };
+            if (right is null) return g;
             right.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
             Grid.SetColumn(right, 2);
-            g.Children.Add(left);
             g.Children.Add(right);
             return g;
         }
-        var sync = new Button { Content = L.T("status.panel.syncNow") };
-        sync.Click += (_, _) => { SyncNow(); owner.Hide(); };
-        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.sync"), Classes = { "card-title" } }, sync));
-        // Mỗi nguồn kèm trang chủ của nó (như nút Mở LMS, Mở MyBK ở thanh trạng thái 1.x): mở trong cửa sổ app, dùng chung đăng nhập.
-        foreach (var (r, home) in Sources().Zip([Config.Str("sources.lms.site"), Config.Str("sources.mybk.home")]))
+        Button Act(string text, Action run)
         {
-            var text = new StackPanel { Spacing = 2, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
-            text.Children.Add(new TextBlock { Text = r.State, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontWeight = r.Problem is null ? Avalonia.Media.FontWeight.Normal : Avalonia.Media.FontWeight.SemiBold });
-            if (r.Problem is { } p) text.Children.Add(new TextBlock { Text = p, Classes = { "meta", "danger" } });
-            if (r.Detail is { Length: > 0 } d) text.Children.Add(new TextBlock { Text = d, Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None });
-            var actions = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8 };
-            if (r.Problem is not null)
-            {
-                var fix = new Button { Content = L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry") };
-                fix.Click += (_, _) => { owner.Hide(); if (r.NeedsLogin) _host.Login(this); else SyncNow(); };
-                actions.Children.Add(fix);
-            }
-            var open = new Button { Content = L.F("status.panel.open", r.Label) };
-            open.Click += (_, _) => { owner.Hide(); _ = Files.Links.OpenAsync(this, home, r.Label); };
-            actions.Children.Add(open);
-            panel.Children.Add(Row(text, actions));
+            var b = new Button { Content = text };
+            b.Click += (_, _) => { owner.Hide(); run(); };
+            return b;
         }
-        panel.Children.Add(new Separator { Margin = default });   // hết bề ngang, như vạch kẻ của thẻ
-        panel.Children.Add(new TextBlock { Text = L.T("status.panel.notices"), Classes = { "card-title" } });
-        if (_notices.Items.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("status.panel.noNotices"), Classes = { "meta" } });
-        foreach (var n in _notices.Items.Take(8))
+        static TextBlock Wrap(string text, params string[] classes)
         {
-            var item = new Button { HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch, HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                Content = new StackPanel { Spacing = 2, Children =
-                {
-                    new TextBlock { Text = n.Title, FontWeight = Avalonia.Media.FontWeight.SemiBold, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
-                    new TextBlock { Text = n.Body, Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None },
-                    new TextBlock { Text = Format.Ago(n.Time), Classes = { "sub" } },
-                } } };
-            item.Click += (_, _) => { owner.Hide(); Show(PageOf(n.Page)); };
-            panel.Children.Add(item);
+            var t = new TextBlock { Text = text, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None };
+            t.Classes.AddRange(classes);
+            return t;
+        }
+        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.sync"), Classes = { "card-title" } }, Act(L.T("status.panel.syncNow"), SyncNow)));
+        foreach (var r in Sources())
+        {
+            var text = new StackPanel { Spacing = 2, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Children = { Wrap(r.State) } };
+            if (r.Problem is { } p) text.Children.Add(Wrap(p, "meta", "danger"));
+            if (r.Detail is { Length: > 0 } d) text.Children.Add(Wrap(d, "sub"));
+            panel.Children.Add(Row(text, r.Problem is null ? null : Act(L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry"), r.NeedsLogin ? Login : SyncNow)));
+        }
+        // Trang chủ của từng nguồn (như nút Mở LMS, Mở MyBK ở thanh trạng thái 1.x): mở trong cửa sổ app, dùng chung đăng nhập.
+        panel.Children.Add(new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8,
+            Children =
+            {
+                Act(L.F("status.panel.open", "LMS"), () => _ = Files.Links.OpenAsync(this, Config.Str("sources.lms.site"), "LMS")),
+                Act(L.F("status.panel.open", "MyBK"), () => _ = Files.Links.OpenAsync(this, Config.Str("sources.mybk.home"), "MyBK")),
+            },
+        });
+        panel.Children.Add(new Separator { Margin = default });   // hết bề ngang, như vạch kẻ của thẻ
+        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.notices"), Classes = { "card-title" } },
+            _notices.Items.Count == 0 ? null : Act(L.T("status.panel.clear"), _notices.Clear)));
+        if (_notices.Items.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("status.panel.noNotices"), Classes = { "meta" } });
+        foreach (var n in _notices.Items)
+        {
+            var body = new StackPanel { Spacing = 2, Children = { Wrap(n.Title), Wrap(n.Body, "sub"), new TextBlock { Text = Format.Ago(n.Time), Classes = { "sub" } } } };
+            body.Children[0].SetValue(TextBlock.FontWeightProperty, Avalonia.Media.FontWeight.SemiBold);
+            if (n.Page.Length == 0) { panel.Children.Add(body); continue; }
+            panel.Children.Add(new Button
+            {
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch, HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Content = body, Command = new Command(() => { owner.Hide(); Show(PageOf(n.Page)); }),
+            });
         }
         _notices.MarkRead();
         return new ScrollViewer { MaxHeight = (double)this.FindResource("PanelMaxHeight")!, Content = panel };
@@ -237,6 +253,71 @@ public partial class MainWindow : Window
     {
         _host.Hub.Start(SourceIds.Lms, force: true);
         _host.Hub.Start(SourceIds.Mybk, force: true);
+    }
+
+    // ------------------------------------------------------------------ dải báo, đăng nhập
+
+    private InfoBarState? _info;        // dải đang hiện
+    private string? _infoClosed;        // Key của dải người dùng đã đóng: InfoBar.Decide không hiện lại dải cùng Key
+    private string _loginStage = "", _loginMessage = "";
+    private readonly Avalonia.Threading.DispatcherTimer _infoHide = new() { Interval = TimeSpan.FromSeconds(6) };   // báo xong việc: đủ lâu để đọc
+
+    /// <summary>Đăng nhập HCMUT: khi cần mật khẩu, trang đăng nhập phủ lên vùng nội dung của cửa sổ này (không mở cửa sổ riêng).</summary>
+    private void Login() => _host.Login(view => { LoginHost.Child = view; LoginHost.IsVisible = view is not null; });
+
+    private void OnLoginProgress(string stage, string message)
+    {
+        (_loginStage, _loginMessage) = (stage, message);
+        ShowSync();
+        ShowInfo();
+    }
+
+    /// <summary>Vẽ dải báo theo InfoBar.Decide (lượt đăng nhập, hết phiên, lỗi đồng bộ, mời tự đăng nhập lại); không có gì thì ẩn.</summary>
+    private void ShowInfo()
+    {
+        var s = _host.State;
+        var mybkNeeded = MybkLoginPrompt.Needed(_current == PageOf("mybk"), Format.Now, s.SyncedAt(SourceIds.Mybk), (s.Mybk?.Registration ?? []).Select(r => (r.Start, r.End)));
+        _info = InfoBar.Decide(InfoBar.Input(s, _loginStage, _loginMessage, mybkNeeded, Platform.Credentials.Supported, _infoClosed));
+        Info.IsVisible = _info is not null;
+        if (_info is not { } i) return;
+        Info.Classes.Set("success", i.Severity == InfoSeverity.Success);
+        Info.Classes.Set("warning", i.Severity == InfoSeverity.Warning);
+        Info.Classes.Set("error", i.Severity == InfoSeverity.Error);
+        InfoText.Text = i.Text;
+        ToolTip.SetTip(InfoText, i.Detail);   // chữ kỹ thuật cho người báo lỗi, không chiếm chỗ trên dải
+        (InfoPrimary.Content, InfoPrimary.IsVisible) = (i.PrimaryText, i.Primary != InfoAction.None);
+        (InfoSecondary.Content, InfoSecondary.IsVisible) = (i.SecondaryText, i.Secondary != InfoAction.None);
+        if (!i.AutoHide) return;
+        _infoHide.Stop();
+        _infoHide.Start();
+    }
+
+    private void OnInfoHide(object? sender, EventArgs e)
+    {
+        _infoHide.Stop();
+        if (_loginStage is "done" or "logout") _loginStage = "";
+        ShowInfo();
+    }
+
+    private async void Run(InfoAction action)
+    {
+        switch (action)
+        {
+            case InfoAction.Login: Login(); break;
+            case InfoAction.Retry: SyncNow(); break;
+            case InfoAction.OpenSource:
+                var mybk = _info?.Source == SourceIds.Mybk;
+                await Files.Links.OpenAsync(this, Config.Str(mybk ? "sources.mybk.home" : "sources.lms.site"), mybk ? "MyBK" : "LMS");
+                break;
+            case InfoAction.AutoLoginOn:
+                await ShowAsync(NavCount, remember: true);
+                (Page.Child as SettingsView)?.OpenAutoLogin();
+                break;
+            case InfoAction.AutoLoginNo:
+                SoHocTap.Core.Settings.Sso.AutoLoginAsked = true;
+                ShowInfo();
+                break;
+        }
     }
 
     /// <summary>
@@ -409,7 +490,7 @@ public partial class MainWindow : Window
     /// <summary>Việc của trang Cài đặt cần tới cửa sổ và phần chạy nền.</summary>
     private SoHocTap.Presentation.SettingsActions SettingsActions() => new(
         AccountText: AccountText,
-        Login: () => _host.Login(this),
+        Login: Login,
         Logout: _host.LogoutAsync,
         SyncNow: SyncNow,
         ApplyTheme: App.ApplyTheme,
@@ -423,11 +504,7 @@ public partial class MainWindow : Window
         AutostartGet: () => Platform.Autostart.Enabled,
         AutostartSet: Platform.Autostart.Set,
         AutoLoginSupported: Platform.Credentials.Supported,
-        AutoLoginToggle: async () =>
-        {
-            if (SoHocTap.Core.Settings.Sso.AutoLogin) { Platform.Credentials.Forget(); return L.T("set.autoLoginOffDone"); }
-            return await new AutoLoginWindow().ShowDialog<bool>(this) ? L.T("set.autoLoginOnDone") : null;
-        },
+        AutoLoginSave: Platform.Credentials.Enable,
         ForgetCredentials: Platform.Credentials.Forget,
         UpdateSupported: SoHocTap.Updates.UpdateService.CanSelfUpdate,
         UpdateCheck: async () => await _host.Updates.CheckAsync(manual: true, default) is { } o ? L.F("update.available", o.Version)
@@ -454,8 +531,7 @@ public partial class MainWindow : Window
     /// <summary>Cửa sổ Tải tài liệu của một lớp; tải xong thì trang Môn học đọc lại thư mục.</summary>
     private void Download(SoHocTap.Data.LmsCourse course)
     {
-        if (_host.Hub.Get(SourceIds.Lms) is not SoHocTap.Sources.Lms.LmsSource lms) return;
-        var w = new DownloadWindow(lms, course);
+        var w = new DownloadWindow(course);
         w.Closed += (_, _) => Show(_current);
         w.ShowDialog(this);
     }

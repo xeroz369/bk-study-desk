@@ -15,10 +15,10 @@ Soạn quiz để tự ôn và gửi cho bạn bè: gõ trong app, nhờ AI ho�
 | `test-roundtrip.ts` | Kiểm thử: gói mẫu đổi sang Markdown rồi đổi ngược lại vẫn phải giữ nguyên từng câu |
 | `examples/` | Quiz mẫu, bắt đầu từ `vi-du.md` |
 
-Các công cụ chạy bằng Node 23.6+ (Node 22.6+ thì thêm `--experimental-strip-types`) và dùng chung code với app (`src/ui/src/lib/study/`), nên file nào qua được `validate.ts` thì app nhập được.
+Lần đầu chạy `npm ci` trong thư mục `studypack` (cài `fflate` để đọc tệp zip). Các công cụ chạy bằng Node 23.6+ (Node 22.6+ thì thêm `--experimental-strip-types`) và dùng bộ đọc, kiểm gói ở `studypack/lib/` (cùng quy tắc với app, có test đối chiếu), nên file nào qua được `validate.ts` thì app nhập được.
 
 ## An toàn
 
-- Gói chỉ gồm chữ và ảnh; app không chạy code nào trong gói. HTML được lọc lại khi hiển thị (`sanitize.ts`).
+- Gói chỉ gồm chữ và ảnh; app không chạy code nào trong gói. HTML không chạy trong trình duyệt: app đọc bằng bộ đọc riêng (`Presentation/Practice/Html.cs`) và chỉ vẽ các thẻ đã biết thành control.
 - Ảnh chỉ nhận PNG, JPEG, WebP, GIF nhúng sẵn; không SVG, không link ngoài.
 - Quiz LMS đã lưu chỉ xuất được sau khi quiz đóng.

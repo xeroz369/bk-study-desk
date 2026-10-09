@@ -1,8 +1,0 @@
-<!-- Luyện tập: bài học, câu hỏi có chấm, ôn câu sai, thi thử. Nội dung có công thức toán nên render bằng WebView2 (MathJax),
-     nằm gọn trong vùng page; phần còn lại của app là WPF. WebView được dựng trong code khi trang hiện, và đóng khi rời trang lâu
-     hoặc app xuống khay (PracticePage.xaml.cs), để không giữ cả trăm MB RAM cho một trang không ai xem. -->
-<UserControl x:Class="SoHocTap.Ui.Pages.PracticePage"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid x:Name="Host" />
-</UserControl>

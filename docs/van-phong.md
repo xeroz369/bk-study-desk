@@ -2,7 +2,7 @@
 
 **Tiếng Việt** | [English writing style](english-style.md)
 
-Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template, chú thích code, commit và chữ trong app (`src/SoHocTap/lang/vi.json`, khung Luyện tập). Mỗi quy tắc đều có nguồn; quy tắc nào là lựa chọn của dự án (không có nguồn) thì ghi rõ.
+Quy chuẩn viết cho README, CHANGELOG, Wiki, PRIVACY/SECURITY, issue template, chú thích code, commit và chữ trong app (`src/BKStudyDesk.Core/lang/vi.json`). Mỗi quy tắc đều có nguồn; quy tắc nào là lựa chọn của dự án (không có nguồn) thì ghi rõ.
 
 ## Nguồn
 

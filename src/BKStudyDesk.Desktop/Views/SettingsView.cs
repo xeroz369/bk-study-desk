@@ -33,6 +33,7 @@ public sealed class SettingsView : UserControl
     }
 
     private readonly Expander? _advanced;
+    private Action? _openCredential;   // mở form tài khoản của mục CredentialItem (dải báo mời bật tự đăng nhập lại)
 
     /// <summary>Mở phần Nâng cao (tham số --tab=1 khi chụp kiểm tra).</summary>
     public void ExpandAdvanced()
@@ -40,7 +41,10 @@ public sealed class SettingsView : UserControl
         if (_advanced is not null) _advanced.IsExpanded = true;
     }
 
-    private static Border Card(SettingGroup g)
+    /// <summary>Mở sẵn form tự đăng nhập lại (nút Bật trên dải báo); máy không hỗ trợ thì không có gì.</summary>
+    public void OpenAutoLogin() => _openCredential?.Invoke();
+
+    private Border Card(SettingGroup g)
     {
         var head = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { new TextBlock { Text = g.Title, Classes = { "card-title" } } } };
         if (g.Note is { Length: > 0 } note) head.Children.Add(new TextBlock { Text = note, Classes = { "meta" } });
@@ -51,7 +55,7 @@ public sealed class SettingsView : UserControl
     }
 
     /// <summary>Một dòng: trái là tên và ghi chú (ghi chú cũng là chỗ báo lỗi, báo kết quả), phải là control.</summary>
-    private static Border Row(SettingItem item)
+    private Border Row(SettingItem item)
     {
         var note = new TextBlock { Text = item.Note ?? "", Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None, IsVisible = item.Note is { Length: > 0 } };
         void Say(string? text, bool error = false)
@@ -81,6 +85,7 @@ public sealed class SettingsView : UserControl
             ChoiceItem c => Choice(c),
             ActionItem a => Action(a, Say),
             InfoItem i => new TextBlock { Text = i.Value, Classes = { "meta" } },
+            CredentialItem c => new Button(),   // dựng ở Credential: nút và form đi cùng nhau
             _ => new TextBlock(),
         };
         right.VerticalAlignment = VerticalAlignment.Center;
@@ -88,7 +93,54 @@ public sealed class SettingsView : UserControl
         grid.Children.Add(left);
         Grid.SetColumn(right, 2);
         grid.Children.Add(right);
+        if (item is CredentialItem cred) return new Border { Classes = { "row" }, Child = Credential(cred, (Button)right, grid, Say) };
         return new Border { Classes = { "row" }, Child = grid };
+    }
+
+    /// <summary>
+    /// Mục tự đăng nhập lại: nút Bật mở form ngay dưới dòng (tên đăng nhập, mật khẩu, Lưu và bật, Hủy); đang bật thì nút Tắt (xóa
+    /// tài khoản). Ô mật khẩu luôn được xóa sau khi bấm Lưu, kể cả khi lưu lỗi.
+    /// </summary>
+    private StackPanel Credential(CredentialItem c, Button toggle, Grid row, Action<string?, bool> say)
+    {
+        var user = new TextBox { PlaceholderText = L.T("autoLogin.user") };
+        var password = new TextBox { PlaceholderText = L.T("autoLogin.password"), PasswordChar = '●', Classes = { "revealPasswordButton" } };
+        var save = new Button { Content = L.T("autoLogin.save"), Classes = { "accent" } };   // không IsDefault: Enter ở ô khác của trang không bấm nút này
+        var cancel = new Button { Content = L.T("events.cancel") };
+        var form = new StackPanel
+        {
+            Spacing = 8, Margin = new Thickness(0, 12, 0, 0), IsVisible = false,
+            Children =
+            {
+                new TextBlock { Text = L.T("autoLogin.noteAnyOs"), Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None },
+                user, password,
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { save, cancel } },
+            },
+        };
+        void Sync() => toggle.Content = L.T(c.IsOn() ? "set.turnOff" : "set.turnOn");
+        void Open() { form.IsVisible = true; user.Focus(); }
+        Sync();
+        toggle.Click += (_, _) =>
+        {
+            if (!c.IsOn()) { Open(); return; }
+            say(c.Off(), false);
+            Sync();
+        };
+        void Save()
+        {
+            var error = c.Save(user.Text ?? "", password.Text ?? "");
+            password.Text = "";
+            if (error is not null) { say(error, true); return; }
+            form.IsVisible = false;
+            user.Text = "";
+            say(L.T("set.autoLoginOnDone"), false);
+            Sync();
+        }
+        save.Click += (_, _) => Save();
+        password.KeyDown += (_, e) => { if (e.Key == Key.Enter) { Save(); e.Handled = true; } };
+        cancel.Click += (_, _) => { form.IsVisible = false; password.Text = ""; };
+        _openCredential = Open;
+        return new StackPanel { Children = { row, form } };
     }
 
     private static ToggleSwitch Toggle(ToggleItem t)

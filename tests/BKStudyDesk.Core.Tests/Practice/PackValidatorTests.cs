@@ -3,7 +3,7 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Port src/ui/src/lib/study/pack.test.ts. Bản private có gói đề thật; repo public không có, nên dùng gói mẫu dựng ở đây.
+// Port từ khung Svelte của bản 1.x, src/ui/src/lib/study/pack.test.ts. Bản private có gói đề thật; repo public không có, nên dùng gói mẫu dựng ở đây.
 public class PackValidatorTests
 {
     private const string Minimal = """

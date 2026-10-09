@@ -9,7 +9,6 @@ on:
       - 'src/BKStudyDesk.Core/**'
       - 'src/BKStudyDesk.Desktop/**'
       - 'src/ThirdParty/**'
-      - 'src/SoHocTap/**'
       - '.github/workflows/package.yml'
   workflow_dispatch:
     inputs:

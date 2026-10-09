@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- BK Study Desk (Windows, macOS, Linux) bằng Avalonia 12, theme Fluent có sẵn. Sửa ở đâu: README.md cạnh file này;
-       spec docs/plans/2026-10-06-ban-2-da-nen-tang.md; thiết kế design-system/bk/README.md. App WPF (src\SoHocTap) là bản 1.x còn bảo trì. -->
+       spec docs/plans/2026-10-06-ban-2-da-nen-tang.md; thiết kế design-system/bk/README.md. Lõi (dữ liệu, đồng bộ, logic trang): src/BKStudyDesk.Core. -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!-- net10.0: macOS, Linux (và chạy được trên Windows). net10.0-windows10.0.19041.0: bản Windows, thêm thông báo hệ thống (WinRT). -->
@@ -46,13 +46,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\app.ico" />
-  </ItemGroup>
-
-  <!-- Tài khoản cho tự đăng nhập lại trên Windows (Credential Manager): dùng lại file của 1.x, chỉ chạy khi OperatingSystem.IsWindows(). -->
-  <ItemGroup>
-    <Compile Include="..\SoHocTap\Shell\SsoCredentials.cs" Link="Platform\SsoCredentials.cs" />
-    <!-- Cập nhật (Velopack): cùng UpdateService của 1.x (chế độ, bỏ qua bản, tiến độ tải, cài khi thoát). -->
-    <Compile Include="..\SoHocTap\Updates\*.cs" Link="Updates\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- Phần chỉ có trên Windows (WinRT): chỉ biên dịch cho bản Windows; code gọi qua #if WINDOWS. -->

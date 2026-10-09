@@ -10,17 +10,19 @@ Xác định chỗ viết trước khi code, đừng vá tạm vào file gần n
 
 | Việc | Viết ở |
 |---|---|
-| Đọc dữ liệu mới từ LMS, MyBK | `Sources/Lms`, `Sources/Mybk` (một file một nhóm API) |
-| Bản ghi, lưu file dữ liệu | `Data/` |
-| Quy tắc thuần (giờ VN, mức gấp, tách mã nhóm) | `Core/` hoặc `Ui/Due.cs`, có test |
-| Khóa cấu hình mới | `Core/DefaultConfig.json` và một thuộc tính trong `Core/Settings.cs` |
-| Thẻ Cài đặt | một file trong `Ui/Settings/`, một dòng trong `SettingsSections.cs` |
-| Cột hay kiểu hiển thị của bảng sự kiện | `Ui/Controls/TimelineList` |
-| Trang mới | `Ui/Pages/`, đăng ký trong `PageRegistry` |
-| Cửa sổ, khay, đăng nhập, WebView | `Shell/` |
-| Luyện tập bản đa nền tảng: chấm điểm, lịch ôn, gói, nhập xuất | `BKStudyDesk.Core/Presentation/Practice/`, có test |
-| Luyện tập bản đa nền tảng: màn, nút | `BKStudyDesk.Desktop/Views/Practice/` |
-| Chữ hiển thị | `lang/vi.json` và `lang/en.json` |
+| Đọc dữ liệu mới từ LMS, MyBK | `BKStudyDesk.Core/Sources/Lms`, `Sources/Mybk` (một file một nhóm API) |
+| Bản ghi, lưu file dữ liệu | `BKStudyDesk.Core/Data/` |
+| Quy tắc thuần (giờ VN, mức gấp, tách mã nhóm) | `BKStudyDesk.Core/Core/` hoặc `Ui/Due.cs`, có test |
+| Khóa cấu hình mới | `BKStudyDesk.Core/Core/DefaultConfig.json` và một thuộc tính trong `Core/Settings.cs` |
+| Trang hiện mục nào, thứ tự, chữ trong dòng; dải báo; mục Cài đặt | `BKStudyDesk.Core/Presentation/` (thuần, có test) |
+| Bố cục một trang | `BKStudyDesk.Desktop/Views/<Trang>View.axaml` |
+| Khung cửa sổ, thanh trên cùng, dải báo, bảng Thông báo | `BKStudyDesk.Desktop/MainWindow.axaml(.cs)` |
+| Đăng nhập, WebView, MyBK chạy ẩn | `BKStudyDesk.Desktop/Web/` |
+| Khay, mở cùng máy, kho mật khẩu, bản Store, thông báo hệ thống | `BKStudyDesk.Desktop/Platform/` (`Platform/Windows/` chỉ biên dịch cho Windows) |
+| Luyện tập: chấm điểm, lịch ôn, gói, nhập xuất | `BKStudyDesk.Core/Presentation/Practice/`, có test |
+| Luyện tập: màn, nút | `BKStudyDesk.Desktop/Views/Practice/` |
+| Màu, cỡ, số đo khung | `BKStudyDesk.Desktop/Styles/Tokens.axaml`, quy tắc ở `design-system/bk/README.md` |
+| Chữ hiển thị | `BKStudyDesk.Core/lang/vi.json` và `lang/en.json` |
 
 Chưa có chỗ phù hợp thì tạo file mới nhỏ, một việc, thay vì nhét vào file lớn.
 
@@ -28,68 +30,69 @@ Chưa có chỗ phù hợp thì tạo file mới nhỏ, một việc, thay vì n
 
 ```
 src/
-├── SoHocTap/            app WPF (.NET 10, theme Fluent)
+├── BKStudyDesk.Desktop/ app (Avalonia 12, theme Fluent có sẵn; Windows, macOS, Linux)
+│   ├── Views/           các trang, hộp thoại, Luyện tập (Practice/)
+│   ├── Web/             đăng nhập, WebView, MyBK chạy ẩn
+│   ├── Platform/        khay, mở cùng máy, kho mật khẩu, thông báo (Windows/ chỉ cho Windows)
+│   ├── Updates/         kiểm tra và tải bản cập nhật (Velopack)
+│   └── Styles/          token màu, cỡ (Tokens.axaml)
+├── BKStudyDesk.Core/    lõi, không phụ thuộc giao diện
 │   ├── Core/            config, đường dẫn, log, quy tắc thuần
 │   ├── Data/            bản ghi và lưu file dữ liệu
 │   ├── Sources/         đọc LMS (Lms/) và MyBK (Mybk/)
 │   ├── Library/         thư viện tài liệu
 │   ├── Files/           xếp và đặt tên file tải về
-│   ├── Updates/         kiểm tra và tải bản cập nhật
-│   ├── Api/             API nội bộ cho khung Luyện tập
-│   ├── Shell/           cửa sổ, khay, nhắc hạn, đăng nhập
-│   ├── Ui/              giao diện WPF (Pages/, Controls/)
-│   ├── lang/            chữ giao diện vi.json, en.json
-│   └── tools-dev/       script phát hành, export
-├── ui/                  khung Luyện tập của app WPF (Svelte), build ra ui/
-├── BKStudyDesk.Core/    lõi đa nền tảng: file link từ SoHocTap và logic Luyện tập
-├── BKStudyDesk.Desktop/ bản Avalonia (Windows, macOS, Linux), Luyện tập vẽ bằng control có sẵn
-├── ThirdParty/XamlMath/ bộ vẽ công thức TeX cho bản Avalonia (MIT, tự bảo trì)
-└── BKStudyDesk.Setup/   bộ cài
-tests/                   xUnit: SoHocTap.Tests, BKStudyDesk.Core.Tests, BKStudyDesk.Math.Tests
+│   ├── Api/             API nội bộ (Luyện tập đọc ghi kết quả, gói)
+│   ├── Presentation/    logic từng trang, dải báo, Cài đặt, Luyện tập
+│   ├── Ui/              trạng thái app, định dạng, chữ (không có giao diện)
+│   └── lang/            chữ giao diện vi.json, en.json
+├── ThirdParty/XamlMath/ bộ vẽ công thức TeX (MIT, tự bảo trì)
+└── BKStudyDesk.Setup/   bộ cài, bộ gỡ tiếng Việt
+studypack/               đặc tả và công cụ gói luyện tập (Node)
+tests/                   xUnit: BKStudyDesk.Logic.Tests, BKStudyDesk.Core.Tests, BKStudyDesk.Math.Tests
 ```
-
-`Ui/Format.cs`, `Ui/AppState.cs`, `Ui/Lang.cs`, `Ui/Models.cs`, `Ui/Curriculum.cs`, `Ui/Due.cs` cũng được biên dịch vào `BKStudyDesk.Core`: giữ chúng không phụ thuộc WPF.
 
 ## Phân lớp
 
-- `Core/`, `Data/`, `Sources/`, `Library/`, `Files/`, `Updates/` không dùng WPF.
-- `Ui/` không gọi mạng trực tiếp: đi qua `AppHost` và các service.
-- `Shell/` không phụ thuộc trang cụ thể: trang đăng ký qua `PageRegistry`.
+- `BKStudyDesk.Core` không dùng Avalonia hay API riêng của hệ điều hành ngoài nhánh `OperatingSystem.IsWindows()`.
+- View không lọc, sắp hay quyết định hiện gì: hỏi `Presentation/`. View không gọi mạng trực tiếp: đi qua `AppHost` và các service.
+- Không icon, không control tự viết, không viết lại template control (`design-system/bk/README.md`).
 - Đây là quy tắc đích. Chỗ nào còn vi phạm thì đừng làm tệ thêm.
-- Test tự lấy mọi file trong `Core/`, `Data/`, `Sources/`, `Library/`. File cần `Config`, `Paths` hay WPF thì ghi vào `LogicExclude` trong `SoHocTap.Tests.csproj` kèm lý do.
+- `BKStudyDesk.Logic.Tests` tự lấy mọi file trong `Core/`, `Data/`, `Sources/`, `Library/` của lõi. File cần `Config`, `Paths` thì ghi vào `LogicExclude` trong `BKStudyDesk.Logic.Tests.csproj` kèm lý do.
 
-## Thêm một thẻ Cài đặt
+## Thêm một mục Cài đặt
 
 1. Thêm khóa vào `Core/DefaultConfig.json` và một thuộc tính trong `Core/Settings.cs`.
-2. Tạo `Ui/Settings/<Tên>Section.xaml` và `.xaml.cs`, cài `ISettingsSection`.
-3. Thẻ chỉ đọc và ghi qua `Settings`, không gọi `Config` trực tiếp.
-4. Thêm một dòng vào `Ui/Settings/SettingsSections.cs`: `Common` nếu người dùng hay cần, `Advanced` (mục Nâng cao, gập sẵn) nếu ít khi dùng.
-5. Chữ hiển thị thêm vào `lang/vi.json` rồi `lang/en.json`.
+2. Thêm một dòng vào `Presentation/SettingsCatalog.cs` (`ToggleItem`, `NumberItem`, `ChoiceItem`...), đúng thẻ; ít khi dùng thì vào nhóm Nâng cao. `SettingsView` tự vẽ, không cần sửa.
+3. Mục chỉ đọc và ghi qua `Settings`, không gọi `Config` trực tiếp.
+4. Chữ hiển thị thêm vào `lang/vi.json` rồi `lang/en.json`.
 
 ## Thêm một cột vào bảng sự kiện
 
-1. Cột nằm trong `Ui/Controls/TimelineList`, dùng chung cho mọi bảng sự kiện.
-2. Dữ liệu cột là thuộc tính của `TimelineItem` (`Ui/AppState.cs`), dựng từ bản ghi trong `Data/Models.cs`; trường mới thì thêm ở cả hai.
-3. Quy tắc tính giá trị (mức gấp, tách nhóm) viết thuần ở `Core/` hoặc `Ui/Due.cs`, có test.
+1. Giá trị cột là thuộc tính của dòng trong `Presentation/` (ví dụ `CalendarRow` ở `Presentation/Calendar.cs`), dựng từ `TimelineItem` (`Ui/AppState.cs`) và bản ghi trong `Data/Models.cs`; trường mới thì thêm ở cả hai.
+2. Quy tắc tính giá trị (mức gấp, tách nhóm) viết thuần ở `Core/` hoặc `Ui/Due.cs`, có test.
+3. Cột thêm vào `DataGrid` trong `Views/<Trang>View.axaml`: cột ngắn `Width="Auto"` kèm `MinWidth`, cột tên chia phần còn lại; không đặt độ rộng cứng làm mất chữ.
 4. Tiêu đề cột thêm vào `lang/vi.json` rồi `lang/en.json`.
-5. Tạo cột bằng `Grids.Text`, `Grids.Flex` hay `Grids.Right` để độ rộng giãn theo cỡ chữ đang chọn; không đặt độ rộng cứng làm mất chữ (DESIGN 6b-3).
 
 ## Trước khi gửi PR
 
 ```powershell
-dotnet format src/SoHocTap --verify-no-changes --severity warn
-dotnet build src/SoHocTap -c Release -warnaserror
-dotnet test tests/SoHocTap.Tests
+dotnet format src/BKStudyDesk.Core/BKStudyDesk.Core.csproj --verify-no-changes --severity warn
+dotnet format src/BKStudyDesk.Desktop/BKStudyDesk.Desktop.csproj --verify-no-changes --severity warn
+dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -warnaserror
+dotnet test tests/BKStudyDesk.Logic.Tests
+dotnet test tests/BKStudyDesk.Core.Tests
+dotnet test tests/BKStudyDesk.Math.Tests
 ```
 
-Sửa khung Luyện tập (`src/ui`) thì chạy thêm `npm run check` và `npx prettier --check src`. CI chạy đúng các lệnh này.
+Sửa giao diện thì chụp lại bằng `--snap=<ảnh.png>` (app tự vẽ ra ảnh, dùng dữ liệu demo), sáng và tối (`--theme=light`). CI chạy đúng các lệnh này trên Windows, macOS, Linux.
 
 ## Quy tắc
 
 - **Chỉ đọc:** không tính năng nào được nộp bài, đăng ký, hủy, thanh toán hay sửa dữ liệu trên hệ thống của trường.
 - **Không dữ liệu cá nhân** (tên, MSSV, token, đường dẫn máy) trong mã, ảnh, log hay issue.
 - **Code đơn giản:** hàm ngắn, làm một việc, tên rõ nghĩa. Comment giải thích *vì sao*, tiếng Anh hoặc tiếng Việt kèm thuật ngữ đều được.
-- **Chữ trên giao diện** nằm trong `src/SoHocTap/lang/*.json`: viết `vi.json` trước, giữ đủ chỗ trống `{0}`.
+- **Chữ trên giao diện** nằm trong `src/BKStudyDesk.Core/lang/*.json`: viết `vi.json` trước, giữ đủ chỗ trống `{0}`.
 - **Văn phong** theo [docs/van-phong.md](docs/van-phong.md) (tiếng Việt) và [docs/english-style.md](docs/english-style.md) (tiếng Anh): thuật ngữ, viết hoa, dấu câu, thông báo lỗi, CHANGELOG. Mỗi quy tắc ở đó có nguồn.
 - **Tài liệu hai ngôn ngữ:** sửa phần tiếng Việt thì sửa luôn phần tiếng Anh (file cùng tên trong `docs/en/`, trang Wiki tiếng Anh) trong cùng PR.
 - **Không đoán:** mẫu giao diện, giới hạn API, con số thời gian chờ... phải dựa trên tài liệu gốc (Microsoft Learn, mã nguồn, RFC) hoặc đo thật, và ghi nguồn trong comment. Câu nào trong README/Wiki hứa điều gì thì code phải làm đúng điều đó.

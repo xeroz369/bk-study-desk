@@ -7,8 +7,8 @@ using Windows.UI.Notifications;
 namespace BKStudyDesk.Desktop.Platform.Windows;
 
 /// <summary>
-/// Thông báo hệ thống của Windows (toast) cho bản không đóng gói: đăng ký tên hiện (AppUserModelId) dưới HKCU\Software\Classes, cách
-/// Windows App SDK làm cho app không đóng gói, rồi gửi toast hai dòng. Chỉ biên dịch cho net10.0-windows. Bấm vào thông báo khi app
+/// Thông báo hệ thống của Windows (toast). Bản cài thường: đăng ký tên hiện (AppUserModelId) dưới HKCU\Software\Classes, cách Windows
+/// App SDK làm cho app không đóng gói; bản Store: package đã có AUMID. Rồi gửi toast hai dòng. Chỉ biên dịch cho net10.0-windows. Bấm vào thông báo khi app
 /// đang chạy thì mở đúng trang.
 /// </summary>
 internal static class Toast
@@ -16,24 +16,27 @@ internal static class Toast
     private static bool _registered;
 
     /// <summary>Windows cho hiện thông báo của app không (người dùng, chính sách có thể tắt). Không gửi gì.</summary>
-    public static string Setting()
+    public static string Setting() => Notifier().Setting.ToString();
+
+    /// <summary>Bản Store (MSIX): AUMID là của package, dùng notifier mặc định; bản cài thường: đăng ký AUMID của app rồi dùng nó.</summary>
+    private static ToastNotifier Notifier()
     {
+        if (AppPackage.IsPackaged) return ToastNotificationManager.CreateToastNotifier();
         Register();
-        return ToastNotificationManager.CreateToastNotifier(AppInfo.Id).Setting.ToString();
+        return ToastNotificationManager.CreateToastNotifier(AppInfo.Id);
     }
 
     public static bool Show(string title, string body, Action onClick)
     {
         try
         {
-            Register();
             var xml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText02);
             var texts = xml.GetElementsByTagName("text");
             texts[0].AppendChild(xml.CreateTextNode(title));
             texts[1].AppendChild(xml.CreateTextNode(body));
             var toast = new ToastNotification(xml);
             toast.Activated += (_, _) => onClick();
-            ToastNotificationManager.CreateToastNotifier(AppInfo.Id).Show(toast);
+            Notifier().Show(toast);
             return true;
         }
         catch (Exception e) when (e is not OutOfMemoryException)
