@@ -175,8 +175,8 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         Put("exams", got.ContainsKey("exams"), () => MybkNormalize.Exams(got.GetValueOrDefault("exams")), perTerm: true);
         Put("gradeTerms", got.ContainsKey("gradesTerms"), () => MybkNormalize.GradeTerms(got.GetValueOrDefault("gradesTerms") as JsonArray));
         Put("grades", got.ContainsKey("gradesCourses"), () => MybkNormalize.Grades(got.GetValueOrDefault("gradesCourses") as JsonArray, special));
-        Put("curriculum", got.ContainsKey("curriculumInfo") && got.ContainsKey("curriculum"),
-            () => MybkNormalize.Curriculum(got.GetValueOrDefault("curriculumInfo") as JsonObject, got.GetValueOrDefault("curriculum") as JsonArray, special));
+        Put("curriculum", got.ContainsKey("curriculum"), () => MybkNormalize.Curriculum(got.GetValueOrDefault("curriculumInfo") as JsonObject,
+            got.GetValueOrDefault("curriculum") as JsonArray, special, prev?["curriculum"] as JsonObject));
         Put("components", extra.ContainsKey("components"), () => MybkNormalize.Components(extra.GetValueOrDefault("components") as JsonArray, special));
         Put("decisions", extra.ContainsKey("decisions"), () => MybkNormalize.Decisions(extra.GetValueOrDefault("decisions") as JsonArray));
         Put("socialWork", extra.ContainsKey("socialWork"), () => MybkNormalize.SocialWork(extra.GetValueOrDefault("socialWork") as JsonObject));
@@ -198,30 +198,16 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
                 JsonSerializer.Serialize(Fill(o["body"]?.GetValue<string>() ?? "{mssv}"))),
             _ => throw new InvalidOperationException($"Cấu hình API MyBK sai: {n}"),
         }).ToList();
-        var res = await browser.FetchAsync(reqs, ct, onEach);
+        var (res, retried) = await MybkReply.FetchAsync(browser, reqs, TimeSpan.FromSeconds(1.5), ct, onEach);
+        if (retried.Count > 0) Log.Info($"MyBK: gọi lại một lần {string.Join(", ", retried)} sau lỗi");
         var output = new Dictionary<string, JsonNode?>();
         foreach (var n in names)
         {
-            if (!res.TryGetValue(n, out var r) || r.Status != 200)
-            {
-                if (r is { Status: 401 or 403 } || r is { HasToken: false }) throw new SessionExpiredException("Phiên MyBK hết hạn, cần đăng nhập HCMUT lại.");
-                var why = r is null ? "không gửi được (MyBK đang giới hạn, đã tạm dừng)" : r.Status <= 0 ? "không kết nối được" : $"HTTP {r.Status}";
-                // Ghi kèm tóm tắt body (field báo lỗi, title trang), không chép cả body: có thể chứa dữ liệu cá nhân.
-                Log.Warn($"MyBK {n}: {why}{(r is null ? "" : ", " + MybkNormalize.ErrorSummary(r.Body))}");
-                log(SyncSignal.Warn(Label(n), $"{n}: {why}"));
-                continue;
-            }
-            JsonObject? body;
-            try { body = JsonNode.Parse(r.Body) as JsonObject; }
-            catch (JsonException) { body = null; }
-            if (body?["code"]?.ToString() is not ("200" or "204"))
-            {
-                var why = body is null ? "trả về không phải JSON" : $"mã {body["code"]} {body["msg"]}".Trim();
-                Log.Warn($"MyBK {n}: {why}");
-                log(SyncSignal.Warn(Label(n), $"{n}: {why}"));
-                continue;
-            }
-            output[n] = body["data"]?.DeepClone();
+            var reply = res.TryGetValue(n, out var r) ? MybkReply.Read(r) : new(null, "không gửi được (MyBK đang giới hạn, đã tạm dừng)", false);
+            if (reply.Why is not { } why) { output[n] = reply.Data; continue; }
+            // Ghi kèm tóm tắt body (field báo lỗi, title trang), không chép cả body: có thể chứa dữ liệu cá nhân.
+            Log.Warn($"MyBK {n}: {why}{(r is null ? "" : ", " + MybkNormalize.ErrorSummary(r.Body))}");
+            if (!MybkReply.Silent(n)) log(SyncSignal.Warn(Label(n), $"{n}: {why}"));
         }
         return output;
     }

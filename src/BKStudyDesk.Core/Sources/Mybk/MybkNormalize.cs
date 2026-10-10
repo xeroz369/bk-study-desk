@@ -223,11 +223,13 @@ public static partial class MybkNormalize
     /// Chương trình đào tạo. Mỗi row API là một môn nhưng kèm luôn số liệu của KHỐI (tcyeucau, tcdat, mhdat, hoanthanh),
     /// nên tách ra blocks[] và courses[]. Tiến độ khối tính theo tín chỉ (mhyeucau luôn là 0). Trạng thái môn do UI tự suy
     /// từ result/attempted, ghép với bảng điểm (CTĐT có thể cũ hơn) và thời khóa biểu (môn đang học).
+    /// <paramref name="info"/> null (API phần đầu lỗi hay trả rỗng): phần đầu lấy của <paramref name="previous"/> (bản đã lưu), danh sách vẫn mới.
     /// </summary>
-    public static JsonObject Curriculum(JsonObject? info, JsonArray? rows, IReadOnlyDictionary<string, string> special)
+    public static JsonObject Curriculum(JsonObject? info, JsonArray? rows, IReadOnlyDictionary<string, string> special, JsonObject? previous = null)
     {
         var list = (rows ?? []).OfType<JsonObject>().OrderBy(r => Long(r["stt"]) ?? 0).ToList();
         var (done, need) = Fraction(info?["sotctl"]);
+        JsonNode? Head(string key, JsonNode? fresh) => info is null ? previous?[key]?.DeepClone() : fresh;
         var blocks = list.GroupBy(r => r["khoikienthucid"]?.ToString() ?? "").Select(g =>
         {
             var r = g.First();
@@ -246,15 +248,15 @@ public static partial class MybkNormalize
         }).ToArray();
         return new JsonObject
         {
-            ["program"] = V(info?["tenctdt"]),
-            ["faculty"] = V(info?["tenkhoa"]),
-            ["year"] = V(info?["namapdung"]),
-            ["code"] = V(info?["mactdt"]),
-            ["creditsDone"] = done,
-            ["creditsNeed"] = need,
-            ["gpa10"] = Number(info?["tbtlhe10"]),
-            ["gpa4"] = Number(info?["tbtlhe4"]),
-            ["updated"] = V(info?["capnhatcuoi"]),
+            ["program"] = Head("program", V(info?["tenctdt"])),
+            ["faculty"] = Head("faculty", V(info?["tenkhoa"])),
+            ["year"] = Head("year", V(info?["namapdung"])),
+            ["code"] = Head("code", V(info?["mactdt"])),
+            ["creditsDone"] = Head("creditsDone", done),
+            ["creditsNeed"] = Head("creditsNeed", need),
+            ["gpa10"] = Head("gpa10", Number(info?["tbtlhe10"])),
+            ["gpa4"] = Head("gpa4", Number(info?["tbtlhe4"])),
+            ["updated"] = Head("updated", V(info?["capnhatcuoi"])),
             ["blocks"] = new JsonArray(blocks),
             ["courses"] = new JsonArray(list.Select(r => (JsonNode)new JsonObject
             {

@@ -21,6 +21,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Sửa lỗi
 
+- MyBK: API nào lỗi thoáng qua (server lỗi, mất kết nối, trả mã lỗi) thì app gọi lại một lần trước khi báo. Phần đầu của chương trình đào tạo (tên chương trình, tín chỉ, điểm trung bình) không đọc được thì giữ của lần trước và vẫn cập nhật danh sách môn, không báo "chưa đọc được: chương trình đào tạo".
 - Không còn cửa sổ trắng lóe lên ở góc màn hình mỗi lượt đồng bộ MyBK hay giữ phiên đăng nhập: trang chạy ngầm nằm hẳn ngoài màn hình và trong suốt.
 - Đồng bộ MyBK không còn dừng giữa chừng với lỗi "Unable to invoke script before any page was loaded": trình duyệt ẩn bị hủy giữa lượt thì app mở lại trang MyBK và chạy tiếp, ghi log nguyên nhân.
 - Cửa sổ tải không còn báo "Không có file mới" khi file tải hỏng: số file lỗi hiện riêng, chi tiết trong nhật ký.

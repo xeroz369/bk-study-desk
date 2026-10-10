@@ -23,6 +23,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- MyBK: an API that fails transiently (server error, lost connection, error code) is called once more before it is reported. If the curriculum header (program name, credits, GPA) cannot be read, the previous one is kept and the course list still updates, without the "some parts could not be read: curriculum" warning.
 - No more white window flashing in the corner of the screen on every MyBK sync or session keep-alive: the background page stays fully off-screen and transparent.
 - MyBK sync no longer stops halfway with "Unable to invoke script before any page was loaded": if the hidden browser is destroyed during a sync, the app reopens the MyBK page and carries on, and logs the cause.
 - The download window no longer says "No new files" when downloads failed: failed files are counted separately, with details in the log.

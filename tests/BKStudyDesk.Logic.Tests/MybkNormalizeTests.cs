@@ -92,6 +92,19 @@ public class MybkNormalizeTests
     }
 
     [Fact]
+    public void Curriculum_WithoutInfo_KeepsPreviousHeader()
+    {
+        // API phần đầu (curriculumInfo) lỗi: danh sách môn vẫn cập nhật, tên chương trình, tín chỉ, điểm trung bình giữ của lần trước.
+        var before = MybkNormalize.Curriculum(Study["curriculumInfo"] as JsonObject, Study["curriculum"] as JsonArray, Special);
+        var c = MybkNormalize.Curriculum(null, Study["curriculum"] as JsonArray, Special, before);
+        Assert.Equal(50, c["creditsDone"]!.GetValue<int>());
+        Assert.Equal(7.3, c["gpa10"]!.GetValue<double>());
+        Assert.Equal(before["program"]?.ToString(), c["program"]?.ToString());
+        Assert.Equal(3, c["courses"]!.AsArray().Count);
+        Assert.Null(MybkNormalize.Curriculum(null, Study["curriculum"] as JsonArray, Special)["creditsNeed"]);   // chưa có lần trước
+    }
+
+    [Fact]
     public void Components_DropsTotals_ToleratesBadJson()
     {
         var c = MybkNormalize.Components(Extra["components"] as JsonArray, Special);
