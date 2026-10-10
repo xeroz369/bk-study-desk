@@ -18,7 +18,7 @@ internal sealed class MybkBrowser : IBrowserRunner
 {
     private readonly HiddenWeb _hidden = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private bool _onApp;   // đang ở /app (có #hid_Token)
+    private WebPage? _app;   // trang đang ở /app (có #hid_Token); HiddenWeb bỏ trang đó (bị hủy) thì phải vào lại
     // Giãn cách các request API MyBK trong một lần đồng bộ (sources.mybk.gapMs); server báo 429/503 thì nghỉ hẳn một lúc.
     private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.mybk.gapMs", 300)));
 
@@ -44,7 +44,6 @@ internal sealed class MybkBrowser : IBrowserRunner
             await _gate.WaitAsync(ct);
             try
             {
-                await EnsureOnAppAsync(ct);
                 var results = new Dictionary<string, FetchResult>();
                 foreach (var r in requests)
                 {
@@ -52,7 +51,7 @@ internal sealed class MybkBrowser : IBrowserRunner
                         .Replace("__BODY__", r.Body is null ? "undefined" : JsonSerializer.Serialize(r.Body));
                     await ApiPace.WaitAsync(ct);
                     var sw = Stopwatch.StartNew();
-                    var o = JsonNode.Parse(await Page().EvalAwaitAsync(js, ScriptTimeout, ct) ?? "{}") as JsonObject;
+                    var o = JsonNode.Parse(await EvalOnAppAsync(js, ct) ?? "{}") as JsonObject;
                     var res = new FetchResult(o?["status"]?.GetValue<int>() ?? 0, o?["body"]?.GetValue<string>() ?? "", o?["auth"]?.GetValue<bool>() ?? false);
                     results[r.Name] = res;
                     Log.Debug($"MyBK {r.Name}: HTTP {res.Status}, {res.Body.Length / 1024} KB, {sw.ElapsedMilliseconds} ms");
@@ -79,7 +78,7 @@ internal sealed class MybkBrowser : IBrowserRunner
                 var page = Page();
                 var target = new Uri(url);
                 var prefix = target.AbsolutePath[..(target.AbsolutePath.LastIndexOf('/') + 1)];
-                _onApp = false;
+                _app = null;
                 // Hệ thống đăng ký môn (/dkmh) đi qua SSO rồi về trang chủ của nó trước: chỉ coi là tới khi đúng trang, rơi vào trang khác
                 // cùng hệ thống thì mở lại (tối đa 2 lần). Lần đầu vào trong phiên, trang chỉ là trang trung gian: chờ rồi mở lại.
                 var retries = 0;
@@ -115,7 +114,7 @@ internal sealed class MybkBrowser : IBrowserRunner
             if (!await _gate.WaitAsync(0, ct)) return null;
             try
             {
-                _onApp = false;
+                _app = null;
                 var mybkHost = SchoolUrls.Host(Config.Str("sources.mybk.site"));
                 try { await Page().NavigateUntilAsync(Config.Str("sources.mybk.casLogin"), u => u.Host == mybkHost, ct, failAt: u => SchoolUrls.IsSsoLogin(u.AbsoluteUri)); }
                 catch (SessionExpiredException) when (Platform.Credentials.Usable() is not null)
@@ -135,7 +134,7 @@ internal sealed class MybkBrowser : IBrowserRunner
     public void Release() => Dispatcher.UIThread.Post(() =>
     {
         if (!_gate.Wait(0)) return;
-        try { _hidden.Close(); _onApp = false; }
+        try { _hidden.Close(); _app = null; }
         finally { _gate.Release(); }
     });
 
@@ -144,20 +143,37 @@ internal sealed class MybkBrowser : IBrowserRunner
     {
         Log.Warn($"MyBK: bỏ trình duyệt ẩn sau lỗi ({why.GetType().Name}), lần sau tạo mới");
         _hidden.Close();
-        _onApp = false;
+        _app = null;
+    }
+
+    /// <summary>
+    /// Chạy một fetch trên trang /app. Trình duyệt ẩn bị hủy giữa chừng (HiddenWeb bỏ trang, script báo chưa có trang) thì vào lại /app
+    /// trên trang mới và chạy lại một lần: mọi API MyBK app gọi đều chỉ đọc nên chạy lại không đổi gì trên trường.
+    /// </summary>
+    private async Task<string?> EvalOnAppAsync(string js, CancellationToken ct)
+    {
+        await EnsureOnAppAsync(ct);
+        var page = Page();
+        try { return await page.EvalAwaitAsync(js, ScriptTimeout, ct); }
+        catch (InvalidOperationException) when (!_hidden.Holds(page))
+        {
+            Log.Info("MyBK: trình duyệt ẩn mất giữa chừng, vào lại /app rồi chạy lại");
+            await EnsureOnAppAsync(ct);
+            return await Page().EvalAwaitAsync(js, ScriptTimeout, ct);
+        }
     }
 
     /// <summary>Vào /app: thử thẳng bằng phiên MyBK đã có; hết thì đi qua SSO: /my/homeSSO.action, /app/login?type=cas, /app/.</summary>
     private async Task EnsureOnAppAsync(CancellationToken ct, bool afterAutoLogin = false)
     {
-        if (_onApp) return;
+        if (_app is { } cur && _hidden.Holds(cur)) return;
         var page = Page();
         static bool OnApp(Uri u) => u.AbsolutePath.StartsWith("/app", StringComparison.Ordinal) && !u.AbsolutePath.Contains("/login") && !u.AbsolutePath.Contains("/401");
         try
         {
             await page.NavigateUntilAsync(Config.Str("sources.mybk.home"), OnApp, ct,
                 failAt: u => u.AbsolutePath.Contains("/login", StringComparison.Ordinal) || u.AbsolutePath.Contains("/401", StringComparison.Ordinal));
-            if (await page.EvalAsync("String(!!document.getElementById('hid_Token')?.value)") == "true") { _onApp = true; return; }
+            if (await page.EvalAsync("String(!!document.getElementById('hid_Token')?.value)") == "true") { _app = page; return; }
         }
         catch (SessionExpiredException) { /* phiên MyBK hết, đi qua SSO */ }
         var hosts = LoginHosts.FromConfig();
@@ -182,7 +198,7 @@ internal sealed class MybkBrowser : IBrowserRunner
             return;
         }
         Log.Debug("MyBK: vào lại qua SSO");
-        _onApp = true;
+        _app = page;
         SsoSession.MarkAlive();
         await SsoKeep.PersistAsync(page);
     }

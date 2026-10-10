@@ -76,7 +76,7 @@ Report problems in [Issues](https://github.com/xeroz369/bk-study-desk/issues) wi
 - **Subjects**:
   - browse each subject's folder like File Explorer;
   - see recently updated files on your computer, deadlines, announcements, gradebook and classes on LMS;
-  - **download documents section by section**, filter by file type (PDF, slides, other), optionally extract .zip/.rar/.7z;
+  - **download documents** from one course or several at once (pick by term, course, section), only new files, filter by file type (PDF, slides, other), optionally extract .zip/.rar/.7z;
   - optional auto-download: each sync fetches new files (including assignment attachments), so they open even when LMS is slow.
 - **Grades & records**:
   - transcript by term with component scores;

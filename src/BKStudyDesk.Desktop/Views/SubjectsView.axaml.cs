@@ -20,7 +20,7 @@ namespace BKStudyDesk.Desktop.Views;
 public partial class SubjectsView : UserControl, IFillPage
 {
     private readonly AppState _state = null!;
-    private readonly Action<LmsCourse>? _download;
+    private readonly Action<IReadOnlyCollection<long>?>? _download;   // các lớp tích sẵn; null = học kỳ đang học
     private readonly Action<string>? _openLibrary;
     private IReadOnlyList<SubjectRow> _rows = [];
     private SubjectRow? _subject;
@@ -32,14 +32,14 @@ public partial class SubjectsView : UserControl, IFillPage
 
     /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ môn, tab, thư mục người dùng đang xem.</param>
     /// <param name="openLibrary">Mở trang Thư viện đúng môn này (nút Xem trong Thư viện); null thì ẩn nút.</param>
-    internal SubjectsView(AppState state, SubjectsView? previous, Action<LmsCourse>? download, Action<string>? openLibrary) : this()
+    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?>? download, Action<string>? openLibrary) : this()
     {
         _keepDir = previous?._dir;
         if (previous is not null) Tabs.SelectedIndex = previous.Tabs.SelectedIndex;
         _state = state;
         _download = download;
         _openLibrary = openLibrary;
-        DownloadButton.IsVisible = download is not null;
+        DownloadButton.IsVisible = DownloadAllButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
         _wanted = previous?.Selected;
         Build(null);
@@ -250,7 +250,14 @@ public partial class SubjectsView : UserControl, IFillPage
 
     private void OnOpenLms(object? sender, RoutedEventArgs e) => PickCourse(LmsButton, c => _ = OpenUrl(c.Url));
 
-    private void OnDownload(object? sender, RoutedEventArgs e) => PickCourse(DownloadButton, c => _download?.Invoke(c));
+    /// <summary>Tải tài liệu của môn đang xem: mọi lớp của môn (lý thuyết, thí nghiệm, kỳ khác) tích sẵn trong cùng cửa sổ, khỏi menu chọn lớp.</summary>
+    private void OnDownload(object? sender, RoutedEventArgs e)
+    {
+        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)]);
+    }
+
+    /// <summary>Tải tài liệu nhiều môn: mở cây với học kỳ đang học tích sẵn.</summary>
+    private void OnDownloadAll(object? sender, RoutedEventArgs e) => _download?.Invoke(null);
 
     private void OnOpenLibrary(object? sender, RoutedEventArgs e)
     {

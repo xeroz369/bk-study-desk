@@ -6,10 +6,14 @@
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.SubjectsView">
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,24">
-            <TextBlock Classes="title" Text="{l:T nav.subjects}" />
-            <TextBlock Classes="meta" Text="{l:T subjects.subtitle}" />
-        </StackPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
+            <Button x:Name="DownloadAllButton" DockPanel.Dock="Right" VerticalAlignment="Center" Content="{l:T subjects.downloadAll}"
+                    ToolTip.Tip="{l:T subjects.downloadAll.tip}" Click="OnDownloadAll" IsVisible="False" />
+            <StackPanel Spacing="2">
+                <TextBlock Classes="title" Text="{l:T nav.subjects}" />
+                <TextBlock Classes="meta" Text="{l:T subjects.subtitle}" />
+            </StackPanel>
+        </DockPanel>
         <Grid x:Name="Columns" RowDefinitions="*,Auto">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="{StaticResource ListMinWidth}" MaxWidth="{StaticResource ListMaxWidth}" />

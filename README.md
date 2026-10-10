@@ -80,7 +80,7 @@ Gặp lỗi thì báo ở [Issues](https://github.com/xeroz369/bk-study-desk/iss
 - **Môn học**:
   - duyệt thư mục từng môn kiểu File Explorer;
   - xem file mới cập nhật trên máy, deadline, thông báo, sổ điểm và các lớp trên LMS.
-  - **Tải tài liệu theo từng mục** của lớp trên LMS, chọn loại file (PDF, slide, khác), tùy chọn tự giải nén .zip/.rar/.7z.
+  - **Tải tài liệu** một lớp hay nhiều môn một lượt (chọn theo học kỳ, môn, mục), chỉ tải file mới, chọn loại file (PDF, slide, khác), tùy chọn tự giải nén .zip/.rar/.7z.
   - Bật tự tải: mỗi lần đồng bộ, app tải file mới (cả đề và file đính kèm bài tập), LMS chậm vẫn mở được.
 - **Điểm và học vụ**:
   - bảng điểm theo học kỳ kèm điểm thành phần;

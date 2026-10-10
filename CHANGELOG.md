@@ -6,6 +6,26 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.4] - 2026-10-09
+
+### Thêm
+
+- **Tải tài liệu nhiều môn một lượt** (#42): nút "Tải tài liệu nhiều môn..." ở trang Môn học mở cây học kỳ, môn, mục, tích sẵn học kỳ đang học. Học kỳ cũ chỉ đọc danh sách khi tích hay mở. Chỉ tải file chưa có hay có bản mới trên LMS, lưu vào thư mục từng môn như trước.
+- Cửa sổ tải có thanh tiến độ và dòng trạng thái: đang đọc mấy lớp, đang tải file thứ mấy, xong bao nhiêu file, bao nhiêu file lỗi; có nút Dừng.
+- Lượt tải lớn (từ 500 MB hay 200 file) hỏi lại một lần ngay trong cửa sổ; ổ không đủ chỗ thì không cho tải.
+
+### Thay đổi
+
+- Nút Tải tài liệu của một môn mở cùng cửa sổ, tích sẵn mọi lớp của môn (lý thuyết, thí nghiệm, kỳ khác), không còn menu chọn lớp.
+- Dung lượng từ 1 GB trở lên hiện bằng GB.
+
+### Sửa lỗi
+
+- MyBK: API nào lỗi thoáng qua (server lỗi, mất kết nối, trả mã lỗi) thì app gọi lại một lần trước khi báo. Phần đầu của chương trình đào tạo (tên chương trình, tín chỉ, điểm trung bình) không đọc được thì giữ của lần trước và vẫn cập nhật danh sách môn, không báo "chưa đọc được: chương trình đào tạo".
+- Không còn cửa sổ trắng lóe lên ở góc màn hình mỗi lượt đồng bộ MyBK hay giữ phiên đăng nhập: trang chạy ngầm nằm hẳn ngoài màn hình và trong suốt.
+- Đồng bộ MyBK không còn dừng giữa chừng với lỗi "Unable to invoke script before any page was loaded": trình duyệt ẩn bị hủy giữa lượt thì app mở lại trang MyBK và chạy tiếp, ghi log nguyên nhân.
+- Cửa sổ tải không còn báo "Không có file mới" khi file tải hỏng: số file lỗi hiện riêng, chi tiết trong nhật ký.
+
 ## [1.2.3] - 2026-10-09
 
 ### Thay đổi

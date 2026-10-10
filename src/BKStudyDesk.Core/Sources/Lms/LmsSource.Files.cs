@@ -102,8 +102,6 @@ public sealed partial class LmsSource
     {
         var contents = (JsonArray)await CallAsync("core_course_get_contents", [Arg("courseid", courseId)], ct);
         var index = JsonStore.ReadObject(FilesIndex);
-        bool Have(JsonObject f) => index[f["fileurl"]?.GetValue<string>() ?? ""] is JsonObject e
-                                   && LocalCopy(e) is { } p && (File.Exists(p) || Directory.Exists(e["extractedTo"]?.GetValue<string>() ?? ""));
         var files = Downloadable(contents).ToList();
         var list = new List<SectionInfo>();
         var i = 0;
@@ -112,18 +110,31 @@ public sealed partial class LmsSource
             var mine = files.Where(x => ReferenceEquals(x.Sec, sec)).Select(x => x.File).ToList();
             if (mine.Count > 0)
                 list.Add(new SectionInfo(i, WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? "Mục " + i),
-                    [.. mine.Select(f => new FileStat(KindOf(f["filename"]?.GetValue<string>()), f["filesize"]?.GetValue<long>() ?? 0, Have(f)))]));
+                    [.. mine.Select(f => new FileStat(KindOf(f["filename"]?.GetValue<string>()), f["filesize"]?.GetValue<long>() ?? 0, UpToDate(index, f)))]));
             i++;
         }
         return list;
     }
 
     /// <summary>
-    /// Tải các mục đã chọn của một khóa vào thư mục môn (giống lúc sync: chống trùng, giữ bản cũ). extract = true thì tự giải nén file zip.
-    /// <paramref name="kinds"/>: chỉ tải các loại file này (null = mọi loại).
+    /// File đã có trên máy đúng bản trên LMS (cùng timemodified): cửa sổ Tải tài liệu không đếm, lúc tải bỏ qua. Một điều kiện cho cả hai
+    /// chỗ để số "file mới" trên cửa sổ khớp số file thực tải (thanh tiến độ). File nén đã giải nén thì thư mục giải nén cũng tính là có.
     /// </summary>
-    public static async Task<int> DownloadSectionsAsync(long courseId, IReadOnlyCollection<int> sections, bool extract, Action<string> log, CancellationToken ct,
-        IReadOnlySet<FileKind>? kinds = null)
+    private static bool UpToDate(JsonObject index, JsonObject f) =>
+        index[f["fileurl"]?.GetValue<string>() ?? ""] is JsonObject e
+        && e["timemodified"]?.GetValue<long>() == f["timemodified"]?.GetValue<long>()
+        && (File.Exists(LocalCopy(e)) || Directory.Exists(e["extractedTo"]?.GetValue<string>() ?? ""));
+
+    /// <summary>Kết quả một lượt tải theo mục: số file mới hay cập nhật, số file lỗi (đã ghi vào nhật ký).</summary>
+    public readonly record struct DownloadResult(int Got, int Failed);
+
+    /// <summary>
+    /// Tải các mục đã chọn của một khóa vào thư mục môn (giống lúc sync: chống trùng, giữ bản cũ). extract = true thì tự giải nén file zip.
+    /// <paramref name="kinds"/>: chỉ tải các loại file này (null = mọi loại). <paramref name="step"/>: gọi với tên file ngay trước khi tải
+    /// từng file chưa có (file đã có không gọi), để cửa sổ báo tiến độ.
+    /// </summary>
+    public static async Task<DownloadResult> DownloadSectionsAsync(long courseId, IReadOnlyCollection<int> sections, bool extract, Action<string> log,
+        CancellationToken ct, IReadOnlySet<FileKind>? kinds = null, Action<string>? step = null)
     {
         var m = Course(courseId) ?? throw new InvalidOperationException("Chưa có khóa này, hãy đồng bộ LMS trước.");
         await Gate.WaitAsync(ct);
@@ -133,25 +144,30 @@ public sealed partial class LmsSource
             var chosen = contents.OfType<JsonObject>().Where((_, i) => sections.Contains(i)).ToHashSet();
             var index = JsonStore.ReadObject(FilesIndex);
             var hashes = new Dictionary<string, Dictionary<string, string>>();
-            var n = 0;
+            int n = 0, failed = 0;
             foreach (var (sec, mod, f) in Downloadable(contents).Where(x => chosen.Contains(x.Sec)
                          && (kinds is null || kinds.Contains(KindOf(x.File["filename"]?.GetValue<string>())))))
             {
                 ct.ThrowIfCancellationRequested();
+                if (UpToDate(index, f)) continue;
+                step?.Invoke(f["filename"]?.GetValue<string>() ?? "");
                 try
                 {
                     if (await SyncFileAsync(m, sec, mod, f, index, hashes, log, ct, extract) is not null) n++;
+                    // null mà vẫn chưa có trên máy (trùng nội dung thì chỉ mục đã ghi dedupOf, tính là có): tải hỏng, SyncFileAsync đã ghi log.
+                    else if (!UpToDate(index, f)) { failed++; log($"  lỗi: {f["filename"]}: không tải được"); }
                 }
                 // Một file lỗi (đang mở ở chương trình khác, ổ đầy) thì báo và tải tiếp file khác, không dừng cả lượt tải.
                 catch (Exception e) when (Recoverable(e, ct))
                 {
+                    failed++;
                     Log.Warn($"Tải {f["filename"]}: {e.Message}");
                     log($"  lỗi: {f["filename"]}: {e.Message}");
                 }
                 JsonStore.Write(FilesIndex, index);
             }
             Organizer.SaveHashCache();
-            return n;
+            return new(n, failed);
         }
         finally { Gate.Release(); }
     }
@@ -162,7 +178,7 @@ public sealed partial class LmsSource
         var url = f["fileurl"]!.GetValue<string>();
         var known = index[url] as JsonObject;
         var modified = f["timemodified"]?.GetValue<long>();
-        if (known is not null && known["timemodified"]?.GetValue<long>() == modified && File.Exists(LocalCopy(known))) return null;
+        if (UpToDate(index, f)) return null;
 
         var sub = new List<string> { SafeName(WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? "Chung")) };
         if (mod["modname"]!.GetValue<string>() == "folder")
