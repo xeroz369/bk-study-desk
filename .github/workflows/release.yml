@@ -305,8 +305,27 @@ jobs:
           if ($LASTEXITCODE) { throw 'Không đăng nhập được Partner Center. Xem dòng "Entra:" ở trên để biết sai secret, app hay tenant.' }
       - name: Submit to Microsoft Store
         shell: pwsh
+        env:
+          # Gói MSIX của app desktop cần quyền runFullTrust (restricted capability): Store cảnh báo và người kiểm duyệt cần lý do.
+          # Ghi vào notesForCertification của bản nộp trước khi commit, mỗi lần nộp đều có (cảnh báo thấy ở bản 1.2.4).
+          CERT_NOTES: >-
+            BK Study Desk is a desktop app built with .NET and Avalonia, packaged as MSIX. It needs runFullTrust to run as a desktop
+            process: it hosts WebView2 to sign in to the university portal, keeps its data in the user's local app data folder, and
+            uses a startup task and toast notifications. It does not install drivers or services and does not change system settings.
+            The app is read-only towards university systems.
         run: |
+          $ErrorActionPreference = 'Stop'
+          $id = $env:STORE_PRODUCT_ID
           $msix = (Get-ChildItem msix -Filter *.msix | Select-Object -First 1).FullName
-          msstore publish $msix -id $env:STORE_PRODUCT_ID
+          msstore publish $msix -id $id --noCommit
           if ($LASTEXITCODE) { throw 'Nộp lên Store lỗi (xem log msstore ở trên).' }
-          msstore submission status $env:STORE_PRODUCT_ID
+          # submission get in JSON kèm dòng trạng thái: lấy từ dấu { đầu tới dấu } cuối.
+          $raw = (msstore submission get $id | Out-String)
+          if ($LASTEXITCODE) { throw 'Không đọc được bản nháp vừa tạo.' }
+          $sub = $raw.Substring($raw.IndexOf('{'), $raw.LastIndexOf('}') - $raw.IndexOf('{') + 1) | ConvertFrom-Json
+          $sub | Add-Member -NotePropertyName notesForCertification -NotePropertyValue $env:CERT_NOTES -Force
+          $sub | ConvertTo-Json -Depth 100 | msstore submission update $id -
+          if ($LASTEXITCODE) { throw 'Không ghi được ghi chú kiểm duyệt vào bản nháp.' }
+          msstore submission publish $id
+          if ($LASTEXITCODE) { throw 'Không commit được bản nộp (bản nháp vẫn còn trong Partner Center).' }
+          msstore submission status $id
