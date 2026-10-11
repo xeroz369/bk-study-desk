@@ -177,6 +177,11 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         Put("gradeTerms", got.ContainsKey("gradesTerms"), () => MybkNormalize.GradeTerms(got.GetValueOrDefault("gradesTerms") as JsonArray));
         Put("grades", got.ContainsKey("gradesCourses"), () => MybkNormalize.Grades(got.GetValueOrDefault("gradesCourses") as JsonArray, special));
         // MyBK báo chưa có CTĐT (sinh viên năm nhất): ghi câu đó thay cho danh sách cũ, như trang MyBK; trang MyBK của app hiện rõ lý do.
+        if (got.TryGetValue("curriculum", out var rows) && !MybkNormalize.CurriculumReady(rows as JsonArray))
+        {
+            Log.Info("MyBK: danh sách CTĐT chưa sẵn sàng (không có msg \"done\"), giữ bản đã lưu");
+            got.Remove("curriculum");
+        }
         var noProgram = missing.GetValueOrDefault("curriculum");
         Put("curriculum", got.ContainsKey("curriculum") || noProgram is not null, () =>
         {

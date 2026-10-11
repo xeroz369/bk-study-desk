@@ -20,6 +20,19 @@ public class SubjectsTests
         [.. dirs.Select(d => (JsonNode)new JsonObject { ["name"] = d.Name, ["files"] = d.Files })];
 
     [Fact]
+    public void Recent_rows_mark_read_and_filter_unread()
+    {
+        var recent = JsonNode.Parse("""{"files":[{"name":"a.pdf","folder":".","path":"M/a.pdf","size":1,"modified":10},{"name":"b.pdf","folder":"C1","path":"M/C1/b.pdf","size":2,"modified":20}]}""")!.AsObject();
+        var marks = new SoHocTap.Files.ReadMarks();
+        marks.Set("M/a.pdf", 10, read: true);
+        var rows = SubjectsPresenter.RecentRows(recent, marks);
+        Assert.True(rows[0].Read);
+        Assert.Equal("", rows[0].ReadText);
+        Assert.False(rows[1].Read);
+        Assert.Equal(["b.pdf"], SubjectsPresenter.RecentRows(recent, marks, unreadOnly: true).Select(r => r.Name));
+    }
+
+    [Fact]
     public void Subjects_LocalOnly_NotOnLms()
     {
         var rows = SubjectsPresenter.Rows(Lms([]), Scan(("Vật lý", 3)));

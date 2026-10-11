@@ -79,6 +79,9 @@ public partial class QuizRunView : UserControl
         _service = service;
         _make = make;
         _title = title;
+        // Phím tắt (QuizKeys): nghe ở cửa sổ để bấm được ngay cả khi chưa bấm vào câu nào; rời trang thì gỡ.
+        AttachedToVisualTree += (_, _) => { if (TopLevel.GetTopLevel(this) is { } top) top.KeyDown += OnQuizKey; };
+        DetachedFromVisualTree += (_, _) => { if (TopLevel.GetTopLevel(this) is { } top) top.KeyDown -= OnQuizKey; };
         TitleText.Text = title;
         EmptyText.Text = empty;
         NewRoundButton.IsVisible = newRound;
@@ -253,6 +256,25 @@ public partial class QuizRunView : UserControl
         if (e.Key != Key.Enter) return;
         e.Handled = true;
         Check();
+    }
+
+    private void OnQuizKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Handled || e.KeyModifiers != KeyModifiers.None || !QuestionCard.IsVisible) return;
+        var typing = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is TextBox;
+        switch (SoHocTap.Presentation.Practice.QuizKeys.Of(e.Key.ToString(), typing, _choices.Count, out var option))
+        {
+            case SoHocTap.Presentation.Practice.QuizKey.Choose:
+                // Một đáp án: chọn ô đó; nhiều đáp án: bật tắt ô đó. Enter mới chấm, như bấm Kiểm tra.
+                if (_choices[option] is CheckBox box) box.IsChecked = box.IsChecked != true;
+                else foreach (var c in _choices) c.IsChecked = ReferenceEquals(c, _choices[option]);
+                break;
+            case SoHocTap.Presentation.Practice.QuizKey.Check when CheckButton.IsVisible && CheckButton.IsEnabled: Check(); break;
+            case SoHocTap.Presentation.Practice.QuizKey.Prev when PrevButton.IsEnabled: OnPrev(null, e); break;
+            case SoHocTap.Presentation.Practice.QuizKey.Next when NextButton.IsEnabled: OnNext(null, e); break;
+            default: return;
+        }
+        e.Handled = true;
     }
 
     private void OnPrev(object? sender, RoutedEventArgs e) => Show(Math.Max(0, _index - 1));

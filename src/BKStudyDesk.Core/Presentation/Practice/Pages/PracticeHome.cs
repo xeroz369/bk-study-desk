@@ -13,7 +13,11 @@ public sealed record PracticeToday(int Due, int Review, Entry? Next);
 
 public sealed record PracticeLessonRow(string Id, string Title, string Sub, LessonStatus Status, string StatusText);
 
-public sealed record PracticeUnitRow(string Title, List<PracticeLessonRow> Lessons);
+/// <summary>Một chương: Done/Total đếm trên mọi bài của chương (kể cả bài chưa soạn, như dòng phụ của môn), giữ nguyên khi lọc bài.</summary>
+public sealed record PracticeUnitRow(string Title, List<PracticeLessonRow> Lessons, int Done, int Total)
+{
+    public string Header => L.F("practice.unit.header", Title, Done, Total);
+}
 
 public sealed record PracticeCourseRow(string Id, string Name, string? Code, int Done, int Total, int Questions, bool CanRandomExam, bool CanMix, string? Exam, string Sub,
     string ExamText,
@@ -41,6 +45,20 @@ public sealed record PracticeHomeModel(PracticeToday Today, List<PracticeCourseR
 /// <summary>Trang chính Luyện tập: tab Hôm nay, Môn học, Quiz của bạn, Kết quả. Chỉ dựng dữ liệu để hiện, không đụng control.</summary>
 public static class PracticeHome
 {
+    /// <summary>
+    /// Ô lọc tab Môn học (bỏ dấu, không phân biệt hoa thường): tên hay mã môn khớp thì giữ cả môn; không thì chỉ giữ bài có tên khớp,
+    /// bỏ chương, môn không còn bài nào. Ô trống thì trả nguyên danh sách.
+    /// </summary>
+    public static IReadOnlyList<PracticeCourseRow> Filter(IReadOnlyList<PracticeCourseRow> courses, string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return courses;
+        var q = query.Trim();
+        return [.. courses.Select(c => Files.NameMatch.ContainsFolded(c.Name, q) || Files.NameMatch.ContainsFolded(c.Code, q) ? c
+                : c with { Units = [.. c.Units.Select(u => u with { Lessons = [.. u.Lessons.Where(l => Files.NameMatch.ContainsFolded(l.Title, q))] })
+                    .Where(u => u.Lessons.Count > 0)] })
+            .Where(c => c.Units.Count > 0)];
+    }
+
     public static PracticeHomeModel Build(StudyRegistry study, PracticeProgress progress, IReadOnlyList<InstalledPack> packs, IReadOnlyList<QuizInfo> quizzes)
     {
         var today = new PracticeToday(progress.DueQuestions(limit: int.MaxValue).Count, progress.ReviewCount(), progress.NextLesson());
@@ -54,13 +72,17 @@ public static class PracticeHome
                 exam,
                 L.F("practice.course.sub", stats.Done, stats.Total, questions),
                 exam is null ? L.T("practice.exams.noDate") : L.F("practice.exams.examSub", exam),
-                c.Units.Select(u => new PracticeUnitRow(u.Title, u.Lessons.Select(e =>
+                c.Units.Select(u =>
                 {
-                    var status = progress.Status(e.Id);
-                    var n = study.Lessons.TryGetValue(e.Id, out var l) ? l.Questions?.Count ?? 0 : 0;
-                    var sub = status == LessonStatus.NotWritten ? L.T("practice.lesson.notWritten") : L.F("practice.lesson.sub", n);
-                    return new PracticeLessonRow(e.Id, e.Title, sub, status, status.Label());
-                }).ToList())).ToList());
+                    var lessons = u.Lessons.Select(e =>
+                    {
+                        var status = progress.Status(e.Id);
+                        var n = study.Lessons.TryGetValue(e.Id, out var l) ? l.Questions?.Count ?? 0 : 0;
+                        var sub = status == LessonStatus.NotWritten ? L.T("practice.lesson.notWritten") : L.F("practice.lesson.sub", n);
+                        return new PracticeLessonRow(e.Id, e.Title, sub, status, status.Label());
+                    }).ToList();
+                    return new PracticeUnitRow(u.Title, lessons, lessons.Count(l => l.Status == LessonStatus.Done), lessons.Count);
+                }).ToList());
         }).ToList();
         var quizRows = packs.Select(p => p.Pack is { } pk
                 ? new PracticeQuizRow(pk.Title, L.F("practice.quiz.packSub", p.Questions, string.Join(", ", pk.Authors.Select(a => a.Name))), false, "", p.File)

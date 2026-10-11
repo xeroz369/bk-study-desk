@@ -50,10 +50,10 @@
             <x:Double x:Key="ListMaxWidth">320</x:Double>
             <!-- Luyện tập: thẻ câu hỏi, bài học rộng tối đa khoảng 80 chữ một dòng ở cỡ chữ thân (đọc dễ hơn dòng dài cả màn hình) -->
             <x:Double x:Key="ReadingMaxWidth">880</x:Double>
-            <!-- Cỡ chữ trang Luyện tập (Ctrl+cộng, Ctrl+trừ): phần trăm, bước mỗi lần bấm. -->
-            <x:Int32 x:Key="PracticeZoomMin">80</x:Int32>
-            <x:Int32 x:Key="PracticeZoomMax">160</x:Int32>
-            <x:Int32 x:Key="PracticeZoomStep">10</x:Int32>
+            <!-- Cỡ chữ vùng nội dung cả app (Ctrl+cộng, Ctrl+trừ): phần trăm, bước mỗi lần bấm. -->
+            <x:Int32 x:Key="ZoomMin">80</x:Int32>
+            <x:Int32 x:Key="ZoomMax">160</x:Int32>
+            <x:Int32 x:Key="ZoomStep">10</x:Int32>
             <!-- Bảng Đồng bộ và thông báo (Flyout của nút Đồng bộ trên thanh): rộng cố định, cao hơn thì tự cuộn -->
             <x:Double x:Key="PanelWidth">400</x:Double>
             <x:Double x:Key="PanelMaxHeight">560</x:Double>

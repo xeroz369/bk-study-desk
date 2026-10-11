@@ -36,6 +36,16 @@ public static class NotifyDigest
         return latest > lastDigest;
     }
 
+    /// <summary>
+    /// "Tạm im tới sáng mai": mốc giờ VN <paramref name="morning"/> (phút trong ngày) kế tiếp sau <paramref name="now"/>.
+    /// Bấm lúc 2 giờ sáng thì im tới sáng nay, bấm buổi tối thì tới sáng hôm sau.
+    /// </summary>
+    public static long NextMorning(long now, int morning)
+    {
+        var at = VnTime.FromWall(VnTime.ToWall(now).Date.AddMinutes(morning));
+        return at > now ? at : VnTime.FromWall(VnTime.ToWall(now).Date.AddDays(1).AddMinutes(morning));
+    }
+
     /// <summary>Bài này chờ giờ gom (còn từ <paramref name="immediateHours"/> giờ trở lên), hay báo ngay.</summary>
     public static bool Hold(long due, long now, int immediateHours) => due - now >= immediateHours * 3600L;
 }

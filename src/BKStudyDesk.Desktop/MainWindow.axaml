@@ -43,8 +43,11 @@
         </Border>
         <!-- Trang đăng nhập (Views/LoginView) phủ lên vùng nội dung khi cần mật khẩu, không mở cửa sổ riêng. -->
         <Panel>
+            <!-- Cỡ chữ cả vùng nội dung (Ctrl+cộng, Ctrl+trừ, Ctrl+0, Ctrl+lăn chuột): MainWindow.SetZoom, config app.zoom. -->
             <ScrollViewer x:Name="Scroller">
-                <Border x:Name="Page" Margin="24,24,24,32" />
+                <LayoutTransformControl x:Name="Zoom">
+                    <Border x:Name="Page" Margin="24,24,24,32" />
+                </LayoutTransformControl>
             </ScrollViewer>
             <Border x:Name="LoginHost" Background="{DynamicResource PageBg}" IsVisible="False" />
         </Panel>

@@ -54,6 +54,16 @@ public partial class MainWindow : Window
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + NavCount, KeyModifiers.Control), Command = new Command(() => Show(NavCount)) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.F5), Command = new Command(SyncNow) });   // như 1.x
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Left, KeyModifiers.Alt), Command = new Command(Back) });
+        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.K, KeyModifiers.Control), Command = new Command(OpenQuick) });
+        ApplyZoom(Config.Int("app.zoom", Config.Int("practice.zoom", 100)));   // practice.zoom: cỡ chữ riêng Luyện tập trước 1.2.5
+        foreach (var (key, step) in new[] { (Key.OemPlus, 1), (Key.Add, 1), (Key.OemMinus, -1), (Key.Subtract, -1), (Key.D0, 0), (Key.NumPad0, 0) })
+            KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(key, KeyModifiers.Control), Command = new Command(() => ZoomStep(step)) });
+        Scroller.AddHandler(PointerWheelChangedEvent, (_, e) =>
+        {
+            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
+            ZoomStep(e.Delta.Y > 0 ? 1 : -1);
+            e.Handled = true;
+        }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         SettingsButton.Content = BarLabel(L.T("nav.settings"));
         SettingsButton.Click += (_, _) => Show(NavCount);
         MoreSettings.Click += (_, _) => Show(NavCount);
@@ -86,7 +96,7 @@ public partial class MainWindow : Window
         AppEvents.UnhandledError += e => Avalonia.Threading.Dispatcher.UIThread.Post(() => _notices.Add(new Notice(Format.Now, L.T("error.unhandled"), e.Message, "")));
         var args = Environment.GetCommandLineArgs();
         // Trang mở đầu: cờ --mon, --lich, --thu-vien... (chụp kiểm tra), không thì trang đang xem lúc đóng app lần trước.
-        var snapping = args.Any(a => a.StartsWith("--snap=", StringComparison.Ordinal));
+        var snapping = _snapping = args.Any(a => a.StartsWith("--snap=", StringComparison.Ordinal));
         if (!snapping) _placement.Apply(this);   // ảnh chụp kiểm tra luôn cùng cỡ trong XAML, hay cỡ của --size=RộngxCao (ảnh Store tối thiểu 1366x768)
         if (args.FirstOrDefault(a => a.StartsWith("--size=", StringComparison.Ordinal))?[7..].Split('x') is [var sw, var sh]
             && double.TryParse(sw, System.Globalization.CultureInfo.InvariantCulture, out var w) && double.TryParse(sh, System.Globalization.CultureInfo.InvariantCulture, out var h))
@@ -108,6 +118,7 @@ public partial class MainWindow : Window
         if (args.Contains("--toastcheck")) { Log.Info($"Toastcheck: {Platform.Windows.Toast.Setting()}"); Environment.Exit(0); }   // không gửi thông báo
 #endif
         if (args.Contains("--panel")) Opened += (_, _) => StatusButton.Flyout?.ShowAt(StatusButton);   // chụp kiểm tra bảng Thông báo
+        if (args.Contains("--quick")) Opened += (_, _) => OpenQuick();   // kiểm tra tìm nhanh bằng UI Automation
         if (args.Contains("--login")) Opened += (_, _) => Login();
         if (args.Contains("--event")) Opened += async (_, _) => await new EventWindow(null, null).ShowDialog(this);   // chụp kiểm tra hộp thoại Thêm sự kiện
         if (args.Contains("--setup")) Opened += (_, _) => { var (f, u) = FirstRunWindow.Both(); f.Show(this); u.Show(this); };   // chụp kiểm tra câu hỏi lần đầu
@@ -128,6 +139,43 @@ public partial class MainWindow : Window
     }
 
     private async void Show(int index, bool remember = true) => await ShowAsync(index, remember);
+
+    // Tìm nhanh Ctrl+K: trang, môn (theo LMS), bài học (khi Luyện tập đã nạp; chưa mở Luyện tập lần nào thì chưa đọc sổ, đỡ tốn pin).
+    private Flyout? _quick;
+
+    private void OpenQuick()
+    {
+        if (_quick is null)
+        {
+            var panel = new QuickSearchPanel();
+            _quick = new Flyout { Content = panel, Placement = PlacementMode.Bottom };
+            panel.Picked += item => { _quick.Hide(); _ = GoQuickAsync(item.Target); };
+        }
+        List<QuickItem> items = [.. _pages.Select((p, i) => new QuickItem(p.Title, L.T("quick.page"), $"page:{i}"))];
+        items.AddRange(SubjectsPresenter.Rows(_host.State.Lms, null).Select(r => new QuickItem(r.Name, L.T("quick.subject"), "subject:" + r.Name)));
+        if (_practice is { } practice) items.AddRange(practice.QuickItems());
+        ((QuickSearchPanel)_quick.Content!).Reset(items);
+        _quick.ShowAt(Bar);
+    }
+
+    private async Task GoQuickAsync(string target)
+    {
+        var (kind, value) = target.IndexOf(':') is var i and >= 0 ? (target[..i], target[(i + 1)..]) : (target, "");
+        switch (kind)
+        {
+            case "page" when int.TryParse(value, out var index):
+                await ShowAsync(index, true);
+                break;
+            case "subject":
+                await ShowAsync(1, true);
+                _subjects?.SelectSubject(value);
+                break;
+            case "lesson":
+                await ShowAsync(4, true);
+                _practice?.OpenLessonById(value);
+                break;
+        }
+    }
 
     private int _navGen;   // lượt chuyển trang mới nhất
 
@@ -155,7 +203,12 @@ public partial class MainWindow : Window
         SettingsButton.Classes.Set("on", index == NavCount);
         More.Classes.Set("on", index == NavCount);   // Cài đặt nằm trong nút Thêm khi thanh hẹp
         if (index != _shownIndex) FitBar();   // trang đang xem luôn có mục trên thanh
+        var old = Page.Child as ITabbedPage;
+        if (index != _shownIndex && old is not null) SaveTab(_shownIndex, old.Tab);
         var page = _pages[index].Build();
+        // Tab: dựng lại cùng trang (dữ liệu mới) thì giữ tab đang xem; sang trang khác thì mở tab lần trước (ui.tab.<route>).
+        if (page is ITabbedPage tabbed && !ReferenceEquals(page, old))
+            tabbed.Tab = index == _shownIndex && old is not null ? old.Tab : _snapping ? 0 : Config.Int($"ui.tab.{Routes[index]}", 0);
         // Trang lấp đầy (bảng) nhận đúng khung cửa sổ và tự cuộn; trang thường cuộn cả vùng.
         Scroller.VerticalScrollBarVisibility = page is IFillPage ? Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled : Avalonia.Controls.Primitives.ScrollBarVisibility.Auto;
         Page.MaxWidth = page is IFillPage ? double.PositiveInfinity : (double)this.FindResource("ContentMaxWidth")!;   // bảng dùng hết bề ngang, trang chữ giữ độ rộng dễ đọc
@@ -164,6 +217,31 @@ public partial class MainWindow : Window
         if (changed) Scroller.Offset = default;   // trang khác: về đầu trang (dựng lại cùng trang vì dữ liệu mới thì giữ chỗ đang xem)
         _shownIndex = index;
         if (changed) ShowInfo();   // MyBK hết phiên chỉ bật dải khi đang ở trang MyBK (MybkLoginPrompt)
+    }
+
+    private int _zoom = 100;
+
+    private static int Token(string key) => (int)Application.Current!.FindResource(key)!;
+
+    // Cỡ chữ vùng nội dung theo phần trăm (LayoutTransformControl Zoom), trong khoảng ZoomMin..ZoomMax của Tokens.
+    private void ApplyZoom(int percent)
+    {
+        _zoom = Math.Clamp(percent, Token("ZoomMin"), Token("ZoomMax"));
+        Zoom.LayoutTransform = _zoom == 100 ? null : new Avalonia.Media.ScaleTransform(_zoom / 100.0, _zoom / 100.0);
+    }
+
+    /// <param name="step">1 to hơn, -1 nhỏ hơn, 0 về 100%.</param>
+    private void ZoomStep(int step)
+    {
+        ApplyZoom(step == 0 ? 100 : _zoom + step * Token("ZoomStep"));
+        if (Config.Int("app.zoom", 100) != _zoom) Config.Set("app.zoom", _zoom);
+    }
+
+    private bool _snapping;   // chụp kiểm tra: luôn mở tab đầu (hay --tab=), không đọc, không ghi tab đã nhớ
+
+    private void SaveTab(int index, int tab)
+    {
+        if (!_snapping && index >= 0 && tab >= 0 && Config.Int($"ui.tab.{Routes[index]}", 0) != tab) Config.Set($"ui.tab.{Routes[index]}", tab);
     }
 
     private readonly NoticeLog _notices = new();
@@ -223,7 +301,11 @@ public partial class MainWindow : Window
             var text = new StackPanel { Spacing = 2, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Children = { Wrap(r.State) } };
             if (r.Problem is { } p) text.Children.Add(Wrap(p, "meta", "danger"));
             if (r.Detail is { Length: > 0 } d) text.Children.Add(Wrap(d, "sub"));
-            panel.Children.Add(Row(text, r.Problem is null ? null : Act(L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry"), r.NeedsLogin ? Login : SyncNow)));
+            // Có vấn đề: nút sửa (đăng nhập lại, thử lại nguồn đó); không thì nút đồng bộ riêng nguồn này (ẩn khi đang đồng bộ).
+            var id = r.Id;
+            var fix = r.Problem is not null ? Act(L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry"), r.NeedsLogin ? Login : () => _host.Hub.Start(id, force: true))
+                : r.Syncing ? null : Act(L.F("status.panel.syncOne", r.Label), () => _host.Hub.Start(id, force: true));
+            panel.Children.Add(Row(text, fix));
         }
         // Trang chủ của từng nguồn (như nút Mở LMS, Mở MyBK ở thanh trạng thái 1.x): mở trong cửa sổ app, dùng chung đăng nhập.
         panel.Children.Add(new StackPanel
@@ -238,6 +320,10 @@ public partial class MainWindow : Window
         panel.Children.Add(new Separator { Margin = default });   // hết bề ngang, như vạch kẻ của thẻ
         panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.notices"), Classes = { "card-title" } },
             _notices.Items.Count == 0 ? null : Act(L.T("status.panel.clear"), _notices.Clear)));
+        // Tạm im nhắc hạn tới sáng mai (DeadlineNotifier.Mute): đang im thì ghi tới giờ nào và cho bật lại.
+        var muted = _host.RemindersMutedUntil;
+        panel.Children.Add(Row(Wrap(muted is { } until ? L.F("status.panel.mutedUntil", Format.Hm(until)) : L.T("status.panel.reminders"), "meta"),
+            Act(L.T(muted is null ? "status.panel.mute" : "status.panel.unmute"), () => { _host.MuteReminders(muted is null); ShowSync(); })));
         if (_notices.Items.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("status.panel.noNotices"), Classes = { "meta" } });
         foreach (var n in _notices.Items)
         {
@@ -432,6 +518,7 @@ public partial class MainWindow : Window
         {
             _placement.Capture(this, Routes[_current]);
             _placement.Save();
+            if (Page.Child is ITabbedPage t) SaveTab(_shownIndex, t.Tab);   // thu xuống khay rồi tắt máy thì vẫn nhớ tab
             if (_exiting || !SoHocTap.Core.Settings.App.CloseToTray) return;
             e.Cancel = true;
             Hide();
@@ -554,6 +641,8 @@ public partial class MainWindow : Window
     {
         var w = new DownloadWindow(pick);
         w.Closed += (_, _) => Show(_current);
+        // Tải lâu, người dùng sang app khác hay thu nhỏ: báo bằng thông báo hệ điều hành khi xong; đang nhìn thì đã thấy dòng kết quả.
+        w.Finished += (text, seen) => { if (!seen) _notifier?.Show(L.T("download.title"), text, "mon", outside: true); };
         w.ShowDialog(this);
     }
 
@@ -570,6 +659,14 @@ public partial class MainWindow : Window
         using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(size, new Vector(96 * RenderScaling, 96 * RenderScaling));
         bitmap.Render(this);
         bitmap.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        // Popup nằm ngoài cửa sổ chính: ô tìm nhanh đang mở (--quick) thì vẽ thêm ra <tên>-popup.png.
+        if (_quick is { IsOpen: true, Content: Control c } && TopLevel.GetTopLevel(c) is { } popup && !ReferenceEquals(popup, this))
+        {
+            var ps = new PixelSize((int)(popup.Bounds.Width * RenderScaling), (int)(popup.Bounds.Height * RenderScaling));
+            using var pb = new Avalonia.Media.Imaging.RenderTargetBitmap(ps, new Vector(96 * RenderScaling, 96 * RenderScaling));
+            pb.Render(popup);
+            pb.Save(Path.ChangeExtension(path, null) + "-popup.png", new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        }
         _exiting = true;
         Close();
     };

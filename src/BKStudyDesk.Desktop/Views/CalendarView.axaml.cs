@@ -14,7 +14,7 @@ namespace BKStudyDesk.Desktop.Views;
 /// Trang Lịch: nối CalendarPresenter (Sắp tới) và WeekPresenter (Thời khóa biểu, Lịch thi, xuất .ics) vào ba bảng. Sự kiện tự thêm:
 /// thêm, sửa (bấm đúp), xóa (menu chuột phải, xác nhận ở menu con) qua CustomEventsData.Store của 1.x. Báo kết quả ở dòng Note.
 /// </summary>
-public partial class CalendarView : UserControl, IFillPage
+public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 {
     private readonly AppState _state = null!;
     private static bool _showClasses, _showDone;   // nhớ trong lần chạy app (trang dựng lại khi có dữ liệu mới)
@@ -39,6 +39,8 @@ public partial class CalendarView : UserControl, IFillPage
 
     /// <summary>Mở một tab theo thứ tự (tham số --tab=N khi chụp kiểm tra).</summary>
     public void SelectTab(int index) => Tabs.SelectedIndex = Math.Clamp(index, 0, Tabs.ItemCount - 1);
+
+    public int Tab { get => Tabs.SelectedIndex; set => SelectTab(value); }
 
     private void Say(string text)
     {
@@ -78,7 +80,6 @@ public partial class CalendarView : UserControl, IFillPage
     {
         var monday = Monday;
         WeekText.Text = WeekPresenter.Title(monday);
-        ThisWeek.IsEnabled = _offset != 0;
         var noSlot = WeekPresenter.NoSlot(_state.Mybk);
         NoSlot.Text = noSlot.Count == 0 ? "" : L.F("calendar.noSlot", string.Join(", ", noSlot));
         NoSlot.IsVisible = noSlot.Count > 0;
@@ -108,7 +109,13 @@ public partial class CalendarView : UserControl, IFillPage
 
     private void OnPrevWeek(object? sender, RoutedEventArgs e) { _offset--; ShowWeek(); }
     private void OnNextWeek(object? sender, RoutedEventArgs e) { _offset++; ShowWeek(); }
-    private void OnThisWeek(object? sender, RoutedEventArgs e) { _offset = 0; ShowWeek(); }
+    // Hôm nay: về tuần này và cuộn lưới về giờ hiện tại (như nút Today của lịch Outlook, Google), bấm được cả khi đang ở tuần này.
+    private void OnThisWeek(object? sender, RoutedEventArgs e)
+    {
+        _offset = 0;
+        WeekGrid.ScrollToNowNext();
+        ShowWeek();
+    }
 
     private async void OnWeekOpen(object? sender, TappedEventArgs e)
     {

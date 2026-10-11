@@ -1,5 +1,6 @@
 using SoHocTap.Data;
 using SoHocTap.Presentation;
+using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
@@ -42,6 +43,24 @@ public class MybkTests
         Assert.Equal(["B1", "A1", "X1"], rows.Select(r => r.Code));
         Assert.True(rows[0].Fail);
         Assert.Equal("HK252", rows[1].Group);
+    }
+
+    [Fact]
+    public void Grades_search_by_code_or_name_without_diacritics()
+    {
+        var rows = MybkPresenter.Grades(Data([Grade("20252", "MT1005", 8, 1), Grade("20261", "PH1003", 3, 0)]));
+        Assert.Equal(["PH1003"], MybkPresenter.SearchGrades(rows, "ph10").Select(r => r.Code));
+        Assert.Equal(["MT1005"], MybkPresenter.SearchGrades(rows, "mon mt").Select(r => r.Code));   // tên "Môn MT1005", gõ không dấu
+        Assert.Same(rows, MybkPresenter.SearchGrades(rows, "  "));
+    }
+
+    [Fact]
+    public void Not_passed_filter_is_what_is_still_owed()
+    {
+        var f = MybkPresenter.Filters.Single(x => x.Match.Contains(CourseStatus.ChuaHoc) && x.Match.Contains(CourseStatus.HocLai));
+        Assert.DoesNotContain(CourseStatus.Dat, f.Match);
+        Assert.DoesNotContain(CourseStatus.Mien, f.Match);
+        Assert.DoesNotContain(CourseStatus.LuaChon, f.Match);
     }
 
     [Fact]

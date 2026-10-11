@@ -288,7 +288,8 @@
     "lastHours": 2,
     "urgentHours": 6,
     "soonHours": 24,
-    "digestTimes": "07:00, 12:00, 19:00"
+    "digestTimes": "07:00, 12:00, 19:00",
+    "morning": "07:00"
   },
   "archives": {
     "extract": true,

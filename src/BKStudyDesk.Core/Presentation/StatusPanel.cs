@@ -7,7 +7,8 @@ namespace SoHocTap.Presentation;
 /// Tình trạng một nguồn trong bảng Thông báo: dòng chữ (đang làm bước nào, xong lúc nào), vấn đề nếu có (lỗi, phần không đọc được),
 /// chi tiết kỹ thuật, và có cần đăng nhập lại không (View hiện nút Đăng nhập lại, còn lại là Thử lại).
 /// </summary>
-public sealed record SourceState(string Label, string State, string? Problem, string? Detail, bool Syncing, bool NeedsLogin);
+/// <param name="Id">Tên nguồn trong SourceHub (SourceIds), để đồng bộ riêng nguồn này từ bảng Thông báo.</param>
+public sealed record SourceState(string Label, string State, string? Problem, string? Detail, bool Syncing, bool NeedsLogin, string Id = "");
 
 /// <summary>Một thông báo trong app (nhắc hạn, có bản mới, đăng nhập xong); Page là trang mở khi bấm.</summary>
 public sealed record Notice(long Time, string Title, string Body, string Page);
@@ -32,7 +33,7 @@ public static class StatusPanel
         else if (!syncing && s.Warnings(name) is { Count: > 0 } w) (problem, detail) = (string.Join("; ", w.Select(x => x.What).Distinct()), string.Join("\n", w.Select(x => x.Detail)));
         var need = s.Account;
         var login = !syncing && problem is not null && (need == AccountNeed.Both || (name == SourceIds.Lms ? need == AccountNeed.Lms : need == AccountNeed.Mybk));
-        return new SourceState(label, state, problem, detail, syncing, login);
+        return new SourceState(label, state, problem, detail, syncing, login, name);
     }
 
     /// <summary>

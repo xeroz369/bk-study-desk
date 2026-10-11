@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using BKStudyDesk.Desktop.Practice;
 using SoHocTap.Presentation.Practice;
 using SoHocTap.Ui;
@@ -54,6 +55,32 @@ public partial class LessonView : UserControl
         PrevButton.Content = _near.Prev is { } pv ? L.F("practice.lessonPage.prev", pv.Title) : "";
         NextButton.IsVisible = _near.Next != null;
         NextButton.Content = _near.Next is { } nx ? L.F("practice.lessonPage.next", nx.Title) : "";
+        Loaded += (_, _) => FollowScroll();
+        DetachedFromVisualTree += (_, _) => { if (_scroll != null) _scroll.ScrollChanged -= OnScrolled; };
+    }
+
+    // Chỗ đọc (PracticeProgress.Scroll) theo tỉ lệ của ScrollViewer trang chứa bài: mở lại bài thì cuộn về đó, cuộn thì ghi lại.
+    // Cuộn sau lượt layout (Background) vì lúc Loaded chiều dài bài chưa đo xong.
+    private ScrollViewer? _scroll;
+
+    private void FollowScroll()
+    {
+        _scroll = this.FindAncestorOfType<ScrollViewer>();
+        if (_scroll is null) return;
+        var at = _service.Progress.Scroll(_entry.Id);
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (_scroll is null) return;
+            var room = _scroll.Extent.Height - _scroll.Viewport.Height;
+            _scroll.Offset = new Avalonia.Vector(_scroll.Offset.X, at is { } f && room > 0 ? f * room : 0);
+            _scroll.ScrollChanged += OnScrolled;
+        }, Avalonia.Threading.DispatcherPriority.Background);
+    }
+
+    private void OnScrolled(object? sender, ScrollChangedEventArgs e)
+    {
+        if (_scroll is { } s && s.Extent.Height - s.Viewport.Height is var room and > 0)
+            _service.Progress.SetScroll(_entry.Id, s.Offset.Y / room);
     }
 
     private async void OnSource(object? sender, RoutedEventArgs e)

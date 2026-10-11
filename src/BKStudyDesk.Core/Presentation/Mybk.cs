@@ -55,7 +55,10 @@ public static class MybkPresenter
 {
     public static IReadOnlyList<ProgramFilter> Filters { get; } =
     [
-        new(L.T("grades.filter.all"), []), new(L.T("grades.filter.retake"), [CourseStatus.HocLai, CourseStatus.Rut]),
+        new(L.T("grades.filter.all"), []),
+        // Chưa đạt: như tùy chọn "Môn học chưa đạt (còn nợ)" của MyBK; môn lựa chọn chưa chọn (LuaChon) không tính là nợ.
+        new(L.T("grades.filter.notPassed"), [CourseStatus.DangHoc, CourseStatus.Rut, CourseStatus.HocLai, CourseStatus.ChuaHoc]),
+        new(L.T("grades.filter.retake"), [CourseStatus.HocLai, CourseStatus.Rut]),
         new(L.T("grades.filter.studying"), [CourseStatus.DangHoc]), new(L.T("grades.filter.notTaken"), [CourseStatus.ChuaHoc]),
         new(L.T("grades.filter.passed"), [CourseStatus.Dat, CourseStatus.Mien]),
     ];
@@ -95,6 +98,11 @@ public static class MybkPresenter
                 g.Score ?? -1, g.Letter ?? "", Result(g), g.Result == 0))
             .OrderByDescending(r => r.TermSort, StringComparer.Ordinal)];
     }
+
+    /// <summary>Ô tìm của Bảng điểm: mã hay tên môn chứa chữ gõ (bỏ dấu, không phân biệt hoa thường); ô trống giữ nguyên.</summary>
+    public static IReadOnlyList<MybkGradeRow> SearchGrades(IReadOnlyList<MybkGradeRow> rows, string query) =>
+        string.IsNullOrWhiteSpace(query) ? rows
+            : [.. rows.Where(r => Files.NameMatch.ContainsFolded(r.Code, query.Trim()) || Files.NameMatch.ContainsFolded(r.Name, query.Trim()))];
 
     /// <summary>Chương trình đào tạo theo khối, lọc theo trạng thái (Filters). Null khi MyBK chưa có chương trình.</summary>
     public static IReadOnlyList<ProgramRow>? Program(MybkData? m, ProgramFilter filter)

@@ -105,6 +105,17 @@ public class MybkNormalizeTests
     }
 
     [Fact]
+    public void Curriculum_ready_only_when_MyBK_says_done()
+    {
+        // Trang CTĐT của MyBK chỉ vẽ danh sách khi dòng đầu có msg "done" (tien-do-hoan-thanh-ctdt.js); thiếu msg thì vẫn nhận.
+        Assert.True(MybkNormalize.CurriculumReady(JsonNode.Parse("""[{"msg":"done","mamonhoc":"MT1003"}]""") as JsonArray));
+        Assert.True(MybkNormalize.CurriculumReady(JsonNode.Parse("""[{"mamonhoc":"MT1003"}]""") as JsonArray));
+        Assert.False(MybkNormalize.CurriculumReady(JsonNode.Parse("""[{"msg":"processing"}]""") as JsonArray));
+        Assert.False(MybkNormalize.CurriculumReady(new JsonArray()));
+        Assert.False(MybkNormalize.CurriculumReady(null));
+    }
+
+    [Fact]
     public void Components_DropsTotals_ToleratesBadJson()
     {
         var c = MybkNormalize.Components(Extra["components"] as JsonArray, Special);

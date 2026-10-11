@@ -51,6 +51,21 @@ public static class CustomEventsData
     public static CustomEventStore Store { get; } = new(() => FilePath, (path, node) => JsonStore.Write(path, node), Log.Warn);
 }
 
+/// <summary>Tài liệu đã đọc (data/doc-read.json, <see cref="Files.ReadMarks"/>): đọc một lần, ghi mỗi lần đổi. Chỉ trên máy này.</summary>
+public static class DocReads
+{
+    public static string FilePath => Paths.DataFile("doc-read.json");
+
+    private static Files.ReadMarks? _marks;
+
+    public static Files.ReadMarks Marks => _marks ??= new Files.ReadMarks(JsonStore.ReadObject(FilePath));
+
+    public static void Set(string path, long modified, bool read)
+    {
+        if (Marks.Set(path, modified, read)) JsonStore.Write(FilePath, Marks.ToJson());
+    }
+}
+
 /// <summary>Một chỗ đọc/ghi data/mybk.json, giống <see cref="LmsStore"/>.</summary>
 public static class MybkStore
 {

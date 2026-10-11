@@ -69,6 +69,9 @@ public sealed class WeekGridView : UserControl
     private static object? Token(string key) => Application.Current!.TryFindResource(key, out var v) ? v : null;
     private static double Res(string key) => Token(key) is double d ? d : throw new InvalidOperationException($"Thiếu token {key} trong Tokens.axaml");
 
+    /// <summary>Lần Show sau cuộn lại về giờ hiện tại (nút Hôm nay), kể cả khi đang ở đúng tuần đó.</summary>
+    public void ScrollToNowNext() => _scrolledFor = default;
+
     /// <summary>Hiện các buổi của tuần bắt đầu từ <paramref name="monday"/>.</summary>
     public void Show(DateTime monday, IReadOnlyList<WeekBlock> blocks)
     {
