@@ -91,6 +91,34 @@ public partial class PracticeHomeView : UserControl
     private void OnAuthor(object? sender, RoutedEventArgs e) => Go?.Invoke("author");
     private void OnRandomExam(object? sender, RoutedEventArgs e) => Go?.Invoke("random:" + TagOf(sender));
     private void OnMix(object? sender, RoutedEventArgs e) => Go?.Invoke("mix:" + TagOf(sender));
+
+    // ------------------------------------------------------------------ thu gọn từng môn (tab Môn học)
+
+    private const string CollapsedKey = "practice.collapsed";   // mã các môn người dùng đã thu gọn, giữ qua lần mở sau
+
+    /// <summary>
+    /// Đặt lại trạng thái đã lưu rồi mới lắng nghe: chỉ thao tác của người dùng sau khi thẻ đã hiện mới ghi config. Gắn qua XAML thì Fluent
+    /// có lúc báo Expanded/Collapsed ngay lúc dựng thẻ, và một lần thử đã tự ghi một môn là thu gọn dù không ai bấm (11/10/2026).
+    /// </summary>
+    private void OnCourseLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander x || x.Tag is not string id) return;
+        x.IsExpanded = !SoHocTap.Core.Config.List(CollapsedKey).Contains(id);
+        x.Expanded += OnCourseToggle;
+        x.Collapsed += OnCourseToggle;
+        x.Unloaded += (_, _) => { x.Expanded -= OnCourseToggle; x.Collapsed -= OnCourseToggle; };
+    }
+
+    private void OnCourseToggle(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander x || x.Tag is not string id || !ReferenceEquals(e.Source, x)) return;
+        var now = SoHocTap.Core.Config.List(CollapsedKey);
+        var ids = now.Where(c => c != id).ToList();
+        if (!x.IsExpanded) ids.Add(id);
+        if (ids.Count == now.Count && ids.All(now.Contains)) return;   // không đổi: khỏi ghi
+        SoHocTap.Core.Config.Set(CollapsedKey, new System.Text.Json.Nodes.JsonArray([.. ids.Select(c => (System.Text.Json.Nodes.JsonNode?)c)]));
+    }
+
     private void OnLessonTapped(object? sender, TappedEventArgs e) => Go?.Invoke("lesson:" + TagOf(sender));
 
     private void OnOpenQuiz(object? sender, RoutedEventArgs e)

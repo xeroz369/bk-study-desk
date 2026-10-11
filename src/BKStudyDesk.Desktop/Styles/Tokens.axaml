@@ -262,6 +262,20 @@
 
     <!-- Bảng (DataGrid chính thức, chỉ đổi màu và canh): dải nhóm nền nhạt, tiêu đề cột cho phép canh phải -->
     <Style Selector="DataGridColumnHeader"><Setter Property="AreSeparatorsVisible" Value="False" /><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="MinHeight" Value="{StaticResource TableHeaderHeight}" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /></Style>
+    <!-- Expander nằm trong thẻ (Luyện tập, Môn học): nền, viền trong suốt để lấy màu của thẻ, không khối đen/xám riêng của Fluent -->
+    <Style Selector="Expander.flat">
+        <Style.Resources>
+            <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderContentBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="Transparent" />
+            <Thickness x:Key="ExpanderContentPadding">0</Thickness>
+        </Style.Resources>
+    </Style>
     <!-- Tiêu đề cột hẹp hơn chữ thì cắt có dấu ba chấm như ô dữ liệu, không cụt giữa chữ ("Điểm thành phầ" ở cửa sổ 760 px) -->
     <Style Selector="DataGridColumnHeader TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
     <!-- Chữ dài hơn cột thì cắt có dấu ba chấm, không cụt giữa chữ -->

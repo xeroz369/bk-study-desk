@@ -10,11 +10,14 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thay đổi
 
+- Luyện tập, tab Môn học: mỗi môn thu gọn được (nút mũi tên ở đầu thẻ); môn đã thu gọn được nhớ cho lần mở sau.
+- Bài học, bài làm quiz, trang lộ trình: cột đọc căn giữa màn hình thay vì dạt về bên trái trên màn hình rộng.
 - Thanh tiến độ mảnh dưới thanh trên cùng khi đồng bộ: chạy theo phần đã xong thật, chạy vô định khi đang mở trang trường.
 - Đồng bộ nhanh hơn khoảng gấp đôi: request tới LMS, MyBK cách nhau 100 ms thay vì 300 ms (đo trên tài khoản thật: LMS từ 9 còn 5 giây, MyBK từ 8 còn 4,4 giây). Server báo quá tải (429, 503) thì app vẫn tạm dừng như trước.
 
 ### Sửa lỗi
 
+- Bài học từ gói do AI soạn không còn hiện dấu `**` trong ô ghi chú, danh sách: chữ giữa hai cặp dấu sao được in đậm.
 - Thư viện không còn hiện ba ô lọc trống trong lúc đang tải tài liệu của môn; tiêu đề cột bảng hẹp được cắt có dấu ba chấm thay vì cụt giữa chữ.
 - Không còn hai bản BK Study Desk chạy cùng lúc (ví dụ bản Store và bản cài từ GitHub, hay bản zip cũ): mở bản thứ hai thì nó đưa cửa sổ bản đang chạy lên rồi thoát, không đồng bộ và báo trùng.
 - Thanh trên cùng: mục đang xem in đậm không còn bị xén nét chữ cuối, các mục không xô lệch khi đổi trang (giữ sẵn chỗ cho chữ đậm như tab của Fluent UI).

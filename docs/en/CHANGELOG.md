@@ -12,11 +12,14 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Changed
 
+- Practice, Subjects tab: each subject can be collapsed (arrow at the top of its card), and collapsed subjects stay collapsed next time.
+- Lessons, quiz runs and the study plan page: the reading column is centred instead of hugging the left edge on wide screens.
 - A thin progress bar under the top bar while syncing: it follows the real share done, and runs indeterminate while a university page is opening.
 - Syncing is about twice as fast: requests to LMS and MyBK are 100 ms apart instead of 300 ms (measured on a real account: LMS from 9 to 5 seconds, MyBK from 8 to 4.4 seconds). The app still pauses when a server reports overload (429, 503).
 
 ### Fixed
 
+- Lessons from AI-written packs no longer show `**` in notes and lists: text between double asterisks is shown in bold.
 - Library no longer shows three empty filter boxes while a course is loading; narrow table column headers end with an ellipsis instead of being cut mid-word.
 - Two copies of BK Study Desk no longer run at once (for example the Store app and the GitHub install, or an old zip copy): opening a second one brings the running window forward and exits, so syncs and notifications are not doubled.
 - Top bar: the bold current item no longer loses its last stroke, and items no longer shift when you change pages (space is reserved for the bold text, as Fluent UI tabs do).
