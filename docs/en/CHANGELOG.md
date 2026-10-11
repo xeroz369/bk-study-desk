@@ -17,6 +17,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- Two copies of BK Study Desk no longer run at once (for example the Store app and the GitHub install, or an old zip copy): opening a second one brings the running window forward and exits, so syncs and notifications are not doubled.
 - Top bar: the bold current item no longer loses its last stroke, and items no longer shift when you change pages (space is reserved for the bold text, as Fluent UI tabs do).
 - Automatic sign-in after the session ends now works: the app always gave up with "the sign-in page does not have the expected form" because the SSO page's Login button is named "submit", which hides the form's submit function.
 - When MyBK has no curriculum for the account yet (MyBK answers "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin CTÄT", usually first-year students), the app no longer shows a MyBK error on every sync; the Curriculum tab says why. Any MyBK API that reports no data is no longer treated as an error.

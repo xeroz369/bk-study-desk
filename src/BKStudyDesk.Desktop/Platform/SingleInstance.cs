@@ -6,7 +6,7 @@ using SoHocTap.Shell;
 namespace BKStudyDesk.Desktop.Platform;
 
 /// <summary>
-/// Chỉ cho chạy một bản (như 1.x, Program.cs): khóa là Mutex có tên AppInfo.InstanceKey (theo thư mục app, nên bản demo, bản thử chạy
+/// Chỉ cho chạy một bản (như 1.x, Program.cs): khóa là Mutex có tên InstanceLock.Current (mỗi người dùng một bản; bản demo, bản thử đặt BKSD_INSTANCE thì chạy
 /// song song được). Bản thứ hai gọi vào named pipe của bản đang chạy để nó hiện cửa sổ (kể cả khi đang nằm dưới khay) rồi thoát.
 /// Named pipe thay cho EventWaitHandle có tên của 1.x vì macOS, Linux không có EventWaitHandle có tên; CurrentUserOnly: tài khoản khác
 /// trên máy không gọi được.
@@ -14,12 +14,12 @@ namespace BKStudyDesk.Desktop.Platform;
 internal static class SingleInstance
 {
     private const string RestartArg = "--restart";
-    private static string PipeName => AppInfo.InstanceKey + ".show";
+    private static string PipeName => InstanceLock.Current + ".show";
 
     /// <summary>Giữ khóa chạy một bản; null khi đã có bản khác đang chạy (bản này báo cho nó rồi nên thoát).</summary>
     public static Mutex? Acquire(string[] args)
     {
-        var mutex = new Mutex(initiallyOwned: true, AppInfo.InstanceKey, out var first);
+        var mutex = new Mutex(initiallyOwned: true, InstanceLock.Current, out var first);
         // Khởi động lại (đổi ngôn ngữ): bản cũ đang thoát, đợi nó nhả khóa tối đa 5 giây.
         if (!first && args.Contains(RestartArg))
         {
