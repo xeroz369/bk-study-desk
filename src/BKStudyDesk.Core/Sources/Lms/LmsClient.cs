@@ -123,7 +123,7 @@ public static partial class LmsClient
     public static int Calls => Volatile.Read(ref _calls);
 
     // Giãn cách request tới LMS, dùng chung mọi luồng: API cách nhau sources.lms.gapMs, mỗi file tài liệu cách nhau sources.lms.fileGapMs.
-    private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.lms.gapMs", 300)));
+    private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.lms.gapMs", 100)));
     private static readonly Pace FilePace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.lms.fileGapMs", 1000)));
 
     /// <summary>Một request API chờ tối đa bấy nhiêu giây; quá thì báo lỗi rõ thay vì để người dùng chờ mãi.</summary>

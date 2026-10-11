@@ -176,6 +176,10 @@ public partial class MainWindow : Window
         StatusText.Text = text;
         StatusText.FontWeight = attention ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal;
         ToolTip.SetTip(StatusButton, string.Join(Environment.NewLine, rows.Select(r => r.Problem is { } p ? $"{r.State}. {p}" : r.State)));
+        var bar = SyncStatus.Progress([.. new[] { SourceIds.Lms, SourceIds.Mybk }.Select(n => (_host.State.Syncing(n), _host.State.Step(n)))]);
+        SyncBar.IsVisible = bar.Visible;
+        SyncBar.IsIndeterminate = bar.Visible && bar.Fraction is null;
+        if (bar.Fraction is { } f) SyncBar.Value = f;
         FitBar();
     }
 

@@ -27,6 +27,8 @@
                 <StackPanel x:Name="Nav" Orientation="Horizontal" Spacing="24" />
             </DockPanel>
         </Border>
+        <!-- Thanh tiến độ đồng bộ (SyncStatus.Progress): % thật khi biết tổng, vô định khi đang mở trang trường; ẩn khi không đồng bộ. -->
+        <ProgressBar x:Name="SyncBar" DockPanel.Dock="Top" Height="3" MinHeight="3" Minimum="0" Maximum="1" CornerRadius="0" IsVisible="False" />
         <!-- Dải báo (Presentation/InfoBar quyết định hiện gì): đăng nhập, hết phiên, lỗi đồng bộ, mời tự đăng nhập lại. Viền trái theo
              mức độ (Border.info.error...), chữ trái, nút phải, Đóng cuối. Ẩn khi không có gì để báo. -->
         <Border x:Name="Info" DockPanel.Dock="Top" Classes="info" IsVisible="False">

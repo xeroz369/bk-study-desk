@@ -8,6 +8,11 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Changed
+
+- A thin progress bar under the top bar while syncing: it follows the real share done, and runs indeterminate while a university page is opening.
+- Syncing is about twice as fast: requests to LMS and MyBK are 100 ms apart instead of 300 ms (measured on a real account: LMS from 9 to 5 seconds, MyBK from 8 to 4.4 seconds). The app still pauses when a server reports overload (429, 503).
+
 ### Fixed
 
 - When MyBK has no curriculum for the account yet (MyBK answers "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin CTÄT", usually first-year students), the app no longer shows a MyBK error on every sync; the Curriculum tab says why. Any MyBK API that reports no data is no longer treated as an error.

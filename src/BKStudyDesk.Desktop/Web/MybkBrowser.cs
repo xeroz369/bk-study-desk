@@ -20,7 +20,7 @@ internal sealed class MybkBrowser : IBrowserRunner
     private readonly SemaphoreSlim _gate = new(1, 1);
     private WebPage? _app;   // trang đang ở /app (có #hid_Token); HiddenWeb bỏ trang đó (bị hủy) thì phải vào lại
     // Giãn cách các request API MyBK trong một lần đồng bộ (sources.mybk.gapMs); server báo 429/503 thì nghỉ hẳn một lúc.
-    private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.mybk.gapMs", 300)));
+    private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.mybk.gapMs", 100)));
 
     // Bearer token lấy từ input ẩn #hid_Token của trang /app; token không bao giờ ra khỏi trang.
     private const string FetchJs = """

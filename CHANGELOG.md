@@ -6,6 +6,11 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Thanh tiến độ mảnh dưới thanh trên cùng khi đồng bộ: chạy theo phần đã xong thật, chạy vô định khi đang mở trang trường.
+- Đồng bộ nhanh hơn khoảng gấp đôi: request tới LMS, MyBK cách nhau 100 ms thay vì 300 ms (đo trên tài khoản thật: LMS từ 9 còn 5 giây, MyBK từ 8 còn 4,4 giây). Server báo quá tải (429, 503) thì app vẫn tạm dừng như trước.
+
 ### Sửa lỗi
 
 - MyBK chưa có chương trình đào tạo cho tài khoản (MyBK trả "Không tìm thấy thông tin CTĐT", thường là sinh viên năm nhất): không còn báo "Lỗi MyBK" mỗi lần đồng bộ; tab Chương trình đào tạo ghi rõ lý do. Mọi API MyBK báo không có dữ liệu đều không còn bị coi là lỗi.
