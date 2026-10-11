@@ -6,6 +6,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.5] - 2026-10-11
+
 ### Thay đổi
 
 - Thanh tiến độ mảnh dưới thanh trên cùng khi đồng bộ: chạy theo phần đã xong thật, chạy vô định khi đang mở trang trường.

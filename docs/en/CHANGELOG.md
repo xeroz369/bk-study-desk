@@ -8,6 +8,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-10-11
+
 ### Changed
 
 - A thin progress bar under the top bar while syncing: it follows the real share done, and runs indeterminate while a university page is opening.
