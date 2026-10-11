@@ -45,7 +45,7 @@ public sealed record MybkBlock(string Id, string Name, string Group, bool Requir
 public sealed record MybkCurriculumCourse(string Block, string Code, string Name, double? Credits, double? Score, string? Letter, string? Special,
     int Result, bool Attempted, string? Equiv);
 public sealed record MybkCurriculum(string? Program, string? Faculty, string? Year, double? CreditsDone, double? CreditsNeed, JsonNode? Gpa10, JsonNode? Gpa4,
-    string? Updated, List<MybkBlock> Blocks, List<MybkCurriculumCourse> Courses);
+    string? Updated, List<MybkBlock> Blocks, List<MybkCurriculumCourse> Courses, string? Missing = null);   // Missing: MyBK báo chưa có CTĐT
 public sealed record MybkRegistration(string Code, string Name, long Start, long End);
 public sealed record MybkComponentItem(string Code, string Name, double? Weight, double? Score, string? Special);
 public sealed record MybkComponents(long TermId, long CourseId, string? Status, List<MybkComponentItem> Items);

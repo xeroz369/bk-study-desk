@@ -14,6 +14,27 @@ public class MybkTests
     private static MybkGrade Grade(string term, string code, double? score, int result) =>
         new(term, code, "Môn " + code, 3, score, score is null ? null : "B", null, result, null, null, null, null);
 
+    [Theory]
+    [InlineData("NGOAICTDT", "NGOAICTDT", "Môn ngoài chương trình đào tạo")]
+    [InlineData("TUCHON_TUDO", "Tự chọn tự do", "Tự chọn bổ sung / tự do")]
+    [InlineData("TOAN", "Toán", "Toán")]
+    public void Block_titles_follow_mybk(string group, string name, string expected)
+    {
+        // Như trang Tiến độ CTĐT của MyBK (tien-do-hoan-thanh-ctdt.js): khối NGOAICTDT là môn ngoài CTĐT, TUCHON_TUDO đổi tên.
+        var title = new SoHocTap.Ui.BlockView(new MybkBlock("1", name, group, false, 0, 0, false, 1), []).Title;
+        Assert.StartsWith(expected, title);
+        if (group == "NGOAICTDT") Assert.Equal(expected, title);   // không ghi "tự chọn", không tín chỉ
+    }
+
+    [Fact]
+    public void Program_empty_says_when_mybk_has_no_curriculum()
+    {
+        var missing = new MybkCurriculum(null, null, null, null, null, null, null, null, [], [], "Không tìm thấy thông tin CTĐT");
+        var m = Data() with { Curriculum = missing };
+        Assert.Contains("Không tìm thấy thông tin CTĐT", MybkPresenter.ProgramEmpty(m));
+        Assert.NotEqual(MybkPresenter.ProgramEmpty(Data()), MybkPresenter.ProgramEmpty(m));
+    }
+
     [Fact]
     public void Grades_NewestTermFirst_ReservedLast_FailFlag()
     {

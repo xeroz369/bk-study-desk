@@ -27,10 +27,15 @@ public sealed record CourseView(MybkCurriculumCourse Course, CourseStatus Status
     public string Letter => FromGrades?.Letter ?? Course.Letter ?? "";
 }
 
+/// <summary>
+/// Một khối kiến thức. Tên theo trang Tiến độ CTĐT của MyBK (app/js/share/ketquahoctap/tien-do-hoan-thanh-ctdt.js): NGOAICTDT là các
+/// môn ngoài chương trình (MyBK để bảng riêng, không bắt buộc, không tín chỉ yêu cầu), TUCHON_TUDO hiện là "Tự chọn bổ sung / tự do".
+/// </summary>
 public sealed record BlockView(MybkBlock Block, List<CourseView> Courses)
 {
-    public string Title => $"{Block.Name}, {L.T(Block.Required ? "curriculum.required" : "curriculum.optional")}" +
-                           (Block.CreditsNeed > 0 ? ", " + L.F("curriculum.credits", Block.CreditsDone, Block.CreditsNeed) : Block.Complete ? ", " + L.T("curriculum.complete") : "");
+    public string Title => Block.Group == "NGOAICTDT" ? L.T("curriculum.outside")
+        : $"{(Block.Group == "TUCHON_TUDO" ? L.T("curriculum.freeElective") : Block.Name)}, {L.T(Block.Required ? "curriculum.required" : "curriculum.optional")}" +
+          (Block.CreditsNeed > 0 ? ", " + L.F("curriculum.credits", Block.CreditsDone, Block.CreditsNeed) : Block.Complete ? ", " + L.T("curriculum.complete") : "");
 }
 
 public sealed record CurriculumView(List<BlockView> Blocks, List<CourseView> Courses, int Retake, int Studying, double? Missing, bool Stale)

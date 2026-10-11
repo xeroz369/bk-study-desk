@@ -19,6 +19,17 @@ public class MybkReplyTests
         Assert.False(r.Retry);
     }
 
+    [Fact]
+    public void Not_found_code_means_no_data_not_failure()
+    {
+        // Sinh viên năm nhất: MyBK trả code 404 "Không tìm thấy thông tin CTĐT" (09/10/2026). Không phải lỗi, gọi lại cũng vậy.
+        var r = MybkReply.Read(R(200, """{"code":"404","msg":"Không tìm thấy thông tin CTĐT","data":null}"""));
+        Assert.Null(r.Why);
+        Assert.False(r.Retry);
+        Assert.Equal("Không tìm thấy thông tin CTĐT", r.Missing);
+        Assert.Null(r.Data);
+    }
+
     [Theory]
     [InlineData(500, "", true)]                                   // server lỗi: thoáng qua
     [InlineData(0, "", true)]                                     // mất kết nối, fetch lỗi

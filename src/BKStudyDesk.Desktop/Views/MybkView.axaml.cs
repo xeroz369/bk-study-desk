@@ -41,7 +41,7 @@ public partial class MybkView : UserControl, IFillPage
     {
         if (ProgramFilter.SelectedItem is not SoHocTap.Presentation.ProgramFilter f) return;
         var rows = MybkPresenter.Program(_m, f);
-        Tables.Show(Program, ProgramEmpty, Tables.Grouped(rows ?? [], nameof(ProgramRow.Group)), L.T("grades.programEmpty"));
+        Tables.Show(Program, ProgramEmpty, Tables.Grouped(rows ?? [], nameof(ProgramRow.Group)), MybkPresenter.ProgramEmpty(_m));
     }
 
     private void OnServiceFilter(object? sender, TextChangedEventArgs e) => ShowServices();

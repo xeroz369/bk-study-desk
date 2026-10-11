@@ -8,6 +8,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Sửa lỗi
 
+- MyBK chưa có chương trình đào tạo cho tài khoản (MyBK trả "Không tìm thấy thông tin CTĐT", thường là sinh viên năm nhất): không còn báo "Lỗi MyBK" mỗi lần đồng bộ; tab Chương trình đào tạo ghi rõ lý do. Mọi API MyBK báo không có dữ liệu đều không còn bị coi là lỗi.
+- Khối "NGOAICTDT" hiện đúng tên "Môn ngoài chương trình đào tạo", khối tự chọn tự do theo tên của MyBK.
 - MyBK không còn treo 45 giây rồi báo "Trang trường không phản hồi" sau khi trường chuyển về trang đăng nhập bằng http: app chờ lượt cũ kết thúc rồi mới mở lại bằng https, chưa tải xong sau 10 giây thì mở lại một lần.
 - Trang ngoài trường bị chặn giữa lượt đồng bộ được báo ngay, không còn chờ hết giờ.
 

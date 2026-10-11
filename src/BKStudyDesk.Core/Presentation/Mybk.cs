@@ -105,6 +105,10 @@ public static class MybkPresenter
                 c.Status is CourseStatus.ChuaHoc or CourseStatus.LuaChon)))];
     }
 
+    /// <summary>Chữ khi bảng chương trình đào tạo trống: MyBK báo chưa có CTĐT (thường là sinh viên năm nhất) thì nói rõ, không thì do bộ lọc.</summary>
+    public static string ProgramEmpty(MybkData? m) =>
+        m?.Curriculum?.Missing is { Length: > 0 } why ? L.F("grades.programMissing", why) : L.T("grades.programEmpty");
+
     /// <summary>Ghi chú khi chương trình đào tạo trên MyBK cũ hơn bảng điểm.</summary>
     public static string ProgramNote(MybkData? m) => m is not null && CurriculumView.From(m) is { Stale: true } ? L.F("grades.stale", m.Curriculum?.Updated) : "";
 
