@@ -8,6 +8,11 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Fixed
+
+- MyBK no longer hangs for 45 seconds and then says the school site is not responding after the university redirects to its sign-in page over http: the app waits for the cancelled navigation to finish before reopening it over https, and reopens it once more if it has not loaded after 10 seconds.
+- A blocked page outside the university during a sync is reported at once instead of waiting for the timeout.
+
 ## [1.2.4] - 2026-10-09
 
 ### Added

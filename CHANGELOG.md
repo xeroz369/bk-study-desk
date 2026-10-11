@@ -6,6 +6,11 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- MyBK không còn treo 45 giây rồi báo "Trang trường không phản hồi" sau khi trường chuyển về trang đăng nhập bằng http: app chờ lượt cũ kết thúc rồi mới mở lại bằng https, chưa tải xong sau 10 giây thì mở lại một lần.
+- Trang ngoài trường bị chặn giữa lượt đồng bộ được báo ngay, không còn chờ hết giờ.
+
 ## [1.2.4] - 2026-10-09
 
 ### Thêm
