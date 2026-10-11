@@ -19,6 +19,18 @@ public class SettingsCatalogTests
     }
 
     [Fact]
+    public void Search_matches_label_note_or_group_without_diacritics()
+    {
+        var g = new SettingGroup("Nhắc hạn", null, []);
+        var item = new ToggleItem("Mở cùng Windows", "Chạy nền khi bật máy", () => false, _ => { });
+        Assert.True(SettingsCatalog.Matches(g, item, "windows"));
+        Assert.True(SettingsCatalog.Matches(g, item, "bat may"));
+        Assert.True(SettingsCatalog.Matches(g, item, "nhac han"));
+        Assert.False(SettingsCatalog.Matches(g, item, "giao dien"));
+        Assert.True(SettingsCatalog.Matches(g, item, " "));
+    }
+
+    [Fact]
     public void LibraryUrl_HttpsOrEmpty()
     {
         var url = SettingsCatalog.Groups(None).SelectMany(g => g.Items).OfType<TextItem>().Single(i => i.Error.Contains("https"));

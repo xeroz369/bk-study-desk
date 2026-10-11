@@ -24,10 +24,12 @@ public sealed record FileRow(string Name, bool Dir, string Kind, long Size, long
 }
 
 /// <summary>Một file trong danh sách Mới cập nhật của môn. Path: đường dẫn tương đối trong thư mục học.</summary>
-public sealed record RecentRow(string Name, string Folder, string Path, long Size, long Modified)
+/// <param name="Read">Đã mở hay đánh dấu đã đọc từ lần file đổi gần nhất (Files.ReadMarks).</param>
+public sealed record RecentRow(string Name, string Folder, string Path, long Size, long Modified, bool Read = false)
 {
     public string SizeText => Format.Size(Size);
     public string ModifiedText => Format.DateTime(Modified);
+    public string ReadText => Read ? "" : L.T("subjects.unread");
 }
 
 public sealed record SubjectNews(string Title, string Forum, string Author, string When, string? Url);
@@ -114,10 +116,16 @@ public static class SubjectsPresenter
             .Concat((dir["files"] as JsonArray ?? []).OfType<JsonObject>().Select(x => new FileRow(x["name"]!.GetValue<string>(), false,
                 Format.FileKind(x["ext"]?.GetValue<string>() ?? ""), x["size"]?.GetValue<long>() ?? 0, x["modified"]?.GetValue<long>() ?? 0, 0)))];
 
-    /// <summary>Danh sách Mới cập nhật (kết quả Documents.SubjectFiles).</summary>
-    public static IReadOnlyList<RecentRow> RecentRows(JsonObject recent) =>
-        [.. (recent["files"] as JsonArray ?? []).OfType<JsonObject>().Select(x => new RecentRow(x["name"]!.GetValue<string>(),
-            x["folder"]?.GetValue<string>() is { } fd && fd != "." ? fd : "", x["path"]!.GetValue<string>(), x["size"]?.GetValue<long>() ?? 0, x["modified"]?.GetValue<long>() ?? 0))];
+    /// <summary>Danh sách Mới cập nhật (kết quả Documents.SubjectFiles); <paramref name="unreadOnly"/> chỉ giữ file chưa đọc.</summary>
+    public static IReadOnlyList<RecentRow> RecentRows(JsonObject recent, ReadMarks? marks = null, bool unreadOnly = false) =>
+        [.. (recent["files"] as JsonArray ?? []).OfType<JsonObject>().Select(x =>
+            {
+                var path = x["path"]!.GetValue<string>();
+                var modified = x["modified"]?.GetValue<long>() ?? 0;
+                return new RecentRow(x["name"]!.GetValue<string>(), x["folder"]?.GetValue<string>() is { } fd && fd != "." ? fd : "", path,
+                    x["size"]?.GetValue<long>() ?? 0, modified, marks?.IsRead(path, modified) == true);
+            })
+            .Where(r => !unreadOnly || !r.Read)];
 
     private static IEnumerable<LmsGradeBook> Books(LmsData? lms, SubjectRow s) => (lms?.Grades ?? []).Where(b => NameMatch.Same(b.Subject, s.Name));
 

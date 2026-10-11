@@ -1,0 +1,24 @@
+<!-- Tìm nhanh (Ctrl+K): ô gõ và danh sách kết quả trong một Flyout dưới thanh trên cùng. Rộng 400: FlyoutPresenter của Fluent
+     tối đa 456 kể cả lề, rộng hơn thì mép phải bị cắt (ảnh người dùng 11/10/2026). Lên xuống chọn, Enter hay bấm để mở, Esc đóng.
+     Xếp hạng: Presentation/QuickSearch. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
+             xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
+             x:Class="BKStudyDesk.Desktop.Views.QuickSearchPanel"
+             Width="400">
+    <StackPanel Spacing="8">
+        <TextBox x:Name="Query" PlaceholderText="{l:T quick.placeholder}" TextChanged="OnQuery" KeyDown="OnQueryKey" />
+        <ListBox x:Name="Results" MaxHeight="360" SelectionMode="Single" Tapped="OnTapped" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="p:QuickItem">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Classes="sub" Text="{Binding Sub}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock x:Name="NoMatch" Classes="sub" Text="{l:T quick.noMatch}" IsVisible="False" />
+    </StackPanel>
+</UserControl>

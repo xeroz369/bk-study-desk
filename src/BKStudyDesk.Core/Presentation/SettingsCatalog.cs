@@ -77,6 +77,17 @@ public static class SettingsCatalog
         ];
     }
 
+    /// <summary>
+    /// Ô tìm của trang Cài đặt: mục khớp khi tên, ghi chú của nó hay tên nhóm chứa chữ gõ (bỏ dấu, không phân biệt hoa thường).
+    /// Ô trống: mọi mục.
+    /// </summary>
+    public static bool Matches(SettingGroup g, SettingItem i, string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return true;
+        var q = query.Trim();
+        return Files.NameMatch.ContainsFolded(i.Label, q) || Files.NameMatch.ContainsFolded(i.Note, q) || Files.NameMatch.ContainsFolded(g.Title, q);
+    }
+
     public static IReadOnlyList<SettingGroup> Groups(SettingsActions a) =>
     [
         new(L.T("settings.account"), a.AccountText(),

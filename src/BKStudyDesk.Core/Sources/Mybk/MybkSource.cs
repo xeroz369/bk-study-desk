@@ -78,7 +78,8 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
             else Report(plan.Advance(1, doneCalls, calls.Count));
         }
         Report(plan.Enter("sync.mybk.open"));
-        var first = await RunAsync(browser, api, first2, new(), log, OnEach, ct);
+        var missing = new Dictionary<string, string>();   // API MyBK báo không có dữ liệu (code 404): tên, câu của MyBK
+        var first = await RunAsync(browser, api, first2, new(), missing, log, OnEach, ct);
         var info = first.GetValueOrDefault("info") as JsonObject;
         if (info?["id"] is null) throw new SyncException(SyncErrorKind.Data, "Không đọc được thông tin sinh viên từ MyBK.");
         var sems = first.GetValueOrDefault("semesters") as JsonArray ?? [];
@@ -96,15 +97,15 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         Dictionary<string, JsonNode?> got = [], extra = [];
         try
         {
-            got = await RunAsync(browser, api, study, args, log, OnEach, ct);
+            got = await RunAsync(browser, api, study, args, missing, log, OnEach, ct);
             // Mấy API đọc dò ra từ source trang MyBK (01/10/2026): điểm thành phần, quyết định học vụ, ngày CTXH, khoản phí. Lỗi thì bỏ qua.
-            extra = await RunAsync(browser, api, more, args, log, OnEach, ct);
+            extra = await RunAsync(browser, api, more, args, missing, log, OnEach, ct);
         }
         catch (Exception e) when (got.Count > 0 && !ct.IsCancellationRequested)
         {
             // Hết phiên hay lỗi mạng giữa chừng: phần đã đọc được vẫn lưu (phần còn lại giữ bản cũ), giữ syncedAt của lần trước
             // vì lần này chưa đồng bộ xong; lỗi vẫn báo lên như thường.
-            var partial = Build(info, sem, cur, got, extra, prev, special);
+            var partial = Build(info, sem, cur, got, extra, missing, prev, special);
             partial["syncedAt"] = prev?["syncedAt"]?.DeepClone() ?? partial["syncedAt"]!.DeepClone();
             partial["registration"] = prev?["registration"]?.DeepClone() ?? new JsonArray();
             partial["registrationAt"] = prev?["registrationAt"]?.DeepClone() ?? 0;
@@ -113,7 +114,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
             throw;
         }
 
-        var output = Build(info, sem, cur, got, extra, prev, special);
+        var output = Build(info, sem, cur, got, extra, missing, prev, special);
         // Đăng ký môn là trang HTML riêng nên để cuối cùng (WebView ẩn phải rời /app). Trang này nằm trên hệ thống đăng ký môn,
         // hay quá tải vào đợt đăng ký, nên chỉ tải lại mỗi ngày một lần; giữa chừng dùng bản đã lưu.
         // Danh sách rỗng không giữ cả ngày: có thể là lần đọc trước bị lỗi (ví dụ rơi vào trang khác), thử lại ở lần đồng bộ sau.
@@ -153,7 +154,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
     /// giữ phần của lần trước: một API chập chờn không được xóa mất lịch thi hay bảng điểm đang có.
     /// </summary>
     private static JsonObject Build(JsonObject info, string sem, JsonObject? cur, Dictionary<string, JsonNode?> got, Dictionary<string, JsonNode?> extra,
-        JsonObject? prev, IReadOnlyDictionary<string, string> special)
+        IReadOnlyDictionary<string, string> missing, JsonObject? prev, IReadOnlyDictionary<string, string> special)
     {
         var output = new JsonObject
         {
@@ -175,8 +176,20 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         Put("exams", got.ContainsKey("exams"), () => MybkNormalize.Exams(got.GetValueOrDefault("exams")), perTerm: true);
         Put("gradeTerms", got.ContainsKey("gradesTerms"), () => MybkNormalize.GradeTerms(got.GetValueOrDefault("gradesTerms") as JsonArray));
         Put("grades", got.ContainsKey("gradesCourses"), () => MybkNormalize.Grades(got.GetValueOrDefault("gradesCourses") as JsonArray, special));
-        Put("curriculum", got.ContainsKey("curriculum"), () => MybkNormalize.Curriculum(got.GetValueOrDefault("curriculumInfo") as JsonObject,
-            got.GetValueOrDefault("curriculum") as JsonArray, special, prev?["curriculum"] as JsonObject));
+        // MyBK báo chưa có CTĐT (sinh viên năm nhất): ghi câu đó thay cho danh sách cũ, như trang MyBK; trang MyBK của app hiện rõ lý do.
+        if (got.TryGetValue("curriculum", out var rows) && !MybkNormalize.CurriculumReady(rows as JsonArray))
+        {
+            Log.Info("MyBK: danh sách CTĐT chưa sẵn sàng (không có msg \"done\"), giữ bản đã lưu");
+            got.Remove("curriculum");
+        }
+        var noProgram = missing.GetValueOrDefault("curriculum");
+        Put("curriculum", got.ContainsKey("curriculum") || noProgram is not null, () =>
+        {
+            var c = MybkNormalize.Curriculum(got.GetValueOrDefault("curriculumInfo") as JsonObject, got.GetValueOrDefault("curriculum") as JsonArray, special,
+                prev?["curriculum"] as JsonObject);
+            if (noProgram is not null) c["missing"] = noProgram;
+            return c;
+        });
         Put("components", extra.ContainsKey("components"), () => MybkNormalize.Components(extra.GetValueOrDefault("components") as JsonArray, special));
         Put("decisions", extra.ContainsKey("decisions"), () => MybkNormalize.Decisions(extra.GetValueOrDefault("decisions") as JsonArray));
         Put("socialWork", extra.ContainsKey("socialWork"), () => MybkNormalize.SocialWork(extra.GetValueOrDefault("socialWork") as JsonObject));
@@ -187,7 +200,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
 
     /// <summary>Gọi các API theo tên trong config, điền sẵn {id} {mssv} {sem} {year} {term}. Request POST gửi MSSV làm body.</summary>
     private static async Task<Dictionary<string, JsonNode?>> RunAsync(IBrowserRunner browser, JsonObject api, string[] names,
-        Dictionary<string, string> args, Action<string> log, Action<string> onEach, CancellationToken ct)
+        Dictionary<string, string> args, Dictionary<string, string> missing, Action<string> log, Action<string> onEach, CancellationToken ct)
     {
         var baseUrl = Config.Str("sources.mybk.site").TrimEnd('/') + "/api/";
         string Fill(string s) => args.Aggregate(s, (acc, kv) => acc.Replace("{" + kv.Key + "}", kv.Value));
@@ -204,6 +217,13 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         foreach (var n in names)
         {
             var reply = res.TryGetValue(n, out var r) ? MybkReply.Read(r) : new(null, "không gửi được (MyBK đang giới hạn, đã tạm dừng)", false);
+            if (reply.Missing is { } none)
+            {
+                // MyBK trả lời được nhưng không có dữ liệu này: không phải lỗi, không báo người dùng; Build ghi lại câu của MyBK nếu cần hiện.
+                Log.Info($"MyBK {n}: MyBK báo không có dữ liệu ({none})");
+                missing[n] = none;
+                continue;
+            }
             if (reply.Why is not { } why) { output[n] = reply.Data; continue; }
             // Ghi kèm tóm tắt body (field báo lỗi, title trang), không chép cả body: có thể chứa dữ liệu cá nhân.
             Log.Warn($"MyBK {n}: {why}{(r is null ? "" : ", " + MybkNormalize.ErrorSummary(r.Body))}");

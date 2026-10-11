@@ -19,7 +19,7 @@
       "maxFileMB": 200,
       "autoDownload": false,
       "pastTerms": false,
-      "gapMs": 300,
+      "gapMs": 100,
       "fileGapMs": 1000,
       "timeoutSeconds": 45,
       "saveQuizzes": true,
@@ -209,7 +209,7 @@
       },
       "syncHours": 12,
       "minSyncHours": 6,
-      "gapMs": 300,
+      "gapMs": 100,
       "timeoutSeconds": 45,
       "specialScores": {
         "12": "MT",
@@ -288,7 +288,8 @@
     "lastHours": 2,
     "urgentHours": 6,
     "soonHours": 24,
-    "digestTimes": "07:00, 12:00, 19:00"
+    "digestTimes": "07:00, 12:00, 19:00",
+    "morning": "07:00"
   },
   "archives": {
     "extract": true,

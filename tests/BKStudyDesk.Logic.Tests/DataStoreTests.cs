@@ -40,6 +40,15 @@ public class DataStoreTests
     }
 
     [Fact]
+    public void Curriculum_missing_reason_round_trips()
+    {
+        // MybkSource ghi "missing" khi MyBK báo chưa có CTĐT; trang MyBK đọc lại để nói rõ lý do.
+        var d = DataJson.Parse<MybkData>("""{ "syncedAt": 1, "curriculum": { "blocks": [], "courses": [], "missing": "Không tìm thấy thông tin CTĐT" } }""")!.Normalize();
+        Assert.Equal("Không tìm thấy thông tin CTĐT", d.Curriculum!.Missing);
+        Assert.Null(DataJson.Parse<MybkData>("""{ "syncedAt": 1, "curriculum": { "blocks": [], "courses": [] } }""")!.Normalize().Curriculum!.Missing);
+    }
+
+    [Fact]
     public void Lenient_MissingLists_BecomeEmpty()
     {
         var d = DataJson.Parse<MybkData>("""{ "syncedAt": 1, "schedule": [ { "code": "A", "day": "3", "weeks": null } ] }""")!.Normalize();

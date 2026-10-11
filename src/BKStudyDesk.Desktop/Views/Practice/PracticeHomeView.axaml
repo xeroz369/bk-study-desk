@@ -21,25 +21,29 @@
         </DataTemplate>
         <DataTemplate x:Key="UnitBlock" x:DataType="p:PracticeUnitRow">
             <StackPanel>
-                <Border Classes="group"><TextBlock Classes="group" Text="{Binding Title}" /></Border>
+                <Border Classes="group"><TextBlock Classes="group" Text="{Binding Header}" /></Border>
                 <ItemsControl ItemsSource="{Binding Lessons}" ItemTemplate="{StaticResource LessonRow}" />
             </StackPanel>
         </DataTemplate>
+        <!-- Thẻ một môn: Expander có sẵn của Fluent để thu gọn khi có nhiều môn; môn đã thu gọn nhớ ở practice.collapsed (OnCourseLoaded). -->
         <DataTemplate x:Key="CourseCard" x:DataType="p:PracticeCourseRow">
             <Border Classes="card">
-                <StackPanel>
-                    <Border Classes="card-head"><DockPanel>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Button Content="{l:T practice.mix}" IsVisible="{Binding CanMix}" Tag="{Binding Id}" Click="OnMix" />
-                            <Button Content="{l:T practice.randomExam}" IsVisible="{Binding CanRandomExam}" Tag="{Binding Id}" Click="OnRandomExam" />
-                        </StackPanel>
-                        <StackPanel VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Classes="card-title" Text="{Binding Name}" />
-                            <TextBlock Classes="sub" Text="{Binding Sub}" />
-                        </StackPanel>
-                    </DockPanel></Border>
+                <Expander Classes="flat" Tag="{Binding Id}" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0"
+                          Loaded="OnCourseLoaded">
+                    <Expander.Header>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button Content="{l:T practice.mix}" IsVisible="{Binding CanMix}" Tag="{Binding Id}" Click="OnMix" />
+                                <Button Content="{l:T practice.randomExam}" IsVisible="{Binding CanRandomExam}" Tag="{Binding Id}" Click="OnRandomExam" />
+                            </StackPanel>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Classes="card-title" Text="{Binding Name}" />
+                                <TextBlock Classes="sub" Text="{Binding Sub}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Expander.Header>
                     <ItemsControl ItemsSource="{Binding Units}" ItemTemplate="{StaticResource UnitBlock}" />
-                </StackPanel>
+                </Expander>
             </Border>
         </DataTemplate>
         <DataTemplate x:Key="ExamRow" x:DataType="p:PracticeCourseRow">
@@ -175,7 +179,16 @@
             <TabItem Header="{l:T practice.tab.courses}">
                 <StackPanel Margin="0,16,0,0" Spacing="24">
                     <TextBlock x:Name="CoursesEmpty" Classes="empty" Text="{l:T practice.empty.courses}" />
-                    <ItemsControl ItemsSource="{Binding Courses}" ItemTemplate="{StaticResource CourseCard}">
+                    <!-- Lọc bài (PracticeHome.Filter), mở hay thu gọn mọi môn một lần -->
+                    <DockPanel x:Name="CoursesBar">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0">
+                            <Button Content="{l:T practice.courses.expandAll}" Click="OnExpandAll" />
+                            <Button Content="{l:T practice.courses.collapseAll}" Click="OnCollapseAll" />
+                        </StackPanel>
+                        <TextBox x:Name="CourseFilter" PlaceholderText="{l:T practice.courses.filter}" TextChanged="OnCourseFilter" />
+                    </DockPanel>
+                    <TextBlock x:Name="CoursesNoMatch" Classes="empty" Text="{l:T practice.courses.noMatch}" IsVisible="False" />
+                    <ItemsControl x:Name="CourseList" ItemTemplate="{StaticResource CourseCard}">
                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="24" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </StackPanel>

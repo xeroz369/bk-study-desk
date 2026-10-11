@@ -163,4 +163,29 @@ public class PracticeHomeTests
         Assert.Null(m.Today.Next);
         Assert.Equal((0, 0), (m.Today.Due, m.Today.Review));
     }
+
+    [Fact]
+    public void Unit_shows_how_many_lessons_are_done()
+    {
+        var (study, p) = Make();
+        foreach (var i in Enumerable.Range(1, 4)) p.RecordAnswer($"b1.q{i}", Answer.Index(0), true);
+        var units = PracticeHome.Build(study, p, [], []).Courses[0].Units;
+        Assert.Equal(LessonStatus.Done, p.Status("b1"));
+        Assert.Equal("C1, 1/2 bài xong", units[0].Header);
+        Assert.Equal("C2, 0/2 bài xong", units[1].Header);   // như dòng phụ của môn: đếm cả bài chưa soạn
+    }
+
+    [Fact]
+    public void Filter_keeps_matching_lessons_or_whole_course()
+    {
+        var (study, p) = Make();
+        var courses = PracticeHome.Build(study, p, [], []).Courses;
+        Assert.Same(courses, PracticeHome.Filter(courses, "  "));
+        var byLesson = PracticeHome.Filter(courses, "bai 3");   // không dấu, không phân biệt hoa thường
+        Assert.Equal(["Bài 3"], byLesson.Single().Units.SelectMany(u => u.Lessons).Select(l => l.Title));
+        Assert.Single(byLesson.Single().Units);                   // chương không còn bài nào thì bỏ
+        Assert.Equal(4, PracticeHome.Filter(courses, "phuong phap").Single().Units.Sum(u => u.Lessons.Count));   // khớp tên môn: giữ cả môn
+        Assert.Equal(4, PracticeHome.Filter(courses, "mt1009").Single().Units.Sum(u => u.Lessons.Count));       // khớp mã môn
+        Assert.Empty(PracticeHome.Filter(courses, "không có"));
+    }
 }

@@ -50,10 +50,10 @@
             <x:Double x:Key="ListMaxWidth">320</x:Double>
             <!-- Luyện tập: thẻ câu hỏi, bài học rộng tối đa khoảng 80 chữ một dòng ở cỡ chữ thân (đọc dễ hơn dòng dài cả màn hình) -->
             <x:Double x:Key="ReadingMaxWidth">880</x:Double>
-            <!-- Cỡ chữ trang Luyện tập (Ctrl+cộng, Ctrl+trừ): phần trăm, bước mỗi lần bấm. -->
-            <x:Int32 x:Key="PracticeZoomMin">80</x:Int32>
-            <x:Int32 x:Key="PracticeZoomMax">160</x:Int32>
-            <x:Int32 x:Key="PracticeZoomStep">10</x:Int32>
+            <!-- Cỡ chữ vùng nội dung cả app (Ctrl+cộng, Ctrl+trừ): phần trăm, bước mỗi lần bấm. -->
+            <x:Int32 x:Key="ZoomMin">80</x:Int32>
+            <x:Int32 x:Key="ZoomMax">160</x:Int32>
+            <x:Int32 x:Key="ZoomStep">10</x:Int32>
             <!-- Bảng Đồng bộ và thông báo (Flyout của nút Đồng bộ trên thanh): rộng cố định, cao hơn thì tự cuộn -->
             <x:Double x:Key="PanelWidth">400</x:Double>
             <x:Double x:Key="PanelMaxHeight">560</x:Double>
@@ -262,6 +262,22 @@
 
     <!-- Bảng (DataGrid chính thức, chỉ đổi màu và canh): dải nhóm nền nhạt, tiêu đề cột cho phép canh phải -->
     <Style Selector="DataGridColumnHeader"><Setter Property="AreSeparatorsVisible" Value="False" /><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="MinHeight" Value="{StaticResource TableHeaderHeight}" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /></Style>
+    <!-- Expander nằm trong thẻ (Luyện tập, Môn học): nền, viền trong suốt để lấy màu của thẻ, không khối đen/xám riêng của Fluent -->
+    <Style Selector="Expander.flat">
+        <Style.Resources>
+            <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderContentBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="Transparent" />
+            <Thickness x:Key="ExpanderContentPadding">0</Thickness>
+        </Style.Resources>
+    </Style>
+    <!-- Tiêu đề cột hẹp hơn chữ thì cắt có dấu ba chấm như ô dữ liệu, không cụt giữa chữ ("Điểm thành phầ" ở cửa sổ 760 px) -->
+    <Style Selector="DataGridColumnHeader TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
     <!-- Chữ dài hơn cột thì cắt có dấu ba chấm, không cụt giữa chữ -->
     <Style Selector="DataGridCell TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
     <Style Selector="DataGridRowGroupHeader"><Setter Property="Background" Value="{DynamicResource GroupBg}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>

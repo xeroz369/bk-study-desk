@@ -147,7 +147,7 @@ Màu nằm trong `ThemeDictionaries` của `Styles/Tokens.axaml`; View dùng `Dy
 
 ## 8. Trang Luyện tập
 
-- Bản Avalonia: control có sẵn như các trang khác (thẻ, tab, `RadioButton`, `CheckBox`, `DataGrid`, `ProgressBar`). Cột đọc của làm câu và bài học rộng tối đa `ReadingMaxWidth`, sát lề trái. Cỡ chữ đổi bằng Ctrl+cộng, Ctrl+trừ trong khoảng `PracticeZoomMin` đến `PracticeZoomMax`.
+- Bản Avalonia: control có sẵn như các trang khác (thẻ, tab, `RadioButton`, `CheckBox`, `DataGrid`, `ProgressBar`). Cột đọc của làm câu và bài học rộng tối đa `ReadingMaxWidth`, sát lề trái. Cỡ chữ vùng nội dung (mọi trang, không gồm thanh trên cùng) đổi bằng Ctrl+cộng, Ctrl+trừ, Ctrl+lăn chuột trong khoảng `ZoomMin` đến `ZoomMax`, Ctrl+0 về 100%.
 - Bản 1.x (Svelte): dùng cùng token qua biến CSS (tên giống bảng mục 3), component có sẵn, chỉ đổi biến giao diện.
 - Hai bản đọc chung định dạng Study Pack v1 và `ket-qua.json`; đổi cấu trúc thì có bước chuyển đổi.
 

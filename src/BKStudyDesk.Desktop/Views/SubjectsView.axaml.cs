@@ -17,7 +17,7 @@ namespace BKStudyDesk.Desktop.Views;
 /// Trang Môn học: nối SubjectsPresenter vào danh sách và các tab. Tab chỉ dựng khi mở (đỡ quét thư mục); đọc đĩa chạy nền.
 /// Lọc, khớp mốc, dòng phụ, điểm: BKStudyDesk.Core/Presentation/Subjects.cs.
 /// </summary>
-public partial class SubjectsView : UserControl, IFillPage
+public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 {
     private readonly AppState _state = null!;
     private readonly Action<IReadOnlyCollection<long>?>? _download;   // các lớp tích sẵn; null = học kỳ đang học
@@ -52,8 +52,18 @@ public partial class SubjectsView : UserControl, IFillPage
     /// <summary>Mở một tab theo thứ tự (tham số --tab=N khi chụp kiểm tra).</summary>
     public void SelectTab(int index) => Tabs.SelectedIndex = Math.Clamp(index, 0, Tabs.ItemCount - 1);
 
+    public int Tab { get => Tabs.SelectedIndex; set => SelectTab(value); }
+
     /// <summary>Môn đang chọn (MainWindow giữ lại khi dựng lại trang).</summary>
     public string? Selected => _subject?.Name;
+
+    /// <summary>Chọn một môn theo tên (tìm nhanh Ctrl+K); xóa chữ lọc để môn đó chắc chắn có trong danh sách.</summary>
+    public void SelectSubject(string name)
+    {
+        _wanted = name;
+        if (string.IsNullOrEmpty(Filter.Text)) ShowList();
+        else Filter.Text = "";   // OnFilter dựng lại danh sách, chọn _wanted
+    }
 
     /// <summary>Quét thư mục môn trên máy (có cache theo mtime) rồi dựng lại danh sách có số tài liệu.</summary>
     private async Task ScanAsync()
@@ -155,11 +165,14 @@ public partial class SubjectsView : UserControl, IFillPage
     private async Task LoadRecentAsync(SubjectRow s)
     {
         var gen = ++_gen;
+        _recent = null;
         Status(Recent, FilesEmpty, L.T("subjects.scanning"));
         try
         {
             var recent = await Documents.SubjectFilesAsync(s.Name, 200);
-            if (gen == _gen) Tables.Show(Recent, FilesEmpty, SubjectsPresenter.RecentRows(recent), L.T("subjects.recentEmpty"));
+            if (gen != _gen) return;
+            _recent = recent;
+            ShowRecent();
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
@@ -168,10 +181,28 @@ public partial class SubjectsView : UserControl, IFillPage
         }
     }
 
+    // Danh sách Mới cập nhật vừa quét: dựng lại khi đổi lọc Chỉ chưa đọc hay đánh dấu, không quét lại đĩa.
+    private System.Text.Json.Nodes.JsonObject? _recent;
+
+    private void ShowRecent()
+    {
+        if (_recent is null) return;
+        var unread = UnreadOnly.IsChecked == true;
+        Tables.Show(Recent, FilesEmpty, SubjectsPresenter.RecentRows(_recent, DocReads.Marks, unread), L.T(unread ? "subjects.allRead" : "subjects.recentEmpty"));
+    }
+
+    private void OnUnreadOnly(object? sender, RoutedEventArgs e) => ShowRecent();
+
+    private void MarkRead(string path, long modified, bool read)
+    {
+        DocReads.Set(path, modified, read);
+        ShowRecent();
+    }
+
     private void OnRecentToggle(object? sender, RoutedEventArgs e)
     {
         var recent = RecentToggle.IsChecked == true;
-        Recent.IsVisible = recent;
+        Recent.IsVisible = UnreadOnly.IsVisible = recent;
         Files.IsVisible = UpButton.IsVisible = PathText.IsVisible = !recent;
         _filled.Remove(FilesTab);
         FillTab();
@@ -190,7 +221,11 @@ public partial class SubjectsView : UserControl, IFillPage
     {
         if (Files.SelectedItem is not FileRow f) return;
         if (f.Dir) { _dir += "/" + f.Name; _ = LoadDirAsync(); }
-        else await Opener.OpenAsync(this, _dir + "/" + f.Name);
+        else
+        {
+            DocReads.Set(_dir + "/" + f.Name, f.Modified, read: true);
+            await Opener.OpenAsync(this, _dir + "/" + f.Name);
+        }
     }
 
     /// <summary>Enter mở, Backspace lên thư mục cha (như trình quản lý file).</summary>
@@ -202,7 +237,9 @@ public partial class SubjectsView : UserControl, IFillPage
 
     private async void OnRecentOpen(object? sender, TappedEventArgs e)
     {
-        if (Recent.SelectedItem is RecentRow r) await Opener.OpenAsync(this, r.Path);
+        if (Recent.SelectedItem is not RecentRow r) return;
+        MarkRead(r.Path, r.Modified, read: true);
+        await Opener.OpenAsync(this, r.Path);
     }
 
     private void OnFileMenu(object? sender, EventArgs e)
@@ -212,7 +249,12 @@ public partial class SubjectsView : UserControl, IFillPage
 
     private void OnRecentMenu(object? sender, EventArgs e)
     {
-        if (sender is MenuFlyout m) Fill(m, Recent.SelectedItem is RecentRow r ? (r.Name, r.Path) : null);
+        if (sender is not MenuFlyout m) return;
+        Fill(m, Recent.SelectedItem is RecentRow r ? (r.Name, r.Path) : null);
+        if (Recent.SelectedItem is not RecentRow row) return;
+        var mark = new MenuItem { Header = L.T(row.Read ? "subjects.markUnread" : "subjects.markRead") };
+        mark.Click += (_, _) => MarkRead(row.Path, row.Modified, !row.Read);
+        m.Items.Insert(0, mark);
     }
 
     /// <summary>Menu chuột phải của một file: mở thư mục chứa, sao chép tên, sao chép đường dẫn đầy đủ.</summary>

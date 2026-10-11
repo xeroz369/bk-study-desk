@@ -12,38 +12,22 @@ namespace BKStudyDesk.Desktop.Views.Practice;
 /// Trang Luyện tập native (thay khung Svelte trong WebView): nạp dữ liệu một lần (PracticeService), hiện trang chính, mở màn con
 /// (làm câu, bài học, thi thử, soạn) và quay lại. MainWindow giữ một instance để chuyển trang không mất bài đang làm.
 /// </summary>
-public sealed class PracticeHost : UserControl
+public sealed class PracticeHost : UserControl, ITabbedPage
 {
     private readonly PracticeService _service;
     private readonly Stack<Control> _back = new();
     private readonly string? _demo;
 
-    // Mọi màn nằm trong một khung phóng to được (Ctrl+cộng, Ctrl+trừ, Ctrl+0, Ctrl+lăn chuột), như cỡ chữ của khung Svelte cũ.
-    private readonly LayoutTransformControl _frame = new();
-
+    // Cỡ chữ (Ctrl+cộng, Ctrl+trừ) nay áp cho cả app ở MainWindow (config app.zoom), không còn riêng Luyện tập.
     private Control? Screen
     {
-        get => _frame.Child;
-        set => _frame.Child = value;
+        get => Content as Control;
+        set => Content = value;
     }
 
     public PracticeHost(SoHocTap.Api.ApiRouter router)
     {
         _service = new PracticeService(router);
-        Content = _frame;
-        ApplyZoom(Config.Int("practice.zoom", 100));
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.OemPlus, KeyModifiers.Control), Command = new Command(() => ZoomStep(1)) });
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Add, KeyModifiers.Control), Command = new Command(() => ZoomStep(1)) });
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.OemMinus, KeyModifiers.Control), Command = new Command(() => ZoomStep(-1)) });
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Subtract, KeyModifiers.Control), Command = new Command(() => ZoomStep(-1)) });
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D0, KeyModifiers.Control), Command = new Command(() => SetZoom(100)) });
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.NumPad0, KeyModifiers.Control), Command = new Command(() => SetZoom(100)) });
-        AddHandler(PointerWheelChangedEvent, (_, e) =>
-        {
-            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
-            ZoomStep(e.Delta.Y > 0 ? 1 : -1);
-            e.Handled = true;
-        }, RoutingStrategies.Tunnel);
         // Chụp kiểm tra: --luyen-man=lam|bai|thi|soan mở thẳng màn con với dữ liệu đang có (thư mục demo).
         _demo = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--luyen-man=", StringComparison.Ordinal))?[12..];
         Screen = new TextBlock { Classes = { "empty" }, Text = L.T("practice.loading") };
@@ -60,33 +44,38 @@ public sealed class PracticeHost : UserControl
         };
     }
 
-    private int _zoom = 100;
-
-    private static int Token(string key) => (int)Avalonia.Application.Current!.FindResource(key)!;
-
-    // Cỡ chữ theo phần trăm, giữ trong khoảng của Tokens, nhớ trong config (practice.zoom).
-    private void ApplyZoom(int percent)
-    {
-        _zoom = Math.Clamp(percent, Token("PracticeZoomMin"), Token("PracticeZoomMax"));
-        _frame.LayoutTransform = _zoom == 100 ? null : new Avalonia.Media.ScaleTransform(_zoom / 100.0, _zoom / 100.0);
-    }
-
-    private void SetZoom(int percent)
-    {
-        ApplyZoom(percent);
-        if (Config.Int("practice.zoom", 100) != _zoom) Config.Set("practice.zoom", _zoom);
-    }
-
-    private void ZoomStep(int direction) => SetZoom(_zoom + direction * Token("PracticeZoomStep"));
-
     /// <summary>Đang ở một màn con (không phải trang chính): Alt+Mũi tên trái lùi trong Luyện tập trước.</summary>
     public bool CanGoBack => Screen is Control and not PracticeHomeView and not TextBlock;
 
     /// <summary>Lùi một màn (như nút Quay lại).</summary>
     public void GoBack() => Back();
 
-    /// <summary>Tab đang mở của trang chính (chụp kiểm tra --tab=).</summary>
-    public int Tab { get; set; }
+    /// <summary>Bài đã soạn cho tìm nhanh Ctrl+K; rỗng khi sổ chưa nạp.</summary>
+    public IEnumerable<SoHocTap.Presentation.QuickItem> QuickItems() => !_service.Loaded ? [] :
+        _service.Study.Manifest.Courses.SelectMany(c => c.Units.SelectMany(u => u.Lessons))
+            .Where(e => _service.Study.Lessons.ContainsKey(e.Id) && _service.Study.Entry(e.Id) is not null)
+            .Select(e => new SoHocTap.Presentation.QuickItem(e.Title, L.F("quick.lesson", _service.Study.Entry(e.Id)!.CourseName), "lesson:" + e.Id));
+
+    /// <summary>Mở một bài từ tìm nhanh: về trang chính rồi mở bài, Quay lại về trang chính.</summary>
+    public void OpenLessonById(string id)
+    {
+        if (!_service.Loaded) return;
+        if (Screen is not PracticeHomeView) ShowHome();
+        OpenLesson(id);
+    }
+
+    /// <summary>Tab của trang chính: đang hiện trang chính thì đọc, ghi thẳng vào đó; đang ở màn con thì dùng khi quay về.</summary>
+    public int Tab
+    {
+        get => Screen is PracticeHomeView h ? h.SelectedTab : _tab;
+        set
+        {
+            _tab = value;
+            if (Screen is PracticeHomeView h) h.SelectTab(value);
+        }
+    }
+
+    private int _tab;
 
     /// <summary>Ghi nốt kết quả còn chờ (MainWindow gọi trước khi rời trang).</summary>
     public async Task FlushAsync()

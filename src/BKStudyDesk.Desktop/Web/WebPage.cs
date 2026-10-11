@@ -20,8 +20,9 @@ internal sealed class WebPage
     /// <summary>macOS: WKWebView giữ dữ liệu theo mã này (cố định để cookie còn sau khi mở lại app).</summary>
     private static readonly Guid AppleStore = new("6b0d7f3e-2c1a-4f5e-9a51-0b0000000001");
 
-    private bool _cancelled;          // vừa tự hủy một điều hướng (ngoài trường, đổi sang https): bỏ qua lần báo lỗi của nó
+    private Uri? _upgrade;            // vừa hủy lượt http của trường: mở bản https này khi lượt bị hủy báo kết thúc
     private string? _blocked;         // link ngoài trường vừa bị chặn, để báo lỗi rõ thay vì chờ hết giờ
+    private int _completions;         // số lần báo kết thúc, để biết lượt https có tiến triển không
     private Action<Uri, bool>? _loaded;
 
     public NativeWebView View { get; } = new();
@@ -48,12 +49,12 @@ internal sealed class WebPage
         {
             if (e.Request is not { } u || Allow is null || u.Scheme == "about" || Allow(u)) return;
             e.Cancel = true;
-            _cancelled = true;
             // MyBK hết phiên có lúc chuyển về http://mybk.../app/login: cùng tên miền trường thì mở lại bằng https.
             if (SchoolUrls.HttpsOfSchoolDomain(u.AbsoluteUri) is { } https)
             {
                 Log.Info($"Web: đổi http sang https {Log.Where(u.AbsoluteUri)}");
-                Dispatcher.UIThread.Post(() => View.Navigate(new Uri(https)));
+                _upgrade = new Uri(https);
+                DispatcherTimer.RunOnce(Upgrade, TimeSpan.FromSeconds(2));   // phòng khi lượt bị hủy không báo kết thúc
                 return;
             }
             _blocked = u.AbsoluteUri;
@@ -61,10 +62,33 @@ internal sealed class WebPage
         };
         View.NavigationCompleted += (_, e) =>
         {
-            if (!e.IsSuccess && _cancelled) { _cancelled = false; return; }
+            _completions++;
+            // Báo kết thúc của lượt http vừa hủy: không phải trang nào cả, giờ mới mở bản https. Bản 1.2.4 trở về trước mở ngay lúc hủy,
+            // hai lượt chồng nhau mà báo kết thúc không cho biết của lượt nào (Request là trang hiện tại); 6 lần MyBK treo 45 giây đều
+            // ngay sau bước này (log 08-11/10/2026, chưa tái hiện được trên máy). Trang ngoài trường bị chặn thì vẫn báo lên (bản cũ nuốt
+            // mất nên chờ hết giờ, đã thử), NavigateUntilAsync báo lỗi rõ ngay.
+            if (_upgrade is not null && !e.IsSuccess) { Upgrade(); return; }
             if (View.Source is { } u) _loaded?.Invoke(u, e.IsSuccess);
             Loaded?.Invoke(View.Source, e.IsSuccess);
         };
+    }
+
+    /// <summary>
+    /// Mở bản https đang chờ (một lần). Mười giây sau mà chưa có báo kết thúc nào thì mở lại một lần, ghi log: lần treo nào cũng
+    /// biết đã đi tới bước này.
+    /// </summary>
+    private void Upgrade()
+    {
+        if (_upgrade is not { } target) return;
+        _upgrade = null;
+        View.Navigate(target);
+        var seen = _completions;
+        DispatcherTimer.RunOnce(() =>
+        {
+            if (_completions != seen) return;
+            Log.Info($"Web: {Log.Where(target.AbsoluteUri)} chưa tải xong sau 10 giây, mở lại một lần");
+            View.Navigate(target);
+        }, TimeSpan.FromSeconds(10));
     }
 
     /// <summary>Trang vừa tải xong (thành công hay không).</summary>

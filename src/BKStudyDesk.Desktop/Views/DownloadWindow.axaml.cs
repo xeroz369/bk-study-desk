@@ -57,6 +57,9 @@ public partial class DownloadWindow : Window
 
     private IEnumerable<CourseRow> Courses => _terms.SelectMany(t => t.Courses);
 
+    /// <summary>Tải xong (không tính bấm Dừng hay đóng cửa sổ): kết quả, và người dùng có đang nhìn cửa sổ này không.</summary>
+    public event Action<string, bool>? Finished;
+
     // ------------------------------------------------------------------ đọc danh sách mục
 
     /// <summary>Đưa lớp vào hàng đọc (lớp đang đọc thì thôi). again: đọc lại lớp đã đọc (sau khi tải, để số file mới đúng với máy).</summary>
@@ -222,6 +225,7 @@ public partial class DownloadWindow : Window
                 failed += r.Failed;
             }
             _outcome = failed > 0 ? L.F("download.doneFailed", got, failed) : got == 0 ? L.T("download.doneNone") : L.F("download.done", got);
+            Finished?.Invoke(_outcome, IsActive && WindowState != WindowState.Minimized);
         }
         catch (OperationCanceledException) { _outcome = L.T("download.stopped"); }
         catch (Exception x) when (x is not OutOfMemoryException)

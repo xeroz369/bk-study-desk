@@ -4,8 +4,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
              x:Class="BKStudyDesk.Desktop.Views.Practice.LessonView">
-    <!-- Cột đọc tối đa ReadingMaxWidth, sát lề trái như các trang khác. -->
-    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="{StaticResource ReadingMaxWidth}" /></Grid.ColumnDefinitions>
+    <!-- Cột đọc tối đa ReadingMaxWidth, căn giữa vùng trang (màn hình rộng thì cột không dạt về trái, ảnh người dùng 11/10/2026). -->
+    <Grid MaxWidth="{StaticResource ReadingMaxWidth}">
     <StackPanel Spacing="24">
         <DockPanel>
             <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T practice.back}" Click="OnBack" />

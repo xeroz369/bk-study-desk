@@ -235,7 +235,19 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
 
     public void OpenLesson(string id)
     {
-        State.Lessons[id] = new LessonVisit(Now());
+        State.Lessons[id] = new LessonVisit(Now(), Scroll(id));
+        Save();
+    }
+
+    public double? Scroll(string id) => State.Lessons.GetValueOrDefault(id)?.Scroll;
+
+    /// <summary>Ghi chỗ đang đọc của bài đã mở; chỉ đánh dấu chờ ghi khi đổi đáng kể, cuộn liên tục không làm ghi file liên tục.</summary>
+    public void SetScroll(string id, double fraction)
+    {
+        if (State.Lessons.GetValueOrDefault(id) is not { } v) return;
+        var f = Math.Round(Math.Clamp(fraction, 0, 1), 3);
+        if (v.Scroll is { } old && Math.Abs(old - f) < 0.001) return;
+        State.Lessons[id] = v with { Scroll = f };
         Save();
     }
 
@@ -276,9 +288,12 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
             recs.Count, recs.Count(r => r.FirstTry));
     }
 
-    /// <summary>Bài kế tiếp: theo thứ tự ưu tiên môn, bài đầu tiên đã soạn mà chưa xong.</summary>
+    /// <summary>Bài kế tiếp: bài mở gần nhất còn dở; không có thì theo thứ tự ưu tiên môn, bài đầu tiên đã soạn mà chưa xong.</summary>
     public Entry? NextLesson()
     {
+        var last = State.Lessons.Where(kv => kv.Value.OpenedAt != null).OrderByDescending(kv => kv.Value.OpenedAt, StringComparer.Ordinal)
+            .Select(kv => kv.Key).FirstOrDefault();
+        if (last != null && study.Lessons.ContainsKey(last) && Status(last) != LessonStatus.Done && study.Entry(last) is { } recent) return recent;
         var order = study.Manifest.Priority ?? study.Manifest.Courses.Select(c => c.Id).ToList();
         foreach (var cid in order)
             if (study.Entries(cid).FirstOrDefault(x => study.Lessons.ContainsKey(x.Id) && Status(x.Id) != LessonStatus.Done) is { } e) return e;

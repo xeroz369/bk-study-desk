@@ -10,8 +10,11 @@ namespace SoHocTap.Sources.Mybk;
 /// </summary>
 public static class MybkReply
 {
-    /// <summary>Why null là đọc được. Retry: lỗi có thể thoáng qua (server lỗi, mất kết nối, trả trang HTML hay mã lỗi trong JSON).</summary>
-    public readonly record struct Reply(JsonNode? Data, string? Why, bool Retry);
+    /// <summary>
+    /// Why null là đọc được. Retry: lỗi có thể thoáng qua (server lỗi, mất kết nối, trả trang HTML hay mã lỗi trong JSON).
+    /// Missing: MyBK trả lời được nhưng không có dữ liệu này (code 404 trong JSON, kèm câu của MyBK), không phải lỗi.
+    /// </summary>
+    public readonly record struct Reply(JsonNode? Data, string? Why, bool Retry, string? Missing = null);
 
     /// <summary>
     /// Hết phiên (401, 403, trang không có token) thì ném SessionExpiredException như trước. Không gọi lại khi server bảo nghỉ (429, 503,
@@ -29,6 +32,8 @@ public static class MybkReply
         try { body = JsonNode.Parse(r.Body) as JsonObject; }
         catch (JsonException) { body = null; }
         if (body?["code"]?.ToString() is "200" or "204") return new(body["data"]?.DeepClone(), null, false);
+        // MyBK báo không tìm thấy (sinh viên năm nhất chưa có CTĐT: "Không tìm thấy thông tin CTĐT", 09/10/2026): gọi lại cũng vậy.
+        if (body?["code"]?.ToString() == "404") return new(null, null, false, (body["msg"]?.ToString() ?? "").Trim());
         return new(null, body is null ? "trả về không phải JSON" : $"mã {body["code"]} {body["msg"]}".Trim(), true);
     }
 

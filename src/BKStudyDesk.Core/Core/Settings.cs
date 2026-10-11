@@ -74,6 +74,8 @@ public static partial class Settings
         public static int SoonHours { get => GetInt("notify.soonHours"); set => SetInt("notify.soonHours", value); }
         /// <summary>Giờ gom nhắc, dạng "07:00, 12:00, 19:00" (NotifyDigest.Parse); rỗng là báo ngay từng bài.</summary>
         public static string DigestTimes { get => GetStr("notify.digestTimes"); set => SetStr("notify.digestTimes", value); }
+        /// <summary>Giờ hết "Tạm im tới sáng mai" (HH:mm, giờ VN).</summary>
+        public static string Morning { get => GetStr("notify.morning"); set => SetStr("notify.morning", value); }
     }
 
     public static class Update

@@ -38,6 +38,9 @@ public partial class PracticeHomeView : UserControl
         FlaggedSub.Text = L.F("practice.today.flaggedSub", m.Flagged);
         FlaggedButton.IsEnabled = m.Flagged > 0;
         CoursesEmpty.IsVisible = m.Courses.Count == 0;
+        _courses = m.Courses;
+        CoursesBar.IsVisible = m.Courses.Count > 0;
+        ShowCourses();
         QuizzesEmpty.IsVisible = m.Quizzes.Count == 0;
         ProgressGrid.IsVisible = m.Progress.Count > 0;
         ProgressEmpty.IsVisible = m.Progress.Count == 0;
@@ -91,6 +94,55 @@ public partial class PracticeHomeView : UserControl
     private void OnAuthor(object? sender, RoutedEventArgs e) => Go?.Invoke("author");
     private void OnRandomExam(object? sender, RoutedEventArgs e) => Go?.Invoke("random:" + TagOf(sender));
     private void OnMix(object? sender, RoutedEventArgs e) => Go?.Invoke("mix:" + TagOf(sender));
+
+    // ------------------------------------------------------------------ thu gọn từng môn (tab Môn học)
+
+    private const string CollapsedKey = "practice.collapsed";   // mã các môn người dùng đã thu gọn, giữ qua lần mở sau
+    private IReadOnlyList<PracticeCourseRow> _courses = [];
+
+    private bool Filtering => !string.IsNullOrWhiteSpace(CourseFilter.Text);
+
+    private void ShowCourses()
+    {
+        var rows = PracticeHome.Filter(_courses, CourseFilter.Text ?? "");
+        CourseList.ItemsSource = rows;
+        CoursesNoMatch.IsVisible = _courses.Count > 0 && rows.Count == 0;
+    }
+
+    private void OnCourseFilter(object? sender, TextChangedEventArgs e) => ShowCourses();
+
+    private void OnExpandAll(object? sender, RoutedEventArgs e) => SetAll(true);
+    private void OnCollapseAll(object? sender, RoutedEventArgs e) => SetAll(false);
+
+    /// <summary>Mở hay thu gọn mọi môn đang hiện; như người dùng bấm từng thẻ nên được nhớ (OnCourseToggle).</summary>
+    private void SetAll(bool expanded)
+    {
+        foreach (var x in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(CourseList).OfType<Expander>()) x.IsExpanded = expanded;
+    }
+
+    /// <summary>
+    /// Đặt lại trạng thái đã lưu rồi mới lắng nghe: chỉ thao tác của người dùng sau khi thẻ đã hiện mới ghi config. Gắn qua XAML thì Fluent
+    /// có lúc báo Expanded/Collapsed ngay lúc dựng thẻ, và một lần thử đã tự ghi một môn là thu gọn dù không ai bấm (11/10/2026).
+    /// </summary>
+    private void OnCourseLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander x || x.Tag is not string id) return;
+        x.IsExpanded = Filtering || !SoHocTap.Core.Config.List(CollapsedKey).Contains(id);   // đang lọc: mở môn khớp để thấy bài, không ghi đè lựa chọn đã lưu
+        x.Expanded += OnCourseToggle;
+        x.Collapsed += OnCourseToggle;
+        x.Unloaded += (_, _) => { x.Expanded -= OnCourseToggle; x.Collapsed -= OnCourseToggle; };
+    }
+
+    private void OnCourseToggle(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander x || x.Tag is not string id || !ReferenceEquals(e.Source, x)) return;
+        var now = SoHocTap.Core.Config.List(CollapsedKey);
+        var ids = now.Where(c => c != id).ToList();
+        if (!x.IsExpanded) ids.Add(id);
+        if (ids.Count == now.Count && ids.All(now.Contains)) return;   // không đổi: khỏi ghi
+        SoHocTap.Core.Config.Set(CollapsedKey, new System.Text.Json.Nodes.JsonArray([.. ids.Select(c => (System.Text.Json.Nodes.JsonNode?)c)]));
+    }
+
     private void OnLessonTapped(object? sender, TappedEventArgs e) => Go?.Invoke("lesson:" + TagOf(sender));
 
     private void OnOpenQuiz(object? sender, RoutedEventArgs e)

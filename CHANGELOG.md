@@ -6,6 +6,45 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.5] - 2026-10-11
+
+### Thêm
+
+- Luyện tập, tab Môn học: nút Mở tất cả, Thu gọn tất cả và ô lọc theo tên môn, mã môn hay tên bài (gõ không dấu cũng được).
+- Mỗi chương ghi số bài đã xong, ví dụ "Chương 1, 2/5 bài xong".
+- Phím tắt khi làm quiz: 1 đến 9 chọn đáp án, Enter kiểm tra, mũi tên trái phải sang câu trước, câu sau. Đang gõ vào ô trả lời hay ghi chú thì phím số vẫn là chữ số.
+- Tìm nhanh Ctrl+K: gõ tên trang, môn hay bài học (không dấu cũng được), mũi tên lên xuống chọn, Enter mở.
+- Mỗi trang có tab (Môn học, Lịch, Luyện tập, MyBK) mở lại đúng tab đang xem lần trước, kể cả sau khi tắt app. Đồng bộ xong trang MyBK không còn nhảy về tab đầu.
+- Ctrl+cộng, Ctrl+trừ, Ctrl+lăn chuột đổi cỡ chữ cho mọi trang (trước đây chỉ Luyện tập), Ctrl+0 về 100%; cỡ đã chọn ở Luyện tập được giữ.
+- Bảng Thông báo có nút Đồng bộ LMS, Đồng bộ MyBK để đồng bộ riêng một nguồn; nút Thử lại khi một nguồn lỗi chỉ chạy lại nguồn đó.
+- Bảng Thông báo có nút Tạm im tới sáng mai: không hiện nhắc hạn, nhắc sự kiện tới giờ notify.morning (mặc định 07:00); sáng ra báo bù những gì đã tới mốc. Bấm Bật lại nhắc để bật ngay.
+- Tải tài liệu nhiều môn: xong lúc bạn đang ở app khác hay đã thu nhỏ cửa sổ thì có thông báo của Windows (số file đã tải, file lỗi). Nhắc hạn khi cửa sổ thu nhỏ cũng hiện bằng thông báo Windows thay vì góc cửa sổ không ai thấy.
+- Môn học, Mới cập nhật: cột Đọc ghi file chưa đọc, ô Chỉ chưa đọc, chuột phải Đánh dấu đã đọc hay chưa đọc. Mở file là đã đọc; file có bản mới trên LMS thì thành chưa đọc lại. Chỉ lưu trên máy này.
+- MyBK: Bảng điểm có ô tìm theo mã hay tên môn; Chương trình đào tạo có lọc Chưa đạt (còn nợ), như tùy chọn tải về của MyBK.
+- Cài đặt có ô tìm: gõ tên hay ghi chú của mục (không dấu cũng được), chỉ còn các mục khớp, mục trong Nâng cao cũng hiện.
+- Lịch, Thời khóa biểu: nút Tuần này đổi thành Hôm nay, luôn bấm được, về tuần này và cuộn lưới về giờ hiện tại.
+- Học tiếp mở bài đang học dở gần nhất (trước đây luôn là bài đầu tiên chưa xong của môn ưu tiên); mở lại một bài thì cuộn về chỗ đang đọc.
+
+### Thay đổi
+
+- Luyện tập, tab Môn học: mỗi môn thu gọn được (nút mũi tên ở đầu thẻ); môn đã thu gọn được nhớ cho lần mở sau.
+- Bài học, bài làm quiz, trang lộ trình: cột đọc căn giữa màn hình thay vì dạt về bên trái trên màn hình rộng.
+- Thanh tiến độ mảnh dưới thanh trên cùng khi đồng bộ: chạy theo phần đã xong thật, chạy vô định khi đang mở trang trường.
+- Đồng bộ nhanh hơn khoảng gấp đôi: request tới LMS, MyBK cách nhau 100 ms thay vì 300 ms (đo trên tài khoản thật: LMS từ 9 còn 5 giây, MyBK từ 8 còn 4,4 giây). Server báo quá tải (429, 503) thì app vẫn tạm dừng như trước.
+
+### Sửa lỗi
+
+- Bài học từ gói do AI soạn không còn hiện dấu `**` trong ô ghi chú, danh sách: chữ giữa hai cặp dấu sao được in đậm.
+- Thư viện không còn hiện ba ô lọc trống trong lúc đang tải tài liệu của môn; tiêu đề cột bảng hẹp được cắt có dấu ba chấm thay vì cụt giữa chữ.
+- Không còn hai bản BK Study Desk chạy cùng lúc (ví dụ bản Store và bản cài từ GitHub, hay bản zip cũ): mở bản thứ hai thì nó đưa cửa sổ bản đang chạy lên rồi thoát, không đồng bộ và báo trùng.
+- Thanh trên cùng: mục đang xem in đậm không còn bị xén nét chữ cuối, các mục không xô lệch khi đổi trang (giữ sẵn chỗ cho chữ đậm như tab của Fluent UI).
+- Tự đăng nhập lại khi hết phiên nay chạy được: trước đây app luôn báo "Trang đăng nhập không có form như mong đợi" vì nút Login của trang SSO tên "submit" che mất lệnh gửi form.
+- MyBK chưa có chương trình đào tạo cho tài khoản (MyBK trả "Không tìm thấy thông tin CTĐT", thường là sinh viên năm nhất): không còn báo "Lỗi MyBK" mỗi lần đồng bộ; tab Chương trình đào tạo ghi rõ lý do. Mọi API MyBK báo không có dữ liệu đều không còn bị coi là lỗi.
+- Chương trình đào tạo: như trang MyBK, chỉ nhận danh sách môn khi MyBK đã tính xong (đang tính lại thì giữ bản đã lưu); chưa có CTĐT thì app gợi ý bấm Cập nhật ở trang Tiến độ hoàn thành CTĐT trên MyBK.
+- Khối "NGOAICTDT" hiện đúng tên "Môn ngoài chương trình đào tạo", khối tự chọn tự do theo tên của MyBK.
+- MyBK không còn treo 45 giây rồi báo "Trang trường không phản hồi" sau khi trường chuyển về trang đăng nhập bằng http: app chờ lượt cũ kết thúc rồi mới mở lại bằng https, chưa tải xong sau 10 giây thì mở lại một lần.
+- Trang ngoài trường bị chặn giữa lượt đồng bộ được báo ngay, không còn chờ hết giờ.
+
 ## [1.2.4] - 2026-10-09
 
 ### Thêm

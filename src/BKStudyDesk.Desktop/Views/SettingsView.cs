@@ -25,11 +25,37 @@ public sealed class SettingsView : UserControl
             Spacing = 2,
             Children = { new TextBlock { Text = L.T("set.title"), Classes = { "title" } }, new TextBlock { Text = L.T("set.subtitle"), Classes = { "meta" } } },
         });
+        var search = new TextBox { PlaceholderText = L.T("set.search"), Width = (double)Application.Current!.FindResource("ListMaxWidth")!, HorizontalAlignment = HorizontalAlignment.Left };
+        search.TextChanged += (_, _) => Filter(search.Text ?? "");
+        page.Children.Add(search);
+        page.Children.Add(_noMatch);
         foreach (var g in groups.Where(g => !g.Advanced)) page.Children.Add(Card(g));
         var advanced = new StackPanel { Spacing = 24, Margin = new Thickness(0, 16, 0, 0) };
         foreach (var g in groups.Where(g => g.Advanced)) advanced.Children.Add(Card(g));
         page.Children.Add(_advanced = new Expander { Header = L.T("set.advanced"), Content = advanced, HorizontalAlignment = HorizontalAlignment.Stretch });
         Content = page;
+    }
+
+    // Ô tìm (SettingsCatalog.Matches): ẩn dòng không khớp, ẩn thẻ không còn dòng nào; đang tìm thì mở sẵn Nâng cao để thấy mục trong đó.
+    private readonly List<(SettingGroup Group, Border Card, List<(SettingItem Item, Border Row)> Rows)> _cards = [];
+    private readonly TextBlock _noMatch = new() { Text = L.T("set.searchNone"), Classes = { "meta" }, IsVisible = false };
+    private bool? _wasExpanded;
+
+    private void Filter(string query)
+    {
+        var any = false;
+        foreach (var (g, card, rows) in _cards)
+        {
+            foreach (var (item, row) in rows) row.IsVisible = SettingsCatalog.Matches(g, item, query);
+            card.IsVisible = rows.Any(r => r.Row.IsVisible);
+            any |= card.IsVisible;
+        }
+        _noMatch.IsVisible = !any;
+        if (_advanced is null) return;
+        var searching = !string.IsNullOrWhiteSpace(query);
+        if (searching) { _wasExpanded ??= _advanced.IsExpanded; _advanced.IsExpanded = true; }
+        else if (_wasExpanded is { } was) { _advanced.IsExpanded = was; _wasExpanded = null; }
+        _advanced.IsVisible = !searching || _cards.Any(c => c.Group.Advanced && c.Card.IsVisible);
     }
 
     private readonly Expander? _advanced;
@@ -50,8 +76,11 @@ public sealed class SettingsView : UserControl
         if (g.Note is { Length: > 0 } note) head.Children.Add(new TextBlock { Text = note, Classes = { "meta" } });
         var body = new StackPanel();
         body.Children.Add(new Border { Classes = { "card-head" }, Child = head });
-        foreach (var item in g.Items) body.Children.Add(Row(item));
-        return new Border { Classes = { "card" }, Child = body };
+        var rows = g.Items.Select(i => (i, Row(i))).ToList();
+        foreach (var (_, row) in rows) body.Children.Add(row);
+        var card = new Border { Classes = { "card" }, Child = body };
+        _cards.Add((g, card, rows));
+        return card;
     }
 
     /// <summary>Một dòng: trái là tên và ghi chú (ghi chú cũng là chỗ báo lỗi, báo kết quả), phải là control.</summary>

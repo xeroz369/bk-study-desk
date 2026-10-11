@@ -87,6 +87,16 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         _notifier.Check();
     }
 
+    /// <summary>Nhắc hạn đang tạm im tới lúc nào (giây Unix), null là đang bật.</summary>
+    public long? RemindersMutedUntil => DeadlineNotifier.MutedUntil();
+
+    /// <summary>Tạm im nhắc tới sáng mai (true) hay bật lại ngay (false); bật lại thì xem mốc ngay, không chờ 5 phút.</summary>
+    public void MuteReminders(bool on)
+    {
+        DeadlineNotifier.Mute(on);
+        if (!on) _notifier?.Check();
+    }
+
     private void OnSourceChanged(string name, string stage)
     {
         if (stage == "done" && Hub.Quiet(name)) State.RefreshStatusOnly();

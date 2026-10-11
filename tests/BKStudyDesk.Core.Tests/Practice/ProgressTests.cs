@@ -259,6 +259,24 @@ public class ProgressTests
     }
 
     [Fact]
+    public void Next_lesson_is_the_last_opened_unfinished_one_and_keeps_its_scroll()
+    {
+        var (_, p, _, _) = Make(questions: 2);
+        p.OpenLesson("b2");
+        p.SetScroll("b2", 0.4);
+        Assert.Equal("b2", p.NextLesson()!.Id);
+        p.OpenLesson("b2");
+        Assert.Equal(0.4, p.Scroll("b2"));
+        p.SetScroll("b2", 7);
+        Assert.Equal(1, p.Scroll("b2"));
+        Assert.Null(p.Scroll("b1"));
+        // Bài mở gần nhất đã xong thì quay về thứ tự ưu tiên môn.
+        p.RecordAnswer("b2.q1", Answer.Index(0), true);
+        p.RecordAnswer("b2.q2", Answer.Index(0), true);
+        Assert.Equal("b1", p.NextLesson()!.Id);
+    }
+
+    [Fact]
     public void SeedSchedule_starts_from_past_answers()
     {
         var (study, p, _, _) = Make();

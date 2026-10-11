@@ -15,8 +15,30 @@ internal sealed class DeadlineNotifier(Action<string, string, string> show)
 {
     private static string StateFile => Paths.DataFile("notified.json");
 
+    /// <summary>
+    /// "Tạm im tới sáng mai" (bảng Thông báo): tới notify.morning không hiện nhắc nào; mốc đến trong lúc im không bị đánh dấu đã báo,
+    /// nên sáng ra lần kiểm tra đầu tiên báo bù. Lưu trong notified.json (muteUntil) để tắt mở app vẫn giữ.
+    /// </summary>
+    public static long? MutedUntil()
+    {
+        var at = JsonStore.ReadObject(StateFile)["muteUntil"] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<long>(out var t) ? t : 0;
+        return at > DateTimeOffset.UtcNow.ToUnixTimeSeconds() ? at : null;
+    }
+
+    /// <param name="on">true: im tới sáng mai; false: bật lại ngay.</param>
+    public static void Mute(bool on)
+    {
+        var ledger = JsonStore.ReadObject(StateFile);
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var morning = NotifyDigest.Parse(Core.Settings.Notify.Morning) is [var m, ..] ? m : 7 * 60;   // sửa tay sai dạng: 7 giờ như mặc định
+        if (on) ledger["muteUntil"] = NotifyDigest.NextMorning(now, morning);
+        else ledger.Remove("muteUntil");
+        JsonStore.Write(StateFile, ledger);
+    }
+
     public void Check()
     {
+        if (MutedUntil() is not null) return;
         try { Run(); }
         catch (Exception e) { Log.Error("Nhắc hạn", e); }
         try { RunCustom(); }

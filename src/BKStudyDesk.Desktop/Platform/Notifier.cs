@@ -16,9 +16,11 @@ internal sealed class Notifier(Window main, Action<string> open)
     private WindowNotificationManager? _inApp;
     private readonly List<(string Title, string Body, string Page)> _pending = [];
 
-    public void Show(string title, string body, string page)
+    /// <param name="outside">Người dùng đang ở app khác (ví dụ chờ tải xong): báo bằng thông báo hệ điều hành dù cửa sổ đang mở.</param>
+    public void Show(string title, string body, string page, bool outside = false)
     {
-        if (main.IsVisible) { InApp(title, body, page); return; }
+        // Cửa sổ thu nhỏ vẫn IsVisible nhưng không ai thấy thông báo trong app: coi như ở khay.
+        if (!outside && main.IsVisible && main.WindowState != WindowState.Minimized) { InApp(title, body, page); return; }
         if (OperatingSystem.IsLinux() && Run("notify-send", "-a", AppInfo.Name, title, body)) return;
         if (OperatingSystem.IsMacOS() && Run("osascript", "-e", $"display notification {Quote(body)} with title {Quote(title)}")) return;
 #if WINDOWS

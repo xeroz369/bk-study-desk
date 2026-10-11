@@ -9,11 +9,13 @@ using SoHocTap.Ui;
 namespace BKStudyDesk.Desktop.Views;
 
 /// <summary>Trang MyBK: nối MybkPresenter vào các tab. Bảng có nhóm (điểm theo kỳ, chương trình theo khối, giảng viên) dùng nhóm của DataGrid.</summary>
-public partial class MybkView : UserControl, IFillPage
+public partial class MybkView : UserControl, IFillPage, ITabbedPage
 {
     private readonly MybkData? _m;
 
     public MybkView() => InitializeComponent();
+
+    public int Tab { get => Tabs.SelectedIndex; set => Tabs.SelectedIndex = Math.Clamp(value, 0, Tabs.ItemCount - 1); }
 
     internal MybkView(AppState state) : this()
     {
@@ -24,7 +26,10 @@ public partial class MybkView : UserControl, IFillPage
         Stats.ItemsSource = stats;
         Stats.IsVisible = stats.Count > 0;
         string Empty(string key) => L.T(hasData ? key : "mybk.noData");
-        Tables.Show(Grades, GradesEmpty, Tables.Grouped(MybkPresenter.Grades(_m), nameof(MybkGradeRow.Group)), Empty("grades.gradesEmpty"));
+        _grades = MybkPresenter.Grades(_m);
+        _gradesEmpty = Empty("grades.gradesEmpty");
+        GradesSearch.IsVisible = _grades.Count > 0;
+        ShowGrades();
         ProgramFilter.ItemsSource = MybkPresenter.Filters;
         ProgramFilter.SelectedIndex = 0;   // OnProgramFilter dựng bảng chương trình
         ProgramNote.Text = MybkPresenter.ProgramNote(_m);
@@ -37,11 +42,24 @@ public partial class MybkView : UserControl, IFillPage
         ShowServices();
     }
 
+    private IReadOnlyList<MybkGradeRow> _grades = [];
+    private string _gradesEmpty = "";
+
+    // Ô tìm Bảng điểm (MybkPresenter.SearchGrades): lọc trên danh sách đã dựng, nhóm theo học kỳ như cũ.
+    private void ShowGrades()
+    {
+        var q = GradesSearch.Text ?? "";
+        Tables.Show(Grades, GradesEmpty, Tables.Grouped(MybkPresenter.SearchGrades(_grades, q), nameof(MybkGradeRow.Group)),
+            string.IsNullOrWhiteSpace(q) ? _gradesEmpty : L.T("grades.searchNone"));
+    }
+
+    private void OnGradesSearch(object? sender, TextChangedEventArgs e) => ShowGrades();
+
     private void OnProgramFilter(object? sender, SelectionChangedEventArgs e)
     {
         if (ProgramFilter.SelectedItem is not SoHocTap.Presentation.ProgramFilter f) return;
         var rows = MybkPresenter.Program(_m, f);
-        Tables.Show(Program, ProgramEmpty, Tables.Grouped(rows ?? [], nameof(ProgramRow.Group)), L.T("grades.programEmpty"));
+        Tables.Show(Program, ProgramEmpty, Tables.Grouped(rows ?? [], nameof(ProgramRow.Group)), MybkPresenter.ProgramEmpty(_m));
     }
 
     private void OnServiceFilter(object? sender, TextChangedEventArgs e) => ShowServices();

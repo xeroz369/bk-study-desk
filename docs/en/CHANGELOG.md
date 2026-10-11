@@ -8,6 +8,45 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-10-11
+
+### Added
+
+- Practice, Subjects tab: Expand all, Collapse all, and a filter by subject name, course code or lesson title (works without diacritics).
+- Each chapter shows how many lessons are done, for example "Chapter 1, 2/5 lessons done".
+- Quiz shortcuts: 1 to 9 pick an answer, Enter checks, Left and Right go to the previous or next question. While typing in the answer or note box, digit keys stay digits.
+- Quick search with Ctrl+K: type a page, subject or lesson name (diacritics optional), Up and Down to pick, Enter to open.
+- Pages with tabs (Subjects, Calendar, Practice, MyBK) reopen the tab you last viewed, even after restarting the app. The MyBK page no longer jumps back to its first tab after a sync.
+- Ctrl+Plus, Ctrl+Minus and Ctrl+mouse wheel change the text size on every page (it used to be Practice only), Ctrl+0 resets to 100%; the size chosen in Practice is kept.
+- The notification panel has Sync LMS and Sync MyBK buttons to sync one source; Retry on a failed source reruns only that source.
+- The notification panel has Mute until morning: no deadline or event reminders until notify.morning (07:00 by default), then the missed ones show. Turn reminders back on ends it at once.
+- Downloading documents for several subjects: when it finishes while you are in another app or the window is minimized, a Windows notification says how many files came in or failed. Reminders while the window is minimized also use Windows notifications instead of the corner of a window nobody sees.
+- Subjects, Recently updated: a Read column marks unread files, an Unread only box filters them, and the context menu marks a file read or unread. Opening a file marks it read; a newer version from LMS makes it unread again. Stored on this computer only.
+- MyBK: the grade table has a search box for course code or name; the curriculum has a Not passed yet filter, like the MyBK download option.
+- Settings has a search box: type a setting name or note (diacritics optional) and only matching items stay, Advanced ones included.
+- Calendar, timetable: the This week button is now Today, always enabled; it returns to this week and scrolls the grid to the current time.
+- Continue opens the lesson you were last working on (it used to be the first unfinished lesson of the priority subject); reopening a lesson scrolls back to where you were reading.
+
+### Changed
+
+- Practice, Subjects tab: each subject can be collapsed (arrow at the top of its card), and collapsed subjects stay collapsed next time.
+- Lessons, quiz runs and the study plan page: the reading column is centred instead of hugging the left edge on wide screens.
+- A thin progress bar under the top bar while syncing: it follows the real share done, and runs indeterminate while a university page is opening.
+- Syncing is about twice as fast: requests to LMS and MyBK are 100 ms apart instead of 300 ms (measured on a real account: LMS from 9 to 5 seconds, MyBK from 8 to 4.4 seconds). The app still pauses when a server reports overload (429, 503).
+
+### Fixed
+
+- Lessons from AI-written packs no longer show `**` in notes and lists: text between double asterisks is shown in bold.
+- Library no longer shows three empty filter boxes while a course is loading; narrow table column headers end with an ellipsis instead of being cut mid-word.
+- Two copies of BK Study Desk no longer run at once (for example the Store app and the GitHub install, or an old zip copy): opening a second one brings the running window forward and exits, so syncs and notifications are not doubled.
+- Top bar: the bold current item no longer loses its last stroke, and items no longer shift when you change pages (space is reserved for the bold text, as Fluent UI tabs do).
+- Automatic sign-in after the session ends now works: the app always gave up with "the sign-in page does not have the expected form" because the SSO page's Login button is named "submit", which hides the form's submit function.
+- When MyBK has no curriculum for the account yet (MyBK answers "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin CTÄT", usually first-year students), the app no longer shows a MyBK error on every sync; the Curriculum tab says why. Any MyBK API that reports no data is no longer treated as an error.
+- Curriculum: like the MyBK page, the course list is accepted only once MyBK has finished computing it (while it recomputes, the saved copy stays); with no curriculum yet, the app suggests pressing Update on the curriculum progress page on MyBK.
+- The "NGOAICTDT" block now shows as "Courses outside the curriculum", and the free elective block uses the name MyBK uses.
+- MyBK no longer hangs for 45 seconds and then says the school site is not responding after the university redirects to its sign-in page over http: the app waits for the cancelled navigation to finish before reopening it over https, and reopens it once more if it has not loaded after 10 seconds.
+- A blocked page outside the university during a sync is reported at once instead of waiting for the timeout.
+
 ## [1.2.4] - 2026-10-09
 
 ### Added

@@ -30,6 +30,8 @@
             <TabControl x:Name="Tabs" Padding="0">
                 <TabItem Header="{l:T grades.tabGrades}">
                     <DockPanel>
+                        <TextBox x:Name="GradesSearch" DockPanel.Dock="Top" Margin="16,8" Width="{StaticResource ListMaxWidth}" HorizontalAlignment="Left"
+                                 PlaceholderText="{l:T grades.search}" TextChanged="OnGradesSearch" />
                         <TextBlock x:Name="GradesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                         <DataGrid x:Name="Grades">
                             <DataGrid.Columns>

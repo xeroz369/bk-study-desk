@@ -225,6 +225,13 @@ public static partial class MybkNormalize
     /// từ result/attempted, ghép với bảng điểm (CTĐT có thể cũ hơn) và thời khóa biểu (môn đang học).
     /// <paramref name="info"/> null (API phần đầu lỗi hay trả rỗng): phần đầu lấy của <paramref name="previous"/> (bản đã lưu), danh sách vẫn mới.
     /// </summary>
+    /// <summary>
+    /// Danh sách môn CTĐT dùng được không: như trang MyBK, cần ít nhất một dòng và dòng đầu có msg "done" (thiếu msg thì nhận).
+    /// MyBK đang tính lại tiến độ thì trả dòng khác "done": giữ bản đã lưu, đọc lại ở lần đồng bộ sau.
+    /// </summary>
+    public static bool CurriculumReady(JsonArray? rows) =>
+        rows is [JsonObject first, ..] && (first["msg"] is not JsonValue m || m.ToString() == "done");
+
     public static JsonObject Curriculum(JsonObject? info, JsonArray? rows, IReadOnlyDictionary<string, string> special, JsonObject? previous = null)
     {
         var list = (rows ?? []).OfType<JsonObject>().OrderBy(r => Long(r["stt"]) ?? 0).ToList();

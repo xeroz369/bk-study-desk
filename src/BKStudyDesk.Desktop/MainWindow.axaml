@@ -11,7 +11,7 @@
              Thêm (MainWindow.FitBar). -->
         <Border x:Name="Bar" DockPanel.Dock="Top" Background="{DynamicResource Bar}" MinHeight="{StaticResource BarHeight}">
             <DockPanel Margin="16,0">
-                <Button x:Name="SettingsButton" DockPanel.Dock="Right" Classes="bar" Margin="20,0,0,0"><TextBlock Text="{l:T nav.settings}" VerticalAlignment="Center" /></Button>
+                <Button x:Name="SettingsButton" DockPanel.Dock="Right" Classes="bar" Margin="20,0,0,0" />
                 <Button x:Name="More" DockPanel.Dock="Right" Classes="bar" IsVisible="False" Margin="20,0,0,0">
                     <TextBlock Text="{l:T nav.more}" VerticalAlignment="Center" />
                     <Button.Flyout>
@@ -27,6 +27,8 @@
                 <StackPanel x:Name="Nav" Orientation="Horizontal" Spacing="24" />
             </DockPanel>
         </Border>
+        <!-- Thanh tiến độ đồng bộ (SyncStatus.Progress): % thật khi biết tổng, vô định khi đang mở trang trường; ẩn khi không đồng bộ. -->
+        <ProgressBar x:Name="SyncBar" DockPanel.Dock="Top" Height="3" MinHeight="3" Minimum="0" Maximum="1" CornerRadius="0" IsVisible="False" />
         <!-- Dải báo (Presentation/InfoBar quyết định hiện gì): đăng nhập, hết phiên, lỗi đồng bộ, mời tự đăng nhập lại. Viền trái theo
              mức độ (Border.info.error...), chữ trái, nút phải, Đóng cuối. Ẩn khi không có gì để báo. -->
         <Border x:Name="Info" DockPanel.Dock="Top" Classes="info" IsVisible="False">
@@ -41,8 +43,11 @@
         </Border>
         <!-- Trang đăng nhập (Views/LoginView) phủ lên vùng nội dung khi cần mật khẩu, không mở cửa sổ riêng. -->
         <Panel>
+            <!-- Cỡ chữ cả vùng nội dung (Ctrl+cộng, Ctrl+trừ, Ctrl+0, Ctrl+lăn chuột): MainWindow.SetZoom, config app.zoom. -->
             <ScrollViewer x:Name="Scroller">
-                <Border x:Name="Page" Margin="24,24,24,32" />
+                <LayoutTransformControl x:Name="Zoom">
+                    <Border x:Name="Page" Margin="24,24,24,32" />
+                </LayoutTransformControl>
             </ScrollViewer>
             <Border x:Name="LoginHost" Background="{DynamicResource PageBg}" IsVisible="False" />
         </Panel>

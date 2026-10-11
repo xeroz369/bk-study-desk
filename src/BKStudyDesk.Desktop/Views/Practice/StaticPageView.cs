@@ -18,7 +18,7 @@ public sealed class StaticPageView : UserControl
         Control body = html is null
             ? new TextBlock { Classes = { "empty" }, Text = L.T("practice.page.empty") }
             : new Border { Padding = new Thickness(16), Child = ContentRenderer.Render(html) };
-        var column = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star) { MaxWidth = (double)Application.Current!.FindResource("ReadingMaxWidth")! } } };
+        var column = new Grid { MaxWidth = (double)Application.Current!.FindResource("ReadingMaxWidth")! };   // cột đọc căn giữa vùng trang như bài học
         column.Children.Add(new StackPanel { Spacing = 24, Children = { head, new Border { Classes = { "card" }, Child = body } } });
         Content = column;
     }

@@ -132,7 +132,7 @@ public sealed class UpdateService
         if (args.Any(a => a.StartsWith("--veloapp", StringComparison.OrdinalIgnoreCase))) return null;
         try
         {
-            var other = Mutex.TryOpenExisting(AppInfo.InstanceKey, out var running);
+            var other = Mutex.TryOpenExisting(InstanceLock.Current, out var running);
             running?.Dispose();
             var restarted = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("VELOPACK_RESTART"));
             if (!UpdatePolicy.ApplyOnStartup(Mode, Paths.Kind, args, other, restarted)) return null;

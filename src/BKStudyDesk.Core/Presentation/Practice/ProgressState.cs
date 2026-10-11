@@ -20,7 +20,8 @@ public sealed class QuestionRecord
     public QuestionRecord Copy() => (QuestionRecord)MemberwiseClone();
 }
 
-public sealed record LessonVisit(string? OpenedAt);
+/// <param name="Scroll">Chỗ đang đọc, tỉ lệ 0 đến 1 của chiều dài bài (Học tiếp mở lại đúng chỗ).</param>
+public sealed record LessonVisit(string? OpenedAt, double? Scroll = null);
 
 public sealed class ExamAttempt
 {

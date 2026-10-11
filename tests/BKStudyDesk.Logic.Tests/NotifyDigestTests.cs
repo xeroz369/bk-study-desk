@@ -39,6 +39,14 @@ public class NotifyDigestTests
         Assert.True(NotifyDigest.GateOpen(At(6, 15), [12 * 60], lastDigest: At(5, 12, 1)));
 
     [Fact]
+    public void NextMorning_is_today_before_dawn_else_tomorrow()
+    {
+        Assert.Equal(At(7, 7), NotifyDigest.NextMorning(At(6, 21), 7 * 60));
+        Assert.Equal(At(6, 7), NotifyDigest.NextMorning(At(6, 2), 7 * 60));
+        Assert.Equal(At(7, 7), NotifyDigest.NextMorning(At(6, 7), 7 * 60));   // đúng 7 giờ: sáng mai
+    }
+
+    [Fact]
     public void Hold_OnlyWhenFarFromDue()
     {
         Assert.True(NotifyDigest.Hold(due: At(7, 10), now: At(6, 13), immediateHours: 6));

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SoHocTap.Presentation.Practice;
 
@@ -24,7 +25,7 @@ public sealed record HtmlElement(string Tag) : HtmlNode
 /// những chỗ hay gặp: "&lt;" không theo sau bởi chữ cái là chữ thường (công thức <c>\(f(0)&lt;0\)</c>), thẻ không đóng thì tự đóng,
 /// li, tr, td tự đóng nhau, khối mới đóng p đang mở. Không ném lỗi với HTML hỏng.
 /// </summary>
-public static class Html
+public static partial class Html
 {
     private static readonly HashSet<string> Void = ["br", "img", "hr", "input", "meta", "link", "area", "base", "col", "embed", "source", "track", "wbr"];
     private static readonly HashSet<string> RawText = ["script", "style"];
@@ -278,20 +279,21 @@ public static class Html
     /// colspan, rowspan; thẻ lạ bỏ thẻ giữ chữ; script, iframe... bỏ cả nội dung; ảnh chỉ nhận data URI raster.
     /// </summary>
     /// <param name="headings">Trang tĩnh (lộ trình): giữ thêm h2, h3.</param>
-    public static string Sanitize(string html, bool headings = false) => Serialize(Clean(Parse(html), headings));
+    public static string Sanitize(string html, bool headings = false) => Serialize(Clean(Parse(html), headings, code: false));
 
-    private static List<HtmlNode> Clean(List<HtmlNode> nodes, bool headings)
+    private static List<HtmlNode> Clean(List<HtmlNode> nodes, bool headings, bool code)
     {
         var output = new List<HtmlNode>();
         foreach (var n in nodes)
         {
             if (n is not HtmlElement e)
             {
-                output.Add(n);
+                if (n is HtmlText t && !code) output.AddRange(StrayBold(t.Text));
+                else output.Add(n);
                 continue;
             }
             if (DropWithContent.Contains(e.Tag)) continue;
-            var children = Clean(e.Children, headings);
+            var children = Clean(e.Children, headings, code || e.Tag is "code" or "pre");
             if (!StudyPack.AllowedTags.Contains(e.Tag) && !(headings && e.Tag is "h2" or "h3"))
             {
                 output.AddRange(children);
@@ -315,6 +317,29 @@ public static class Html
         }
         return output;
     }
+
+    /// <summary>
+    /// Gói do AI soạn hay để sót **chữ** của Markdown trong HTML (ô ghi chú, mục danh sách): vẽ thành chữ đậm thay vì hiện hai dấu sao.
+    /// Chỉ ngoài công thức (\( \), \[ \], $$ $$), dấu sao sát chữ ở cả hai đầu (2 ** 3 không phải chữ đậm); trong code, pre thì giữ nguyên.
+    /// </summary>
+    private static IEnumerable<HtmlNode> StrayBold(string text)
+    {
+        if (!text.Contains("**", StringComparison.Ordinal)) { yield return new HtmlText(text); yield break; }
+        var at = 0;
+        foreach (Match m in BoldOrMath().Matches(text))
+        {
+            if (!m.Groups["bold"].Success) continue;   // công thức: để nguyên trong chữ thường
+            if (m.Index > at) yield return new HtmlText(text[at..m.Index]);
+            var strong = new HtmlElement("strong");
+            strong.Children.Add(new HtmlText(m.Groups["bold"].Value));
+            yield return strong;
+            at = m.Index + m.Length;
+        }
+        if (at < text.Length) yield return new HtmlText(text[at..]);
+    }
+
+    [GeneratedRegex(@"\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\]|\$\$[\s\S]+?\$\$|\*\*(?<bold>(?=\S)[^*]+?(?<=\S))\*\*")]
+    private static partial Regex BoldOrMath();
 
     private static bool IsDigits(string s, int max) => s.Length is > 0 && s.Length <= max && s.All(char.IsAsciiDigit);
 }

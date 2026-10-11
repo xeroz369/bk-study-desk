@@ -1,5 +1,6 @@
 using SoHocTap.Data;
 using SoHocTap.Presentation;
+using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
@@ -14,6 +15,27 @@ public class MybkTests
     private static MybkGrade Grade(string term, string code, double? score, int result) =>
         new(term, code, "Môn " + code, 3, score, score is null ? null : "B", null, result, null, null, null, null);
 
+    [Theory]
+    [InlineData("NGOAICTDT", "NGOAICTDT", "Môn ngoài chương trình đào tạo")]
+    [InlineData("TUCHON_TUDO", "Tự chọn tự do", "Tự chọn bổ sung / tự do")]
+    [InlineData("TOAN", "Toán", "Toán")]
+    public void Block_titles_follow_mybk(string group, string name, string expected)
+    {
+        // Như trang Tiến độ CTĐT của MyBK (tien-do-hoan-thanh-ctdt.js): khối NGOAICTDT là môn ngoài CTĐT, TUCHON_TUDO đổi tên.
+        var title = new SoHocTap.Ui.BlockView(new MybkBlock("1", name, group, false, 0, 0, false, 1), []).Title;
+        Assert.StartsWith(expected, title);
+        if (group == "NGOAICTDT") Assert.Equal(expected, title);   // không ghi "tự chọn", không tín chỉ
+    }
+
+    [Fact]
+    public void Program_empty_says_when_mybk_has_no_curriculum()
+    {
+        var missing = new MybkCurriculum(null, null, null, null, null, null, null, null, [], [], "Không tìm thấy thông tin CTĐT");
+        var m = Data() with { Curriculum = missing };
+        Assert.Contains("Không tìm thấy thông tin CTĐT", MybkPresenter.ProgramEmpty(m));
+        Assert.NotEqual(MybkPresenter.ProgramEmpty(Data()), MybkPresenter.ProgramEmpty(m));
+    }
+
     [Fact]
     public void Grades_NewestTermFirst_ReservedLast_FailFlag()
     {
@@ -21,6 +43,24 @@ public class MybkTests
         Assert.Equal(["B1", "A1", "X1"], rows.Select(r => r.Code));
         Assert.True(rows[0].Fail);
         Assert.Equal("HK252", rows[1].Group);
+    }
+
+    [Fact]
+    public void Grades_search_by_code_or_name_without_diacritics()
+    {
+        var rows = MybkPresenter.Grades(Data([Grade("20252", "MT1005", 8, 1), Grade("20261", "PH1003", 3, 0)]));
+        Assert.Equal(["PH1003"], MybkPresenter.SearchGrades(rows, "ph10").Select(r => r.Code));
+        Assert.Equal(["MT1005"], MybkPresenter.SearchGrades(rows, "mon mt").Select(r => r.Code));   // tên "Môn MT1005", gõ không dấu
+        Assert.Same(rows, MybkPresenter.SearchGrades(rows, "  "));
+    }
+
+    [Fact]
+    public void Not_passed_filter_is_what_is_still_owed()
+    {
+        var f = MybkPresenter.Filters.Single(x => x.Match.Contains(CourseStatus.ChuaHoc) && x.Match.Contains(CourseStatus.HocLai));
+        Assert.DoesNotContain(CourseStatus.Dat, f.Match);
+        Assert.DoesNotContain(CourseStatus.Mien, f.Match);
+        Assert.DoesNotContain(CourseStatus.LuaChon, f.Match);
     }
 
     [Fact]
