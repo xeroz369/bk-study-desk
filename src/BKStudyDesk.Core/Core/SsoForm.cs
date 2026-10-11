@@ -6,11 +6,14 @@ namespace SoHocTap.Core;
 /// Script điền trang đăng nhập SSO của trường (CAS: form #fm1, ô #username, #password; đo trên trang thật 06/10/2026) để tự đăng nhập lại.
 /// Giá trị đi qua JSON nên dấu nháy, gạch chéo, thẻ HTML trong mật khẩu không phá script. Trang có captcha hay đổi cấu trúc thì không
 /// điền, trả "false" để app báo đăng nhập lại như thường. Hàm thuần, không giữ mật khẩu.
+/// Gửi bằng cách bấm nút gửi của trang như người dùng: nút Login của trang tên "submit" nên che mất form.submit (gọi f.submit() là
+/// TypeError, bản 1.2.4 trở về trước tự đăng nhập không bao giờ chạy; thử trên HTML thật 11/10/2026). Không có nút thì gọi hàm gốc.
 /// </summary>
 public static class SsoForm
 {
     public static string FillScript(string user, string password) =>
         "(() => { const f = document.getElementById('fm1'), u = document.getElementById('username'), p = document.getElementById('password');"
         + " if (!f || !u || !p || document.querySelector('.g-recaptcha, [name*=\"captcha\" i], [id*=\"captcha\" i]')) return 'false';"
-        + $" u.value = {JsonSerializer.Serialize(user)}; p.value = {JsonSerializer.Serialize(password)}; f.submit(); return 'true'; }})()";
+        + $" u.value = {JsonSerializer.Serialize(user)}; p.value = {JsonSerializer.Serialize(password)};"
+        + " const b = f.querySelector('[type=submit]'); if (b) b.click(); else HTMLFormElement.prototype.submit.call(f); return 'true'; })()";
 }

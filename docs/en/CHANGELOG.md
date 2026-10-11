@@ -17,6 +17,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- Top bar: the bold current item no longer loses its last stroke, and items no longer shift when you change pages (space is reserved for the bold text, as Fluent UI tabs do).
+- Automatic sign-in after the session ends now works: the app always gave up with "the sign-in page does not have the expected form" because the SSO page's Login button is named "submit", which hides the form's submit function.
 - When MyBK has no curriculum for the account yet (MyBK answers "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin CTÄT", usually first-year students), the app no longer shows a MyBK error on every sync; the Curriculum tab says why. Any MyBK API that reports no data is no longer treated as an error.
 - The "NGOAICTDT" block now shows as "Courses outside the curriculum", and the free elective block uses the name MyBK uses.
 - MyBK no longer hangs for 45 seconds and then says the school site is not responding after the university redirects to its sign-in page over http: the app waits for the cancelled navigation to finish before reopening it over https, and reopens it once more if it has not loaded after 10 seconds.

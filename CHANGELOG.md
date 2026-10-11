@@ -15,6 +15,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Sửa lỗi
 
+- Thanh trên cùng: mục đang xem in đậm không còn bị xén nét chữ cuối, các mục không xô lệch khi đổi trang (giữ sẵn chỗ cho chữ đậm như tab của Fluent UI).
+- Tự đăng nhập lại khi hết phiên nay chạy được: trước đây app luôn báo "Trang đăng nhập không có form như mong đợi" vì nút Login của trang SSO tên "submit" che mất lệnh gửi form.
 - MyBK chưa có chương trình đào tạo cho tài khoản (MyBK trả "Không tìm thấy thông tin CTĐT", thường là sinh viên năm nhất): không còn báo "Lỗi MyBK" mỗi lần đồng bộ; tab Chương trình đào tạo ghi rõ lý do. Mọi API MyBK báo không có dữ liệu đều không còn bị coi là lỗi.
 - Khối "NGOAICTDT" hiện đúng tên "Môn ngoài chương trình đào tạo", khối tự chọn tự do theo tên của MyBK.
 - MyBK không còn treo 45 giây rồi báo "Trang trường không phản hồi" sau khi trường chuyển về trang đăng nhập bằng http: app chờ lượt cũ kết thúc rồi mới mở lại bằng https, chưa tải xong sau 10 giây thì mở lại một lần.

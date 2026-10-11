@@ -46,7 +46,7 @@ public partial class MainWindow : Window
         for (var i = 0; i < NavCount; i++)
         {
             var index = i;
-            var item = new Button { Classes = { "bar" }, Content = new TextBlock { Text = _pages[i].Title } };   // gạch chân mục đang xem: style Button.bar.on
+            var item = new Button { Classes = { "bar" }, Content = BarLabel(_pages[i].Title) };   // gạch chân mục đang xem: style Button.bar.on
             item.Click += (_, _) => Show(index);
             Nav.Children.Add(item);
             KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + i, KeyModifiers.Control), Command = new Command(() => Show(index)) });
@@ -54,6 +54,7 @@ public partial class MainWindow : Window
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + NavCount, KeyModifiers.Control), Command = new Command(() => Show(NavCount)) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.F5), Command = new Command(SyncNow) });   // như 1.x
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Left, KeyModifiers.Alt), Command = new Command(Back) });
+        SettingsButton.Content = BarLabel(L.T("nav.settings"));
         SettingsButton.Click += (_, _) => Show(NavCount);
         MoreSettings.Click += (_, _) => Show(NavCount);
         // Dữ liệu mới: dựng lại trang đang xem. Cài đặt không vẽ dữ liệu đồng bộ: giữ nguyên (đang gõ dở trong ô thì không mất chữ).
@@ -343,6 +344,22 @@ public partial class MainWindow : Window
         for (var i = NavCount - 1; i >= 0 && W(Nav) + W(StatusButton) + W(More) > room; i--)
             if (i != _current) Nav.Children[i].IsVisible = false;
     }
+
+    /// <summary>
+    /// Chữ của một mục thanh trên cùng. Mục đang xem in đậm (style Button.bar.on): dưới chữ thật đặt sẵn một bản chữ đậm vô hình để mục
+    /// luôn rộng bằng chữ đậm, như tab của Fluent UI (giữ chỗ cho chữ đậm). Không vậy thì đổi trang làm thanh xô lệch và nét cuối của chữ
+    /// đậm bị xén ("Thư viện" mất nét chữ n, ảnh người dùng 11/10/2026).
+    /// </summary>
+    private static Control BarLabel(string text) => new Grid
+    {
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        Children =
+        {
+            new TextBlock { Text = text, FontWeight = Avalonia.Media.FontWeight.SemiBold, Opacity = 0, IsHitTestVisible = false },   // giá trị đặt thẳng thắng style
+            new TextBlock { Text = text },
+        },
+        [Avalonia.Automation.AutomationProperties.NameProperty] = text,   // trình đọc màn hình đọc một lần
+    };
 
     /// <summary>Menu nút Thêm: các trang không vừa thanh (FitBar ẩn), rồi Cài đặt.</summary>
     private void FillMore(MenuFlyout menu)
