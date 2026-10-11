@@ -57,9 +57,9 @@
                         </DockPanel>
                     </Border>
                     <WrapPanel DockPanel.Dock="Top" Margin="16,8,16,0">
-                        <ComboBox x:Name="TeacherFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="160" />
-                        <ComboBox x:Name="TermFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="120" />
-                        <ComboBox x:Name="ExamFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="140" />
+                        <ComboBox x:Name="TeacherFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="160" IsVisible="False" />
+                        <ComboBox x:Name="TermFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="120" IsVisible="False" />
+                        <ComboBox x:Name="ExamFilter" SelectionChanged="OnItemFilter" Margin="0,0,8,8" MinWidth="140" IsVisible="False" />
                     </WrapPanel>
                     <TextBlock x:Name="Note" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
                     <TextBlock x:Name="StatusLine" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />

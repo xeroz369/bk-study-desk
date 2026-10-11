@@ -15,6 +15,7 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Sửa lỗi
 
+- Thư viện không còn hiện ba ô lọc trống trong lúc đang tải tài liệu của môn; tiêu đề cột bảng hẹp được cắt có dấu ba chấm thay vì cụt giữa chữ.
 - Không còn hai bản BK Study Desk chạy cùng lúc (ví dụ bản Store và bản cài từ GitHub, hay bản zip cũ): mở bản thứ hai thì nó đưa cửa sổ bản đang chạy lên rồi thoát, không đồng bộ và báo trùng.
 - Thanh trên cùng: mục đang xem in đậm không còn bị xén nét chữ cuối, các mục không xô lệch khi đổi trang (giữ sẵn chỗ cho chữ đậm như tab của Fluent UI).
 - Tự đăng nhập lại khi hết phiên nay chạy được: trước đây app luôn báo "Trang đăng nhập không có form như mong đợi" vì nút Login của trang SSO tên "submit" che mất lệnh gửi form.

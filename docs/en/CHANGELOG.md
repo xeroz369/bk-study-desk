@@ -17,6 +17,7 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Fixed
 
+- Library no longer shows three empty filter boxes while a course is loading; narrow table column headers end with an ellipsis instead of being cut mid-word.
 - Two copies of BK Study Desk no longer run at once (for example the Store app and the GitHub install, or an old zip copy): opening a second one brings the running window forward and exits, so syncs and notifications are not doubled.
 - Top bar: the bold current item no longer loses its last stroke, and items no longer shift when you change pages (space is reserved for the bold text, as Fluent UI tabs do).
 - Automatic sign-in after the session ends now works: the app always gave up with "the sign-in page does not have the expected form" because the SSO page's Login button is named "submit", which hides the form's submit function.

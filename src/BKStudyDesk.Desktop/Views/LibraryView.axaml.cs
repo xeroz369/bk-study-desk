@@ -141,6 +141,8 @@ public partial class LibraryView : UserControl, IFillPage
     {
         var gen = ++_gen;
         Status(L.T("library.loading"));
+        // Bộ lọc của môn trước (hay ô trống khi chưa có gì) không hiện trong lúc chờ: FillFilters bật lại ô nào có giá trị.
+        TeacherFilter.IsVisible = TermFilter.IsVisible = ExamFilter.IsVisible = false;
         IReadOnlyList<LibraryRow> rows = [];
         string? error = null;
         var cleaned = 0;
