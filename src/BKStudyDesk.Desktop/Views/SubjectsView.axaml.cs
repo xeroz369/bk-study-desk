@@ -39,6 +39,12 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         _state = state;
         _download = download;
         _openLibrary = openLibrary;
+        // Dòng nhóm học kỳ: tắt container để không chọn, không dừng phím lên xuống ở đó.
+        Subjects.ContainerPrepared += (_, e) =>
+        {
+            var header = Subjects.Items.Count > e.Index && Subjects.Items[e.Index] is SubjectTermHeader;
+            e.Container.IsEnabled = e.Container.Focusable = !header;   // container dùng lại cho dòng môn thì bật lại
+        };
         DownloadButton.IsVisible = DownloadAllButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
         _wanted = previous?.Selected;
@@ -84,7 +90,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private void ShowList()
     {
         var rows = SubjectsPresenter.Filter(_rows, Filter.Text ?? "");
-        Subjects.ItemsSource = rows;
+        Subjects.ItemsSource = SubjectsPresenter.Grouped(rows);
         ListEmpty.IsVisible = rows.Count == 0;
         ListEmpty.Text = L.T(_rows.Count == 0 ? "subjects.listEmpty" : "subjects.noMatch");
         var keep = _wanted ?? _subject?.Name;

@@ -67,7 +67,18 @@ public class SubjectsTests
         var rows = SubjectsPresenter.Rows(lms, Scan());
         Assert.Equal(["Giải tích 2", "Hóa đại cương"], rows.Select(r => r.Name));
         Assert.False(rows[1].Current);
-        Assert.StartsWith("Môn đã học", rows[1].ListSub);
+        Assert.Equal("HK252", rows[1].Term);
+    }
+
+    [Fact]
+    public void Subjects_grouped_by_latest_term_current_first_then_local()
+    {
+        var lms = Lms([Course(1, "Hóa đại cương", "HK241"), Course(2, "Giải tích 2"), Course(3, "Vật lý 1", "HK252"), Course(4, "Vật lý 1", "HK241"),
+            Course(5, "Lịch sử Đảng", "HK253")]);
+        var groups = SubjectsPresenter.Grouped(SubjectsPresenter.Rows(lms, Scan(("Ghi chú riêng", 2))));
+        Assert.Equal(["Học kỳ 1, 2026-2027 (đang học)", "Giải tích 2", "Học kỳ hè, 2025-2026", "Lịch sử Đảng", "Học kỳ 2, 2025-2026", "Vật lý 1",
+            "Học kỳ 1, 2024-2025", "Hóa đại cương", "Chỉ có thư mục trên máy", "Ghi chú riêng"], groups.Select(x => x.ToString()));
+        Assert.IsType<SubjectTermHeader>(groups[0]);
     }
 
     [Fact]

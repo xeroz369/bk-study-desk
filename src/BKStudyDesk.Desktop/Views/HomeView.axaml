@@ -56,7 +56,7 @@
             </Border>
         </DataTemplate>
         <DataTemplate x:Key="RegRow" x:DataType="p:RegItem">
-            <Border Classes="row">
+            <Border Classes="row" Tapped="OnRowTapped" Cursor="Hand">
                 <Grid ColumnDefinitions="*,12,112">
                     <StackPanel VerticalAlignment="Center" Spacing="2">
                         <TextBlock Classes="name" Text="{Binding Name}" />

@@ -32,7 +32,9 @@ public partial class LessonView : UserControl
         var sources = lesson?.Sources ?? entry.Sources ?? [];
         foreach (var s in sources)
         {
-            var b = new Button { Content = s.Pages is { Length: > 0 } p ? L.F("practice.lessonPage.sourcePages", s.File, p) : L.F("practice.lessonPage.source", s.File), Tag = s };
+            // Nội dung là TextBlock, không phải chuỗi: chuỗi trong Button thành AccessText, dấu _ của tên file (So_new) bị coi là phím tắt.
+            var text = s.Pages is { Length: > 0 } p ? L.F("practice.lessonPage.sourcePages", s.File, p) : L.F("practice.lessonPage.source", s.File);
+            var b = new Button { Content = new TextBlock { Text = text }, Tag = s };
             b.Click += OnSource;
             Sources.Children.Add(b);
         }
@@ -52,9 +54,9 @@ public partial class LessonView : UserControl
         EmptyText.Text = L.T(lesson is null ? "practice.lessonPage.notWritten" : "practice.lessonPage.noQuestions");
         _near = PracticeActions.Neighbors(service.Study, entry.Id);
         PrevButton.IsVisible = _near.Prev != null;
-        PrevButton.Content = _near.Prev is { } pv ? L.F("practice.lessonPage.prev", pv.Title) : "";
+        PrevButton.Content = new TextBlock { Text = _near.Prev is { } pv ? L.F("practice.lessonPage.prev", pv.Title) : "" };
         NextButton.IsVisible = _near.Next != null;
-        NextButton.Content = _near.Next is { } nx ? L.F("practice.lessonPage.next", nx.Title) : "";
+        NextButton.Content = new TextBlock { Text = _near.Next is { } nx ? L.F("practice.lessonPage.next", nx.Title) : "" };
         Loaded += (_, _) => FollowScroll();
         DetachedFromVisualTree += (_, _) => { if (_scroll != null) _scroll.ScrollChanged -= OnScrolled; };
     }
