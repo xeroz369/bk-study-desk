@@ -55,10 +55,21 @@ public partial class HomeView : UserControl
 
     private void OnLogin(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _login();
 
-    /// <summary>Bấm một dòng có link: trang trường mở trong cửa sổ app (dùng chung phiên đăng nhập), trang khác bằng trình duyệt.</summary>
+    /// <summary>
+    /// Bấm một dòng có link: trang trường mở trong cửa sổ app (dùng chung phiên đăng nhập), trang khác bằng trình duyệt.
+    /// Đợt đăng ký môn mở trang Đăng ký môn học của MyBK (danh sách các đợt; MyBK không có link riêng cho từng đợt).
+    /// </summary>
     private async void OnRowTapped(object? sender, TappedEventArgs e)
     {
-        if ((sender as Control)?.DataContext switch { TodoItem t => t.Url, NewsItem n => n.Url, _ => null } is { } url)
+        if (UrlOf((sender as Control)?.DataContext) is { Length: > 0 } url)
             await Files.Links.OpenAsync(this, url);
     }
+
+    private static string? UrlOf(object? row) => row switch
+    {
+        TodoItem t => t.Url,
+        NewsItem n => n.Url,
+        RegItem => SoHocTap.Core.Config.Str("sources.mybk.registration"),
+        _ => null,
+    };
 }

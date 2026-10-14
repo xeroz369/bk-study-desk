@@ -58,6 +58,7 @@ Run manually: **Actions** > **security** > **Run workflow**.
 | Low / informational | hardening advice, warnings that don't apply | backlog |
 
 - Every alert is reviewed: real ones are fixed and listed in the CHANGELOG under **Security**; ones that don't apply are **dismissed** in Code scanning with a reason (for example "test-only code", "input already validated in X").
+- gitleaks false positives (for example a fake token in a test): open the exact commit and line to confirm it is not a real secret, then add the fingerprint gitleaks printed to `.gitleaksignore` with the reason. Never disable the job or loosen the rules.
 - A PR with a failing security check isn't merged unless the alert was dismissed with a reason.
 - Reports from others: reply within 7 days (SECURITY.md), fix privately through a GitHub Security Advisory, publish after the patch is out.
 

@@ -1,0 +1,6 @@
+# Phát hiện của gitleaks đã kiểm là cảnh báo giả. Mỗi dòng là fingerprint (commit:file:rule:dòng) gitleaks in ra.
+# Chỉ thêm dòng sau khi đã mở đúng commit, đúng dòng và chắc chắn không phải bí mật thật.
+
+# Token giả "0123456789abcdef" trong test của LogRedactor (kiểm bộ che token trong log), file cũ trước khi chuyển sang
+# tests/BKStudyDesk.Logic.Tests/LogRedactorTests.cs. Kiểm 14/10/2026, run security 38231918863.
+b319a77801d4af90d0d5cd3add25b4f8edf30ce0:tests/SoHocTap.Tests/LogRedactorTests.cs:generic-api-key:9

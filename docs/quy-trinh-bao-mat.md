@@ -56,6 +56,7 @@ Chạy lại bằng tay: tab **Actions** > **security** > **Run workflow**.
 | Thấp / thông tin | khuyến nghị tăng cứng, cảnh báo không áp dụng | ghi vào backlog |
 
 - Mỗi cảnh báo được xem: thật thì sửa và ghi vào CHANGELOG mục **Bảo mật**; không áp dụng thì **Dismiss** trên Code scanning kèm lý do (ví dụ "chỉ chạy trong test", "đầu vào đã được kiểm ở X").
+- gitleaks báo nhầm (ví dụ token giả trong test): mở đúng commit, dòng để chắc không phải bí mật thật, rồi thêm fingerprint gitleaks in ra vào `.gitleaksignore` kèm lý do. Không tắt job, không nới luật chung.
 - PR làm check bảo mật đỏ không được merge, trừ khi đã dismiss có lý do.
 - Lỗ hổng do người ngoài báo: phản hồi trong 7 ngày (SECURITY.md), sửa riêng qua GitHub Security Advisory, công bố sau khi có bản vá.
 

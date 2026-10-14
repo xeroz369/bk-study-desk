@@ -8,12 +8,19 @@ using SoHocTap.Ui;
 namespace SoHocTap.Presentation;
 
 /// <summary>Một môn trong danh sách bên trái. Files: số tài liệu trên máy (null = chưa quét xong).</summary>
-public sealed record SubjectRow(string Name, string Meta, bool Current, IReadOnlyList<LmsCourse> Courses, int? Files)
+/// <param name="Term">Học kỳ gần nhất có lớp LMS của môn (HK261); rỗng khi chỉ có thư mục trên máy.</param>
+public sealed record SubjectRow(string Name, string Meta, bool Current, IReadOnlyList<LmsCourse> Courses, int? Files, string Term = "")
 {
     public bool OnLms => Courses.Count > 0;
-    /// <summary>Dòng phụ trong danh sách: môn không học kỳ này ghi rõ "Môn đã học và môn khác" trước.</summary>
-    public string ListSub => Current ? Meta : string.Join(", ", new[] { L.T("subjects.past"), Meta }.Where(x => x.Length > 0));
+    /// <summary>Dòng phụ trong danh sách (học kỳ đã ghi ở dòng nhóm phía trên).</summary>
+    public string ListSub => Meta;
     public override string ToString() => Name;   // tên cho trình đọc màn hình
+}
+
+/// <summary>Dòng nhóm học kỳ trong danh sách môn (không chọn được).</summary>
+public sealed record SubjectTermHeader(string Title)
+{
+    public override string ToString() => Title;
 }
 
 /// <summary>Một dòng của tab Tài liệu (thư mục đứng trước file, như trình quản lý file).</summary>
@@ -65,9 +72,38 @@ public static class SubjectsPresenter
             {
                 var codes = string.Join(", ", v.Courses.Select(c => c.Code.Split('_')[0]).Distinct());
                 var docs = scan is null ? "" : L.F("subjects.docs", v.Files);   // chưa quét xong thì không ghi "0 tài liệu" sai
-                return new SubjectRow(v.Name, Join(codes, docs), v.Courses.Any(c => c.Term == term), v.Courses, scan is null ? null : v.Files);
+                var latest = v.Courses.Select(c => c.Term).Where(t => t.Length > 0).DefaultIfEmpty("").Max(StringComparer.Ordinal)!;
+                return new SubjectRow(v.Name, Join(codes, docs), v.Courses.Any(c => c.Term == term), v.Courses, scan is null ? null : v.Files, latest);
             })
-            .OrderByDescending(r => r.Current).ThenBy(r => r.Name, ViOrder)];
+            .OrderByDescending(r => r.Current).ThenByDescending(r => r.Term, StringComparer.Ordinal).ThenBy(r => r.Name, ViOrder)];
+    }
+
+    /// <summary>
+    /// Danh sách có dòng nhóm theo học kỳ gần nhất của môn: kỳ đang học trước, rồi các kỳ cũ mới trước, cuối cùng môn chỉ có thư mục trên máy.
+    /// Môn học nhiều kỳ nằm ở kỳ gần nhất. Nhận danh sách đã lọc (Filter) và đã sắp (Rows).
+    /// </summary>
+    public static IReadOnlyList<object> Grouped(IReadOnlyList<SubjectRow> rows)
+    {
+        var list = new List<object>();
+        string? last = null;
+        foreach (var r in rows)
+        {
+            var key = r.Current ? "\u0001" : r.Term;
+            if (key != last) list.Add(new SubjectTermHeader(TermTitle(r.Term, r.Current)));
+            last = key;
+            list.Add(r);
+        }
+        return list;
+    }
+
+    /// <summary>"HK261" thành "Học kỳ 1, 2026-2027"; kỳ 3 là học kỳ hè; rỗng là môn chỉ có trên máy.</summary>
+    public static string TermTitle(string term, bool current = false)
+    {
+        if (term.Length != 5 || !term.StartsWith("HK", StringComparison.Ordinal) || !int.TryParse(term.AsSpan(2, 2), out var yy) || term[4] is < '1' or > '3')
+            return term.Length == 0 ? L.T("subjects.termLocal") : term;
+        var years = $"{2000 + yy}-{2001 + yy}";
+        var title = term[4] == '3' ? L.F("subjects.termSummer", years) : L.F("subjects.term", term[4], years);
+        return current ? L.F("subjects.termCurrent", title) : title;
     }
 
     /// <summary>Lọc bỏ dấu: gõ "giai tich" vẫn ra "Giải tích 2", tên NFD trên đĩa cũng khớp.</summary>

@@ -8,6 +8,17 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-10-14
+
+### Changed
+
+- Subjects: the subject list is grouped by term (current term first, then older terms, newest first); a subject taken in several terms sits under the latest one, and folder-only subjects come last.
+- Today: clicking a row in the course registration card opens the MyBK course registration page.
+
+### Fixed
+
+- Lessons: source file names with an underscore (for example `So_new.pdf`) show in full instead of losing the `_` and underlining the next letter. Same for the previous and next lesson buttons.
+
 ## [1.2.5] - 2026-10-11
 
 ### Added

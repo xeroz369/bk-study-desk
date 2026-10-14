@@ -26,15 +26,19 @@
                 <DockPanel>
                     <TextBox x:Name="Filter" DockPanel.Dock="Top" Margin="12" PlaceholderText="{l:T subjects.filter.tip}" TextChanged="OnFilter" />
                     <TextBlock x:Name="ListEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                    <!-- Môn nhóm theo học kỳ (SubjectsPresenter.Grouped): dòng nhóm là SubjectTermHeader, không chọn được (OnSubjectContainer). -->
                     <ListBox x:Name="Subjects" SelectionChanged="OnPick" Background="Transparent">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="p:SubjectRow">
+                        <ListBox.DataTemplates>
+                            <DataTemplate DataType="p:SubjectTermHeader">
+                                <TextBlock Classes="meta" Text="{Binding Title}" FontWeight="SemiBold" Margin="0,8,0,0" />
+                            </DataTemplate>
+                            <DataTemplate DataType="p:SubjectRow">
                                 <StackPanel Spacing="2" Margin="0,4">
                                     <TextBlock Classes="name" Text="{Binding Name}" />
                                     <TextBlock Classes="sub" Text="{Binding ListSub}" />
                                 </StackPanel>
                             </DataTemplate>
-                        </ListBox.ItemTemplate>
+                        </ListBox.DataTemplates>
                     </ListBox>
                 </DockPanel>
             </Border>

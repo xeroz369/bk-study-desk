@@ -6,6 +6,17 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.6] - 2026-10-14
+
+### Thay đổi
+
+- Môn học: danh sách môn chia theo học kỳ (kỳ đang học trước, rồi các kỳ cũ, mới trước), môn học nhiều kỳ nằm ở kỳ gần nhất; môn chỉ có thư mục trên máy ở cuối.
+- Hôm nay: bấm một dòng ở thẻ Đăng ký môn thì mở trang Đăng ký môn học của MyBK.
+
+### Sửa lỗi
+
+- Bài học: tên file nguồn có dấu gạch dưới (ví dụ `So_new.pdf`) hiện đủ, không còn mất dấu `_` và gạch chân chữ kế bên. Nút bài trước, bài sau cũng vậy.
+
 ## [1.2.5] - 2026-10-11
 
 ### Thêm
