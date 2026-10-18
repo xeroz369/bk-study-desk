@@ -103,7 +103,7 @@ public sealed partial class LmsSource
         var current = metas.Where(m => m.Term == term).ToList();
         plan.SetWeight("sync.lms.check", Math.Max(1, toCheck.Count));
         plan.SetWeight("sync.lms.news", Math.Max(1, current.Count));    // diễn đàn: khoảng một request mỗi lớp
-        plan.SetWeight("sync.lms.grades", Math.Max(1, current.Count));  // sổ điểm: một request mỗi lớp
+        plan.SetWeight("sync.lms.grades", Math.Max(1, current.Count(c => !Files.Organizer.IsShared(c.Part))));  // sổ điểm: một request mỗi lớp (trừ kho chung)
         var nth = 0;
         foreach (var m in toCheck)
         {
@@ -150,7 +150,9 @@ public sealed partial class LmsSource
             // Mỗi bước lỗi thì giữ phần của lần trước (không xóa lịch, điểm đang có vì một API chập chờn).
             Report(plan.Enter("sync.lms.groups"));
             // Nhóm của mình: lọc mốc và mục điểm của nhóm khác (lớp thí nghiệm dùng chung cho nhiều nhóm).
-            var groups = await PartAsync("nhóm lớp LMS", () => MyGroupsAsync(current, uid, ct), new Dictionary<long, HashSet<string>>(), ct);
+            // Kho chung không chia nhóm, không có sổ điểm: bỏ khỏi hai bước gọi từng lớp này (đỡ request, không thêm dòng điểm rỗng).
+            var classes = current.Where(c => !Files.Organizer.IsShared(c.Part)).ToList();
+            var groups = await PartAsync("nhóm lớp LMS", () => MyGroupsAsync(classes, uid, ct), new Dictionary<long, HashSet<string>>(), ct);
             Report(plan.Enter("sync.lms.events"));
             events = await PartAsync("lịch và bài tập LMS", () => CollectEventsAsync(current, groups, ct), prev["events"]?.DeepClone() as JsonArray ?? [], ct);
             Report(plan.Enter("sync.lms.quizzes"));
@@ -160,7 +162,7 @@ public sealed partial class LmsSource
             announcements = await PartAsync("thông báo LMS", () => CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct),
                 prev["announcements"]?.DeepClone() as JsonArray ?? [], ct);
             Report(plan.Enter("sync.lms.grades"));
-            grades = await PartAsync("sổ điểm LMS", () => CollectGradesAsync(current, uid, ct), prev["grades"]?.DeepClone() as JsonArray ?? [], ct);
+            grades = await PartAsync("sổ điểm LMS", () => CollectGradesAsync(classes, uid, ct), prev["grades"]?.DeepClone() as JsonArray ?? [], ct);
         }
         catch (SessionExpiredException) when (events is not null)
         {
