@@ -15,6 +15,10 @@ public class DownloadTests
     [InlineData("Final exam", true)]
     [InlineData("Nội dung kiểm tra giữa kỳ", false)]   // phạm vi thi, không phải đề
     [InlineData("Chương 1", false)]
+    [InlineData("Đề thiết kế bài tập lớn", false)]   // "đề thi" chỉ là tiền tố
+    [InlineData("Examples", false)]
+    [InlineData("Đề cương môn học", false)]
+    [InlineData("Midterm exams", true)]
     public void Exam_sections_by_name(string name, bool exam) => Assert.Equal(exam, DownloadPlan.IsExamSection(name));
 
     private static readonly HashSet<Kind> All = [Kind.Pdf, Kind.Slide, Kind.Other];

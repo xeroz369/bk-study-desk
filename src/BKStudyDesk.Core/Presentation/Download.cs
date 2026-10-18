@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using SoHocTap.Data;
 using SoHocTap.Sources.Lms;
 using SoHocTap.Ui;
@@ -173,7 +174,7 @@ public sealed class TermRow(string term, bool current, IReadOnlyList<CourseRow> 
 }
 
 /// <summary>Dựng cây và quyết định có cần cảnh báo trước khi tải (thuần, test được).</summary>
-public static class DownloadPlan
+public static partial class DownloadPlan
 {
     private static readonly StringComparer ViOrder = StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true);
 
@@ -183,12 +184,11 @@ public static class DownloadPlan
     /// Mục chứa đề cũ (nút Tải đề cũ): tên mục có "đề thi", "đề kiểm tra", "đề cũ", "exam" (bỏ dấu, không phân biệt hoa thường).
     /// Kho chung của môn xếp đề theo mục "Đề kiểm tra giữa kỳ", "Đề thi cuối kỳ" (xem trên LMS 18/10/2026).
     /// </summary>
-    public static bool IsExamSection(string name)
-    {
-        var n = " " + Files.NameMatch.Fold(name) + " ";
-        return n.Contains(" de thi", StringComparison.Ordinal) || n.Contains(" de kiem tra", StringComparison.Ordinal)
-            || n.Contains(" de cu ", StringComparison.Ordinal) || n.Contains("exam", StringComparison.Ordinal);
-    }
+    public static bool IsExamSection(string name) => ExamRx().IsMatch(Files.NameMatch.Fold(name));
+
+    // Trọn từ: "đề thiết kế", "examples", "đề cương" không tính.
+    [GeneratedRegex(@"\b(de thi|de kiem tra|de cu|exams?)\b")]
+    private static partial Regex ExamRx();
 
     /// <summary>Học kỳ đang học lên đầu, rồi kỳ mới tới cũ; trong kỳ xếp theo tên môn tiếng Việt.</summary>
     public static IReadOnlyList<TermRow> Build(IEnumerable<LmsCourse> courses, string currentTerm, Func<IReadOnlySet<FileKind>> kinds) =>
