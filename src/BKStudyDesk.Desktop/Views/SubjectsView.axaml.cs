@@ -48,6 +48,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         DownloadButton.IsVisible = DownloadAllButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
         _wanted = previous?.Selected;
+        // Kỳ đang xem: giữ của trang cũ khi dựng lại; mở mới thì theo lần trước (chỉ nhớ "tất cả" hay "kỳ đang học").
+        _termKey = previous?._termKey ?? (Config.Str("ui.subjectsTerms", "current") == "all" ? SubjectsPresenter.AllTerms : null);
         Build(null);
         _ = ScanAsync();
     }
@@ -87,10 +89,45 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private void OnFilter(object? sender, TextChangedEventArgs e) => ShowList();
 
+    // Ô chọn kỳ (SubjectsPresenter.TermOptions). _termKey null: lựa chọn đầu tiên (kỳ đang học, không có thì kỳ gần nhất).
+    private IReadOnlyList<(string Key, string Title)> _terms = [];
+    private string? _termKey;
+    private bool _fillingTerms;
+
+    private void FillTerms()
+    {
+        _terms = SubjectsPresenter.TermOptions(_rows);
+        var index = Math.Max(0, _terms.ToList().FindIndex(t => t.Key == _termKey));
+        _termKey = _terms.Count > 0 ? _terms[index].Key : null;
+        _fillingTerms = true;
+        TermFilter.ItemsSource = _terms.Select(t => t.Title).ToList();
+        TermFilter.SelectedIndex = _terms.Count > 0 ? index : -1;
+        _fillingTerms = false;
+        TermFilter.IsVisible = _terms.Count > 2;   // chỉ một kỳ (cộng Tất cả) thì không cần chọn
+    }
+
+    private void OnTermFilter(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_fillingTerms || TermFilter.SelectedIndex < 0 || TermFilter.SelectedIndex >= _terms.Count) return;
+        _termKey = _terms[TermFilter.SelectedIndex].Key;
+        var remember = _termKey == SubjectsPresenter.AllTerms ? "all" : "current";
+        if (Config.Str("ui.subjectsTerms", "current") != remember) Config.Set("ui.subjectsTerms", remember);
+        ShowList();
+    }
+
     private void ShowList()
     {
-        var rows = SubjectsPresenter.Filter(_rows, Filter.Text ?? "");
-        Subjects.ItemsSource = SubjectsPresenter.Grouped(rows);
+        // Mở một môn từ chỗ khác (Ctrl+K, Thư viện) mà môn đó ở kỳ khác: chuyển ô chọn kỳ sang kỳ của môn.
+        if (_wanted is { } want && _termKey != SubjectsPresenter.AllTerms && _rows.FirstOrDefault(r => NameMatch.Same(r.Name, want)) is { } target
+            && SubjectsPresenter.TermOf(target) != _termKey)
+            _termKey = SubjectsPresenter.TermOf(target);
+        FillTerms();
+        var text = Filter.Text ?? "";
+        var found = SubjectsPresenter.Filter(_rows, text);
+        // Đang gõ lọc: tìm ở mọi kỳ, có dòng nhóm để biết môn thuộc kỳ nào.
+        var all = text.Trim().Length > 0 || _termKey == SubjectsPresenter.AllTerms;
+        var rows = all ? found : SubjectsPresenter.InTerm(found, _termKey ?? SubjectsPresenter.AllTerms);
+        Subjects.ItemsSource = all ? SubjectsPresenter.Grouped(rows) : rows;
         ListEmpty.IsVisible = rows.Count == 0;
         ListEmpty.Text = L.T(_rows.Count == 0 ? "subjects.listEmpty" : "subjects.noMatch");
         var keep = _wanted ?? _subject?.Name;

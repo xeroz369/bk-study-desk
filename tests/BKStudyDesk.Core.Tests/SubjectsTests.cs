@@ -86,9 +86,23 @@ public class SubjectsTests
         var lms = Lms([Course(1, "Hóa đại cương", "HK241"), Course(2, "Giải tích 2"), Course(3, "Vật lý 1", "HK252"), Course(4, "Vật lý 1", "HK241"),
             Course(5, "Lịch sử Đảng", "HK253")]);
         var groups = SubjectsPresenter.Grouped(SubjectsPresenter.Rows(lms, Scan(("Ghi chú riêng", 2))));
-        Assert.Equal(["Học kỳ 1, 2026-2027 (đang học)", "Giải tích 2", "Học kỳ hè, 2025-2026", "Lịch sử Đảng", "Học kỳ 2, 2025-2026", "Vật lý 1",
-            "Học kỳ 1, 2024-2025", "Hóa đại cương", "Chỉ có thư mục trên máy", "Ghi chú riêng"], groups.Select(x => x.ToString()));
+        Assert.Equal(["Học kỳ 1 năm học 2026-2027 (đang học)", "Giải tích 2", "Học kỳ hè năm học 2025-2026", "Lịch sử Đảng", "Học kỳ 2 năm học 2025-2026", "Vật lý 1",
+            "Học kỳ 1 năm học 2024-2025", "Hóa đại cương", "Chỉ có thư mục trên máy", "Ghi chú riêng"], groups.Select(x => x.ToString()));
         Assert.IsType<SubjectTermHeader>(groups[0]);
+    }
+
+    [Fact]
+    public void Term_options_filter_one_term_or_all()
+    {
+        var lms = Lms([Course(1, "Hóa đại cương", "HK241"), Course(2, "Giải tích 2"), Course(3, "Kỹ thuật số"), Course(4, "Vật lý 1", "HK252")]);
+        var rows = SubjectsPresenter.Rows(lms, Scan());
+        var options = SubjectsPresenter.TermOptions(rows);
+        Assert.Equal(["HK1 2026-2027 (đang học)", "HK2 2025-2026", "HK1 2024-2025",
+            "Tất cả học kỳ (4 môn)"], options.Select(o => o.Title));
+        Assert.Equal(["Giải tích 2", "Kỹ thuật số"], SubjectsPresenter.InTerm(rows, options[0].Key).Select(r => r.Name));
+        Assert.Equal(4, SubjectsPresenter.InTerm(rows, SubjectsPresenter.AllTerms).Count);
+        var old = rows.Single(r => r.Name == "Vật lý 1");
+        Assert.Equal(options[1].Key, SubjectsPresenter.TermOf(old));
     }
 
     [Fact]

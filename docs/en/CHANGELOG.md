@@ -10,6 +10,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ### Added
 
+- Subjects: a term picker above the list (current term by default, each past term, or All terms) keeps the list short. Typing in the filter searches every term. Term names are spelled out like MyBK (Term 1, 2026-2027), and term headers are bold with a divider.
+
 - MyBK, Tuition tab: lists every tuition item with amount, amount owed, due date and Paid or Owed status (owed first). It used to keep only unpaid items, so it was empty once everything was paid.
 
 - Each subject's shared LMS course (name ending in `_Video`) is now synced as part of the subject, under the part "Kho chung" (shared). The app used to skip these courses entirely, missing syllabi, exam scopes, past midterm and final papers, and recorded lectures. Their files go to the subject's `Kho chung` folder.

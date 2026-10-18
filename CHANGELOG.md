@@ -8,6 +8,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thêm
 
+- Môn học: ô chọn học kỳ phía trên danh sách (mặc định kỳ đang học, có từng kỳ cũ và Tất cả học kỳ), danh sách gọn hơn. Gõ vào ô lọc thì tìm ở mọi kỳ. Tên kỳ ghi đầy đủ như MyBK (Học kỳ 1 năm học 2026-2027), dòng tên kỳ in đậm có đường kẻ.
+
 - MyBK, tab Học phí: hiện mọi khoản học phí kèm số tiền, còn nợ, hạn và trạng thái Đã nộp hay Còn nợ (khoản còn nợ lên đầu). Trước đây tab chỉ giữ khoản còn nợ nên đã đóng hết thì trống.
 
 - Lớp kho chung của môn trên LMS (tên kết thúc bằng `_Video`) nay được đồng bộ như một phần của môn, tên phần là "Kho chung". Trước đây app bỏ qua hẳn các lớp này nên thiếu đề cương, nội dung kiểm tra, đề giữa kỳ và cuối kỳ các năm, video bài giảng. Tài liệu nằm trong thư mục `Kho chung` của môn.

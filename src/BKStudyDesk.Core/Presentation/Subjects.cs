@@ -91,7 +91,7 @@ public static class SubjectsPresenter
         string? last = null;
         foreach (var r in rows)
         {
-            var key = r.Current ? "\u0001" : r.Term;
+            var key = TermKey(r);
             if (key != last) list.Add(new SubjectTermHeader(TermTitle(r.Term, r.Current)));
             last = key;
             list.Add(r);
@@ -99,13 +99,39 @@ public static class SubjectsPresenter
         return list;
     }
 
-    /// <summary>"HK261" thành "Học kỳ 1, 2026-2027"; kỳ 3 là học kỳ hè; rỗng là môn chỉ có trên máy.</summary>
-    public static string TermTitle(string term, bool current = false)
+    /// <summary>Lựa chọn "Tất cả học kỳ" trong ô chọn kỳ của trang Môn học.</summary>
+    public const string AllTerms = "*";
+
+    /// <summary>Kỳ của môn trong danh sách: kỳ đang học, kỳ gần nhất có lớp LMS, hay rỗng (chỉ có thư mục trên máy).</summary>
+    private static string TermKey(SubjectRow r) => r.Current ? "\u0001" : r.Term;
+
+    /// <summary>
+    /// Các lựa chọn ô chọn kỳ: kỳ đang học (nếu có), các kỳ cũ mới trước, môn chỉ có trên máy (nếu có), cuối cùng Tất cả học kỳ.
+    /// Mỗi lựa chọn kèm số môn. Thứ tự giống Grouped.
+    /// </summary>
+    public static IReadOnlyList<(string Key, string Title)> TermOptions(IReadOnlyList<SubjectRow> rows) =>
+        [.. rows.GroupBy(TermKey).Select(g => (g.Key, TermTitle(g.First().Term, g.First().Current, shortForm: true))),
+            (AllTerms, L.F("subjects.termCount", L.T("subjects.termAll"), rows.Count))];
+
+    /// <summary>Môn thuộc lựa chọn <paramref name="key"/> của ô chọn kỳ (AllTerms: mọi môn).</summary>
+    public static IReadOnlyList<SubjectRow> InTerm(IReadOnlyList<SubjectRow> rows, string key) =>
+        key == AllTerms ? rows : [.. rows.Where(r => TermKey(r) == key)];
+
+    /// <summary>Lựa chọn của một môn (để chuyển ô chọn kỳ khi mở môn từ chỗ khác, ví dụ Ctrl+K).</summary>
+    public static string TermOf(SubjectRow r) => TermKey(r);
+
+    /// <summary>
+    /// "HK261" thành "Học kỳ 1 năm học 2026-2027" (dòng nhóm), hay "HK1 2026-2027" khi <paramref name="shortForm"/> (ô chọn kỳ hẹp);
+    /// kỳ 3 là học kỳ hè; rỗng là môn chỉ có trên máy.
+    /// </summary>
+    public static string TermTitle(string term, bool current = false, bool shortForm = false)
     {
         if (term.Length != 5 || !term.StartsWith("HK", StringComparison.Ordinal) || !int.TryParse(term.AsSpan(2, 2), out var yy) || term[4] is < '1' or > '3')
-            return term.Length == 0 ? L.T("subjects.termLocal") : term;
+            return term.Length == 0 ? L.T(shortForm ? "subjects.termLocalShort" : "subjects.termLocal") : term;
         var years = $"{2000 + yy}-{2001 + yy}";
-        var title = term[4] == '3' ? L.F("subjects.termSummer", years) : L.F("subjects.term", term[4], years);
+        var summer = term[4] == '3';
+        var title = shortForm ? (summer ? L.F("subjects.termSummerShort", years) : L.F("subjects.termShort", term[4], years))
+            : summer ? L.F("subjects.termSummer", years) : L.F("subjects.term", term[4], years);
         return current ? L.F("subjects.termCurrent", title) : title;
     }
 
