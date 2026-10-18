@@ -8,6 +8,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-10-19
+
 ### Added
 
 - Subjects: a term picker above the list (current term by default, each past term, or All terms) keeps the list short. Typing in the filter searches every term. Each subject line shows how many open deadlines fall in the next 7 days (for example "2 due in 7 days"), set by subjects.dueDays. Term names are spelled out like MyBK (Term 1, 2026-2027), and term headers are bold with a divider.
@@ -19,6 +21,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 - Subjects, Documents tab: the Up button is now Parent folder, and each level of the path next to it can be clicked to jump straight there.
 - Subjects: a Past exams button opens the Download window with the midterm and final exam sections of every course of the subject (shared course included) checked; review, then Download.
 - The Download window has a Video (large) kind, unchecked by default; automatic sync never downloads videos.
+
+### Changed
+
+- The Windows installer is smaller: the app uses the ICU that ships with Windows (Vietnamese dates, numbers and sorting are unchanged) and no longer bundles debug files of the drawing library.
 
 ## [1.2.6] - 2026-10-14
 
@@ -409,7 +415,11 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...HEAD
+[1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
+[1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6
+[1.2.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.4...v1.2.5
+[1.2.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1

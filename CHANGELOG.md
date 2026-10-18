@@ -6,6 +6,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.7] - 2026-10-19
+
 ### Thêm
 
 - Môn học: ô chọn học kỳ phía trên danh sách (mặc định kỳ đang học, có từng kỳ cũ và Tất cả học kỳ), danh sách gọn hơn. Gõ vào ô lọc thì tìm ở mọi kỳ. Dòng phụ của môn ghi số hạn chưa xong trong 7 ngày tới (ví dụ "2 hạn trong 7 ngày"), đổi số ngày bằng subjects.dueDays. Tên kỳ ghi đầy đủ như MyBK (Học kỳ 1 năm học 2026-2027), dòng tên kỳ in đậm có đường kẻ.
@@ -17,6 +19,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 - Môn học, tab Tài liệu: nút Lên đổi thành Thư mục cha; đường dẫn bên cạnh bấm được từng cấp để lên thẳng cấp đó.
 - Môn học: nút Tải đề cũ mở cửa sổ Tải với các mục đề giữa kỳ, đề thi cuối kỳ của mọi lớp của môn (kể cả kho chung) tích sẵn; xem lại rồi bấm Tải.
 - Cửa sổ Tải tài liệu có loại Video (nặng), mặc định không tích; đồng bộ tự động không bao giờ tải video.
+
+### Thay đổi
+
+- Bộ cài Windows nhẹ hơn: app dùng ICU có sẵn của Windows (ngày tháng, số, sắp xếp tiếng Việt vẫn như cũ) và không còn kèm file debug của thư viện vẽ.
 
 ## [1.2.6] - 2026-10-14
 
@@ -406,7 +412,11 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.3...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...HEAD
+[1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
+[1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6
+[1.2.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.4...v1.2.5
+[1.2.4]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.0...v1.2.1
