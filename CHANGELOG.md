@@ -8,13 +8,14 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ### Thêm
 
-- Môn học: ô chọn học kỳ phía trên danh sách (mặc định kỳ đang học, có từng kỳ cũ và Tất cả học kỳ), danh sách gọn hơn. Gõ vào ô lọc thì tìm ở mọi kỳ. Tên kỳ ghi đầy đủ như MyBK (Học kỳ 1 năm học 2026-2027), dòng tên kỳ in đậm có đường kẻ.
+- Môn học: ô chọn học kỳ phía trên danh sách (mặc định kỳ đang học, có từng kỳ cũ và Tất cả học kỳ), danh sách gọn hơn. Gõ vào ô lọc thì tìm ở mọi kỳ. Dòng phụ của môn ghi số hạn chưa xong trong 7 ngày tới (ví dụ "2 hạn trong 7 ngày"), đổi số ngày bằng subjects.dueDays. Tên kỳ ghi đầy đủ như MyBK (Học kỳ 1 năm học 2026-2027), dòng tên kỳ in đậm có đường kẻ.
 
 - MyBK, tab Học phí: hiện mọi khoản học phí kèm số tiền, còn nợ, hạn và trạng thái Đã nộp hay Còn nợ (khoản còn nợ lên đầu). Trước đây tab chỉ giữ khoản còn nợ nên đã đóng hết thì trống.
 
 - Lớp kho chung của môn trên LMS (tên kết thúc bằng `_Video`) nay được đồng bộ như một phần của môn, tên phần là "Kho chung". Trước đây app bỏ qua hẳn các lớp này nên thiếu đề cương, nội dung kiểm tra, đề giữa kỳ và cuối kỳ các năm, video bài giảng. Tài liệu nằm trong thư mục `Kho chung` của môn.
-- Trang Môn học có tab Video và liên kết: video bài giảng (file video, link YouTube, video nhúng trong nhãn), link ngoài, trang chữ (ví dụ đáp án đề giữa kỳ), công cụ ngoài của mọi lớp của môn. Bấm đúp hay Enter để mở xem, không phải tải về.
+- Trang Môn học có tab Video và liên kết: video bài giảng (file video, link YouTube, video nhúng trong nhãn), link ngoài, trang chữ (ví dụ đáp án đề giữa kỳ), công cụ ngoài của mọi lớp của môn. Bấm đúp hay Enter để mở xem, không phải tải về. Danh sách nhóm theo phần và chương, có ô lọc loại (Video, Liên kết, Trang, Công cụ ngoài), cột Xem ghi mục chưa xem (mở là đã xem, chuột phải để đánh dấu lại). Môn không học kỳ này có nút Đọc lớp trên LMS để lấy danh sách (chỉ đọc, không tải file).
 - Môn học, tab Tài liệu: nút Lên đổi thành Thư mục cha; đường dẫn bên cạnh bấm được từng cấp để lên thẳng cấp đó.
+- Môn học: nút Tải đề cũ mở cửa sổ Tải với các mục đề giữa kỳ, đề thi cuối kỳ của mọi lớp của môn (kể cả kho chung) tích sẵn; xem lại rồi bấm Tải.
 - Cửa sổ Tải tài liệu có loại Video (nặng), mặc định không tích; đồng bộ tự động không bao giờ tải video.
 
 ## [1.2.6] - 2026-10-14

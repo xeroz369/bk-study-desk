@@ -111,11 +111,15 @@ public sealed class CourseRow(LmsCourse course, Func<IReadOnlySet<FileKind>> kin
 
     public void Begin() { State = LoadState.Reading; Refresh(); }
 
+    /// <summary>Chỉ tích sẵn mục có tên khớp (nút Tải đề cũ: DownloadPlan.IsExamSection); null là mọi mục còn thiếu file.</summary>
+    public Func<string, bool>? SectionFilter { get; set; }
+
     /// <summary>Đọc xong: người dùng đã tích lớp thì giữ cách chọn mặc định của SectionRow (mục còn thiếu file), không thì bỏ chọn hết.</summary>
     public void Loaded(IEnumerable<LmsSource.SectionInfo> sections)
     {
         Sections = [.. sections.Select(s => new SectionRow(s, kinds))];
-        if (!_wanted) foreach (var s in Sections) s.Selected = false;
+        foreach (var s in Sections)
+            if (!_wanted || SectionFilter?.Invoke(s.Name) == false) s.Selected = false;
         State = LoadState.Ready;
         Refresh();
     }
@@ -174,6 +178,17 @@ public static class DownloadPlan
     private static readonly StringComparer ViOrder = StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true);
 
     public enum Verdict { Nothing, Ok, Large, NoSpace }
+
+    /// <summary>
+    /// Mục chứa đề cũ (nút Tải đề cũ): tên mục có "đề thi", "đề kiểm tra", "đề cũ", "exam" (bỏ dấu, không phân biệt hoa thường).
+    /// Kho chung của môn xếp đề theo mục "Đề kiểm tra giữa kỳ", "Đề thi cuối kỳ" (xem trên LMS 18/10/2026).
+    /// </summary>
+    public static bool IsExamSection(string name)
+    {
+        var n = " " + Files.NameMatch.Fold(name) + " ";
+        return n.Contains(" de thi", StringComparison.Ordinal) || n.Contains(" de kiem tra", StringComparison.Ordinal)
+            || n.Contains(" de cu ", StringComparison.Ordinal) || n.Contains("exam", StringComparison.Ordinal);
+    }
 
     /// <summary>Học kỳ đang học lên đầu, rồi kỳ mới tới cũ; trong kỳ xếp theo tên môn tiếng Việt.</summary>
     public static IReadOnlyList<TermRow> Build(IEnumerable<LmsCourse> courses, string currentTerm, Func<IReadOnlySet<FileKind>> kinds) =>

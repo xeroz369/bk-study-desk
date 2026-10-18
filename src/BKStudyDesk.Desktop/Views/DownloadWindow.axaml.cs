@@ -30,7 +30,8 @@ public partial class DownloadWindow : Window
     public DownloadWindow() => InitializeComponent();
 
     /// <summary><paramref name="pick"/>: các lớp tích sẵn (nút Tải ở một môn); null: mọi lớp của học kỳ đang học.</summary>
-    internal DownloadWindow(IReadOnlyCollection<long>? pick) : this()
+    /// <param name="examsOnly">Nút Tải đề cũ: chỉ tích sẵn mục chứa đề (DownloadPlan.IsExamSection), người dùng vẫn xem và đổi được trước khi tải.</param>
+    internal DownloadWindow(IReadOnlyCollection<long>? pick, bool examsOnly = false) : this()
     {
         Sub.Text = L.F("download.saveToSubjects", Config.Str("folders.subjects"));
         Extract.IsChecked = SoHocTap.Core.Settings.Archives.Extract;
@@ -46,6 +47,7 @@ public partial class DownloadWindow : Window
         foreach (var t in _terms)
             foreach (var c in t.Courses.Where(c => pick?.Contains(c.Course.Id) ?? t.Current))
             {
+                if (examsOnly) c.SectionFilter = DownloadPlan.IsExamSection;
                 c.Checked = true;
                 c.Expanded = pick is not null;   // từ một môn: mở sẵn để thấy các mục
                 t.Expanded = true;

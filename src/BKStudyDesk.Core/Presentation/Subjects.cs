@@ -41,8 +41,12 @@ public sealed record RecentRow(string Name, string Folder, string Path, long Siz
 
 public sealed record SubjectNews(string Title, string Forum, string Author, string When, string? Url);
 
-/// <summary>Một dòng của tab Video và liên kết. Where: phần của lớp và mục trên LMS.</summary>
-public sealed record MediaRow(string Name, string KindText, string Where, string Url);
+/// <summary>Một dòng của tab Video và liên kết. Group: phần của lớp và mục (chương) trên LMS, là dải nhóm của bảng.</summary>
+/// <param name="Seen">Đã mở (đánh dấu đã xem, data/doc-read.json khóa "media:" + url).</param>
+public sealed record MediaRow(string Name, string KindText, Sources.Lms.MediaKind Kind, string Group, string Url, bool Seen = false)
+{
+    public string SeenText => Seen ? "" : L.T("subjects.media.unseen");
+}
 
 /// <summary>Một mục điểm; Total là dòng tổng (của môn hay của nhóm), View in đậm.</summary>
 public sealed record GradeRow(string Part, string Name, string GradeText, string MaxText, string Percent, bool Total);
@@ -154,6 +158,17 @@ public static class SubjectsPresenter
         return list;
     }
 
+    /// <summary>
+    /// Dòng phụ của môn trong danh sách thêm số hạn chưa xong trong <paramref name="days"/> ngày tới (bài tập, quiz, thi; không tính buổi học),
+    /// để nhìn danh sách là biết môn nào gấp. Môn không có hạn thì giữ nguyên.
+    /// </summary>
+    public static IReadOnlyList<SubjectRow> WithDue(IReadOnlyList<SubjectRow> rows, IReadOnlyList<TimelineItem> timeline, long now, int days) =>
+        [.. rows.Select(r =>
+        {
+            var n = timeline.Count(x => Mine(x, r) && x.Kind != "class" && !x.Done && x.Time > now && x.Time <= now + days * 86400L);
+            return n == 0 ? r : r with { Meta = Join(r.Meta, L.F("subjects.dueSoon", n, days)) };
+        })];
+
     /// <summary>Lọc bỏ dấu: gõ "giai tich" vẫn ra "Giải tích 2", tên NFD trên đĩa cũng khớp.</summary>
     public static IReadOnlyList<SubjectRow> Filter(IReadOnlyList<SubjectRow> rows, string q)
     {
@@ -190,11 +205,15 @@ public static class SubjectsPresenter
     /// Tab Video và liên kết: video bài giảng, link ngoài, trang, công cụ ngoài của mọi lớp của môn (cả kho chung), lớp kỳ mới trước.
     /// <paramref name="read"/> đọc cấu trúc khóa đã lưu khi đồng bộ (LmsCourseStore.Read); lớp chưa đọc thì bỏ qua.
     /// </summary>
-    public static IReadOnlyList<MediaRow> Media(SubjectRow s, Func<long, JsonObject?> read) =>
+    public static IReadOnlyList<MediaRow> Media(SubjectRow s, Func<long, JsonObject?> read, ReadMarks? seen = null, Sources.Lms.MediaKind? only = null) =>
         [.. s.Courses.OrderByDescending(c => c.Term, StringComparer.Ordinal).ThenBy(c => c.Part is null ? 0 : 1)
             .SelectMany(c => Sources.Lms.LmsMedia.Items(read(c.Id)))
-            .Select(i => new MediaRow(i.Name, L.T("subjects.media." + i.Kind.ToString().ToLowerInvariant()),
-                Join(i.Part.Length > 0 ? i.Part : L.T("common.theory"), i.Section), i.Url))];
+            .Where(i => only is null || i.Kind == only)
+            .Select(i => new MediaRow(i.Name, L.T("subjects.media." + i.Kind.ToString().ToLowerInvariant()), i.Kind,
+                Join(i.Part.Length > 0 ? i.Part : L.T("common.theory"), i.Section), i.Url, seen?.IsRead(MediaKey(i.Url), 0) == true))];
+
+    /// <summary>Khóa đánh dấu đã xem của một mục (dùng chung ReadMarks với tài liệu, tiền tố riêng để không lẫn đường dẫn file).</summary>
+    public static string MediaKey(string url) => "media:" + url;
 
     public static IReadOnlyList<SubjectNews> News(LmsData? lms, SubjectRow s) =>
         [.. (lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name)).OrderByDescending(a => a.Time)

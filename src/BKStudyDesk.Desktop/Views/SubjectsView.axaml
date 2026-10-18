@@ -55,6 +55,7 @@
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button x:Name="LmsButton" Content="{l:T subjects.openLms}" Click="OnOpenLms" />
                                 <Button x:Name="DownloadButton" Content="{l:T subjects.download}" Click="OnDownload" IsVisible="False" />
+                                <Button x:Name="ExamsButton" Content="{l:T subjects.downloadExams}" ToolTip.Tip="{l:T subjects.downloadExamsTip}" Click="OnDownloadExams" IsVisible="False" />
                                 <Button x:Name="LibraryButton" Content="{l:T subjects.openLibrary}" Click="OnOpenLibrary" IsVisible="False" />
                             </StackPanel>
                             <StackPanel VerticalAlignment="Center" Spacing="2">
@@ -148,14 +149,21 @@
                         <!-- Video bài giảng, link ngoài, trang, công cụ ngoài trên LMS (SubjectsPresenter.Media); bấm đúp mở trên LMS hay trình duyệt. -->
                         <TabItem x:Name="MediaTab" Header="{l:T subjects.tabMedia}">
                             <DockPanel>
+                                <!-- Lọc theo loại; bảng nhóm theo phần và chương (MediaRow.Group); mở là đánh dấu đã xem. -->
+                                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="16,8">
+                                    <ComboBox x:Name="MediaKindFilter" MinWidth="160" SelectionChanged="OnMediaKind" />
+                                    <Button x:Name="ReadPastButton" Content="{l:T subjects.readPast}" ToolTip.Tip="{l:T subjects.readPastTip}" Click="OnReadPast" IsVisible="False" />
+                                    <TextBlock x:Name="MediaStatus" Classes="meta" VerticalAlignment="Center" />
+                                </StackPanel>
                                 <TextBlock x:Name="MediaEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                                 <DataGrid x:Name="Media" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                           BorderThickness="0" SelectionMode="Single" DoubleTapped="OnMediaOpen" KeyDown="OnMediaKey">
+                                    <DataGrid.ContextFlyout><MenuFlyout Opening="OnMediaMenu" /></DataGrid.ContextFlyout>
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:MediaRow" />
+                                        <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:MediaRow" />
                                         <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding KindText}" Width="Auto" MinWidth="96" x:DataType="p:MediaRow" />
-                                        <DataGridTextColumn Header="{l:T col.where}" Binding="{Binding Where}" Width="*" MinWidth="160" x:DataType="p:MediaRow" />
+                                        <DataGridTextColumn Header="{l:T col.seen}" Binding="{Binding SeenText}" Width="Auto" MinWidth="90" SortMemberPath="Seen" x:DataType="p:MediaRow" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>

@@ -261,6 +261,7 @@
     },
     "btlMarker": "_BTL_",
     "sharedMarker": "_Video",
+    "dueDays": 7,
     "aliases": {
       "thí nghiệm vật lý": "Thí nghiệm Vật lý",
       "hệ thống máy tính": "Hệ thống Máy tính và Ngôn ngữ Lập trình",

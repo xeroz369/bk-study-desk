@@ -71,6 +71,38 @@ public class SubjectsTests
     }
 
     [Fact]
+    public void Media_grouped_by_part_and_chapter_filter_and_seen()
+    {
+        var row = SubjectsPresenter.Rows(Lms([Course(1, "Kỹ thuật số")]), Scan())[0];
+        JsonObject Structure(long _) => JsonNode.Parse("""
+            {"part":"Kho chung","sections":[{"name":"Chương 1","modules":[
+              {"type":"resource","name":"C1 record","url":"https://lms/r/1","files":[{"name":"c1.mp4"}]},
+              {"type":"url","name":"PLECS","url":"https://lms/u/2","files":[{"url":"https://plexim.com"}]}]}]}
+            """)!.AsObject();
+        var seen = new SoHocTap.Files.ReadMarks();
+        seen.Set(SubjectsPresenter.MediaKey("https://lms/r/1"), 0, read: true);
+        var all = SubjectsPresenter.Media(row, Structure, seen);
+        Assert.Equal(["C1 record", "PLECS"], all.Select(m => m.Name));
+        Assert.Equal("Kho chung, Chương 1", all[0].Group);
+        Assert.True(all[0].Seen);
+        Assert.Equal("Chưa xem", all[1].SeenText);
+        Assert.Equal(["PLECS"], SubjectsPresenter.Media(row, Structure, seen, SoHocTap.Sources.Lms.MediaKind.Link).Select(m => m.Name));
+    }
+
+    [Fact]
+    public void Due_soon_count_added_to_subject_line()
+    {
+        var rows = SubjectsPresenter.Rows(Lms([Course(1, "Giải tích 2"), Course(2, "Kỹ thuật số")]), Scan());
+        var now = Format.Now;
+        TimelineItem Due(long course, long at, string kind = "assign", bool done = false) =>
+            new("x" + at, kind, "Bài", "Giải tích 2", now + at, "", null, SourceIds.Lms, Done: done, Course: course);
+        var timeline = new List<TimelineItem> { Due(1, 3600), Due(1, 2 * 86400, "quiz"), Due(1, 3 * 86400, done: true), Due(1, 9 * 86400), Due(1, 7200, "class") };
+        var with = SubjectsPresenter.WithDue(rows, timeline, now, 7);
+        Assert.EndsWith("2 hạn trong 7 ngày", with.Single(r => r.Name == "Giải tích 2").Meta);
+        Assert.Equal(rows.Single(r => r.Name == "Kỹ thuật số").Meta, with.Single(r => r.Name == "Kỹ thuật số").Meta);
+    }
+
+    [Fact]
     public void Crumbs_from_subject_folder_down()
     {
         var c = SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 2/Tài liệu LMS/Chương 1");

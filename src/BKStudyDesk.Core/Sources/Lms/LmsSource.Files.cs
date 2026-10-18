@@ -112,6 +112,33 @@ public sealed partial class LmsSource
     }
 
     /// <summary>
+    /// Đọc lại cấu trúc các lớp (mục, file, link) và lưu như lúc đồng bộ, không tải file: dùng cho môn kỳ cũ mà đồng bộ thường không đọc
+    /// (tab Video và liên kết). Một request mỗi lớp, giãn cách như mọi lời gọi LMS. Trả số lớp đọc được; lớp lỗi bỏ qua, ghi log.
+    /// </summary>
+    public static async Task<int> ReadStructuresAsync(IReadOnlyCollection<long> courseIds, CancellationToken ct)
+    {
+        await Gate.WaitAsync(ct);
+        try
+        {
+            var index = JsonStore.ReadObject(FilesIndex);
+            var n = 0;
+            foreach (var id in courseIds)
+            {
+                if (Course(id) is not { } m) continue;
+                try
+                {
+                    var contents = (JsonArray)await CallAsync("core_course_get_contents", [Arg("courseid", id)], ct);
+                    SaveStructure(m, contents, index);
+                    n++;
+                }
+                catch (Exception e) when (Recoverable(e, ct)) { Log.Warn($"Đọc cấu trúc lớp {m.Subject} ({id}): {e.Message}"); }
+            }
+            return n;
+        }
+        finally { Gate.Release(); }
+    }
+
+    /// <summary>
     /// File đã có trên máy đúng bản trên LMS (cùng timemodified): cửa sổ Tải tài liệu không đếm, lúc tải bỏ qua. Một điều kiện cho cả hai
     /// chỗ để số "file mới" trên cửa sổ khớp số file thực tải (thanh tiến độ). File nén đã giải nén thì thư mục giải nén cũng tính là có.
     /// </summary>

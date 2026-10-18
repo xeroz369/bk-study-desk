@@ -20,7 +20,7 @@ namespace BKStudyDesk.Desktop.Views;
 public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 {
     private readonly AppState _state = null!;
-    private readonly Action<IReadOnlyCollection<long>?>? _download;   // các lớp tích sẵn; null = học kỳ đang học
+    private readonly Action<IReadOnlyCollection<long>?, bool>? _download;   // các lớp tích sẵn; null = học kỳ đang học
     private readonly Action<string>? _openLibrary;
     private IReadOnlyList<SubjectRow> _rows = [];
     private SubjectRow? _subject;
@@ -32,7 +32,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ môn, tab, thư mục người dùng đang xem.</param>
     /// <param name="openLibrary">Mở trang Thư viện đúng môn này (nút Xem trong Thư viện); null thì ẩn nút.</param>
-    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?>? download, Action<string>? openLibrary) : this()
+    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?, bool>? download, Action<string>? openLibrary) : this()
     {
         _keepDir = previous?._dir;
         if (previous is not null) Tabs.SelectedIndex = previous.Tabs.SelectedIndex;
@@ -45,7 +45,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             var header = Subjects.Items.Count > e.Index && Subjects.Items[e.Index] is SubjectTermHeader;
             e.Container.IsEnabled = e.Container.Focusable = !header;   // container dùng lại cho dòng môn thì bật lại
         };
-        DownloadButton.IsVisible = DownloadAllButton.IsVisible = download is not null;
+        DownloadButton.IsVisible = DownloadAllButton.IsVisible = ExamsButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
         _wanted = previous?.Selected;
         // Kỳ đang xem: giữ của trang cũ khi dựng lại; mở mới thì theo lần trước (chỉ nhớ "tất cả" hay "kỳ đang học").
@@ -83,7 +83,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private void Build(JsonArray? scan)
     {
         _wanted ??= _subject?.Name;
-        _rows = SubjectsPresenter.Rows(_state.Lms, scan);
+        _rows = SubjectsPresenter.WithDue(SubjectsPresenter.Rows(_state.Lms, scan), _state.Timeline, Format.Now, Config.Int("subjects.dueDays", 7));
         ShowList();
     }
 
@@ -143,7 +143,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         _subject = s;
         SubjectName.Text = s.Name;
         SubjectMeta.Text = SubjectsPresenter.Meta(s, _state.Timeline, _state.Lms, Format.Now);
-        LmsButton.IsEnabled = DownloadButton.IsEnabled = s.OnLms;
+        LmsButton.IsEnabled = DownloadButton.IsEnabled = ExamsButton.IsEnabled = s.OnLms;
         _root = Config.Str("folders.subjects") + "/" + s.Name;
         if (changed) _dir = _keepDir is { } keep && keep.StartsWith(_root, StringComparison.OrdinalIgnoreCase) ? keep : _root;
         _keepDir = null;
@@ -171,7 +171,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         else if (tab == NewsTab)
             Tables.Show(News, NewsEmpty, SubjectsPresenter.News(_state.Lms, s), L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
         else if (tab == MediaTab)
-            Tables.Show(Media, MediaEmpty, SubjectsPresenter.Media(s, LmsCourseStore.Read), L.T(s.OnLms ? "subjects.mediaEmpty" : "subjects.notOnLms"));
+            ShowMedia(s);
         else if (tab == GradesTab)
             Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
     }
@@ -355,9 +355,75 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (News.SelectedItem is SubjectNews { Url: { } url }) await OpenUrl(url);
     }
 
+    // ------------------------------------------------------------------ tab Video và liên kết
+
+    private static readonly SoHocTap.Sources.Lms.MediaKind?[] MediaKinds =
+        [null, SoHocTap.Sources.Lms.MediaKind.Video, SoHocTap.Sources.Lms.MediaKind.Link, SoHocTap.Sources.Lms.MediaKind.Page, SoHocTap.Sources.Lms.MediaKind.Tool];
+
+    private void ShowMedia(SubjectRow s)
+    {
+        if (MediaKindFilter.ItemCount == 0)
+        {
+            MediaKindFilter.ItemsSource = MediaKinds.Select(k => L.T(k is { } kind ? "subjects.media." + kind.ToString().ToLowerInvariant() : "subjects.media.all")).ToList();
+            MediaKindFilter.SelectedIndex = 0;
+        }
+        // Môn không học kỳ này: app không tự đọc lớp kỳ cũ (đỡ request mỗi lần đồng bộ), cho đọc khi cần.
+        ReadPastButton.IsVisible = s.OnLms && !s.Current;
+        var only = MediaKinds[Math.Max(0, MediaKindFilter.SelectedIndex)];
+        var rows = SubjectsPresenter.Media(s, LmsCourseStore.Read, DocReads.Marks, only);
+        Tables.Show(Media, MediaEmpty, Tables.Grouped(rows, nameof(MediaRow.Group)),
+            L.T(!s.OnLms ? "subjects.notOnLms" : s.Current ? "subjects.mediaEmpty" : "subjects.mediaEmptyPast"));
+    }
+
+    private void OnMediaKind(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_subject is { } s && MediaKindFilter.SelectedIndex >= 0) ShowMedia(s);
+    }
+
+    private void MarkSeen(MediaRow m, bool seen)
+    {
+        DocReads.Set(SubjectsPresenter.MediaKey(m.Url), 0, seen);
+        if (_subject is { } s) ShowMedia(s);
+    }
+
     private async void OnMediaOpen(object? sender, TappedEventArgs e)
     {
-        if (Media.SelectedItem is MediaRow { Url.Length: > 0 } m) await OpenUrl(m.Url);
+        if (Media.SelectedItem is not MediaRow { Url.Length: > 0 } m) return;
+        MarkSeen(m, true);
+        await OpenUrl(m.Url);
+    }
+
+    private void OnMediaMenu(object? sender, EventArgs e)
+    {
+        if (sender is not MenuFlyout menu) return;
+        menu.Items.Clear();
+        if (Media.SelectedItem is not MediaRow m) return;
+        var mark = new MenuItem { Header = L.T(m.Seen ? "subjects.media.markUnseen" : "subjects.media.markSeen") };
+        mark.Click += (_, _) => MarkSeen(m, !m.Seen);
+        var copy = new MenuItem { Header = L.T("common.copyLink") };
+        copy.Click += async (_, _) => await Copy(m.Url);
+        menu.Items.Add(mark);
+        menu.Items.Add(copy);
+    }
+
+    /// <summary>Đọc lại cấu trúc các lớp LMS của một môn kỳ cũ (kể cả kho chung), chỉ đọc, không tải file; xong thì dựng lại tab.</summary>
+    private async void OnReadPast(object? sender, RoutedEventArgs e)
+    {
+        if (_subject is not { } s) return;
+        ReadPastButton.IsEnabled = false;
+        MediaStatus.Text = L.T("subjects.readPastRunning");
+        try
+        {
+            var n = await SoHocTap.Sources.Lms.LmsSource.ReadStructuresAsync([.. s.Courses.Select(c => c.Id)], CancellationToken.None);
+            MediaStatus.Text = L.F("subjects.readPastDone", n);
+        }
+        catch (Exception x) when (x is not OutOfMemoryException)
+        {
+            Log.Warn($"Đọc lớp kỳ cũ {s.Name}: {x.Message}");
+            MediaStatus.Text = L.F("subjects.readPastFailed", x.Message);
+        }
+        finally { ReadPastButton.IsEnabled = true; }
+        if (_subject == s) ShowMedia(s);
     }
 
     private void OnMediaKey(object? sender, KeyEventArgs e)
@@ -372,11 +438,17 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     /// <summary>Tải tài liệu của môn đang xem: mọi lớp của môn (lý thuyết, thí nghiệm, kỳ khác) tích sẵn trong cùng cửa sổ, khỏi menu chọn lớp.</summary>
     private void OnDownload(object? sender, RoutedEventArgs e)
     {
-        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)]);
+        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)], false);
     }
 
     /// <summary>Tải tài liệu nhiều môn: mở cây với học kỳ đang học tích sẵn.</summary>
-    private void OnDownloadAll(object? sender, RoutedEventArgs e) => _download?.Invoke(null);
+    private void OnDownloadAll(object? sender, RoutedEventArgs e) => _download?.Invoke(null, false);
+
+    /// <summary>Tải đề cũ của môn đang xem: cùng cửa sổ Tải, chỉ tích sẵn mục chứa đề của mọi lớp của môn (kể cả kho chung).</summary>
+    private void OnDownloadExams(object? sender, RoutedEventArgs e)
+    {
+        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)], true);
+    }
 
     private void OnOpenLibrary(object? sender, RoutedEventArgs e)
     {
