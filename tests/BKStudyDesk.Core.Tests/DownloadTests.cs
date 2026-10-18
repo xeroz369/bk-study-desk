@@ -1,7 +1,7 @@
 using SoHocTap.Data;
 using SoHocTap.Presentation;
 using SoHocTap.Sources.Lms;
-using Kind = SoHocTap.Sources.Lms.LmsSource.FileKind;
+using Kind = SoHocTap.Sources.Lms.FileKind;
 
 namespace BKStudyDesk.Core.Tests;
 

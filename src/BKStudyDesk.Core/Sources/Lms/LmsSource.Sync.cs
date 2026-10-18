@@ -85,6 +85,8 @@ public sealed partial class LmsSource
             .Where(c => c["fullname"]?.GetValue<string>() is { } n && Organizer.SubjectOf(n) is not null && !skip.Any(n.Contains))
             .Select(CourseMeta).ToList();
         var term = CurrentTerm(metas);
+        // Kho chung của môn (Organizer.SharedPart) không ghi học kỳ: tính là kỳ này khi môn đó (cùng mã) đang học, để đọc cùng các lớp kỳ này.
+        metas = [.. metas.Select(m => SharedTerm(m, metas, term))];
         var state = ReadCourseState();
         var index = JsonStore.ReadObject(FilesIndex);
         var hashes = new Dictionary<string, Dictionary<string, string>>();
@@ -244,6 +246,9 @@ public sealed partial class LmsSource
         if (pending is not null) JsonStore.Write(CourseState, pending);
     }
 
+    public static CourseInfo SharedTerm(CourseInfo m, IReadOnlyList<CourseInfo> all, string term) =>
+        Files.Organizer.IsShared(m.Part) && m.Term.Length == 0 && all.Any(x => x.Term == term && x.Code == m.Code) ? m with { Term = term } : m;
+
     private enum CourseCheckKind { New, Changed, Unchanged, ChangedAfterCheck, Skipped }
 
     private sealed record CourseCheck(CourseCheckKind Kind,
@@ -292,7 +297,9 @@ public sealed partial class LmsSource
                        ?? throw new SyncException(SyncErrorKind.Data, "LMS trả nội dung khóa không đúng dạng.");
         Part($"cấu trúc khóa {m.Subject}", () => SaveStructure(m, contents, index), ct);
         var done = new JsonObject { ["synced"] = started, ["checked"] = started, ["term"] = m.Term };
-        var files = Downloadable(contents).Where(x => autoDownload && (only is null || only.Contains(x.Mod["id"]!.GetValue<long>()))).ToList();
+        // Video (bài giảng ghi lại, thường hàng trăm MB) không tự tải khi đồng bộ: xem trên LMS ở tab Video và liên kết, hay tích chọn trong cửa sổ Tải.
+        var files = Downloadable(contents).Where(x => autoDownload && (only is null || only.Contains(x.Mod["id"]!.GetValue<long>()))
+                                                      && KindOf(x.File["filename"]?.GetValue<string>()) != FileKind.Video).ToList();
         if (files.Count == 0)
         {
             state[key] = done;

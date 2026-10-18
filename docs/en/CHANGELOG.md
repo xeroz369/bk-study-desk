@@ -8,6 +8,15 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Added
+
+- MyBK, Tuition tab: lists every tuition item with amount, amount owed, due date and Paid or Owed status (owed first). It used to keep only unpaid items, so it was empty once everything was paid.
+
+- Each subject's shared LMS course (name ending in `_Video`) is now synced as part of the subject, under the part "Kho chung" (shared). The app used to skip these courses entirely, missing syllabi, exam scopes, past midterm and final papers, and recorded lectures. Their files go to the subject's `Kho chung` folder.
+- The Subjects page has a Videos and links tab: recorded lectures (video files, YouTube links, videos embedded in labels), external links, LMS pages (for example midterm answer keys) and external tools from every course of the subject. Double-click or Enter opens one; nothing has to be downloaded.
+- Subjects, Documents tab: the Up button is now Parent folder, and each level of the path next to it can be clicked to jump straight there.
+- The Download window has a Video (large) kind, unchecked by default; automatic sync never downloads videos.
+
 ## [1.2.6] - 2026-10-14
 
 ### Changed

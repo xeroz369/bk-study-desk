@@ -144,8 +144,8 @@ public class MybkNormalizeTests
         Assert.Empty(MybkNormalize.SocialWork(null)["activities"]!.AsArray());
 
         var f = MybkNormalize.Fees(Extra["fees"] as JsonArray);
-        var fee = Assert.Single(f)!;                                  // bỏ khoản đã hủy ("1" chữ) và khoản đã đóng
-        Assert.Equal("Học phí mẫu", fee["content"]!.ToString());
+        Assert.Equal(["Học phí mẫu", "Đã đóng"], f.Select(x => x!["content"]!.ToString()));   // bỏ khoản đã hủy ("1" chữ), giữ khoản đã đóng
+        Assert.Equal(0, f[1]!["remaining"]!.GetValue<long>());
     }
 
     [Fact]

@@ -53,8 +53,22 @@ public static partial class Organizer
         }
         var btl = Config.Str("subjects.btlMarker");
         if (btl.Length > 0 && fullname.Contains(btl)) part = "BTL";
+        part = SharedPart(fullname, part, Config.Str("subjects.sharedMarker"));
         return new SubjectName(SafeFolderName(Canonical(baseName)), code, part);
     }
+
+    /// <summary>
+    /// Lớp kho chung của môn trên LMS ("Kỹ thuật số (EE1009)_Video"): không thuộc học kỳ nào, chứa đề cương, đề cũ, video bài giảng của
+    /// mọi lớp. Phần là "Kho chung" (lớp thí nghiệm thì "Thí nghiệm (kho chung)") để tài liệu nằm riêng một thư mục trong môn.
+    /// </summary>
+    public static string? SharedPart(string fullname, string? part, string marker) =>
+        marker.Length == 0 || !fullname.Contains(marker, StringComparison.OrdinalIgnoreCase) ? part
+            : part is null ? SharedName : $"{part} ({SharedName.ToLowerInvariant()})";
+
+    public const string SharedName = "Kho chung";
+
+    /// <summary>Phần của lớp là kho chung (SharedPart).</summary>
+    public static bool IsShared(string? part) => part is not null && part.Contains(SharedName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Tên môn lấy từ LMS dùng làm tên thư mục: bỏ ký tự Windows không cho phép, không cho "." hay "..".</summary>
     internal static string SafeFolderName(string name)

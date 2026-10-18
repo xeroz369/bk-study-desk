@@ -18,7 +18,7 @@ namespace BKStudyDesk.Desktop.Views;
 public partial class DownloadWindow : Window
 {
     private readonly IReadOnlyList<TermRow> _terms = [];
-    private readonly HashSet<LmsSource.FileKind> _kinds = [.. Enum.GetValues<LmsSource.FileKind>()];
+    private readonly HashSet<FileKind> _kinds = [.. Enum.GetValues<FileKind>().Where(k => k != FileKind.Video)];   // video: tích mới tải
     private readonly CancellationTokenSource _life = new();
     private readonly Queue<CourseRow> _toRead = new();
     private int _readDone, _readTotal;
@@ -123,7 +123,7 @@ public partial class DownloadWindow : Window
 
     private void OnKinds(object? sender, RoutedEventArgs e)
     {
-        foreach (var (box, kind) in new[] { (KindPdf, LmsSource.FileKind.Pdf), (KindSlide, LmsSource.FileKind.Slide), (KindOther, LmsSource.FileKind.Other) })
+        foreach (var (box, kind) in new[] { (KindPdf, FileKind.Pdf), (KindSlide, FileKind.Slide), (KindOther, FileKind.Other), (KindVideo, FileKind.Video) })
             if (box.IsChecked == true) _kinds.Add(kind); else _kinds.Remove(kind);
         Picked([]);
     }
@@ -245,7 +245,7 @@ public partial class DownloadWindow : Window
 
     private void Busy(bool on)
     {
-        Terms.IsEnabled = KindPdf.IsEnabled = KindSlide.IsEnabled = KindOther.IsEnabled = Extract.IsEnabled = !on;
+        Terms.IsEnabled = KindPdf.IsEnabled = KindSlide.IsEnabled = KindOther.IsEnabled = KindVideo.IsEnabled = Extract.IsEnabled = !on;
         Start.IsVisible = !on;
         Stop.IsVisible = on;
         Bar.IsVisible = on;

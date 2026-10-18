@@ -133,6 +133,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             Tables.Show(Due, DueEmpty, SubjectsPresenter.Due(_state.Timeline, s, Format.Now), L.T("subjects.dueEmpty"));
         else if (tab == NewsTab)
             Tables.Show(News, NewsEmpty, SubjectsPresenter.News(_state.Lms, s), L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
+        else if (tab == MediaTab)
+            Tables.Show(Media, MediaEmpty, SubjectsPresenter.Media(s, LmsCourseStore.Read), L.T(s.OnLms ? "subjects.mediaEmpty" : "subjects.notOnLms"));
         else if (tab == GradesTab)
             Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
     }
@@ -151,7 +153,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         var gen = ++_gen;
         var dir = _dir;
-        PathText.Text = dir;
+        ShowPath(dir);
         UpButton.IsEnabled = !dir.Equals(_root, StringComparison.OrdinalIgnoreCase);
         var task = Task.Run(() => Documents.ListDir(dir));
         if (await Task.WhenAny(task, Task.Delay(150)) != task && gen == _gen) Status(Files, FilesEmpty, L.T("subjects.scanning"));
@@ -209,7 +211,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         var recent = RecentToggle.IsChecked == true;
         Recent.IsVisible = UnreadOnly.IsVisible = recent;
-        Files.IsVisible = UpButton.IsVisible = PathText.IsVisible = !recent;
+        Files.IsVisible = UpButton.IsVisible = PathBar.IsVisible = !recent;
         _filled.Remove(FilesTab);
         FillTab();
     }
@@ -219,6 +221,26 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (_dir.Equals(_root, StringComparison.OrdinalIgnoreCase)) return;
         _dir = _dir[.._dir.LastIndexOf('/')];
         _ = LoadDirAsync();
+    }
+
+    // Thanh đường dẫn (SubjectsPresenter.Crumbs): các cấp trên là HyperlinkButton có sẵn của Avalonia, cấp đang xem là chữ thường.
+    private void ShowPath(string dir)
+    {
+        PathBar.Children.Clear();
+        var crumbs = SubjectsPresenter.Crumbs(_root, dir);
+        for (var i = 0; i < crumbs.Count; i++)
+        {
+            var (name, path) = crumbs[i];
+            if (i > 0) PathBar.Children.Add(new TextBlock { Text = "/", Classes = { "meta" }, Margin = new Thickness(4, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            if (i == crumbs.Count - 1)
+            {
+                PathBar.Children.Add(new TextBlock { Text = name, Classes = { "meta" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+                continue;
+            }
+            var link = new HyperlinkButton { Content = new TextBlock { Text = name }, Padding = new Thickness(2, 0) };
+            link.Click += (_, _) => { _dir = path; _ = LoadDirAsync(); };
+            PathBar.Children.Add(link);
+        }
     }
 
     private async void OnOpenFolder(object? sender, RoutedEventArgs e) => await Opener.OpenAsync(this, _dir);
@@ -294,6 +316,18 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private async void OnNewsOpen(object? sender, TappedEventArgs e)
     {
         if (News.SelectedItem is SubjectNews { Url: { } url }) await OpenUrl(url);
+    }
+
+    private async void OnMediaOpen(object? sender, TappedEventArgs e)
+    {
+        if (Media.SelectedItem is MediaRow { Url.Length: > 0 } m) await OpenUrl(m.Url);
+    }
+
+    private void OnMediaKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        OnMediaOpen(sender, null!);
+        e.Handled = true;
     }
 
     private void OnOpenLms(object? sender, RoutedEventArgs e) => PickCourse(LmsButton, c => _ = OpenUrl(c.Url));

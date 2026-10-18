@@ -71,6 +71,16 @@ public class SubjectsTests
     }
 
     [Fact]
+    public void Crumbs_from_subject_folder_down()
+    {
+        var c = SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 2/Tài liệu LMS/Chương 1");
+        Assert.Equal(["Giải tích 2", "Tài liệu LMS", "Chương 1"], c.Select(x => x.Name));
+        Assert.Equal("Môn học/Giải tích 2/Tài liệu LMS", c[1].Path);
+        Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 2"));
+        Assert.Equal("Giải tích 22", Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 22")).Name);   // không nhận nhầm tiền tố
+    }
+
+    [Fact]
     public void Subjects_grouped_by_latest_term_current_first_then_local()
     {
         var lms = Lms([Course(1, "Hóa đại cương", "HK241"), Course(2, "Giải tích 2"), Course(3, "Vật lý 1", "HK252"), Course(4, "Vật lý 1", "HK241"),

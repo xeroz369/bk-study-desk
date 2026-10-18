@@ -10,7 +10,7 @@ namespace SoHocTap.Presentation;
 /// Một mục LMS trong cửa sổ Tải tài liệu (bản 1.x: Ui/DownloadWindow). Số file và dung lượng tính theo các loại file đang chọn;
 /// mặc định tích sẵn mục còn thiếu file trên máy.
 /// </summary>
-public sealed class SectionRow(LmsSource.SectionInfo info, Func<IReadOnlySet<LmsSource.FileKind>> kinds) : INotifyPropertyChanged
+public sealed class SectionRow(LmsSource.SectionInfo info, Func<IReadOnlySet<FileKind>> kinds) : INotifyPropertyChanged
 {
     private bool _selected = info.Items.Any(f => !f.Have);
 
@@ -58,7 +58,7 @@ public enum LoadState { Unread, Reading, Ready, Failed }
 /// Một lớp LMS trong cây Tải tài liệu. Chưa đọc xong thì ô tích chỉ ghi ý người dùng (_wanted); đọc xong thì ô tích là tổng của các mục
 /// có file thuộc loại đang chọn (đủ, một phần, không). Chỉ file chưa có trên máy (Pending) mới tính vào số file và dung lượng sẽ tải.
 /// </summary>
-public sealed class CourseRow(LmsCourse course, Func<IReadOnlySet<LmsSource.FileKind>> kinds) : INotifyPropertyChanged
+public sealed class CourseRow(LmsCourse course, Func<IReadOnlySet<FileKind>> kinds) : INotifyPropertyChanged
 {
     private bool _wanted;
     private string _error = "";
@@ -176,7 +176,7 @@ public static class DownloadPlan
     public enum Verdict { Nothing, Ok, Large, NoSpace }
 
     /// <summary>Học kỳ đang học lên đầu, rồi kỳ mới tới cũ; trong kỳ xếp theo tên môn tiếng Việt.</summary>
-    public static IReadOnlyList<TermRow> Build(IEnumerable<LmsCourse> courses, string currentTerm, Func<IReadOnlySet<LmsSource.FileKind>> kinds) =>
+    public static IReadOnlyList<TermRow> Build(IEnumerable<LmsCourse> courses, string currentTerm, Func<IReadOnlySet<FileKind>> kinds) =>
         [.. courses.Where(c => c.Subject.Length > 0).GroupBy(c => c.Term)
             .OrderByDescending(g => g.Key == currentTerm).ThenByDescending(g => g.Key, StringComparer.Ordinal)
             .Select(g => new TermRow(g.Key, g.Key == currentTerm,

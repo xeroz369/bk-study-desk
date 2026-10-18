@@ -41,6 +41,9 @@ public sealed record RecentRow(string Name, string Folder, string Path, long Siz
 
 public sealed record SubjectNews(string Title, string Forum, string Author, string When, string? Url);
 
+/// <summary>Một dòng của tab Video và liên kết. Where: phần của lớp và mục trên LMS.</summary>
+public sealed record MediaRow(string Name, string KindText, string Where, string Url);
+
 /// <summary>Một mục điểm; Total là dòng tổng (của môn hay của nhóm), View in đậm.</summary>
 public sealed record GradeRow(string Part, string Name, string GradeText, string MaxText, string Percent, bool Total);
 
@@ -106,6 +109,25 @@ public static class SubjectsPresenter
         return current ? L.F("subjects.termCurrent", title) : title;
     }
 
+    /// <summary>
+    /// Thanh đường dẫn tab Tài liệu: từ thư mục môn (<paramref name="root"/>, hiện bằng tên môn) xuống thư mục đang xem; mỗi cấp kèm
+    /// đường dẫn để bấm lên thẳng cấp đó. Thư mục ngoài môn thì chỉ có một cấp là chính nó.
+    /// </summary>
+    public static IReadOnlyList<(string Name, string Path)> Crumbs(string root, string dir)
+    {
+        var name = root[(root.LastIndexOf('/') + 1)..];
+        if (!dir.StartsWith(root, StringComparison.OrdinalIgnoreCase) || (dir.Length > root.Length && dir[root.Length] != '/'))
+            return [(dir[(dir.LastIndexOf('/') + 1)..], dir)];
+        var list = new List<(string, string)> { (name, root) };
+        var path = root;
+        foreach (var part in dir[root.Length..].Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            path += "/" + part;
+            list.Add((part, path));
+        }
+        return list;
+    }
+
     /// <summary>Lọc bỏ dấu: gõ "giai tich" vẫn ra "Giải tích 2", tên NFD trên đĩa cũng khớp.</summary>
     public static IReadOnlyList<SubjectRow> Filter(IReadOnlyList<SubjectRow> rows, string q)
     {
@@ -137,6 +159,16 @@ public static class SubjectsPresenter
     public static IReadOnlyList<CalendarRow> Due(IReadOnlyList<TimelineItem> timeline, SubjectRow s, long now) =>
         [.. timeline.Where(x => Mine(x, s) && x.Kind != "class" && (x.Time > now - 86400 || x.Overdue))
             .OrderBy(x => x.GroupRank).ThenBy(x => x.Time).Select(CalendarPresenter.Row)];
+
+    /// <summary>
+    /// Tab Video và liên kết: video bài giảng, link ngoài, trang, công cụ ngoài của mọi lớp của môn (cả kho chung), lớp kỳ mới trước.
+    /// <paramref name="read"/> đọc cấu trúc khóa đã lưu khi đồng bộ (LmsCourseStore.Read); lớp chưa đọc thì bỏ qua.
+    /// </summary>
+    public static IReadOnlyList<MediaRow> Media(SubjectRow s, Func<long, JsonObject?> read) =>
+        [.. s.Courses.OrderByDescending(c => c.Term, StringComparer.Ordinal).ThenBy(c => c.Part is null ? 0 : 1)
+            .SelectMany(c => Sources.Lms.LmsMedia.Items(read(c.Id)))
+            .Select(i => new MediaRow(i.Name, L.T("subjects.media." + i.Kind.ToString().ToLowerInvariant()),
+                Join(i.Part.Length > 0 ? i.Part : L.T("common.theory"), i.Section), i.Url))];
 
     public static IReadOnlyList<SubjectNews> News(LmsData? lms, SubjectRow s) =>
         [.. (lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name)).OrderByDescending(a => a.Time)

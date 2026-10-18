@@ -208,7 +208,8 @@ public static partial class MybkNormalize
 
     /// <summary>Khoản phí: chỉ giữ khoản còn phải đóng (chưa hủy, còn nợ), gồm nội dung, số tiền, hạn.</summary>
     public static JsonArray Fees(JsonArray? rows) => new((rows ?? []).OfType<JsonObject>()
-        .Where(r => (Long(r["isCancelled"]) ?? 0) == 0 && (Long(r["amtRemaining"]) ?? 0) > 0)
+        // Mọi khoản chưa hủy, cả khoản đã đóng (trang học phí BKPay2 của MyBK cũng liệt kê hết); còn nợ hay không do trang MyBK của app ghi.
+        .Where(r => (Long(r["isCancelled"]) ?? 0) == 0)
         .Select(r => (JsonNode)new JsonObject
         {
             ["content"] = V(r["shortContent"]),
