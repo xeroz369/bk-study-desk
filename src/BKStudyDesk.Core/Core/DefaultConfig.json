@@ -13,10 +13,10 @@
         "font-vni"
       ],
       "skipCourses": [
-        "_Video",
         "Lớp Chủ nhiệm"
       ],
       "maxFileMB": 200,
+      "maxVideoMB": 2048,
       "autoDownload": false,
       "pastTerms": false,
       "gapMs": 100,
@@ -260,6 +260,8 @@
       "bài tập": "Bài tập"
     },
     "btlMarker": "_BTL_",
+    "sharedMarker": "_Video",
+    "dueDays": 7,
     "aliases": {
       "thí nghiệm vật lý": "Thí nghiệm Vật lý",
       "hệ thống máy tính": "Hệ thống Máy tính và Ngôn ngữ Lập trình",

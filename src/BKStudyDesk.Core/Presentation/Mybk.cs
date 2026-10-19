@@ -21,7 +21,8 @@ public sealed record RegisteredRow(string Code, string Name, string ClassGroup, 
 /// <summary>Một buổi dạy trong tuần, nhóm theo giảng viên.</summary>
 public sealed record TeacherRow(string Teacher, string Name, string Code, string Group, string Day, int DaySort, string Time, string Room);
 
-public sealed record FeeRow(string Content, string Remaining, long RemainingValue, string Due);
+/// <param name="Owed">Còn nợ (tô màu cảnh báo ở trạng thái).</param>
+public sealed record FeeRow(string Content, string Amount, long AmountValue, string Remaining, long RemainingValue, string Due, string Status, bool Owed);
 
 public sealed record ActivityRow(string Name, string Date, string Days);
 
@@ -142,7 +143,10 @@ public static class MybkPresenter
     }
 
     public static IReadOnlyList<FeeRow> Fees(MybkData? m) =>
-        [.. (m?.Fees ?? []).Select(f => new FeeRow(f.Content, Format.Money(f.Remaining), f.Remaining, f.Due))];
+        // Còn nợ trước, rồi hạn mới trước (giữ thứ tự MyBK khi cùng hạn).
+        [.. (m?.Fees ?? []).OrderByDescending(f => f.Remaining > 0).ThenByDescending(f => f.Due, StringComparer.Ordinal)
+            .Select(f => new FeeRow(f.Content, Format.Money(f.Amount), f.Amount, Format.Money(f.Remaining), f.Remaining, f.Due,
+                L.T(f.Remaining > 0 ? "grades.feeOwed" : "grades.feePaid"), f.Remaining > 0))];
 
     public static IReadOnlyList<ActivityRow> Social(MybkData? m) =>
         [.. (m?.SocialWork?.Activities ?? []).Select(a => new ActivityRow(a.Name, a.DateText, a.DaysText))];

@@ -637,9 +637,9 @@ public partial class MainWindow : Window
         });
 
     /// <summary>Cửa sổ Tải tài liệu (các lớp <paramref name="pick"/> tích sẵn, null: học kỳ đang học); đóng thì trang Môn học đọc lại thư mục.</summary>
-    private void Download(IReadOnlyCollection<long>? pick)
+    private void Download(IReadOnlyCollection<long>? pick, bool examsOnly)
     {
-        var w = new DownloadWindow(pick);
+        var w = new DownloadWindow(pick, examsOnly);
         w.Closed += (_, _) => Show(_current);
         // Tải lâu, người dùng sang app khác hay thu nhỏ: báo bằng thông báo hệ điều hành khi xong; đang nhìn thì đã thấy dòng kết quả.
         w.Finished += (text, seen) => { if (!seen) _notifier?.Show(L.T("download.title"), text, "mon", outside: true); };

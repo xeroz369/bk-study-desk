@@ -20,7 +20,7 @@ namespace BKStudyDesk.Desktop.Views;
 public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 {
     private readonly AppState _state = null!;
-    private readonly Action<IReadOnlyCollection<long>?>? _download;   // các lớp tích sẵn; null = học kỳ đang học
+    private readonly Action<IReadOnlyCollection<long>?, bool>? _download;   // các lớp tích sẵn; null = học kỳ đang học
     private readonly Action<string>? _openLibrary;
     private IReadOnlyList<SubjectRow> _rows = [];
     private SubjectRow? _subject;
@@ -32,7 +32,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ môn, tab, thư mục người dùng đang xem.</param>
     /// <param name="openLibrary">Mở trang Thư viện đúng môn này (nút Xem trong Thư viện); null thì ẩn nút.</param>
-    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?>? download, Action<string>? openLibrary) : this()
+    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?, bool>? download, Action<string>? openLibrary) : this()
     {
         _keepDir = previous?._dir;
         if (previous is not null) Tabs.SelectedIndex = previous.Tabs.SelectedIndex;
@@ -45,9 +45,11 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             var header = Subjects.Items.Count > e.Index && Subjects.Items[e.Index] is SubjectTermHeader;
             e.Container.IsEnabled = e.Container.Focusable = !header;   // container dùng lại cho dòng môn thì bật lại
         };
-        DownloadButton.IsVisible = DownloadAllButton.IsVisible = download is not null;
+        DownloadButton.IsVisible = DownloadAllButton.IsVisible = ExamsButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
         _wanted = previous?.Selected;
+        // Kỳ đang xem: giữ của trang cũ khi dựng lại; mở mới thì theo lần trước (chỉ nhớ "tất cả" hay "kỳ đang học").
+        _termKey = previous?._termKey ?? (Config.Str("ui.subjectsTerms", "current") == "all" ? SubjectsPresenter.AllTerms : null);
         Build(null);
         _ = ScanAsync();
     }
@@ -81,16 +83,51 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private void Build(JsonArray? scan)
     {
         _wanted ??= _subject?.Name;
-        _rows = SubjectsPresenter.Rows(_state.Lms, scan);
+        _rows = SubjectsPresenter.WithDue(SubjectsPresenter.Rows(_state.Lms, scan), _state.Timeline, Format.Now, Config.Int("subjects.dueDays", 7));
         ShowList();
     }
 
     private void OnFilter(object? sender, TextChangedEventArgs e) => ShowList();
 
+    // Ô chọn kỳ (SubjectsPresenter.TermOptions). _termKey null: lựa chọn đầu tiên (kỳ đang học, không có thì kỳ gần nhất).
+    private IReadOnlyList<(string Key, string Title)> _terms = [];
+    private string? _termKey;
+    private bool _fillingTerms;
+
+    private void FillTerms()
+    {
+        _terms = SubjectsPresenter.TermOptions(_rows);
+        var index = Math.Max(0, _terms.ToList().FindIndex(t => t.Key == _termKey));
+        _termKey = _terms.Count > 0 ? _terms[index].Key : null;
+        _fillingTerms = true;
+        TermFilter.ItemsSource = _terms.Select(t => t.Title).ToList();
+        TermFilter.SelectedIndex = _terms.Count > 0 ? index : -1;
+        _fillingTerms = false;
+        TermFilter.IsVisible = _terms.Count > 2;   // chỉ một kỳ (cộng Tất cả) thì không cần chọn
+    }
+
+    private void OnTermFilter(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_fillingTerms || TermFilter.SelectedIndex < 0 || TermFilter.SelectedIndex >= _terms.Count) return;
+        _termKey = _terms[TermFilter.SelectedIndex].Key;
+        var remember = _termKey == SubjectsPresenter.AllTerms ? "all" : "current";
+        if (Config.Str("ui.subjectsTerms", "current") != remember) Config.Set("ui.subjectsTerms", remember);
+        ShowList();
+    }
+
     private void ShowList()
     {
-        var rows = SubjectsPresenter.Filter(_rows, Filter.Text ?? "");
-        Subjects.ItemsSource = SubjectsPresenter.Grouped(rows);
+        // Mở một môn từ chỗ khác (Ctrl+K, Thư viện) mà môn đó ở kỳ khác: chuyển ô chọn kỳ sang kỳ của môn.
+        if (_wanted is { } want && _termKey != SubjectsPresenter.AllTerms && _rows.FirstOrDefault(r => NameMatch.Same(r.Name, want)) is { } target
+            && SubjectsPresenter.TermOf(target) != _termKey)
+            _termKey = SubjectsPresenter.TermOf(target);
+        FillTerms();
+        var text = Filter.Text ?? "";
+        var found = SubjectsPresenter.Filter(_rows, text);
+        // Đang gõ lọc: tìm ở mọi kỳ, có dòng nhóm để biết môn thuộc kỳ nào.
+        var all = text.Trim().Length > 0 || _termKey == SubjectsPresenter.AllTerms;
+        var rows = all ? found : SubjectsPresenter.InTerm(found, _termKey ?? SubjectsPresenter.AllTerms);
+        Subjects.ItemsSource = all ? SubjectsPresenter.Grouped(rows) : rows;
         ListEmpty.IsVisible = rows.Count == 0;
         ListEmpty.Text = L.T(_rows.Count == 0 ? "subjects.listEmpty" : "subjects.noMatch");
         var keep = _wanted ?? _subject?.Name;
@@ -106,7 +143,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         _subject = s;
         SubjectName.Text = s.Name;
         SubjectMeta.Text = SubjectsPresenter.Meta(s, _state.Timeline, _state.Lms, Format.Now);
-        LmsButton.IsEnabled = DownloadButton.IsEnabled = s.OnLms;
+        LmsButton.IsEnabled = DownloadButton.IsEnabled = ExamsButton.IsEnabled = s.OnLms;
         _root = Config.Str("folders.subjects") + "/" + s.Name;
         if (changed) _dir = _keepDir is { } keep && keep.StartsWith(_root, StringComparison.OrdinalIgnoreCase) ? keep : _root;
         _keepDir = null;
@@ -133,6 +170,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             Tables.Show(Due, DueEmpty, SubjectsPresenter.Due(_state.Timeline, s, Format.Now), L.T("subjects.dueEmpty"));
         else if (tab == NewsTab)
             Tables.Show(News, NewsEmpty, SubjectsPresenter.News(_state.Lms, s), L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
+        else if (tab == MediaTab)
+            ShowMedia(s);
         else if (tab == GradesTab)
             Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
     }
@@ -151,7 +190,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         var gen = ++_gen;
         var dir = _dir;
-        PathText.Text = dir;
+        ShowPath(dir);
         UpButton.IsEnabled = !dir.Equals(_root, StringComparison.OrdinalIgnoreCase);
         var task = Task.Run(() => Documents.ListDir(dir));
         if (await Task.WhenAny(task, Task.Delay(150)) != task && gen == _gen) Status(Files, FilesEmpty, L.T("subjects.scanning"));
@@ -209,7 +248,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         var recent = RecentToggle.IsChecked == true;
         Recent.IsVisible = UnreadOnly.IsVisible = recent;
-        Files.IsVisible = UpButton.IsVisible = PathText.IsVisible = !recent;
+        Files.IsVisible = UpButton.IsVisible = PathBar.IsVisible = !recent;
         _filled.Remove(FilesTab);
         FillTab();
     }
@@ -219,6 +258,26 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (_dir.Equals(_root, StringComparison.OrdinalIgnoreCase)) return;
         _dir = _dir[.._dir.LastIndexOf('/')];
         _ = LoadDirAsync();
+    }
+
+    // Thanh đường dẫn (SubjectsPresenter.Crumbs): các cấp trên là HyperlinkButton có sẵn của Avalonia, cấp đang xem là chữ thường.
+    private void ShowPath(string dir)
+    {
+        PathBar.Children.Clear();
+        var crumbs = SubjectsPresenter.Crumbs(_root, dir);
+        for (var i = 0; i < crumbs.Count; i++)
+        {
+            var (name, path) = crumbs[i];
+            if (i > 0) PathBar.Children.Add(new TextBlock { Text = "/", Classes = { "meta" }, Margin = new Thickness(4, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            if (i == crumbs.Count - 1)
+            {
+                PathBar.Children.Add(new TextBlock { Text = name, Classes = { "meta" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+                continue;
+            }
+            var link = new HyperlinkButton { Content = new TextBlock { Text = name }, Padding = new Thickness(2, 0) };
+            link.Click += (_, _) => { _dir = path; _ = LoadDirAsync(); };
+            PathBar.Children.Add(link);
+        }
     }
 
     private async void OnOpenFolder(object? sender, RoutedEventArgs e) => await Opener.OpenAsync(this, _dir);
@@ -296,16 +355,100 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (News.SelectedItem is SubjectNews { Url: { } url }) await OpenUrl(url);
     }
 
+    // ------------------------------------------------------------------ tab Video và liên kết
+
+    private static readonly SoHocTap.Sources.Lms.MediaKind?[] MediaKinds =
+        [null, SoHocTap.Sources.Lms.MediaKind.Video, SoHocTap.Sources.Lms.MediaKind.Link, SoHocTap.Sources.Lms.MediaKind.Page, SoHocTap.Sources.Lms.MediaKind.Tool];
+
+    private void ShowMedia(SubjectRow s)
+    {
+        if (MediaKindFilter.ItemCount == 0)
+        {
+            MediaKindFilter.ItemsSource = MediaKinds.Select(k => L.T(k is { } kind ? "subjects.media." + kind.ToString().ToLowerInvariant() : "subjects.media.all")).ToList();
+            MediaKindFilter.SelectedIndex = 0;
+        }
+        // Môn không học kỳ này: app không tự đọc lớp kỳ cũ (đỡ request mỗi lần đồng bộ), cho đọc khi cần.
+        ReadPastButton.IsVisible = s.OnLms && !s.Current;
+        var only = MediaKinds[Math.Max(0, MediaKindFilter.SelectedIndex)];
+        var rows = SubjectsPresenter.Media(s, LmsCourseStore.Read, DocReads.Marks, only);
+        Tables.Show(Media, MediaEmpty, Tables.Grouped(rows, nameof(MediaRow.Group)),
+            L.T(!s.OnLms ? "subjects.notOnLms" : s.Current ? "subjects.mediaEmpty" : "subjects.mediaEmptyPast"));
+    }
+
+    private void OnMediaKind(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_subject is { } s && MediaKindFilter.SelectedIndex >= 0) ShowMedia(s);
+    }
+
+    private void MarkSeen(MediaRow m, bool seen)
+    {
+        DocReads.Set(SubjectsPresenter.MediaKey(m.Url), 0, seen);
+        if (_subject is { } s) ShowMedia(s);
+    }
+
+    private async void OnMediaOpen(object? sender, TappedEventArgs e)
+    {
+        if (Media.SelectedItem is not MediaRow { Url.Length: > 0 } m) return;
+        MarkSeen(m, true);
+        await OpenUrl(m.Url);
+    }
+
+    private void OnMediaMenu(object? sender, EventArgs e)
+    {
+        if (sender is not MenuFlyout menu) return;
+        menu.Items.Clear();
+        if (Media.SelectedItem is not MediaRow m) return;
+        var mark = new MenuItem { Header = L.T(m.Seen ? "subjects.media.markUnseen" : "subjects.media.markSeen") };
+        mark.Click += (_, _) => MarkSeen(m, !m.Seen);
+        var copy = new MenuItem { Header = L.T("common.copyLink") };
+        copy.Click += async (_, _) => await Copy(m.Url);
+        menu.Items.Add(mark);
+        menu.Items.Add(copy);
+    }
+
+    /// <summary>Đọc lại cấu trúc các lớp LMS của một môn kỳ cũ (kể cả kho chung), chỉ đọc, không tải file; xong thì dựng lại tab.</summary>
+    private async void OnReadPast(object? sender, RoutedEventArgs e)
+    {
+        if (_subject is not { } s) return;
+        ReadPastButton.IsEnabled = false;
+        MediaStatus.Text = L.T("subjects.readPastRunning");
+        try
+        {
+            var n = await SoHocTap.Sources.Lms.LmsSource.ReadStructuresAsync([.. s.Courses.Select(c => c.Id)], CancellationToken.None);
+            MediaStatus.Text = L.F("subjects.readPastDone", n);
+        }
+        catch (Exception x) when (x is not OutOfMemoryException)
+        {
+            Log.Warn($"Đọc lớp kỳ cũ {s.Name}: {x.Message}");
+            MediaStatus.Text = L.F("subjects.readPastFailed", x.Message);
+        }
+        finally { ReadPastButton.IsEnabled = true; }
+        if (_subject == s) ShowMedia(s);
+    }
+
+    private void OnMediaKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        OnMediaOpen(sender, null!);
+        e.Handled = true;
+    }
+
     private void OnOpenLms(object? sender, RoutedEventArgs e) => PickCourse(LmsButton, c => _ = OpenUrl(c.Url));
 
     /// <summary>Tải tài liệu của môn đang xem: mọi lớp của môn (lý thuyết, thí nghiệm, kỳ khác) tích sẵn trong cùng cửa sổ, khỏi menu chọn lớp.</summary>
     private void OnDownload(object? sender, RoutedEventArgs e)
     {
-        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)]);
+        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)], false);
     }
 
     /// <summary>Tải tài liệu nhiều môn: mở cây với học kỳ đang học tích sẵn.</summary>
-    private void OnDownloadAll(object? sender, RoutedEventArgs e) => _download?.Invoke(null);
+    private void OnDownloadAll(object? sender, RoutedEventArgs e) => _download?.Invoke(null, false);
+
+    /// <summary>Tải đề cũ của môn đang xem: cùng cửa sổ Tải, chỉ tích sẵn mục chứa đề của mọi lớp của môn (kể cả kho chung).</summary>
+    private void OnDownloadExams(object? sender, RoutedEventArgs e)
+    {
+        if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)], true);
+    }
 
     private void OnOpenLibrary(object? sender, RoutedEventArgs e)
     {

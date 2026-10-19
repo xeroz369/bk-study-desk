@@ -17,6 +17,8 @@
             <CheckBox x:Name="KindPdf" Content="PDF" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
             <CheckBox x:Name="KindSlide" Content="{l:T download.kindSlide}" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
             <CheckBox x:Name="KindOther" Content="{l:T download.kindOther}" IsChecked="True" Click="OnKinds" Margin="0,0,16,0" />
+            <!-- Video bài giảng nặng (hàng trăm MB mỗi file): mặc định không tải, tích khi cần xem không mạng. -->
+            <CheckBox x:Name="KindVideo" Content="{l:T download.kindVideo}" IsChecked="False" Click="OnKinds" Margin="0,0,16,0" />
             <CheckBox x:Name="Extract" Content="{l:T download.extract}" />
         </WrapPanel>
 

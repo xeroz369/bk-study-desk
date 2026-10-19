@@ -18,7 +18,7 @@ namespace BKStudyDesk.Desktop.Views;
 public partial class DownloadWindow : Window
 {
     private readonly IReadOnlyList<TermRow> _terms = [];
-    private readonly HashSet<LmsSource.FileKind> _kinds = [.. Enum.GetValues<LmsSource.FileKind>()];
+    private readonly HashSet<FileKind> _kinds = [.. Enum.GetValues<FileKind>().Where(k => k != FileKind.Video)];   // video: tích mới tải
     private readonly CancellationTokenSource _life = new();
     private readonly Queue<CourseRow> _toRead = new();
     private int _readDone, _readTotal;
@@ -30,7 +30,8 @@ public partial class DownloadWindow : Window
     public DownloadWindow() => InitializeComponent();
 
     /// <summary><paramref name="pick"/>: các lớp tích sẵn (nút Tải ở một môn); null: mọi lớp của học kỳ đang học.</summary>
-    internal DownloadWindow(IReadOnlyCollection<long>? pick) : this()
+    /// <param name="examsOnly">Nút Tải đề cũ: chỉ tích sẵn mục chứa đề (DownloadPlan.IsExamSection), người dùng vẫn xem và đổi được trước khi tải.</param>
+    internal DownloadWindow(IReadOnlyCollection<long>? pick, bool examsOnly = false) : this()
     {
         Sub.Text = L.F("download.saveToSubjects", Config.Str("folders.subjects"));
         Extract.IsChecked = SoHocTap.Core.Settings.Archives.Extract;
@@ -46,6 +47,7 @@ public partial class DownloadWindow : Window
         foreach (var t in _terms)
             foreach (var c in t.Courses.Where(c => pick?.Contains(c.Course.Id) ?? t.Current))
             {
+                if (examsOnly) c.SectionFilter = DownloadPlan.IsExamSection;
                 c.Checked = true;
                 c.Expanded = pick is not null;   // từ một môn: mở sẵn để thấy các mục
                 t.Expanded = true;
@@ -123,7 +125,7 @@ public partial class DownloadWindow : Window
 
     private void OnKinds(object? sender, RoutedEventArgs e)
     {
-        foreach (var (box, kind) in new[] { (KindPdf, LmsSource.FileKind.Pdf), (KindSlide, LmsSource.FileKind.Slide), (KindOther, LmsSource.FileKind.Other) })
+        foreach (var (box, kind) in new[] { (KindPdf, FileKind.Pdf), (KindSlide, FileKind.Slide), (KindOther, FileKind.Other), (KindVideo, FileKind.Video) })
             if (box.IsChecked == true) _kinds.Add(kind); else _kinds.Remove(kind);
         Picked([]);
     }
@@ -245,7 +247,7 @@ public partial class DownloadWindow : Window
 
     private void Busy(bool on)
     {
-        Terms.IsEnabled = KindPdf.IsEnabled = KindSlide.IsEnabled = KindOther.IsEnabled = Extract.IsEnabled = !on;
+        Terms.IsEnabled = KindPdf.IsEnabled = KindSlide.IsEnabled = KindOther.IsEnabled = KindVideo.IsEnabled = Extract.IsEnabled = !on;
         Start.IsVisible = !on;
         Stop.IsVisible = on;
         Bar.IsVisible = on;

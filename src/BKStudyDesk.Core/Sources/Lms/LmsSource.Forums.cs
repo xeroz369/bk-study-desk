@@ -33,6 +33,7 @@ public sealed partial class LmsSource
         var courseSubject = enrolled.OfType<JsonObject>()
             .Where(c => Organizer.SubjectOf(c["fullname"]?.GetValue<string>() ?? "") is not null)
             .Select(CourseMeta)
+            .Select(m => SharedTerm(m, current, term ?? ""))   // kho chung (diễn đàn hỏi đáp đề thi) tính theo kỳ của môn
             .Where(m => m.Term == term && subjects.Contains(m.Subject))
             .ToDictionary(m => m.Id, m => m.Subject);
         var since = Now() - Config.Int("sources.lms.announcementDays", 60) * 86400L;

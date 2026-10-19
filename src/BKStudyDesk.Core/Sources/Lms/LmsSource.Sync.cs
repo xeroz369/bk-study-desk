@@ -85,6 +85,8 @@ public sealed partial class LmsSource
             .Where(c => c["fullname"]?.GetValue<string>() is { } n && Organizer.SubjectOf(n) is not null && !skip.Any(n.Contains))
             .Select(CourseMeta).ToList();
         var term = CurrentTerm(metas);
+        // Kho chung của môn (Organizer.SharedPart) không ghi học kỳ: tính là kỳ này khi môn đó (cùng mã) đang học, để đọc cùng các lớp kỳ này.
+        metas = [.. metas.Select(m => SharedTerm(m, metas, term))];
         var state = ReadCourseState();
         var index = JsonStore.ReadObject(FilesIndex);
         var hashes = new Dictionary<string, Dictionary<string, string>>();
@@ -101,7 +103,7 @@ public sealed partial class LmsSource
         var current = metas.Where(m => m.Term == term).ToList();
         plan.SetWeight("sync.lms.check", Math.Max(1, toCheck.Count));
         plan.SetWeight("sync.lms.news", Math.Max(1, current.Count));    // diễn đàn: khoảng một request mỗi lớp
-        plan.SetWeight("sync.lms.grades", Math.Max(1, current.Count));  // sổ điểm: một request mỗi lớp
+        plan.SetWeight("sync.lms.grades", Math.Max(1, current.Count(c => !Files.Organizer.IsShared(c.Part))));  // sổ điểm: một request mỗi lớp (trừ kho chung)
         var nth = 0;
         foreach (var m in toCheck)
         {
@@ -148,7 +150,9 @@ public sealed partial class LmsSource
             // Mỗi bước lỗi thì giữ phần của lần trước (không xóa lịch, điểm đang có vì một API chập chờn).
             Report(plan.Enter("sync.lms.groups"));
             // Nhóm của mình: lọc mốc và mục điểm của nhóm khác (lớp thí nghiệm dùng chung cho nhiều nhóm).
-            var groups = await PartAsync("nhóm lớp LMS", () => MyGroupsAsync(current, uid, ct), new Dictionary<long, HashSet<string>>(), ct);
+            // Kho chung không chia nhóm, không có sổ điểm: bỏ khỏi hai bước gọi từng lớp này (đỡ request, không thêm dòng điểm rỗng).
+            var classes = current.Where(c => !Files.Organizer.IsShared(c.Part)).ToList();
+            var groups = await PartAsync("nhóm lớp LMS", () => MyGroupsAsync(classes, uid, ct), new Dictionary<long, HashSet<string>>(), ct);
             Report(plan.Enter("sync.lms.events"));
             events = await PartAsync("lịch và bài tập LMS", () => CollectEventsAsync(current, groups, ct), prev["events"]?.DeepClone() as JsonArray ?? [], ct);
             Report(plan.Enter("sync.lms.quizzes"));
@@ -158,7 +162,7 @@ public sealed partial class LmsSource
             announcements = await PartAsync("thông báo LMS", () => CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct),
                 prev["announcements"]?.DeepClone() as JsonArray ?? [], ct);
             Report(plan.Enter("sync.lms.grades"));
-            grades = await PartAsync("sổ điểm LMS", () => CollectGradesAsync(current, uid, ct), prev["grades"]?.DeepClone() as JsonArray ?? [], ct);
+            grades = await PartAsync("sổ điểm LMS", () => CollectGradesAsync(classes, uid, ct), prev["grades"]?.DeepClone() as JsonArray ?? [], ct);
         }
         catch (SessionExpiredException) when (events is not null)
         {
@@ -244,6 +248,9 @@ public sealed partial class LmsSource
         if (pending is not null) JsonStore.Write(CourseState, pending);
     }
 
+    public static CourseInfo SharedTerm(CourseInfo m, IReadOnlyList<CourseInfo> all, string term) =>
+        Files.Organizer.IsShared(m.Part) && m.Term.Length == 0 && all.Any(x => x.Term == term && x.Code == m.Code) ? m with { Term = term } : m;
+
     private enum CourseCheckKind { New, Changed, Unchanged, ChangedAfterCheck, Skipped }
 
     private sealed record CourseCheck(CourseCheckKind Kind,
@@ -292,7 +299,9 @@ public sealed partial class LmsSource
                        ?? throw new SyncException(SyncErrorKind.Data, "LMS trả nội dung khóa không đúng dạng.");
         Part($"cấu trúc khóa {m.Subject}", () => SaveStructure(m, contents, index), ct);
         var done = new JsonObject { ["synced"] = started, ["checked"] = started, ["term"] = m.Term };
-        var files = Downloadable(contents).Where(x => autoDownload && (only is null || only.Contains(x.Mod["id"]!.GetValue<long>()))).ToList();
+        // Video (bài giảng ghi lại, thường hàng trăm MB) không tự tải khi đồng bộ: xem trên LMS ở tab Video và liên kết, hay tích chọn trong cửa sổ Tải.
+        var files = Downloadable(contents).Where(x => autoDownload && (only is null || only.Contains(x.Mod["id"]!.GetValue<long>()))
+                                                      && KindOf(x.File["filename"]?.GetValue<string>()) != FileKind.Video).ToList();
         if (files.Count == 0)
         {
             state[key] = done;

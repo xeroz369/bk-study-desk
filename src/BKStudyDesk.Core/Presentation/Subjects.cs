@@ -41,6 +41,13 @@ public sealed record RecentRow(string Name, string Folder, string Path, long Siz
 
 public sealed record SubjectNews(string Title, string Forum, string Author, string When, string? Url);
 
+/// <summary>Một dòng của tab Video và liên kết. Group: phần của lớp và mục (chương) trên LMS, là dải nhóm của bảng.</summary>
+/// <param name="Seen">Đã mở (đánh dấu đã xem, data/doc-read.json khóa "media:" + url).</param>
+public sealed record MediaRow(string Name, string KindText, Sources.Lms.MediaKind Kind, string Group, string Url, bool Seen = false)
+{
+    public string SeenText => Seen ? "" : L.T("subjects.media.unseen");
+}
+
 /// <summary>Một mục điểm; Total là dòng tổng (của môn hay của nhóm), View in đậm.</summary>
 public sealed record GradeRow(string Part, string Name, string GradeText, string MaxText, string Percent, bool Total);
 
@@ -88,7 +95,7 @@ public static class SubjectsPresenter
         string? last = null;
         foreach (var r in rows)
         {
-            var key = r.Current ? "\u0001" : r.Term;
+            var key = TermKey(r);
             if (key != last) list.Add(new SubjectTermHeader(TermTitle(r.Term, r.Current)));
             last = key;
             list.Add(r);
@@ -96,15 +103,71 @@ public static class SubjectsPresenter
         return list;
     }
 
-    /// <summary>"HK261" thành "Học kỳ 1, 2026-2027"; kỳ 3 là học kỳ hè; rỗng là môn chỉ có trên máy.</summary>
-    public static string TermTitle(string term, bool current = false)
+    /// <summary>Lựa chọn "Tất cả học kỳ" trong ô chọn kỳ của trang Môn học.</summary>
+    public const string AllTerms = "*";
+
+    /// <summary>Kỳ của môn trong danh sách: kỳ đang học, kỳ gần nhất có lớp LMS, hay rỗng (chỉ có thư mục trên máy).</summary>
+    private static string TermKey(SubjectRow r) => r.Current ? "\u0001" : r.Term;
+
+    /// <summary>
+    /// Các lựa chọn ô chọn kỳ: kỳ đang học (nếu có), các kỳ cũ mới trước, môn chỉ có trên máy (nếu có), cuối cùng Tất cả học kỳ.
+    /// Mỗi lựa chọn kèm số môn. Thứ tự giống Grouped.
+    /// </summary>
+    public static IReadOnlyList<(string Key, string Title)> TermOptions(IReadOnlyList<SubjectRow> rows) =>
+        [.. rows.GroupBy(TermKey).Select(g => (g.Key, TermTitle(g.First().Term, g.First().Current, shortForm: true))),
+            (AllTerms, L.F("subjects.termCount", L.T("subjects.termAll"), rows.Count))];
+
+    /// <summary>Môn thuộc lựa chọn <paramref name="key"/> của ô chọn kỳ (AllTerms: mọi môn).</summary>
+    public static IReadOnlyList<SubjectRow> InTerm(IReadOnlyList<SubjectRow> rows, string key) =>
+        key == AllTerms ? rows : [.. rows.Where(r => TermKey(r) == key)];
+
+    /// <summary>Lựa chọn của một môn (để chuyển ô chọn kỳ khi mở môn từ chỗ khác, ví dụ Ctrl+K).</summary>
+    public static string TermOf(SubjectRow r) => TermKey(r);
+
+    /// <summary>
+    /// "HK261" thành "Học kỳ 1 năm học 2026-2027" (dòng nhóm), hay "HK1 2026-2027" khi <paramref name="shortForm"/> (ô chọn kỳ hẹp);
+    /// kỳ 3 là học kỳ hè; rỗng là môn chỉ có trên máy.
+    /// </summary>
+    public static string TermTitle(string term, bool current = false, bool shortForm = false)
     {
         if (term.Length != 5 || !term.StartsWith("HK", StringComparison.Ordinal) || !int.TryParse(term.AsSpan(2, 2), out var yy) || term[4] is < '1' or > '3')
-            return term.Length == 0 ? L.T("subjects.termLocal") : term;
+            return term.Length == 0 ? L.T(shortForm ? "subjects.termLocalShort" : "subjects.termLocal") : term;
         var years = $"{2000 + yy}-{2001 + yy}";
-        var title = term[4] == '3' ? L.F("subjects.termSummer", years) : L.F("subjects.term", term[4], years);
+        var summer = term[4] == '3';
+        var title = shortForm ? (summer ? L.F("subjects.termSummerShort", years) : L.F("subjects.termShort", term[4], years))
+            : summer ? L.F("subjects.termSummer", years) : L.F("subjects.term", term[4], years);
         return current ? L.F("subjects.termCurrent", title) : title;
     }
+
+    /// <summary>
+    /// Thanh đường dẫn tab Tài liệu: từ thư mục môn (<paramref name="root"/>, hiện bằng tên môn) xuống thư mục đang xem; mỗi cấp kèm
+    /// đường dẫn để bấm lên thẳng cấp đó. Thư mục ngoài môn thì chỉ có một cấp là chính nó.
+    /// </summary>
+    public static IReadOnlyList<(string Name, string Path)> Crumbs(string root, string dir)
+    {
+        var name = root[(root.LastIndexOf('/') + 1)..];
+        if (!dir.StartsWith(root, StringComparison.OrdinalIgnoreCase) || (dir.Length > root.Length && dir[root.Length] != '/'))
+            return [(dir[(dir.LastIndexOf('/') + 1)..], dir)];
+        var list = new List<(string, string)> { (name, root) };
+        var path = root;
+        foreach (var part in dir[root.Length..].Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            path += "/" + part;
+            list.Add((part, path));
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Dòng phụ của môn trong danh sách thêm số hạn chưa xong trong <paramref name="days"/> ngày tới (bài tập, quiz, thi; không tính buổi học),
+    /// để nhìn danh sách là biết môn nào gấp. Môn không có hạn thì giữ nguyên.
+    /// </summary>
+    public static IReadOnlyList<SubjectRow> WithDue(IReadOnlyList<SubjectRow> rows, IReadOnlyList<TimelineItem> timeline, long now, int days) =>
+        [.. rows.Select(r =>
+        {
+            var n = timeline.Count(x => Mine(x, r) && x.Kind != "class" && !x.Done && x.Time > now && x.Time <= now + days * 86400L);
+            return n == 0 ? r : r with { Meta = Join(r.Meta, L.F("subjects.dueSoon", n, days)) };
+        })];
 
     /// <summary>Lọc bỏ dấu: gõ "giai tich" vẫn ra "Giải tích 2", tên NFD trên đĩa cũng khớp.</summary>
     public static IReadOnlyList<SubjectRow> Filter(IReadOnlyList<SubjectRow> rows, string q)
@@ -137,6 +200,20 @@ public static class SubjectsPresenter
     public static IReadOnlyList<CalendarRow> Due(IReadOnlyList<TimelineItem> timeline, SubjectRow s, long now) =>
         [.. timeline.Where(x => Mine(x, s) && x.Kind != "class" && (x.Time > now - 86400 || x.Overdue))
             .OrderBy(x => x.GroupRank).ThenBy(x => x.Time).Select(CalendarPresenter.Row)];
+
+    /// <summary>
+    /// Tab Video và liên kết: video bài giảng, link ngoài, trang, công cụ ngoài của mọi lớp của môn (cả kho chung), lớp kỳ mới trước.
+    /// <paramref name="read"/> đọc cấu trúc khóa đã lưu khi đồng bộ (LmsCourseStore.Read); lớp chưa đọc thì bỏ qua.
+    /// </summary>
+    public static IReadOnlyList<MediaRow> Media(SubjectRow s, Func<long, JsonObject?> read, ReadMarks? seen = null, Sources.Lms.MediaKind? only = null) =>
+        [.. s.Courses.OrderByDescending(c => c.Term, StringComparer.Ordinal).ThenBy(c => c.Part is null ? 0 : 1)
+            .SelectMany(c => Sources.Lms.LmsMedia.Items(read(c.Id)))
+            .Where(i => only is null || i.Kind == only)
+            .Select(i => new MediaRow(i.Name, L.T("subjects.media." + i.Kind.ToString().ToLowerInvariant()), i.Kind,
+                Join(i.Part.Length > 0 ? i.Part : L.T("common.theory"), i.Section), i.Url, seen?.IsRead(MediaKey(i.Url), 0) == true))];
+
+    /// <summary>Khóa đánh dấu đã xem của một mục (dùng chung ReadMarks với tài liệu, tiền tố riêng để không lẫn đường dẫn file).</summary>
+    public static string MediaKey(string url) => "media:" + url;
 
     public static IReadOnlyList<SubjectNews> News(LmsData? lms, SubjectRow s) =>
         [.. (lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name)).OrderByDescending(a => a.Time)

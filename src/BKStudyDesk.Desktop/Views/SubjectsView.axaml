@@ -25,12 +25,16 @@
             <Border x:Name="ListCard" Classes="card">
                 <DockPanel>
                     <TextBox x:Name="Filter" DockPanel.Dock="Top" Margin="12" PlaceholderText="{l:T subjects.filter.tip}" TextChanged="OnFilter" />
+                    <!-- Chọn kỳ (SubjectsPresenter.TermOptions): mặc định kỳ đang học; Tất cả học kỳ thì danh sách có dòng nhóm theo kỳ. Đang gõ lọc thì tìm mọi kỳ. -->
+                    <ComboBox x:Name="TermFilter" DockPanel.Dock="Top" Margin="12,0,12,12" HorizontalAlignment="Stretch" SelectionChanged="OnTermFilter" />
                     <TextBlock x:Name="ListEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                     <!-- Môn nhóm theo học kỳ (SubjectsPresenter.Grouped): dòng nhóm là SubjectTermHeader, không chọn được (OnSubjectContainer). -->
                     <ListBox x:Name="Subjects" SelectionChanged="OnPick" Background="Transparent">
                         <ListBox.DataTemplates>
                             <DataTemplate DataType="p:SubjectTermHeader">
-                                <TextBlock Classes="meta" Text="{Binding Title}" FontWeight="SemiBold" Margin="0,8,0,0" />
+                                <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,12,0,6">
+                                    <TextBlock Classes="name" Text="{Binding Title}" TextWrapping="Wrap" />
+                                </Border>
                             </DataTemplate>
                             <DataTemplate DataType="p:SubjectRow">
                                 <StackPanel Spacing="2" Margin="0,4">
@@ -51,6 +55,7 @@
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button x:Name="LmsButton" Content="{l:T subjects.openLms}" Click="OnOpenLms" />
                                 <Button x:Name="DownloadButton" Content="{l:T subjects.download}" Click="OnDownload" IsVisible="False" />
+                                <Button x:Name="ExamsButton" Content="{l:T subjects.downloadExams}" ToolTip.Tip="{l:T subjects.downloadExamsTip}" Click="OnDownloadExams" IsVisible="False" />
                                 <Button x:Name="LibraryButton" Content="{l:T subjects.openLibrary}" Click="OnOpenLibrary" IsVisible="False" />
                             </StackPanel>
                             <StackPanel VerticalAlignment="Center" Spacing="2">
@@ -70,7 +75,8 @@
                                         <Button Content="{l:T subjects.openFolder}" Click="OnOpenFolder" />
                                     </StackPanel>
                                     <Button x:Name="UpButton" DockPanel.Dock="Left" Content="{l:T subjects.up}" Click="OnUp" Margin="0,0,12,0" />
-                                    <TextBlock x:Name="PathText" Classes="meta" TextTrimming="CharacterEllipsis" />
+                                    <!-- Đường dẫn từ thư mục môn: mỗi cấp trên là link bấm để lên thẳng cấp đó (như thanh địa chỉ của File Explorer). -->
+                                    <WrapPanel x:Name="PathBar" VerticalAlignment="Center" />
                                 </DockPanel>
                                 <TextBlock x:Name="FilesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                                 <Panel>
@@ -136,6 +142,28 @@
                                         <DataGridTextColumn Header="{l:T col.forum}" Binding="{Binding Forum}" Width="*" MinWidth="120" x:DataType="p:SubjectNews" />
                                         <DataGridTextColumn Header="{l:T col.author}" Binding="{Binding Author}" Width="*" MinWidth="120" x:DataType="p:SubjectNews" />
                                         <DataGridTextColumn Header="{l:T col.at}" Binding="{Binding When}" Width="Auto" MinWidth="96" x:DataType="p:SubjectNews" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DockPanel>
+                        </TabItem>
+                        <!-- Video bài giảng, link ngoài, trang, công cụ ngoài trên LMS (SubjectsPresenter.Media); bấm đúp mở trên LMS hay trình duyệt. -->
+                        <TabItem x:Name="MediaTab" Header="{l:T subjects.tabMedia}">
+                            <DockPanel>
+                                <!-- Lọc theo loại; bảng nhóm theo phần và chương (MediaRow.Group); mở là đánh dấu đã xem. -->
+                                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="16,8">
+                                    <ComboBox x:Name="MediaKindFilter" MinWidth="160" SelectionChanged="OnMediaKind" />
+                                    <Button x:Name="ReadPastButton" Content="{l:T subjects.readPast}" ToolTip.Tip="{l:T subjects.readPastTip}" Click="OnReadPast" IsVisible="False" />
+                                    <TextBlock x:Name="MediaStatus" Classes="meta" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock x:Name="MediaEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
+                                <DataGrid x:Name="Media" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
+                                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
+                                          BorderThickness="0" SelectionMode="Single" DoubleTapped="OnMediaOpen" KeyDown="OnMediaKey">
+                                    <DataGrid.ContextFlyout><MenuFlyout Opening="OnMediaMenu" /></DataGrid.ContextFlyout>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:MediaRow" />
+                                        <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding KindText}" Width="Auto" MinWidth="96" x:DataType="p:MediaRow" />
+                                        <DataGridTextColumn Header="{l:T col.seen}" Binding="{Binding SeenText}" Width="Auto" MinWidth="90" SortMemberPath="Seen" x:DataType="p:MediaRow" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>

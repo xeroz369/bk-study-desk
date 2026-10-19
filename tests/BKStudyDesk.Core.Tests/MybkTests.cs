@@ -55,6 +55,17 @@ public class MybkTests
     }
 
     [Fact]
+    public void Fees_show_paid_too_owed_first()
+    {
+        var m = Data() with { Fees = [new("HK252", 15300000, 0, "2026-03-03"), new("HK261", 16065000, 0, "2026-09-22"), new("Học lại", 1000000, 500000, "2026-01-01")] };
+        var rows = MybkPresenter.Fees(m);
+        Assert.Equal(["Học lại", "HK261", "HK252"], rows.Select(r => r.Content));
+        Assert.True(rows[0].Owed);
+        Assert.False(rows[1].Owed);
+        Assert.Equal("Đã nộp", rows[1].Status);
+    }
+
+    [Fact]
     public void Not_passed_filter_is_what_is_still_owed()
     {
         var f = MybkPresenter.Filters.Single(x => x.Match.Contains(CourseStatus.ChuaHoc) && x.Match.Contains(CourseStatus.HocLai));
