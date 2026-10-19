@@ -1,13 +1,26 @@
 using SoHocTap.Data;
 using SoHocTap.Presentation;
 using SoHocTap.Sources.Lms;
-using Kind = SoHocTap.Sources.Lms.LmsSource.FileKind;
+using Kind = SoHocTap.Sources.Lms.FileKind;
 
 namespace BKStudyDesk.Core.Tests;
 
 /// <summary>Cửa sổ Tải tài liệu nhiều môn (discussion #42): cây học kỳ, môn, mục; chỉ đếm file chưa có; cảnh báo khi lớn.</summary>
 public class DownloadTests
 {
+    [Theory]
+    [InlineData("Đề kiểm tra giữa kỳ", true)]
+    [InlineData("Đề thi cuối kỳ", true)]
+    [InlineData("ĐỀ CŨ", true)]
+    [InlineData("Final exam", true)]
+    [InlineData("Nội dung kiểm tra giữa kỳ", false)]   // phạm vi thi, không phải đề
+    [InlineData("Chương 1", false)]
+    [InlineData("Đề thiết kế bài tập lớn", false)]   // "đề thi" chỉ là tiền tố
+    [InlineData("Examples", false)]
+    [InlineData("Đề cương môn học", false)]
+    [InlineData("Midterm exams", true)]
+    public void Exam_sections_by_name(string name, bool exam) => Assert.Equal(exam, DownloadPlan.IsExamSection(name));
+
     private static readonly HashSet<Kind> All = [Kind.Pdf, Kind.Slide, Kind.Other];
 
     private static LmsCourse C(long id, string subject, string term, string? part = null) => new(id, subject, subject, "", part, term, "", "", "");

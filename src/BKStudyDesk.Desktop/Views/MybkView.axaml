@@ -106,8 +106,16 @@
                         <DataGrid x:Name="Fees">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{l:T col.content}" Binding="{Binding Content}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:FeeRow" />
+                                <DataGridTextColumn Header="{l:T col.amount}" Binding="{Binding Amount}" Width="Auto" MinWidth="120" SortMemberPath="AmountValue" x:DataType="p:FeeRow" />
                                 <DataGridTextColumn Header="{l:T col.remaining}" Binding="{Binding Remaining}" Width="Auto" MinWidth="120" SortMemberPath="RemainingValue" x:DataType="p:FeeRow" />
                                 <DataGridTextColumn Header="{l:T col.due}" Binding="{Binding Due}" Width="Auto" MinWidth="110" x:DataType="p:FeeRow" />
+                                <DataGridTemplateColumn Header="{l:T col.status}" Width="Auto" MinWidth="96" SortMemberPath="Owed">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="p:FeeRow">
+                                            <TextBlock Classes.danger="{Binding Owed}" Text="{Binding Status}" VerticalAlignment="Center" Margin="12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>

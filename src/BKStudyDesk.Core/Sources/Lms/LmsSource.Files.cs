@@ -64,25 +64,20 @@ public sealed partial class LmsSource
     {
         var skip = Config.List("sources.lms.skipFolders");
         var max = Config.Int("sources.lms.maxFileMB", 200) * 1024L * 1024;
+        var maxVideo = Config.Int("sources.lms.maxVideoMB", 2048) * 1024L * 1024;   // video chỉ tải khi người dùng tích chọn
         foreach (var sec in contents.OfType<JsonObject>())
             foreach (var mod in (sec["modules"] as JsonArray ?? []).OfType<JsonObject>())
             {
                 if (mod["modname"]?.GetValue<string>() is not ("resource" or "folder")) continue;
                 if (skip.Any(s => (mod["name"]?.GetValue<string>() ?? "").Contains(s, StringComparison.OrdinalIgnoreCase))) continue;
                 foreach (var f in (mod["contents"] as JsonArray ?? []).OfType<JsonObject>())
-                    if (f["type"]?.GetValue<string>() == "file" && (f["filesize"]?.GetValue<long>() ?? 0) <= max) yield return (sec, mod, f);
+                    if (f["type"]?.GetValue<string>() == "file"
+                        && (f["filesize"]?.GetValue<long>() ?? 0) <= (KindOf(f["filename"]?.GetValue<string>()) == FileKind.Video ? maxVideo : max))
+                        yield return (sec, mod, f);
             }
     }
 
-    /// <summary>Loại file để người dùng chọn tải: PDF, slide (thường nặng nhất), còn lại.</summary>
-    public enum FileKind { Pdf, Slide, Other }
-
-    public static FileKind KindOf(string? fileName) => Path.GetExtension(fileName ?? "").ToLowerInvariant() switch
-    {
-        ".pdf" => FileKind.Pdf,
-        ".ppt" or ".pptx" or ".pps" or ".ppsx" or ".odp" or ".key" => FileKind.Slide,
-        _ => FileKind.Other,
-    };
+    private static FileKind KindOf(string? fileName) => FileKinds.Of(fileName);
 
     /// <summary>Một file tải được trong mục: loại, dung lượng, đã có trên máy chưa.</summary>
     public sealed record FileStat(FileKind Kind, long Bytes, bool Have);
@@ -114,6 +109,33 @@ public sealed partial class LmsSource
             i++;
         }
         return list;
+    }
+
+    /// <summary>
+    /// Đọc lại cấu trúc các lớp (mục, file, link) và lưu như lúc đồng bộ, không tải file: dùng cho môn kỳ cũ mà đồng bộ thường không đọc
+    /// (tab Video và liên kết). Một request mỗi lớp, giãn cách như mọi lời gọi LMS. Trả số lớp đọc được; lớp lỗi bỏ qua, ghi log.
+    /// </summary>
+    public static async Task<int> ReadStructuresAsync(IReadOnlyCollection<long> courseIds, CancellationToken ct)
+    {
+        await Gate.WaitAsync(ct);
+        try
+        {
+            var index = JsonStore.ReadObject(FilesIndex);
+            var n = 0;
+            foreach (var id in courseIds)
+            {
+                if (Course(id) is not { } m) continue;
+                try
+                {
+                    var contents = (JsonArray)await CallAsync("core_course_get_contents", [Arg("courseid", id)], ct);
+                    SaveStructure(m, contents, index);
+                    n++;
+                }
+                catch (Exception e) when (Recoverable(e, ct)) { Log.Warn($"Đọc cấu trúc lớp {m.Subject} ({id}): {e.Message}"); }
+            }
+            return n;
+        }
+        finally { Gate.Release(); }
     }
 
     /// <summary>
@@ -279,7 +301,8 @@ public sealed partial class LmsSource
                     else if (f["type"]?.GetValue<string>() == "url")
                         files.Add(new JsonObject { ["name"] = f["filename"]?.GetValue<string>(), ["url"] = f["fileurl"]?.GetValue<string>() });
                 }
-                var text = type == "label" ? TagRx().Replace(WebUtility.HtmlDecode(mod["description"]?.GetValue<string>() ?? ""), " ").Trim() : "";
+                var html = mod["description"]?.GetValue<string>() ?? "";
+                var text = type == "label" ? TagRx().Replace(WebUtility.HtmlDecode(html), " ").Trim() : "";
                 mods.Add(new JsonObject
                 {
                     ["id"] = mod["id"]?.GetValue<long>(),
@@ -288,6 +311,8 @@ public sealed partial class LmsSource
                     ["url"] = mod["url"]?.GetValue<string>(),
                     ["files"] = files,
                     ["text"] = text.Length > 300 ? text[..300] : text,
+                    // Nhãn hay nhúng video (iframe YouTube) hoặc link ngoài: giữ link để tab Video và liên kết hiện được.
+                    ["links"] = type == "label" ? new JsonArray([.. LmsMedia.LinksIn(html).Select(l => (JsonNode)l)]) : null,
                 });
             }
             if (mods.Count > 0) sections.Add(new JsonObject { ["name"] = WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? ""), ["modules"] = mods });

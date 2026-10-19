@@ -66,6 +66,12 @@ public static class DocReads
     }
 }
 
+/// <summary>Cấu trúc một khóa LMS lưu khi đồng bộ (data/lms-course/&lt;id&gt;.json): mục, module, file, link. Null khi chưa đọc khóa đó.</summary>
+public static class LmsCourseStore
+{
+    public static JsonObject? Read(long id) => JsonStore.Read(Path.Combine(Paths.DataFile("lms-course"), $"{id}.json")) as JsonObject;
+}
+
 /// <summary>Một chỗ đọc/ghi data/mybk.json, giống <see cref="LmsStore"/>.</summary>
 public static class MybkStore
 {

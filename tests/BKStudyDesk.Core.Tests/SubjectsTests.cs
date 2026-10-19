@@ -71,14 +71,70 @@ public class SubjectsTests
     }
 
     [Fact]
+    public void Media_grouped_by_part_and_chapter_filter_and_seen()
+    {
+        var row = SubjectsPresenter.Rows(Lms([Course(1, "Kỹ thuật số")]), Scan())[0];
+        JsonObject Structure(long _) => JsonNode.Parse("""
+            {"part":"Kho chung","sections":[{"name":"Chương 1","modules":[
+              {"type":"resource","name":"C1 record","url":"https://lms/r/1","files":[{"name":"c1.mp4"}]},
+              {"type":"url","name":"PLECS","url":"https://lms/u/2","files":[{"url":"https://plexim.com"}]}]}]}
+            """)!.AsObject();
+        var seen = new SoHocTap.Files.ReadMarks();
+        seen.Set(SubjectsPresenter.MediaKey("https://lms/r/1"), 0, read: true);
+        var all = SubjectsPresenter.Media(row, Structure, seen);
+        Assert.Equal(["C1 record", "PLECS"], all.Select(m => m.Name));
+        Assert.Equal("Kho chung, Chương 1", all[0].Group);
+        Assert.True(all[0].Seen);
+        Assert.Equal("Chưa xem", all[1].SeenText);
+        Assert.Equal(["PLECS"], SubjectsPresenter.Media(row, Structure, seen, SoHocTap.Sources.Lms.MediaKind.Link).Select(m => m.Name));
+    }
+
+    [Fact]
+    public void Due_soon_count_added_to_subject_line()
+    {
+        var rows = SubjectsPresenter.Rows(Lms([Course(1, "Giải tích 2"), Course(2, "Kỹ thuật số")]), Scan());
+        var now = Format.Now;
+        TimelineItem Due(long course, long at, string kind = "assign", bool done = false) =>
+            new("x" + at, kind, "Bài", "Giải tích 2", now + at, "", null, SourceIds.Lms, Done: done, Course: course);
+        var timeline = new List<TimelineItem> { Due(1, 3600), Due(1, 2 * 86400, "quiz"), Due(1, 3 * 86400, done: true), Due(1, 9 * 86400), Due(1, 7200, "class") };
+        var with = SubjectsPresenter.WithDue(rows, timeline, now, 7);
+        Assert.EndsWith("2 hạn trong 7 ngày", with.Single(r => r.Name == "Giải tích 2").Meta);
+        Assert.Equal(rows.Single(r => r.Name == "Kỹ thuật số").Meta, with.Single(r => r.Name == "Kỹ thuật số").Meta);
+    }
+
+    [Fact]
+    public void Crumbs_from_subject_folder_down()
+    {
+        var c = SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 2/Tài liệu LMS/Chương 1");
+        Assert.Equal(["Giải tích 2", "Tài liệu LMS", "Chương 1"], c.Select(x => x.Name));
+        Assert.Equal("Môn học/Giải tích 2/Tài liệu LMS", c[1].Path);
+        Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 2"));
+        Assert.Equal("Giải tích 22", Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 22")).Name);   // không nhận nhầm tiền tố
+    }
+
+    [Fact]
     public void Subjects_grouped_by_latest_term_current_first_then_local()
     {
         var lms = Lms([Course(1, "Hóa đại cương", "HK241"), Course(2, "Giải tích 2"), Course(3, "Vật lý 1", "HK252"), Course(4, "Vật lý 1", "HK241"),
             Course(5, "Lịch sử Đảng", "HK253")]);
         var groups = SubjectsPresenter.Grouped(SubjectsPresenter.Rows(lms, Scan(("Ghi chú riêng", 2))));
-        Assert.Equal(["Học kỳ 1, 2026-2027 (đang học)", "Giải tích 2", "Học kỳ hè, 2025-2026", "Lịch sử Đảng", "Học kỳ 2, 2025-2026", "Vật lý 1",
-            "Học kỳ 1, 2024-2025", "Hóa đại cương", "Chỉ có thư mục trên máy", "Ghi chú riêng"], groups.Select(x => x.ToString()));
+        Assert.Equal(["Học kỳ 1 năm học 2026-2027 (đang học)", "Giải tích 2", "Học kỳ hè năm học 2025-2026", "Lịch sử Đảng", "Học kỳ 2 năm học 2025-2026", "Vật lý 1",
+            "Học kỳ 1 năm học 2024-2025", "Hóa đại cương", "Chỉ có thư mục trên máy", "Ghi chú riêng"], groups.Select(x => x.ToString()));
         Assert.IsType<SubjectTermHeader>(groups[0]);
+    }
+
+    [Fact]
+    public void Term_options_filter_one_term_or_all()
+    {
+        var lms = Lms([Course(1, "Hóa đại cương", "HK241"), Course(2, "Giải tích 2"), Course(3, "Kỹ thuật số"), Course(4, "Vật lý 1", "HK252")]);
+        var rows = SubjectsPresenter.Rows(lms, Scan());
+        var options = SubjectsPresenter.TermOptions(rows);
+        Assert.Equal(["HK1 2026-2027 (đang học)", "HK2 2025-2026", "HK1 2024-2025",
+            "Tất cả học kỳ (4 môn)"], options.Select(o => o.Title));
+        Assert.Equal(["Giải tích 2", "Kỹ thuật số"], SubjectsPresenter.InTerm(rows, options[0].Key).Select(r => r.Name));
+        Assert.Equal(4, SubjectsPresenter.InTerm(rows, SubjectsPresenter.AllTerms).Count);
+        var old = rows.Single(r => r.Name == "Vật lý 1");
+        Assert.Equal(options[1].Key, SubjectsPresenter.TermOf(old));
     }
 
     [Fact]
