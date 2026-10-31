@@ -71,6 +71,11 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
 
     /// <summary>Cùng quy tắc với bản 1.x (Shell/AppHost): lượt không có gì mới thì chỉ báo trạng thái, không đọc lại, không vẽ lại trang.</summary>
     private DeadlineNotifier? _notifier;
+    private MessageNotifier? _messages;
+    private Avalonia.Threading.DispatcherTimer? _messagesTimer;
+
+    /// <summary>Lượt đọc nhanh tin nhắn vừa ghi file mới: trang Hộp thư, thẻ ở Hôm nay đọc lại.</summary>
+    public event Action? MessagesChanged;   // tin nhắn riêng LMS mới, xem sau mỗi lượt đồng bộ LMS
     private Avalonia.Threading.DispatcherTimer? _notifyTimer;
 
     /// <summary>
@@ -81,6 +86,20 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     {
         if (_notifier is not null) return;   // đã bật (mở ở khay rồi mới hiện cửa sổ)
         _notifier = new DeadlineNotifier(show);
+        _messages = new MessageNotifier(show);
+        // Tin nhắn riêng: đọc nhanh mỗi sources.lms.messagesMinutes phút (lượt LMS đầy đủ chỉ 3 giờ một lần), có tin mới thì báo ngay.
+        _messagesTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(Math.Max(10, Config.Int("sources.lms.messagesMinutes", 30))) };
+        _messagesTimer.Tick += async (_, _) =>
+        {
+            if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) return;
+            if (await Task.Run(() => LmsSource.SyncMessagesAsync(CancellationToken.None)))
+            {
+                _messages?.Check();
+                State.RefreshStatusOnly();
+                MessagesChanged?.Invoke();
+            }
+        };
+        _messagesTimer.Start();
         _notifyTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
         _notifyTimer.Tick += (_, _) => _notifier.Check();
         _notifyTimer.Start();
@@ -104,7 +123,7 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         else if (stage == "progress") State.RefreshProgress();
         else if (stage == "start" && State.SyncedAt(name) is not null) State.RefreshStatusOnly();
         else State.RefreshStatus();
-        if (name == SourceIds.Lms && stage == "done") _notifier?.Check();
+        if (name == SourceIds.Lms && stage == "done") { _notifier?.Check(); _messages?.Check(); }
         // Token LMS hết hạn: phiên SSO còn thì trường tự cấp vé mới, lấy lại token ngầm (một lần), không bắt người dùng đăng nhập.
         if (name == SourceIds.Lms && stage == "done" && Hub.ErrorKind(SourceIds.Lms) == SoHocTap.Data.SyncErrorKind.SessionExpired && !_lmsRefreshTried)
         {
@@ -139,6 +158,10 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     public async Task LogoutAsync()
     {
         LmsClient.Logout();
+        // Tin nhắn riêng và nội dung trang là của tài khoản vừa đăng xuất: xóa luôn, người đăng nhập sau trên cùng máy không đọc được.
+        foreach (var f in new[] { SoHocTap.Data.LmsMessagesStore.FilePath, SoHocTap.Data.LmsPagesStore.FilePath })
+            try { if (File.Exists(f)) File.Delete(f); } catch (Exception e) { Log.Warn($"Xóa {Path.GetFileName(f)}: {e.Message}"); }
+        try { MessageNotifier.Forget(); } catch (Exception e) { Log.Warn($"Quên mốc tin nhắn: {e.Message}"); }
         var hidden = new HiddenWeb();
         try
         {
@@ -257,6 +280,7 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged -= OnNetworkChanged;
         _stop.Cancel();
         _notifyTimer?.Stop();
+        _messagesTimer?.Stop();
         Hub.Dispose();
         Library.Dispose();
         Updates.ApplyOnExit();   // đã tải bản mới (chế độ tự động): cài khi app thoát

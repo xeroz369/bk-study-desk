@@ -39,7 +39,8 @@ public sealed record RecentRow(string Name, string Folder, string Path, long Siz
     public string ReadText => Read ? "" : L.T("subjects.unread");
 }
 
-public sealed record SubjectNews(string Title, string Forum, string Author, string When, string? Url);
+/// <summary>Read: nội dung bài đã lưu, đọc trong app (cả khi LMS sập).</summary>
+public sealed record SubjectNews(string Title, string Forum, string Author, string When, string? Url, Reading? Read = null);
 
 /// <summary>Một dòng của tab Video và liên kết. Group: phần của lớp và mục (chương) trên LMS, là dải nhóm của bảng.</summary>
 /// <param name="Seen">Đã mở (đánh dấu đã xem, data/doc-read.json khóa "media:" + url).</param>
@@ -50,6 +51,9 @@ public sealed record MediaRow(string Name, string KindText, Sources.Lms.MediaKin
 
 /// <summary>Một mục điểm; Total là dòng tổng (của môn hay của nhóm), View in đậm.</summary>
 public sealed record GradeRow(string Part, string Name, string GradeText, string MaxText, string Percent, bool Total);
+
+/// <summary>Tab Tổng quan của môn: vài hạn gần nhất, vài thông báo mới nhất, điểm tổng LMS và điểm MyBK (nếu có).</summary>
+public sealed record SubjectOverview(IReadOnlyList<CalendarRow> Due, IReadOnlyList<SubjectNews> News, IReadOnlyList<string> Grades);
 
 /// <summary>
 /// Trang Môn học hiện gì (cùng quy tắc với bản 1.x, Ui/Pages/SubjectsPage): môn từ LMS và thư mục trên máy gộp theo tên (so NFC);
@@ -197,6 +201,18 @@ public static class SubjectsPresenter
     }
 
     /// <summary>Tab Hạn nộp: mọi mốc sắp tới của môn (không cắt theo số ngày) và hạn LMS đã qua mà chưa làm.</summary>
+    /// <summary>Tab Tổng quan: <paramref name="take"/> hạn chưa xong gần nhất, <paramref name="take"/> thông báo mới nhất, dòng điểm tổng.</summary>
+    public static SubjectOverview Overview(IReadOnlyList<TimelineItem> timeline, LmsData? lms, MybkData? mybk, SubjectRow s, long now, int take = 3)
+    {
+        var due = Due(timeline, s, now).Where(r => r.State != L.T("timeline.done")).Take(take).ToList();
+        var news = News(lms, s).Take(take).ToList();
+        var grades = Grades(lms, s).Where(g => g.Total && g.GradeText.Length > 0)
+            .Select(g => L.F("subjects.overview.lmsGrade", g.Part, g.GradeText, g.MaxText)).ToList();
+        foreach (var g in (mybk?.Grades ?? []).Where(g => g.Score is not null && NameMatch.Same(g.Name, s.Name)).OrderByDescending(g => g.Term).Take(1))
+            grades.Add(L.F("subjects.overview.mybkGrade", Format.Score(g.Score!.Value), g.Letter ?? ""));
+        return new(due, news, grades);
+    }
+
     public static IReadOnlyList<CalendarRow> Due(IReadOnlyList<TimelineItem> timeline, SubjectRow s, long now) =>
         [.. timeline.Where(x => Mine(x, s) && x.Kind != "class" && (x.Time > now - 86400 || x.Overdue))
             .OrderBy(x => x.GroupRank).ThenBy(x => x.Time).Select(CalendarPresenter.Row)];
@@ -217,7 +233,43 @@ public static class SubjectsPresenter
 
     public static IReadOnlyList<SubjectNews> News(LmsData? lms, SubjectRow s) =>
         [.. (lms?.Announcements ?? []).Where(a => NameMatch.Same(a.Subject, s.Name)).OrderByDescending(a => a.Time)
-            .Select(a => new SubjectNews(a.Title, a.Forum, a.Author ?? "", Format.Ago(a.Time), a.Url))];
+            .Select(a => new SubjectNews(a.Title, a.Forum, a.Author ?? "", Format.Ago(a.Time), a.Url, ReadingOf(a)))];
+
+    /// <summary>
+    /// Trang LMS (mod/page/view.php?id=cmid) đã lưu nội dung khi đồng bộ (LmsPagesStore): đọc trong app. Null khi chưa có bản lưu.
+    /// </summary>
+    public static Reading? PageReading(string url, string name, string subject)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || !u.AbsolutePath.EndsWith("/mod/page/view.php", StringComparison.OrdinalIgnoreCase)) return null;
+        var id = System.Web.HttpUtility.ParseQueryString(u.Query)["id"];
+        if (!long.TryParse(id, out var cmid) || LmsPagesStore.Read(cmid) is not { } p) return null;
+        var meta = p.Time is { } t ? $"{subject}, {L.F("reader.updated", Format.DateTime(t))}" : subject;
+        return LmsReading.Of(p.Name.Length > 0 ? p.Name : name, meta, p.Html, null, url);
+    }
+
+    /// <summary>Đề bài tập đã lưu khi đồng bộ (LmsEvent.Intro): đọc trong app. Null khi không có đề.</summary>
+    public static Reading? IntroReading(LmsEvent e) =>
+        string.IsNullOrWhiteSpace(e.Intro) ? null
+            : LmsReading.Of(e.Name, $"{e.Subject}, {L.F("reader.due", Format.DateTime(e.Time))}", e.Intro, null, e.Url);
+
+    /// <summary>Bài thông báo để đọc trong app: diễn đàn, người đăng, giờ đăng ở dòng phụ.</summary>
+    public static Reading ReadingOf(LmsAnnouncement a)
+    {
+        var main = LmsReading.Of(a.Title, string.Join(", ", new[] { a.Subject, a.Forum, a.Author ?? "", Format.DateTime(a.Time) }.Where(x => x.Length > 0)), a.Message, a.Attachments, a.Url);
+        if (a.Posts is not { Count: > 0 } posts) return main;
+        // Chuỗi trả lời: mỗi trả lời một dòng đầu "Trả lời của X, giờ" rồi nội dung; link, file gộp xuống cuối.
+        var paragraphs = main.Paragraphs.ToList();
+        var links = main.Links.ToList();
+        var files = main.Attachments.ToList();
+        foreach (var p in posts.Where(p => p is not null))
+        {
+            paragraphs.Add(L.F("reader.reply", p.Author ?? "", Format.DateTime(p.Time)));
+            paragraphs.AddRange(LmsReading.Paragraphs(p.Message));
+            links.AddRange(LmsReading.Links(p.Message).Select(LmsReading.Browsable));
+            files.AddRange((p.Attachments ?? []).Where(f => f is not null).Select(LmsReading.Browsable));
+        }
+        return main with { Paragraphs = paragraphs, Links = [.. links.DistinctBy(l => l.Url)], Attachments = files };
+    }
 
     public static IReadOnlyList<GradeRow> Grades(LmsData? lms, SubjectRow s) =>
         [.. Books(lms, s).SelectMany(b => b.Items.Select(i => new GradeRow(b.Part ?? L.T("common.theory"), i.Name, Format.Score(i.Grade),

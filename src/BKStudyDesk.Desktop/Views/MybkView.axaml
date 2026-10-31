@@ -56,7 +56,8 @@
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="16,8">
                             <ComboBox x:Name="ProgramFilter" SelectionChanged="OnProgramFilter" MinWidth="180" />
-                            <TextBlock x:Name="ProgramNote" Classes="meta" />
+                            <Button x:Name="ProgramRefresh" Content="{l:T grades.refresh}" ToolTip.Tip="{l:T grades.refreshTip}" Click="OnProgramRefresh" />
+                            <TextBlock x:Name="ProgramNote" Classes="meta" VerticalAlignment="Center" />
                         </StackPanel>
                         <TextBlock x:Name="ProgramEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                         <DataGrid x:Name="Program">
@@ -158,6 +159,10 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
+                </TabItem>
+                <!-- Tính thử GPA: dựng trong code (ShowGpaPlanner), chỉ tính trên máy. -->
+                <TabItem Header="{l:T gpa.tab}">
+                    <ScrollViewer><StackPanel x:Name="GpaPanel" Margin="16" Spacing="8" MaxWidth="720" HorizontalAlignment="Left" /></ScrollViewer>
                 </TabItem>
             </TabControl>
         </Border>

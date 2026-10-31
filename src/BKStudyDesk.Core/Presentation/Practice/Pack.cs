@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -73,14 +74,17 @@ public sealed partial class StudyPack
 {
     public const string FormatId = "studypack/1";
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    private static JsonSerializerOptions NewOptions() => new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
     };
 
-    /// <summary>Cách ghi JSON của gói (camelCase, bỏ trường null), dùng chung cho mọi phần của gói.</summary>
-    public static JsonSerializerOptions JsonOptions => Json;
+    // Đọc/ghi gói trong app dùng metadata sinh sẵn (PracticeJson), không reflection.
+    private static readonly JsonSerializerOptions Json = new(NewOptions()) { TypeInfoResolver = PracticeJson.Default };
+
+    /// <summary>Cách ghi JSON của gói (camelCase, bỏ trường null) cho test, nhận cả kiểu ẩn danh nên dùng reflection; code app dùng ToJson/Parse.</summary>
+    public static JsonSerializerOptions JsonOptions { get; } = NewOptions();
 
     public string Format { get; set; } = FormatId;
     public string Id { get; set; } = "";
@@ -102,11 +106,11 @@ public sealed partial class StudyPack
     /// <summary>Đọc gói từ JSON (chưa kiểm tra: gọi <see cref="PackValidator.Validate"/> trước khi nạp). Sai cú pháp thì null.</summary>
     public static StudyPack? Parse(string json)
     {
-        try { return JsonSerializer.Deserialize<StudyPack>(json, Json); }
+        try { return Js.Deserialize<StudyPack>(json, Json); }
         catch (JsonException) { return null; }
     }
 
-    public string ToJson() => JsonSerializer.Serialize(this, Json);
+    public string ToJson() => Js.Serialize(this, Json);
 
     /// <summary>Thẻ HTML được phép trong nội dung (app lọc lại lần nữa khi hiển thị).</summary>
     public static readonly HashSet<string> AllowedTags =

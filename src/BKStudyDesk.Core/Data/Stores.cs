@@ -72,6 +72,72 @@ public static class LmsCourseStore
     public static JsonObject? Read(long id) => JsonStore.Read(Path.Combine(Paths.DataFile("lms-course"), $"{id}.json")) as JsonObject;
 }
 
+/// <summary>
+/// Tin nhắn riêng trên LMS (data/lms-messages.json): mã hóa DPAPI theo tài khoản Windows như token (SecretStore), vì tin nhắn riêng nhạy
+/// cảm hơn lịch, điểm. File cũ còn là JSON thường thì lần đọc đầu mã hóa lại. Đọc có kiểu, chỉ đọc lại khi file đổi (giờ sửa, kích thước).
+/// </summary>
+public static class LmsMessagesStore
+{
+    public static string FilePath => Paths.DataFile("lms-messages.json");
+
+    private static readonly object Gate = new();
+    private static (DateTime At, long Length)? _stamp;
+    private static LmsMessages? _value;
+
+    public static LmsMessages? Read()
+    {
+        lock (Gate)
+        {
+            var info = new FileInfo(FilePath);
+            if (!info.Exists) { _stamp = null; _value = null; return null; }
+            if (_stamp == (info.LastWriteTimeUtc, info.Length)) return _value;
+            // Đọc lỗi (file đang bị khóa, không giải mã được, JSON hỏng): giữ bản đang có và thử lại lần sau, không coi là hộp thư trống.
+            try
+            {
+                if (SecretStore.Read(FilePath) is not { } raw) return _value;
+                var parsed = DataJson.Parse<LmsMessages>(raw.ToJsonString())?.Normalize();
+                if (parsed is null) return _value;
+                info.Refresh();   // file JSON cũ vừa được mã hóa lại: lấy dấu mới để lần sau không đọc lại
+                (_value, _stamp) = (parsed, (info.LastWriteTimeUtc, info.Length));
+            }
+            catch (Exception e) when (e is not OutOfMemoryException) { Log.Warn($"Đọc tin nhắn đã lưu: {e.Message}"); }
+            return _value;
+        }
+    }
+
+    public static JsonObject Raw() => SecretStore.Read(FilePath) ?? new JsonObject();
+
+    public static void Write(JsonNode node)
+    {
+        lock (Gate)
+        {
+            SecretStore.Write(FilePath, node as JsonObject ?? new JsonObject());
+            _stamp = null;
+        }
+    }
+}
+
+/// <summary>Nội dung trang (mod_page) của các lớp kỳ này (data/lms-pages.json), theo cmid. Null khi chưa đồng bộ trang đó.</summary>
+public static class LmsPagesStore
+{
+    public static string FilePath => Paths.DataFile("lms-pages.json");
+
+    private static readonly CachedFile<JsonObject> File = new(() => FilePath, text => JsonNode.Parse(text) as JsonObject) { OnProblem = Log.Warn };
+
+    public static JsonObject Raw() => JsonStore.ReadObject(FilePath);
+
+    /// <summary>Tên và HTML của trang; null nếu chưa có.</summary>
+    public static (string Name, string Html, long? Time)? Read(long cmid) =>
+        File.Get()?["pages"]?[cmid.ToString(System.Globalization.CultureInfo.InvariantCulture)] is JsonObject p
+            ? (p["name"]?.GetValue<string>() ?? "", p["html"]?.GetValue<string>() ?? "", p["time"]?.GetValue<long?>()) : null;
+
+    public static void Write(JsonNode node)
+    {
+        JsonStore.Write(FilePath, node);
+        File.Invalidate();
+    }
+}
+
 /// <summary>Một chỗ đọc/ghi data/mybk.json, giống <see cref="LmsStore"/>.</summary>
 public static class MybkStore
 {

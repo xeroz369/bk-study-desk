@@ -8,6 +8,33 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-10-31
+
+### Added
+
+- Inbox page (right after Today): private messages, course announcements and LMS notices, saved on this computer so you can read them when LMS is down. Filter by kind, search, remembers what you read. Read only; Reply on LMS opens the conversation on LMS. Ctrl+number for pages after Today goes up by one.
+- Forum announcements include the whole reply thread; attachments download to the course folder, under Thông báo.
+- New messages are checked every 30 minutes; Ctrl+K also finds messages and announcements.
+- Today: course surveys for several courses collapse into one row; a line shows when LMS and MyBK last synced.
+- Subjects: an Overview tab (upcoming deadlines, latest announcements, course totals).
+- MyBK: a GPA planner tab. Exam reminders like deadline reminders.
+- Read announcements, LMS pages and assignment descriptions inside the app from the copy saved at sync. Assignments: right-click in a subject's To do tab and choose View assignment.
+- When LMS or MyBK can't be reached, the error bar says which saved copy you are looking at.
+- The Today page has a New messages card, and new messages show a system notification (Snooze until morning is respected).
+- Signing out deletes the saved messages and page content of that account.
+- Subjects, Documents tab: a Back button returns to the folder you were in (Backspace, Alt+Left, mouse back button); the right-click menu has Open, Show in folder, Mark as read, Copy name and Copy path.
+
+### Changed
+
+- The Windows installer is much smaller (about 21 MB zipped for x64): unused library code is trimmed.
+- Messages saved on this computer are encrypted for your Windows account. Partial errors (like registration rounds) no longer show a red bar, only on the status button.
+
+### Fixed
+
+- Course surveys no longer show as overdue as soon as they open: a survey's opening time is not a due date.
+- MyBK registration rounds load again (the registration system changed its page addresses).
+- Right-click menus in tables (Documents, Recently updated, Videos and links, Calendar, Library) open, and right-click selects the row under the pointer.
+
 ## [1.2.7] - 2026-10-19
 
 ### Added
@@ -415,7 +442,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...HEAD
+[1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.4...v1.2.5

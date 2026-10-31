@@ -17,9 +17,58 @@ public partial class MybkView : UserControl, IFillPage, ITabbedPage
 
     public int Tab { get => Tabs.SelectedIndex; set => Tabs.SelectedIndex = Math.Clamp(value, 0, Tabs.ItemCount - 1); }
 
-    internal MybkView(AppState state) : this()
+    /// <summary>
+    /// Tab Tính thử GPA: mỗi môn đang học chưa có điểm một dòng (tên, tín chỉ, ô điểm dự kiến), kết quả GPA học kỳ và tích lũy cập nhật
+    /// ngay khi sửa. Không lưu, không gửi đi đâu.
+    /// </summary>
+    private void ShowGpaPlanner()
     {
+        GpaPanel.Children.Clear();
+        GpaPanel.Children.Add(new TextBlock { Text = L.T("gpa.note"), Classes = { "meta" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap });
+        var start = GpaPlanner.Base(_m);
+        var courses = GpaPlanner.Pending(_m);
+        if (courses.Count == 0) { GpaPanel.Children.Add(new TextBlock { Text = L.T("gpa.none"), Classes = { "empty" } }); return; }
+        var result = new TextBlock { Classes = { "card-title" }, Margin = new Avalonia.Thickness(0, 8, 0, 0) };
+        var boxes = new List<(GpaCourse Course, NumericUpDown Box)>();
+        void Update()
+        {
+            var (term, all) = GpaPlanner.Compute(start, boxes.Select(b => (b.Course.Credits, b.Box.Value is { } v ? (double?)(double)v : null)));
+            result.Text = L.F("gpa.result", term is { } t ? Format.Num(t) : "-", all is { } a ? Format.Num(a) : "-");
+        }
+        foreach (var c in courses)
+        {
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,90,120") };
+            row.Children.Add(new TextBlock { Text = $"{c.Name} ({c.Code})", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
+            var cr = new TextBlock { Text = c.Credits is { } x ? L.F("gpa.credits", Format.Num(x)) : L.T("gpa.noCredits"), Classes = { "meta" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            Grid.SetColumn(cr, 1);
+            row.Children.Add(cr);
+            var box = new NumericUpDown { Minimum = 0, Maximum = 10, Increment = 0.5m, FormatString = "0.0", IsEnabled = c.Credits is not null };
+            box.ValueChanged += (_, _) => Update();
+            Grid.SetColumn(box, 2);
+            row.Children.Add(box);
+            GpaPanel.Children.Add(row);
+            boxes.Add((c, box));
+        }
+        GpaPanel.Children.Add(result);
+        if (start is { } s0) GpaPanel.Children.Add(new TextBlock { Text = L.F("gpa.base", Format.Num(s0.Gpa), Format.Num(s0.Credits)), Classes = { "meta" } });
+        Update();
+    }
+
+    private readonly Action? _refresh;
+
+    private void OnProgramRefresh(object? sender, RoutedEventArgs e)
+    {
+        ProgramRefresh.IsEnabled = false;
+        ProgramNote.Text = L.T("grades.refreshing");
+        _refresh?.Invoke();
+    }
+
+    internal MybkView(AppState state, Action? refresh = null) : this()
+    {
+        _refresh = refresh;
+        ProgramRefresh.IsVisible = refresh is not null;
         _m = state.Mybk;
+        ShowGpaPlanner();
         var hasData = _m is not null;
         Subtitle.Text = MybkPresenter.Subtitle(_m);
         var stats = MybkPresenter.Stats(_m).Where(s => s.Value != "-").ToList();

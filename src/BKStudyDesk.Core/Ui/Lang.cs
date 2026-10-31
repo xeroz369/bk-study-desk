@@ -41,7 +41,7 @@ public static class L
         try
         {
             if (!File.Exists(path)) return [];
-            return JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path)) ?? [];
+            return JsonSerializer.Deserialize(File.ReadAllText(path), CoreJson.Default.StringMap) ?? [];
         }
         catch (Exception e) when (e is IOException or JsonException)
         {

@@ -55,7 +55,7 @@ public sealed record TimelineItem(string Id, string Kind, string Name, string Su
         SubmissionState.Graded => L.T("state.graded"),
         _ => "",
     };
-    public string KindName => Opens ? L.T("kind.quizOpen") : KindText.TryGetValue(Kind, out var k) ? L.T(k) : Kind;
+    public string KindName => Opens && Kind == "quiz" ? L.T("kind.quizOpen") : KindText.TryGetValue(Kind, out var k) ? L.T(k) : Kind;
     /// <summary>Dòng phụ dưới tên trong bảng sự kiện: môn rồi chi tiết (Hạn nộp, Quiz đóng, phòng học). Môn trùng tên mốc (buổi học) thì chỉ ghi chi tiết.</summary>
     public string Sub => Subject.Length == 0 || Subject == Name ? Label : Label.Length == 0 ? Subject : $"{Subject}, {Label}";
     /// <summary>Ngày giờ kèm chi tiết (phòng thi, số phút): dòng phụ của thẻ Lịch thi.</summary>
@@ -246,6 +246,20 @@ public sealed partial class AppState(SourceHub hub)
     public static string LmsLabel(LmsEvent e) =>
         e.Kind == "assign" && e.Label == global::SoHocTap.Sources.Lms.LmsSource.DueLabel ? L.T("timeline.dueLabel") : e.Label;
 
+    /// <summary>
+    /// Mốc LMS có phải mốc mở không (không phải hạn nộp, không tính quá hạn), và hạn đóng đi kèm nếu có.
+    /// Theo eventtype của Moodle: mọi module có "open"/"close" (quiz, khảo sát questionnaire, feedback, choice...); trước đây chỉ xét quiz
+    /// nên mốc mở của khảo sát hiện thành "quá hạn" (31/10/2026). Dữ liệu cũ chưa có eventtype thì so quiz với giờ mở trong danh sách quiz.
+    /// </summary>
+    public static (bool Opens, long? Due) Opening(LmsEvent e, LmsData lms)
+    {
+        var quiz = e.Kind == "quiz" ? lms.Quizzes.FirstOrDefault(q => q.Name == e.Name && q.Course == e.Course) : null;
+        var opens = e.Phase == "open" || (e.Kind == "quiz" && e.Phase is null && quiz?.Open == e.Time && quiz.Close != e.Time);
+        if (!opens) return (false, null);
+        var close = lms.Events.FirstOrDefault(x => x.Kind == e.Kind && x.Phase == "close" && x.Name == e.Name && x.Course == e.Course)?.Time;
+        return (true, close ?? quiz?.Close);
+    }
+
     private List<TimelineItem> BuildTimeline()
     {
         var output = new List<TimelineItem>();
@@ -255,10 +269,7 @@ public sealed partial class AppState(SourceHub hub)
             // Bài đã nộp (done) vẫn vào timeline, đánh dấu Done: trang tự lọc theo "Hiện việc đã làm", không đếm, không nhắc.
             foreach (var e in lms.Events)
             {
-                // Mốc mở của quiz: theo eventtype của Moodle; dữ liệu cũ chưa có eventtype thì so với giờ mở trong danh sách quiz.
-                var quiz = e.Kind == "quiz" ? lms.Quizzes.FirstOrDefault(q => q.Name == e.Name && q.Course == e.Course) : null;
-                var opens = e.Kind == "quiz" && (e.Phase == "open" || (e.Phase is null && quiz?.Open == e.Time && quiz.Close != e.Time));
-                var due = opens ? lms.Events.FirstOrDefault(x => x.Kind == "quiz" && x.Phase == "close" && x.Name == e.Name && x.Course == e.Course)?.Time ?? quiz?.Close : null;
+                var (opens, due) = Opening(e, lms);
                 output.Add(new TimelineItem(e.Id, e.Kind, e.Name, e.Subject, e.Time, LmsLabel(e), e.Url, SourceIds.Lms, Done: e.Done, Course: e.Course, Opens: opens, Due: due,
                     State: e.Kind == "assign" ? SubmissionStates.Parse(e.State) : SubmissionState.Unknown));
                 seen.Add(e.Name + "|" + e.Time);

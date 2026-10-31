@@ -29,7 +29,6 @@
                         </StackPanel>
                         <TextBlock x:Name="UpcomingEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                         <DataGrid x:Name="Upcoming" DoubleTapped="OnUpcomingOpen">
-                            <DataGrid.ContextFlyout><MenuFlyout Opening="OnUpcomingMenu" /></DataGrid.ContextFlyout>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{l:T col.time}" Binding="{Binding Hour}" Width="Auto" MinWidth="64" x:DataType="p:CalendarRow" />
                                 <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:CalendarRow" />
@@ -65,7 +64,6 @@
                         <Panel>
                         <v:WeekGridView x:Name="WeekGrid" Margin="16,0,0,0" IsVisible="False" />
                         <DataGrid x:Name="Week" DoubleTapped="OnWeekOpen">
-                            <DataGrid.ContextFlyout><MenuFlyout Opening="OnWeekMenu" /></DataGrid.ContextFlyout>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{l:T col.time}" Binding="{Binding Time}" Width="Auto" MinWidth="96" SortMemberPath="StartMin" x:DataType="p:WeekRow" />
                                 <DataGridTemplateColumn Header="{l:T col.subject}" Width="*" MinWidth="200">

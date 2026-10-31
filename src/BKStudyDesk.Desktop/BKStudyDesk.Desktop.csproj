@@ -20,6 +20,14 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
+  <!-- Cắt (trim) bản publish theo RID cho nhẹ: TrimMode=partial chỉ cắt assembly đã đánh dấu trimmable (thư viện .NET, Avalonia mới), còn lại giữ nguyên.
+       JSON dùng source generation (CoreJson, DesktopJson), binding biên dịch sẵn, nên không cần reflection. Build thường và test không có RID nên không bị ảnh hưởng. -->
+  <!-- Chỉ bản Windows (win-*) self-contained: đã chạy thử sau khi cắt; Linux, macOS chưa thử. Publish không self-contained (job binskim) thì .NET không cho cắt (NETSDK1102). -->
+  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('win')) and '$(SelfContained)' == 'true'">
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.3" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
@@ -36,6 +44,11 @@
   <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux'))">
     <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
     <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test khói giao diện (tests/BKStudyDesk.Ui.Tests) dựng cả view internal. -->
+    <InternalsVisibleTo Include="BKStudyDesk.Ui.Tests" />
   </ItemGroup>
 
   <ItemGroup>

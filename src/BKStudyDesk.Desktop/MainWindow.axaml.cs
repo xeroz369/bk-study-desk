@@ -24,10 +24,11 @@ public partial class MainWindow : Window
     private int _current;
     private int _shownIndex = -1;
     /// <summary>Số mục trang trên thanh trên cùng; trang ngay sau đó là Cài đặt (nút bên phải).</summary>
-    private const int NavCount = 6;
+    private const int NavCount = 7;
     private SubjectsView? _subjects;   // trang Môn học đang hiện: dựng lại (dữ liệu mới) thì giữ môn, tab, thư mục đang xem
     private LibraryView? _library;     // như trên: giữ chữ tìm, khoa, môn đang xem
     private Views.Practice.PracticeHost? _practice;   // giữ một instance: chuyển trang không mất bài đang làm
+    private InboxView? _inbox;   // giữ một instance: đồng bộ xong không mất ô lọc, chỗ đang đọc
 
     public MainWindow()
     {
@@ -35,13 +36,15 @@ public partial class MainWindow : Window
         // Thứ tự theo mức dùng thường ngày (người dùng chốt 07/10): Hôm nay, Môn học, Lịch, Thư viện, Luyện tập, MyBK. Ctrl+số theo thứ tự này.
         _pages =
         [
-            (L.T("nav.today"), () => new HomeView(_host.State, Login)),
+            (L.T("nav.today"), () => new HomeView(_host.State, Login, OpenInbox)),
+            // Hộp thư ngay sau Hôm nay (người dùng chốt 31/10/2026): tin nhắn, thông báo môn, thông báo LMS; đọc được khi LMS sập.
+            (L.T("nav.inbox"), () => { (_inbox ??= new InboxView()).Reload(_host.State.Lms); return _inbox; }),
             (L.T("nav.subjects"), () => _subjects = new SubjectsView(_host.State, _subjects, Download, OpenLibrary)),
             (L.T("nav.calendar"), () => new CalendarView(_host.State)),
             (L.T("nav.library"), () => _library = new LibraryView(_host.State, _host.Library, _library)),
             (L.T("nav.practice"), () => _practice ??= new Views.Practice.PracticeHost(_host.Router)),
-            ("MyBK", () => new MybkView(_host.State)),
-            (L.T("nav.settings"), () => new SettingsView(SettingsActions())),   // nút bên phải thanh trên cùng, Ctrl+7
+            ("MyBK", () => new MybkView(_host.State, () => { SoHocTap.Sources.Mybk.MybkSource.RequestRefresh(); _host.Hub.Start(SourceIds.Mybk, force: true); })),
+            (L.T("nav.settings"), () => new SettingsView(SettingsActions())),   // nút bên phải thanh trên cùng, Ctrl+8
         ];
         for (var i = 0; i < NavCount; i++)
         {
@@ -75,6 +78,7 @@ public partial class MainWindow : Window
         moreMenu.Opening += (_, _) => FillMore(moreMenu);
         _host.LoginProgress += OnLoginProgress;
         _host.State.Changed += ShowInfo;
+        _host.MessagesChanged += () => { if (_current == PageOf("hom-nay") || _current == PageOf("hop-thu")) Show(_current); };   // Hôm nay, Hộp thư: dựng lại với tin nhắn mới
         _host.State.StatusChanged += ShowInfo;
         InfoClose.Click += (_, _) => { _infoClosed = _info?.Key; _loginStage = ""; ShowInfo(); };
         InfoPrimary.Click += (_, _) => Run(_info?.Primary ?? InfoAction.None);
@@ -154,9 +158,15 @@ public partial class MainWindow : Window
         List<QuickItem> items = [.. _pages.Select((p, i) => new QuickItem(p.Title, L.T("quick.page"), $"page:{i}"))];
         items.AddRange(SubjectsPresenter.Rows(_host.State.Lms, null).Select(r => new QuickItem(r.Name, L.T("quick.subject"), "subject:" + r.Name)));
         if (_practice is { } practice) items.AddRange(practice.QuickItems());
+        items.AddRange(InboxQuickItems());
         ((QuickSearchPanel)_quick.Content!).Reset(items);
         _quick.ShowAt(Bar);
     }
+
+    /// <summary>Tin nhắn, thông báo trong Ctrl+K: mở đúng dòng ở Hộp thư.</summary>
+    private IEnumerable<QuickItem> InboxQuickItems() =>
+        Inbox.Rows(SoHocTap.Data.LmsMessagesStore.Read(), _host.State.Lms?.Announcements ?? [], InboxReads.Load(), Format.Now, 14)
+            .Select(r => new QuickItem(r.Title, r.Sub.Length > 0 ? $"{r.KindText}, {r.Sub}" : r.KindText, "inbox:" + r.Key));
 
     private async Task GoQuickAsync(string target)
     {
@@ -167,11 +177,14 @@ public partial class MainWindow : Window
                 await ShowAsync(index, true);
                 break;
             case "subject":
-                await ShowAsync(1, true);
+                await ShowAsync(PageOf("mon"), true);   // theo route, không theo số thứ tự (thứ tự trang có thể đổi)
                 _subjects?.SelectSubject(value);
                 break;
+            case "inbox":
+                OpenInbox(value);
+                break;
             case "lesson":
-                await ShowAsync(4, true);
+                await ShowAsync(PageOf("luyen-tap"), true);
                 _practice?.OpenLessonById(value);
                 break;
         }
@@ -579,12 +592,20 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Route của từng trang, cùng thứ tự với _pages (route của 1.x: lời nhắc, khung Luyện tập, data/window.json).</summary>
-    private static readonly string[] Routes = ["hom-nay", "mon", "lich", "thu-vien", "luyen-tap", "mybk", "cai-dat"];
+    private static readonly string[] Routes = ["hom-nay", "hop-thu", "mon", "lich", "thu-vien", "luyen-tap", "mybk", "cai-dat"];
 
     /// <summary>Route ("lich", "mon/...", "luyen-tap"...) thành số thứ tự trang; tên khác của 1.x cũng nhận; lạ thì Hôm nay.</summary>
+    /// <summary>Mở Hộp thư ở đúng một dòng (thẻ ở Hôm nay).</summary>
+    private void OpenInbox(string key)
+    {
+        // Chọn dòng trước (tạo trang nếu chưa có) rồi mới chuyển trang: Show có thể chờ (rời Luyện tập), chọn sau thì mất dòng.
+        (_inbox ??= new InboxView()).Select(key);
+        Show(PageOf("hop-thu"));
+    }
+
     private static int PageOf(string route)
     {
-        var key = route.Split('/')[0] switch { "tl" or "mon-hoc" => "mon", "luyen" => "luyen-tap", "diem" or "dich-vu" => "mybk", var k => k };
+        var key = route.Split('/')[0] switch { "tl" or "mon-hoc" => "mon", "luyen" => "luyen-tap", "diem" or "dich-vu" => "mybk", "tin-nhan" => "hop-thu", var k => k };
         return Math.Max(0, Array.IndexOf(Routes, key));
     }
 

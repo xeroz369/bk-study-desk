@@ -159,6 +159,24 @@
         <Setter Property="BorderThickness" Value="0,0,0,1" />
         <Setter Property="Background" Value="Transparent" />
     </Style>
+    <!-- Trang Tin nhắn: tin của người khác nền trang, tin của mình nền nhóm; số tin chưa đọc là ô nhỏ màu link. -->
+    <Style Selector="Border.bubble, Border.bubble-mine">
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource PageBg}" />
+    </Style>
+    <Style Selector="Border.bubble-mine"><Setter Property="Background" Value="{DynamicResource GroupBg}" /></Style>
+    <Style Selector="Border.row.indent"><Setter Property="Padding" Value="48,8,16,8" /></Style>
+    <Style Selector="TextBlock.name.unread"><Setter Property="FontWeight" Value="Bold" /></Style>
+    <Style Selector="Border.badge">
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource Link}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.badge > TextBlock"><Setter Property="Foreground" Value="{DynamicResource PageBg}" /><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /></Style>
     <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="{DynamicResource PageBg}" /></Style>
     <Style Selector="Border.datebox">
         <Setter Property="Width" Value="{StaticResource DateBoxSize}" />

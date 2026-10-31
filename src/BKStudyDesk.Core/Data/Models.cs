@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -12,12 +13,30 @@ namespace SoHocTap.Data;
 
 public sealed record LmsCourse(long Id, string Name, string Subject, string Code, string? Part, string Term, string Teacher, string Url, string Folder);
 /// <summary>Done: bài tập đã nộp (Moodle không còn mốc trên lịch hành động), không đếm và không nhắc.</summary>
-public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url, string? Phase = null, bool Done = false, string? State = null);
+public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url, string? Phase = null, bool Done = false, string? State = null,
+    string? Intro = null);   // Intro: đề bài (HTML của LMS), đọc offline trong app
 public sealed record LmsAttempt(long Id, long Finished, double? Grade);
 public sealed record LmsQuiz(long Id, long Course, string Subject, string Name, long? Open, long? Close, List<LmsAttempt> Attempts, string Url);
 public sealed record LmsNewFile(string Name, string Path, string Subject, long At, bool? Updated);
-public sealed record LmsAnnouncement(string Id, string Kind, string Subject, string Forum, string Title, string? Author, long Time, string? Url);
+/// <summary>Message: nội dung bài (HTML của LMS), Attachments: file đính kèm (link LMS, mở cần mạng). Đọc offline trong app.</summary>
+public sealed record LmsAnnouncement(string Id, string Kind, string Subject, string Forum, string Title, string? Author, long Time, string? Url,
+    string? Message = null, List<LmsLink>? Attachments = null, List<LmsPost>? Posts = null);
+/// <summary>Path: bản đã tải về thư mục học (đường dẫn tương đối), mở được khi LMS sập.</summary>
+public sealed record LmsLink(string? Name, string? Url, string? Path = null);
+/// <summary>Một trả lời trong chuỗi bài diễn đàn.</summary>
+public sealed record LmsPost(string? Author, long Time, string? Message, List<LmsLink>? Attachments);
 public sealed record LmsGradeItem(string Name, string? Kind, double? Grade, string? Text, double? Max, string? Percent, string? Feedback);
+/// <summary>Một tin nhắn riêng trên LMS. Text: HTML của LMS. Mine: tin mình gửi.</summary>
+public sealed record LmsMessage(long Id, long From, string? FromName, bool? Mine, string Text, long Time);
+/// <summary>Một hội thoại tin nhắn riêng (data/lms-messages.json). Members: tên người kia (hay các thành viên nhóm), không kể mình.</summary>
+public sealed record LmsConversation(long Id, string Name, bool? Group, List<string> Members, int Unread, long LastTime, string? Url, List<LmsMessage> Messages);
+public sealed record LmsMessages(long SyncedAt, List<LmsConversation> Conversations)
+{
+    public LmsMessages Normalize() => this with
+    {
+        Conversations = [.. DataJson.Clean(Conversations).Select(c => c with { Name = c.Name ?? "", Members = DataJson.Clean(c.Members), Messages = DataJson.Clean(c.Messages) })],
+    };
+}
 public sealed record LmsGradeBook(long Course, string Subject, string? Part, List<LmsGradeItem> Items);
 
 public sealed record LmsData(long SyncedAt, string? User, string Term, List<LmsCourse> Courses, List<LmsEvent> Events, List<LmsQuiz> Quizzes,
@@ -94,6 +113,7 @@ public static class DataJson
     public static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true,
+        TypeInfoResolver = CoreJson.Default,
         Converters =
         {
             new LenientString(),
@@ -110,7 +130,7 @@ public static class DataJson
     /// </summary>
     public static T? Parse<T>(string json) where T : class
     {
-        try { return JsonSerializer.Deserialize<T>(json, Options); }
+        try { return Js.Deserialize<T>(json, Options); }
         catch (JsonException e) { throw new DataReadException($"JSON sai ở {e.Path ?? "?"} (dòng {e.LineNumber + 1}): {e.Message}", e); }
         catch (NotSupportedException e) { throw new DataReadException($"kiểu dữ liệu không hỗ trợ: {e.Message}", e); }
     }

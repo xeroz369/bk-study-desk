@@ -65,9 +65,10 @@ jobs:
           "tag=$tag" >> $env:GITHUB_OUTPUT
       - name: Unit tests
         run: |
-          dotnet test tests/BKStudyDesk.Logic.Tests
-          dotnet test tests/BKStudyDesk.Core.Tests
-          dotnet test tests/BKStudyDesk.Math.Tests
+          dotnet test --project tests/BKStudyDesk.Logic.Tests
+          dotnet test --project tests/BKStudyDesk.Core.Tests
+          dotnet test --project tests/BKStudyDesk.Math.Tests
+          dotnet test --project tests/BKStudyDesk.Ui.Tests
       - name: Package
         shell: pwsh
         env:

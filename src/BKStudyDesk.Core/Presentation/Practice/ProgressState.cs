@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -65,6 +66,7 @@ public sealed class ProgressState
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
+        TypeInfoResolver = PracticeJson.Default,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
@@ -78,7 +80,7 @@ public sealed class ProgressState
     /// <summary>Số giây làm câu gần nhất, theo fingerprint.</summary>
     public Dictionary<string, double> Times { get; set; } = [];
 
-    public string ToJson() => JsonSerializer.Serialize(this, Json);
+    public string ToJson() => Js.Serialize(this, Json);
 
     /// <summary>
     /// Đọc trạng thái do bản nào ghi cũng được (như <c>normalize</c> của bản TS): thiếu nhóm thì rỗng, nhóm sai kiểu thì bỏ,
@@ -109,7 +111,7 @@ public sealed class ProgressState
     private static T? Item<T>(JsonNode? n) where T : class
     {
         if (n is not JsonObject) return null;
-        try { return n.Deserialize<T>(Json); }
+        try { return Js.Deserialize<T>(n, Json); }
         catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException) { return null; }
     }
 

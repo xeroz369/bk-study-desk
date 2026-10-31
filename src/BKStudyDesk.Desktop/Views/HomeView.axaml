@@ -9,7 +9,7 @@
     <UserControl.Resources>
         <!-- Dòng 64, lưới 48,12,*,12,112: ô ngày | tên và dòng phụ | còn bao lâu và trạng thái -->
         <DataTemplate x:Key="TodoRow" x:DataType="p:TodoItem">
-            <Border Classes="row" Tapped="OnRowTapped" Cursor="Hand">
+            <Border Classes="row" Classes.indent="{Binding Indent}" Tapped="OnRowTapped" Cursor="Hand">
                 <Grid ColumnDefinitions="48,12,*,12,112">
                     <Border Classes="datebox">
                         <StackPanel VerticalAlignment="Center">
@@ -72,6 +72,8 @@
         <StackPanel Spacing="2">
             <TextBlock Classes="title" Text="{l:T nav.today}" />
             <TextBlock x:Name="DateText" Classes="meta" />
+            <!-- Giờ đồng bộ gần nhất của từng nguồn: biết đang xem dữ liệu mới hay bản lưu (LMS, MyBK sập). -->
+            <TextBlock x:Name="SyncLine" Classes="meta" />
         </StackPanel>
 
         <!-- Chưa có dữ liệu nào: một khối giới thiệu thay cho bốn thẻ trống -->
@@ -97,18 +99,36 @@
                             <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="TodoMeta" />
                             <TextBlock Classes="card-title" Text="{l:T home.todo}" />
                         </DockPanel></Border>
-                        <ItemsControl ItemsSource="{Binding Todo}" ItemTemplate="{StaticResource TodoRow}" />
+                        <ItemsControl x:Name="TodoList" ItemTemplate="{StaticResource TodoRow}" />
                         <TextBlock x:Name="TodoEmpty" Classes="empty" />
                     </StackPanel>
                 </Border>
+                <!-- Hộp thư: tin nhắn, thông báo môn, thông báo LMS chưa đọc hay mới trong NewsDays ngày. Bấm mở đúng dòng ở trang Hộp thư. -->
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
-                            <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="NewsMeta" />
-                            <TextBlock Classes="card-title" Text="{l:T home.news}" />
+                            <TextBlock DockPanel.Dock="Right" Classes="meta" x:Name="InboxMeta" />
+                            <TextBlock Classes="card-title" Text="{l:T home.inbox}" />
                         </DockPanel></Border>
-                        <ItemsControl ItemsSource="{Binding News}" ItemTemplate="{StaticResource NewsRow}" />
-                        <TextBlock x:Name="NewsEmpty" Classes="empty" />
+                        <ItemsControl x:Name="InboxList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="p:InboxRow">
+                                    <Border Classes="row" Tapped="OnInboxTapped" Cursor="Hand">
+                                        <Grid ColumnDefinitions="*,12,112">
+                                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Classes="name" Classes.unread="{Binding Unread}" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Classes="sub" Text="{Binding Preview}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Classes="right" Text="{Binding When}" />
+                                                <TextBlock Classes="sub" HorizontalAlignment="Right" Text="{Binding KindText}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="InboxEmpty" Classes="empty" />
                     </StackPanel>
                 </Border>
             </StackPanel>

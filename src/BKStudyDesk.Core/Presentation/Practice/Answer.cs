@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -40,7 +41,7 @@ public sealed class AnswerConverter : JsonConverter<Answer>
         JsonTokenType.Null => default,   // bỏ trống
         JsonTokenType.Number => Answer.Of(reader.GetDouble()),
         JsonTokenType.String => Answer.Of(reader.GetString()!),
-        JsonTokenType.StartArray => Answer.Many(JsonSerializer.Deserialize<double[]>(ref reader, options)!.Select(x => (int)x).ToArray()),
+        JsonTokenType.StartArray => Answer.Many(JsonSerializer.Deserialize(ref reader, CoreJson.Default.DoubleArray)!.Select(x => (int)x).ToArray()),
         _ => throw new JsonException($"câu trả lời không đọc được ({reader.TokenType})"),
     };
 

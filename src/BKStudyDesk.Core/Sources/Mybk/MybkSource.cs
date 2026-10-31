@@ -8,7 +8,7 @@ namespace SoHocTap.Sources.Mybk;
 /// <summary>
 /// Source MyBK, phần Thông tin sinh viên (docs/archive/DESIGN-1.x.md mục 8b).
 /// Flow: SSO → /my/homeSSO.action → /app/login?type=cas → /app/ (Bearer token nằm trong #hid_Token).
-/// Mọi request đều chạy trong trang MyBK qua <see cref="IBrowserRunner"/>. Chỉ gọi API đọc (sources.mybk.api).
+/// Mọi request đều chạy trong trang MyBK qua <see cref="IBrowserRunner"/>. Chỉ gọi API đọc (sources.mybk.api), trừ refreshGrades/refreshCurriculum (POST, nút Cập nhật của MyBK) khi người dùng bấm nút.
 /// Không lưu CCCD, địa chỉ, điện thoại, ngày sinh, email cá nhân.
 /// </summary>
 public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
@@ -95,6 +95,10 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
             ["term"] = sem.Length > 4 ? sem[4..] : "",
         };
         Dictionary<string, JsonNode?> got = [], extra = [];
+        // Nút "Cập nhật CTĐT trên MyBK" (hay sources.mybk.refreshOnForce cho đồng bộ bấm tay) nhờ MyBK tính lại điểm tích lũy và tiến độ CTĐT,
+        // giống nút Cập nhật trên hai trang của MyBK. Đây là POST ghi lên MyBK nên chỉ chạy khi người dùng chủ động, không bao giờ ở lượt nền.
+        if (Interlocked.Exchange(ref _refreshNext, 0) == 1 || (force && Config.Bool("sources.mybk.refreshOnForce", false)))
+            await RefreshServerAsync(browser, api, args, log, ct);
         try
         {
             got = await RunAsync(browser, api, study, args, missing, log, OnEach, ct);
@@ -208,7 +212,7 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
         {
             JsonValue v => new FetchRequest(n, baseUrl + Fill(v.GetValue<string>())),
             JsonObject o => new FetchRequest(n, baseUrl + Fill(o["post"]!.GetValue<string>()), "POST",
-                JsonSerializer.Serialize(Fill(o["body"]?.GetValue<string>() ?? "{mssv}"))),
+                JsonSerializer.Serialize(Fill(o["body"]?.GetValue<string>() ?? "{mssv}"), CoreJson.Default.String)),
             _ => throw new InvalidOperationException($"Cấu hình API MyBK sai: {n}"),
         }).ToList();
         var (res, retried) = await MybkReply.FetchAsync(browser, reqs, TimeSpan.FromSeconds(1.5), ct, onEach);
@@ -230,6 +234,36 @@ public sealed class MybkSource(Func<IBrowserRunner?> runner) : ISource
             if (!MybkReply.Silent(n)) log(SyncSignal.Warn(Label(n), $"{n}: {why}"));
         }
         return output;
+    }
+
+    private static int _refreshNext;
+    private static readonly string[] RefreshApis = ["refreshGrades", "refreshCurriculum"];
+
+    /// <summary>Đánh dấu lần đồng bộ MyBK kế tiếp gọi hai API cập nhật của MyBK trước khi đọc (người dùng bấm nút Cập nhật).</summary>
+    public static void RequestRefresh() => Interlocked.Exchange(ref _refreshNext, 1);
+
+    /// <summary>
+    /// Gọi lần lượt refreshGrades rồi refreshCurriculum (thứ tự như người dùng bấm tay). Gọi một lần, không gọi lại tự động vì là POST ghi;
+    /// lỗi chỉ báo cảnh báo, phần đọc phía sau vẫn chạy như thường. Hết phiên thì để RunAsync ở bước đọc báo.
+    /// </summary>
+    private static async Task RefreshServerAsync(IBrowserRunner browser, JsonObject api, Dictionary<string, string> args, Action<string> log, CancellationToken ct)
+    {
+        var baseUrl = Config.Str("sources.mybk.site").TrimEnd('/') + "/api/";
+        string Fill(string s) => args.Aggregate(s, (acc, kv) => acc.Replace("{" + kv.Key + "}", kv.Value));
+        var reqs = RefreshApis.Where(n => api[n] is JsonObject).Select(n =>
+        {
+            var o = (JsonObject)api[n]!;
+            return new FetchRequest(n, baseUrl + Fill(o["post"]!.GetValue<string>()), "POST",
+                JsonSerializer.Serialize(Fill(o["body"]?.GetValue<string>() ?? "{mssv}"), CoreJson.Default.String));
+        }).ToList();
+        if (reqs.Count == 0) return;
+        var res = await browser.FetchAsync(reqs, ct);
+        foreach (var r in reqs)
+        {
+            var status = res.TryGetValue(r.Name, out var x) ? x.Status : 0;
+            Log.Info($"MyBK {r.Name}: HTTP {status} (nút Cập nhật)");
+            if (status != 200) log(SyncSignal.Warn("cập nhật trên MyBK", $"{r.Name}: HTTP {status}"));
+        }
     }
 
     /// <summary>Tên dễ hiểu của từng API MyBK để báo lỗi.</summary>
