@@ -47,6 +47,9 @@ public class SmokeTests
     {
         var v = Inbox(out var w);
         var list = ListOf(v);
+        // InboxView nhớ dòng đang xem (static) qua các test: chọn rõ hội thoại 130 tin, không dựa vào thứ tự test.
+        list.SelectedItem = list.Items.OfType<InboxRow>().First(r => r.Key == "msg:10");
+        Ui.Pump(w);
         var older = v.GetVisualDescendants().OfType<Button>().First(b => b.Content is string s && s.Contains("70", StringComparison.Ordinal));
         older.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Ui.Pump(w);
