@@ -22,8 +22,8 @@
 
   <!-- Cắt (trim) bản publish theo RID cho nhẹ: TrimMode=partial chỉ cắt assembly đã đánh dấu trimmable (thư viện .NET, Avalonia mới), còn lại giữ nguyên.
        JSON dùng source generation (CoreJson, DesktopJson), binding biên dịch sẵn, nên không cần reflection. Build thường và test không có RID nên không bị ảnh hưởng. -->
-  <!-- Chỉ bản Windows (win-*) đã chạy thử sau khi cắt; Linux, macOS chưa thử nên chưa bật. -->
-  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('win'))">
+  <!-- Chỉ bản Windows (win-*) self-contained: đã chạy thử sau khi cắt; Linux, macOS chưa thử. Publish không self-contained (job binskim) thì .NET không cho cắt (NETSDK1102). -->
+  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('win')) and '$(SelfContained)' == 'true'">
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
   </PropertyGroup>
