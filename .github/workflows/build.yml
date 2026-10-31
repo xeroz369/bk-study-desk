@@ -58,6 +58,7 @@ jobs:
         run: dotnet test --project tests/BKStudyDesk.Core.Tests
       - name: Math renderer tests
         run: dotnet test --project tests/BKStudyDesk.Math.Tests
+      - name: UI smoke tests (headless)
         run: dotnet test --project tests/BKStudyDesk.Ui.Tests
       - name: Build app (net10.0)
         run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0
