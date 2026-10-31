@@ -8,6 +8,8 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-10-31
+
 ### Added
 
 - Inbox page (right after Today): private messages, course announcements and LMS notices, saved on this computer so you can read them when LMS is down. Filter by kind, search, remembers what you read. Read only; Reply on LMS opens the conversation on LMS. Ctrl+number for pages after Today goes up by one.
@@ -440,7 +442,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...HEAD
+[1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.4...v1.2.5

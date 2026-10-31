@@ -6,6 +6,8 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.2.8] - 2026-10-31
+
 ### Thêm
 
 - Trang Hộp thư (ngay sau Hôm nay): tin nhắn riêng, thông báo của các môn và thông báo của LMS, lưu trên máy nên đọc được cả khi LMS sập. Lọc theo loại, tìm theo chữ, nhớ tin đã đọc. Chỉ đọc; nút Trả lời trên LMS mở hội thoại trên LMS. Ctrl+số của các trang sau Hôm nay tăng thêm 1.
@@ -437,7 +439,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...HEAD
+[1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.4...v1.2.5
