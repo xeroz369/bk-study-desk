@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -13,9 +14,9 @@ public sealed record SavedQuizQuestion(string? Type, string Html, string? Mark =
 public sealed record SavedQuiz(string File, string Quiz, string Subject, string? Code, long? Course, long Attempt, long? Finished,
     JsonNode? Grade, long? ClosesAt, long? SavedAt, bool? Answers, bool? NoReview, List<SavedQuizQuestion>? Questions)
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { TypeInfoResolver = PracticeJson.Default };
 
-    public static List<SavedQuiz> ListFromJson(string json) => JsonSerializer.Deserialize<List<SavedQuiz>>(json, Json) ?? [];
+    public static List<SavedQuiz> ListFromJson(string json) => Js.Deserialize<List<SavedQuiz>>(json, Json) ?? [];
 }
 
 /// <param name="LessonId">Id đầy đủ của bài trong sổ (gói.bài), rỗng khi không có câu dùng được.</param>

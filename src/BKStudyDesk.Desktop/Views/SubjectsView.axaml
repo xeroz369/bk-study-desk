@@ -66,6 +66,10 @@
                     </Border>
                     <TextBlock x:Name="DetailEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                     <TabControl x:Name="Tabs" SelectionChanged="OnTab" Padding="0">
+                        <!-- Tổng quan (tab mặc định): hạn gần nhất, thông báo mới nhất, điểm tổng; dựng trong code (ShowOverview). -->
+                        <TabItem x:Name="OverviewTab" Header="{l:T subjects.tabOverview}">
+                            <ScrollViewer><StackPanel x:Name="OverviewPanel" Margin="16" Spacing="16" /></ScrollViewer>
+                        </TabItem>
                         <TabItem x:Name="FilesTab" Header="{l:T subjects.tabFiles}">
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top" Margin="16,8">
@@ -74,7 +78,7 @@
                                         <ToggleButton x:Name="RecentToggle" Content="{l:T subjects.tabRecent}" Click="OnRecentToggle" />
                                         <Button Content="{l:T subjects.openFolder}" Click="OnOpenFolder" />
                                     </StackPanel>
-                                    <Button x:Name="UpButton" DockPanel.Dock="Left" Content="{l:T subjects.up}" Click="OnUp" Margin="0,0,12,0" />
+                                    <Button x:Name="UpButton" DockPanel.Dock="Left" Content="{l:T subjects.back}" ToolTip.Tip="{l:T subjects.back.tip}" Click="OnUp" Margin="0,0,12,0" />
                                     <!-- Đường dẫn từ thư mục môn: mỗi cấp trên là link bấm để lên thẳng cấp đó (như thanh địa chỉ của File Explorer). -->
                                     <WrapPanel x:Name="PathBar" VerticalAlignment="Center" />
                                 </DockPanel>
@@ -83,7 +87,6 @@
                                     <DataGrid x:Name="Files" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                               GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                               BorderThickness="0" SelectionMode="Single" DoubleTapped="OnFileOpen" KeyDown="OnFilesKey">
-                                        <DataGrid.ContextFlyout><MenuFlyout Opening="OnFileMenu" /></DataGrid.ContextFlyout>
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:FileRow" />
                                             <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding Kind}" Width="Auto" MinWidth="80" x:DataType="p:FileRow" />
@@ -94,7 +97,6 @@
                                     <DataGrid x:Name="Recent" IsVisible="False" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                               GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                               BorderThickness="0" SelectionMode="Single" DoubleTapped="OnRecentOpen">
-                                        <DataGrid.ContextFlyout><MenuFlyout Opening="OnRecentMenu" /></DataGrid.ContextFlyout>
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="2*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:RecentRow" />
                                             <DataGridTextColumn Header="{l:T col.folder}" Binding="{Binding Folder}" Width="*" MinWidth="120" x:DataType="p:RecentRow" />
@@ -159,7 +161,6 @@
                                 <DataGrid x:Name="Media" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                           BorderThickness="0" SelectionMode="Single" DoubleTapped="OnMediaOpen" KeyDown="OnMediaKey">
-                                    <DataGrid.ContextFlyout><MenuFlyout Opening="OnMediaMenu" /></DataGrid.ContextFlyout>
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Name}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:MediaRow" />
                                         <DataGridTextColumn Header="{l:T col.kind}" Binding="{Binding KindText}" Width="Auto" MinWidth="96" x:DataType="p:MediaRow" />

@@ -79,9 +79,10 @@ public static class InfoBar
         foreach (var (name, label) in new[] { (SourceIds.Lms, "LMS"), (SourceIds.Mybk, "MyBK") })
         {
             if (s.Syncing(name) || name == skip) continue;
-            if (s.ExplainError(name, label) is var (text, detail)) return (L.F("info.syncFailed", label, text), detail, name, label);
-            if (s.Warnings(name) is { Count: > 0 } w)
-                return (L.F("info.syncWarnings", label, string.Join(", ", w.Select(x => x.What).Distinct())), string.Join("\n", w.Select(x => $"{x.What}: {x.Detail}")), name, label);
+            // Lỗi mà đã có bản lưu: nói rõ đang xem bản lưu lúc nào (app là bản dự phòng khi LMS, MyBK sập).
+            if (s.ExplainError(name, label) is var (text, detail))
+                return (L.F("info.syncFailed", label, text) + (s.SyncedAt(name) is { } t ? " " + L.F("info.savedCopy", StatusPanel.When(t)) : ""), detail, name, label);
+            // Chỉ một phần không đọc được (đợt đăng ký môn...): không hiện dải đỏ, chỉ báo ở nút trạng thái trên cùng (StatusPanel).
         }
         return null;
     }

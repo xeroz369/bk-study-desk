@@ -25,13 +25,13 @@ internal sealed class WindowPlacement
     public static WindowPlacement Load()
     {
         var n = JsonStore.Read(FilePath);
-        try { return n is null ? new() : System.Text.Json.JsonSerializer.Deserialize<WindowPlacement>(n, JsonStore.Options) ?? new(); }
+        try { return n is null ? new() : Js.Deserialize<WindowPlacement>(n, DesktopJsonOptions.Store) ?? new(); }
         catch (System.Text.Json.JsonException) { return new(); }
     }
 
     public void Save()
     {
-        try { JsonStore.Write(FilePath, this); }
+        try { JsonStore.Write(FilePath, Js.SerializeToNode(this, DesktopJsonOptions.Store)); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Lưu vị trí cửa sổ: {e.Message}"); }
     }
 

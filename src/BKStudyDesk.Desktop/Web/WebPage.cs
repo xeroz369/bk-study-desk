@@ -1,3 +1,4 @@
+using BKStudyDesk.Desktop.Platform;
 using System.Net;
 using System.Text.Json;
 using Avalonia.Controls;
@@ -173,5 +174,5 @@ internal sealed class WebPage
 
     /// <summary>InvokeScript trả kết quả dạng JSON: chuỗi có ngoặc kép, null là "null".</summary>
     private static string? Decode(string? raw) =>
-        raw is null or "null" or "undefined" ? null : raw.StartsWith('"') ? JsonSerializer.Deserialize<string>(raw) : raw;
+        raw is null or "null" or "undefined" ? null : raw.StartsWith('"') ? JsonSerializer.Deserialize(raw, DesktopJson.Default.String) : raw;
 }

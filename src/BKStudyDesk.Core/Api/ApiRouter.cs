@@ -122,7 +122,7 @@ public sealed partial class ApiRouter(IShellActions shell)
                 if (q["course"]?.GetValue<long>() is { } cid && codes.TryGetValue(cid, out var code)) q["code"] = code;
                 foreach (var x in (q["questions"] as JsonArray ?? []).OfType<JsonObject>())
                     x["html"] = Noise().Replace(x["html"]?.GetValue<string>() ?? "", "");
-                list.Add(q);
+                list.Add((JsonNode)q);
             }
         return ApiResponse.Json(list);
     }
@@ -133,7 +133,7 @@ public sealed partial class ApiRouter(IShellActions shell)
         var list = new JsonArray();
         if (Directory.Exists(PacksDir))
             foreach (var f in Directory.GetFiles(PacksDir, "*.studypack.json").Order(StringComparer.OrdinalIgnoreCase))
-                list.Add(new JsonObject { ["file"] = Path.GetFileName(f), ["size"] = new FileInfo(f).Length });
+                list.Add((JsonNode)new JsonObject { ["file"] = Path.GetFileName(f), ["size"] = new FileInfo(f).Length });
         return ApiResponse.Json(list);
     }
 

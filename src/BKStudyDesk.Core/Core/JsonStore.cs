@@ -13,6 +13,7 @@ public static class JsonStore
         WriteIndented = true,
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),   // giữ nguyên tiếng Việt trong file
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        TypeInfoResolver = CoreJson.Default,   // metadata sinh sẵn, không reflection (publish cắt)
     };
 
     private static readonly JsonSerializerOptions Compact = new(Options) { WriteIndented = false };
@@ -53,7 +54,7 @@ public static class JsonStore
         }
     }
 
-    public static bool Write<T>(string path, T value) => Write(path, JsonSerializer.SerializeToNode(value, Options));
+    public static bool Write<T>(string path, T value) => Write(path, value as JsonNode ?? Js.SerializeToNode(value, Options));
 
-    public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Compact);
+    public static string Serialize<T>(T value) => Js.Serialize(value, Compact);
 }

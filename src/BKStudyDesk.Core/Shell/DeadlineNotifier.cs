@@ -98,13 +98,18 @@ internal sealed class DeadlineNotifier(Action<string, string, string> show)
     private static List<DueItem> Collect()
     {
         var list = new List<DueItem>();
-        if (LmsStore.Read() is not { } lms) return list;
-        foreach (var e in lms.Events)
-            if (e.Kind != "quiz" && !e.Done && !string.IsNullOrEmpty(e.Id))
+        var lms = LmsStore.Read();
+        foreach (var e in lms?.Events ?? [])
+            if (e.Kind != "quiz" && e.Phase != "open" && !e.Done && !string.IsNullOrEmpty(e.Id))   // mốc mở (khảo sát, feedback) không phải hạn
                 list.Add(new DueItem(SourceIds.Lms, e.Id, L.F("notify.title", e.Label ?? L.T("notify.due"), e.Name), e.Subject ?? "", e.Time));
-        foreach (var q in lms.Quizzes)
+        foreach (var q in lms?.Quizzes ?? [])
             if (q.Attempts.Count == 0 && q.Close is { } t)
                 list.Add(new DueItem(SourceIds.Lms, "qz" + q.Id, L.F("notify.quizClose", q.Name), q.Subject ?? "", t));
+        // Lịch thi MyBK: nhắc như hạn nộp (trước notify.hoursBefore và notify.lastHours giờ), kèm phòng thi.
+        foreach (var x in MybkStore.Read()?.Exams ?? [])
+            if (VnTime.ParseDate(x.Date) is { } day)
+                list.Add(new DueItem(SourceIds.Mybk, $"ex-{x.Code}-{x.Type}-{x.Date}", L.F("notify.exam", x.Name), L.F("timeline.room", x.Room),
+                    VnTime.FromWall(day.AddMinutes(VnTime.ParseClock(x.Time) ?? 0))));
         return list;
     }
 

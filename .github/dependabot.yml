@@ -8,6 +8,10 @@ updates:
     cooldown: { default-days: 7 }
     groups:
       nuget: { patterns: ['*'] }
+    # Math.Tests phải ở xunit.v3 3.x cho tới khi Avalonia.Headless.XUnit có bản build trên xunit 4 (PR 52 đã đóng vì lỗi này).
+    ignore:
+      - dependency-name: xunit.v3
+        update-types: ['version-update:semver-major']
   - package-ecosystem: npm
     directory: /studypack
     schedule: { interval: weekly }

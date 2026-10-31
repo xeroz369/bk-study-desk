@@ -6,6 +6,31 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Trang Hộp thư (ngay sau Hôm nay): tin nhắn riêng, thông báo của các môn và thông báo của LMS, lưu trên máy nên đọc được cả khi LMS sập. Lọc theo loại, tìm theo chữ, nhớ tin đã đọc. Chỉ đọc; nút Trả lời trên LMS mở hội thoại trên LMS. Ctrl+số của các trang sau Hôm nay tăng thêm 1.
+- Thông báo diễn đàn đọc được cả chuỗi trả lời; file đính kèm tự tải về thư mục môn, phần Thông báo.
+- Tin nhắn mới được kiểm mỗi 30 phút; Ctrl+K tìm được cả tin nhắn và thông báo.
+- Hôm nay: khảo sát của nhiều môn gom một dòng, bấm để xổ ra; dòng giờ đồng bộ LMS, MyBK.
+- Môn học: tab Tổng quan (hạn sắp tới, thông báo mới nhất, điểm tổng).
+- MyBK: tab Tính thử GPA. Nhắc lịch thi như nhắc hạn nộp.
+- Đọc bài thông báo, trang LMS và đề bài tập ngay trong app, từ bản lưu khi đồng bộ. Đề bài: chuột phải ở tab Cần làm của môn, chọn Xem đề bài.
+- Khi không vào được LMS hay MyBK, thanh báo lỗi ghi rõ đang xem bản lưu lúc nào.
+- Trang Hôm nay có thẻ Tin nhắn mới; có tin nhắn mới thì app báo bằng thông báo của máy (tôn trọng Tạm im tới sáng mai).
+- Đăng xuất thì xóa tin nhắn và nội dung trang đã lưu của tài khoản đó.
+- Môn học, tab Tài liệu: nút Quay lại về thư mục vừa xem (Backspace, Alt+Trái, nút lùi của chuột); menu chuột phải có Mở, Mở thư mục chứa, Đánh dấu đã đọc, Sao chép tên và đường dẫn.
+
+### Thay đổi
+
+- Bộ cài Windows nhẹ hơn nhiều (bản x64 nén còn khoảng 21 MB): cắt phần thư viện không dùng.
+- Tin nhắn lưu trên máy được mã hóa theo tài khoản Windows. Lỗi một phần (như đợt đăng ký môn) không hiện dải đỏ, chỉ báo ở nút trạng thái.
+
+### Sửa lỗi
+
+- Khảo sát học phần không còn hiện "quá hạn" ngay khi vừa mở: mốc mở của khảo sát không phải hạn nộp.
+- Đọc được đợt đăng ký môn trên MyBK trở lại (hệ thống đăng ký môn đổi dạng địa chỉ trang).
+- Menu chuột phải ở các bảng (Tài liệu, Mới cập nhật, Video và liên kết, Lịch, Thư viện) hiện được; chuột phải chọn đúng dòng dưới con trỏ.
+
 ## [1.2.7] - 2026-10-19
 
 ### Thêm

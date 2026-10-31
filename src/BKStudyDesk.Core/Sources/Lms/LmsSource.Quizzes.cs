@@ -42,14 +42,14 @@ public sealed partial class LmsSource
             bool opened = open is null || open <= t;
             bool active = opened && (close is null || close >= lastSync - 86400);
             // Quiz cũ đã đóng: dùng lại data, trừ khi còn lượt đã nộp chưa lưu (vừa bật tự lưu, hoặc file bị xóa).
-            if (old.TryGetValue(id, out var prev) && !active && !Unsaved(id, prev)) { item["attempts"] = prev["attempts"]?.DeepClone(); list.Add(item); continue; }
-            if (!opened) { list.Add(item); continue; }
+            if (old.TryGetValue(id, out var prev) && !active && !Unsaved(id, prev)) { item["attempts"] = prev["attempts"]?.DeepClone(); list.Add((JsonNode)item); continue; }
+            if (!opened) { list.Add((JsonNode)item); continue; }
             // Quiz không có hạn đóng thì không biết bao giờ hết làm được: hỏi lượt làm tối đa ngày một lần, không hỏi ở mọi lần đồng bộ.
             if (close is null && old.TryGetValue(id, out var last) && (last["checked"]?.GetValue<long>() ?? 0) > t - 86400 && !Unsaved(id, last))
             {
                 item["attempts"] = last["attempts"]?.DeepClone();
                 item["checked"] = last["checked"]?.DeepClone();
-                list.Add(item);
+                list.Add((JsonNode)item);
                 continue;
             }
             item["checked"] = t;
@@ -59,7 +59,7 @@ public sealed partial class LmsSource
             foreach (var a in attempts.OfType<JsonObject>())
             {
                 var aid = a["id"]!.GetValue<long>();
-                item["attempts"]!.AsArray().Add(new JsonObject { ["id"] = aid, ["finished"] = a["timefinish"]?.GetValue<long>(), ["grade"] = a["sumgrades"]?.DeepClone() });
+                item["attempts"]!.AsArray().Add((JsonNode)new JsonObject { ["id"] = aid, ["finished"] = a["timefinish"]?.GetValue<long>(), ["grade"] = a["sumgrades"]?.DeepClone() });
                 if (!SaveQuizzes) continue;
                 // Only finished attempts, read-only review API. Never touch an attempt that is in progress.
                 var path = Path.Combine(QuizDir, $"{id}-{aid}.json");
@@ -79,7 +79,7 @@ public sealed partial class LmsSource
                     var rev = await CallAsync("mod_quiz_get_attempt_review", [Arg("attemptid", aid), Arg("page", -1)], ct);
                     var questions = new JsonArray();
                     foreach (var x in rev["questions"]!.AsArray().OfType<JsonObject>())
-                        questions.Add(new JsonObject
+                        questions.Add((JsonNode)new JsonObject
                         {
                             ["slot"] = x["slot"]?.DeepClone(),
                             ["type"] = x["type"]?.DeepClone(),
@@ -110,7 +110,7 @@ public sealed partial class LmsSource
                     Warn($"lưu quiz {item["name"]}", e);
                 }
             }
-            list.Add(item);
+            list.Add((JsonNode)item);
         }
         return list;
     }

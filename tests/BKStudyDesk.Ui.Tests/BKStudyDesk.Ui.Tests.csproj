@@ -1,0 +1,25 @@
+<!-- Test khói giao diện: dựng thật các trang của app (InboxView, HomeView, SubjectsView, ReaderWindow, RowMenus) trong Avalonia headless,
+     bắt lỗi kiểu "template gọi với null" hay trang ném lỗi lúc dựng. Tham chiếu thẳng project app (net10.0). -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- xUnit v3 chạy bằng Microsoft.Testing.Platform (global.json), Avalonia.Headless.XUnit 12 cũng cần v3: project test là Exe. -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Giữ 3.x như Math.Tests: Avalonia.Headless.XUnit 12.1.x không chạy với xunit.v3 4.x. -->
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BKStudyDesk.Desktop\BKStudyDesk.Desktop.csproj" />
+    <ProjectReference Include="..\..\src\BKStudyDesk.Core\BKStudyDesk.Core.csproj" />
+  </ItemGroup>
+</Project>

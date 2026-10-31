@@ -65,7 +65,6 @@
                     <TextBlock x:Name="StatusLine" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" IsVisible="False" />
                     <TextBlock x:Name="ItemsEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                     <DataGrid x:Name="Items" DoubleTapped="OnItemOpen">
-                        <DataGrid.ContextFlyout><MenuFlyout Opening="OnItemMenu" /></DataGrid.ContextFlyout>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="{l:T col.name}" Binding="{Binding Title}" Width="*" MinWidth="200" FontWeight="SemiBold" x:DataType="p:LibraryRow" />
                             <DataGridTextColumn Header="{l:T col.term}" Binding="{Binding Term}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />

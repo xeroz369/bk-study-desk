@@ -1,3 +1,4 @@
+using BKStudyDesk.Desktop.Platform;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -47,8 +48,8 @@ internal sealed class MybkBrowser : IBrowserRunner
                 var results = new Dictionary<string, FetchResult>();
                 foreach (var r in requests)
                 {
-                    var js = FetchJs.Replace("__URL__", JsonSerializer.Serialize(r.Url)).Replace("__METHOD__", JsonSerializer.Serialize(r.Method))
-                        .Replace("__BODY__", r.Body is null ? "undefined" : JsonSerializer.Serialize(r.Body));
+                    var js = FetchJs.Replace("__URL__", JsonSerializer.Serialize(r.Url, DesktopJson.Default.String)).Replace("__METHOD__", JsonSerializer.Serialize(r.Method, DesktopJson.Default.String))
+                        .Replace("__BODY__", r.Body is null ? "undefined" : JsonSerializer.Serialize(r.Body, DesktopJson.Default.String));
                     await ApiPace.WaitAsync(ct);
                     var sw = Stopwatch.StartNew();
                     var o = JsonNode.Parse(await EvalOnAppAsync(js, ct) ?? "{}") as JsonObject;
@@ -86,7 +87,7 @@ internal sealed class MybkBrowser : IBrowserRunner
                 await page.NavigateUntilAsync(url, u =>
                 {
                     if (u.Host != target.Host || !u.AbsolutePath.StartsWith(prefix, StringComparison.Ordinal)) return false;
-                    if (u.AbsolutePath == target.AbsolutePath) return true;
+                    if (SchoolUrls.PagePath(u) == SchoolUrls.PagePath(target)) return true;
                     if (retries++ < 2) page.Navigate(url);
                     return false;
                 }, ct, failAt);
@@ -95,7 +96,7 @@ internal sealed class MybkBrowser : IBrowserRunner
                 {
                     Log.Info($"MyBK ẩn: {Log.Where(page.Source?.AbsoluteUri ?? "")} chưa có nội dung cần đọc ({html.Length} ký tự), mở lại lần {again + 1}");
                     await Task.Delay(1500, ct);
-                    await page.NavigateUntilAsync(url, u => u.Host == target.Host && u.AbsolutePath == target.AbsolutePath, ct, failAt);
+                    await page.NavigateUntilAsync(url, u => u.Host == target.Host && SchoolUrls.PagePath(u) == SchoolUrls.PagePath(target), ct, failAt);
                     html = await page.EvalAsync("document.documentElement.outerHTML") ?? "";
                 }
                 return html;

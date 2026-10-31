@@ -556,11 +556,12 @@ public sealed class LibraryClient : IDisposable
 
     private static readonly JsonSerializerOptions ManifestJson = new(JsonSerializerDefaults.Web)
     {
+        TypeInfoResolver = CoreJson.Default,
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
     };
 
-    private void WriteManifest(List<DownloadRecord> list) => AtomicFile.WriteIfChanged(_o.ManifestPath, JsonSerializer.Serialize(list, ManifestJson));
+    private void WriteManifest(List<DownloadRecord> list) => AtomicFile.WriteIfChanged(_o.ManifestPath, Js.Serialize(list, ManifestJson));
 
     public void Dispose()
     {

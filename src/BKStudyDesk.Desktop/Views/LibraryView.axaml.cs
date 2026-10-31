@@ -36,6 +36,7 @@ public partial class LibraryView : UserControl, IFillPage
     /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ chữ tìm, khoa và môn đang xem.</param>
     internal LibraryView(AppState state, LibraryService library, LibraryView? previous) : this()
     {
+        RowMenus.Attach(Items, OnItemMenu);
         _state = state;
         _library = library;
         _subjects = SubjectsPresenter.Rows(state.Lms, null);   // môn trên LMS ngay; môn chỉ có thư mục trên máy thêm sau khi quét (MineAsync)

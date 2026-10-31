@@ -22,7 +22,7 @@ public static class DocumentScan
                 count++;
                 newest = Math.Max(newest, f.LastWriteTimeUtc.Ticks);
             }
-            list.Add(new JsonObject
+            list.Add((JsonNode)new JsonObject
             {
                 ["name"] = Path.GetFileName(d),
                 ["files"] = count,

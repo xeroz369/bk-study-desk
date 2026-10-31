@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Text.Json;
 
 namespace SoHocTap.Presentation.Practice;
@@ -9,17 +10,17 @@ namespace SoHocTap.Presentation.Practice;
 /// </summary>
 public static class ContentLibrary
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { TypeInfoResolver = PracticeJson.Default };
 
-    private sealed record ExamEntry(string Id, string File, string CourseId, List<SourceRef>? Sources);
+    internal sealed record ExamEntry(string Id, string File, string CourseId, List<SourceRef>? Sources);
 
-    private sealed record LessonFile(string Id, string Title, string? File, List<SourceRef>? Sources);
+    internal sealed record LessonFile(string Id, string Title, string? File, List<SourceRef>? Sources);
 
-    private sealed record UnitFile(string Title, List<LessonFile> Lessons);
+    internal sealed record UnitFile(string Title, List<LessonFile> Lessons);
 
-    private sealed record CourseFile(string Id, string Name, string? Code, ExamDate? Exam, Scoring? Scoring, Blueprint? Blueprint, List<UnitFile> Units);
+    internal sealed record CourseFile(string Id, string Name, string? Code, ExamDate? Exam, Scoring? Scoring, Blueprint? Blueprint, List<UnitFile> Units);
 
-    private sealed record ManifestFile(string Term, List<string>? Priority, List<PageEntry>? Pages, List<ExamEntry>? Exams, List<CourseFile> Courses);
+    internal sealed record ManifestFile(string Term, List<string>? Priority, List<PageEntry>? Pages, List<ExamEntry>? Exams, List<CourseFile> Courses);
 
     /// <summary>Nạp vào <paramref name="study"/>; trả về cảnh báo (file thiếu, đọc lỗi, id lệch).</summary>
     public static List<string> Load(string contentDir, StudyRegistry study)
@@ -35,7 +36,7 @@ public static class ContentLibrary
         }
 
         ManifestFile? m;
-        try { m = JsonSerializer.Deserialize<ManifestFile>(Read(Path.Combine("content", "manifest.json")) ?? "null", Json); }
+        try { m = Js.Deserialize<ManifestFile>(Read(Path.Combine("content", "manifest.json")) ?? "null", Json); }
         catch (JsonException e)
         {
             warnings.Add($"manifest.json: {e.Message}");

@@ -1,3 +1,4 @@
+using SoHocTap.Core;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -116,6 +117,7 @@ public static class CustomEvents
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        TypeInfoResolver = CoreJson.Default,
     };
 
     /// <summary>Parse file chịu lỗi (DataJson): phần tử null, trường thiếu không làm hỏng cả file. Sắp theo ngày giờ.</summary>
@@ -142,7 +144,7 @@ public static class CustomEvents
             .OrderBy(e => e.Date, StringComparer.Ordinal).ThenBy(e => e.StartMin ?? 0).ThenBy(e => e.CreatedAt)];
 
     public static JsonNode Serialize(IEnumerable<CustomEvent> events) =>
-        JsonSerializer.SerializeToNode(new CustomEventFile { Events = [.. Normalize(events)] }, WriteOptions)!;
+        Js.SerializeToNode(new CustomEventFile { Events = [.. Normalize(events)] }, WriteOptions)!;
 
     /// <summary>Giờ bắt đầu dạng Unix seconds (giờ VN như MyBK, không theo múi giờ máy); null nếu ngày hoặc giờ sai.</summary>
     public static long? StartTime(CustomEvent e) => e.StartWall is { } w ? Core.VnTime.FromWall(w) : null;

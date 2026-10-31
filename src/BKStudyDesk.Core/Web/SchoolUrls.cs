@@ -64,6 +64,13 @@ public static class SchoolUrls
 
     public static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : "";
 
+    /// <summary>
+    /// Đường dẫn của trang, bỏ phần ";jsessionid=..." (tham số sau dấu chấm phẩy) mà máy chủ Java như hệ thống đăng ký môn tự gắn vào.
+    /// Từ 28/10/2026 /dkmh trả dangKyMonHocForm.action;jsessionid=...: so nguyên đường dẫn thì không nhận ra đã tới trang, app mở lại
+    /// giữa chừng và lượt bị hủy bị báo thành lỗi mạng.
+    /// </summary>
+    public static string PagePath(Uri u) => string.Join('/', u.AbsolutePath.Split('/').Select(s => s.IndexOf(';') is var i and >= 0 ? s[..i] : s));
+
     /// <summary>Đang ở trang nhập mật khẩu SSO (phiên SSO đã hết hoặc chưa đăng nhập).</summary>
     public static bool IsSsoLogin(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.Equals(Host(Config.Str("sources.mybk.casLogin")), StringComparison.OrdinalIgnoreCase)

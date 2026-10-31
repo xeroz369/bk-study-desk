@@ -25,6 +25,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private IReadOnlyList<SubjectRow> _rows = [];
     private SubjectRow? _subject;
     private string _root = "", _dir = "";
+    private FolderHistory _history = new();   // nút Quay lại của tab Tài liệu; giữ qua lần dựng lại sau đồng bộ
     private readonly HashSet<TabItem> _filled = [];
     private int _gen;   // lượt đọc đĩa mới nhất; kết quả của lượt cũ (đã chọn môn khác, thư mục khác) thì bỏ
 
@@ -35,10 +36,16 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?, bool>? download, Action<string>? openLibrary) : this()
     {
         _keepDir = previous?._dir;
+        if (previous is not null) _history = previous._history;
         if (previous is not null) Tabs.SelectedIndex = previous.Tabs.SelectedIndex;
         _state = state;
         _download = download;
         _openLibrary = openLibrary;
+        Files.AddHandler(PointerPressedEvent, OnFilesPointer, RoutingStrategies.Tunnel, handledEventsToo: true);
+        RowMenus.Attach(Files, OnFileMenu);
+        RowMenus.Attach(Recent, OnRecentMenu);
+        RowMenus.Attach(Media, OnMediaMenu);
+        RowMenus.Attach(Due, OnDueMenu);
         // Dòng nhóm học kỳ: tắt container để không chọn, không dừng phím lên xuống ở đó.
         Subjects.ContainerPrepared += (_, e) =>
         {
@@ -145,6 +152,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         SubjectMeta.Text = SubjectsPresenter.Meta(s, _state.Timeline, _state.Lms, Format.Now);
         LmsButton.IsEnabled = DownloadButton.IsEnabled = ExamsButton.IsEnabled = s.OnLms;
         _root = Config.Str("folders.subjects") + "/" + s.Name;
+        if (!_history.Root.Equals(_root, StringComparison.OrdinalIgnoreCase)) _history.Reset(_root);
         if (changed) _dir = _keepDir is { } keep && keep.StartsWith(_root, StringComparison.OrdinalIgnoreCase) ? keep : _root;
         _keepDir = null;
         _filled.Clear();
@@ -161,7 +169,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private void FillTab()
     {
         if (_subject is not { } s || Tabs.SelectedItem is not TabItem tab || !_filled.Add(tab)) return;
-        if (tab == FilesTab)
+        if (tab == OverviewTab) ShowOverview(s);
+        else if (tab == FilesTab)
         {
             if (RecentToggle.IsChecked == true) _ = LoadRecentAsync(s);
             else _ = LoadDirAsync();
@@ -174,6 +183,52 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             ShowMedia(s);
         else if (tab == GradesTab)
             Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
+    }
+
+    /// <summary>Tab Tổng quan: ba phần, mỗi phần có tiêu đề và nút sang tab chi tiết; dòng thông báo bấm là đọc trong app.</summary>
+    private void ShowOverview(SubjectRow s)
+    {
+        OverviewPanel.Children.Clear();
+        var o = SubjectsPresenter.Overview(_state.Timeline, _state.Lms, _state.Mybk, s, Format.Now);
+        StackPanel Section(string title, TabItem? more)
+        {
+            var head = new DockPanel();
+            if (more is not null)
+            {
+                var go = new HyperlinkButton { Content = L.T("subjects.overview.more"), Padding = new Thickness(0) };
+                go.Click += (_, _) => Tabs.SelectedItem = more;
+                DockPanel.SetDock(go, Dock.Right);
+                head.Children.Add(go);
+            }
+            head.Children.Add(new TextBlock { Text = title, Classes = { "card-title" } });
+            var box = new StackPanel { Spacing = 6 };
+            box.Children.Add(head);
+            OverviewPanel.Children.Add(box);
+            return box;
+        }
+        void Line(StackPanel box, string main, string right, Action? open = null)
+        {
+            var row = new DockPanel();
+            var r = new TextBlock { Text = right, Classes = { "meta" }, Margin = new Thickness(12, 0, 0, 0) };
+            DockPanel.SetDock(r, Dock.Right);
+            row.Children.Add(r);
+            Control text = open is null ? new TextBlock { Text = main, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis }
+                : new HyperlinkButton { Content = new TextBlock { Text = main, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis }, Padding = new Thickness(0) };
+            if (text is HyperlinkButton h) h.Click += (_, _) => open!();
+            row.Children.Add(text);
+            box.Children.Add(row);
+        }
+        void Empty(StackPanel box, string text) => box.Children.Add(new TextBlock { Text = text, Classes = { "meta" } });
+
+        var due = Section(L.T("subjects.overview.due"), DueTab);
+        foreach (var d in o.Due) Line(due, d.Name, d.Left);
+        if (o.Due.Count == 0) Empty(due, L.T("subjects.dueEmpty"));
+        var news = Section(L.T("subjects.overview.news"), NewsTab);
+        foreach (var n in o.News) Line(news, n.Title, n.When, n.Read is { } read ? () => ReaderWindow.Open(this, read) : null);
+        if (o.News.Count == 0) Empty(news, L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
+        var grades = Section(L.T("subjects.overview.grades"), GradesTab);
+        foreach (var g in o.Grades) Line(grades, g, "");
+        if (o.Grades.Count == 0) Empty(grades, L.T("subjects.overview.noGrades"));
     }
 
     private static void Status(DataGrid grid, TextBlock empty, string text)
@@ -191,7 +246,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         var gen = ++_gen;
         var dir = _dir;
         ShowPath(dir);
-        UpButton.IsEnabled = !dir.Equals(_root, StringComparison.OrdinalIgnoreCase);
+        UpButton.IsEnabled = _history.CanGoBack(dir);
         var task = Task.Run(() => Documents.ListDir(dir));
         if (await Task.WhenAny(task, Task.Delay(150)) != task && gen == _gen) Status(Files, FilesEmpty, L.T("subjects.scanning"));
         JsonObject d;
@@ -253,11 +308,30 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         FillTab();
     }
 
-    private void OnUp(object? sender, RoutedEventArgs e)
+    private void OnUp(object? sender, RoutedEventArgs e) => GoBack();
+
+    /// <summary>Về thư mục vừa xem (FolderHistory); chưa đi đâu thì lên thư mục cha, không ra ngoài thư mục môn.</summary>
+    private void GoBack()
     {
-        if (_dir.Equals(_root, StringComparison.OrdinalIgnoreCase)) return;
-        _dir = _dir[.._dir.LastIndexOf('/')];
+        if (_history.Back(_dir) is not { } dir) return;
+        _dir = dir;
         _ = LoadDirAsync();
+    }
+
+    /// <summary>Mở một thư mục trong môn (thư mục con, một cấp trên thanh đường dẫn), ghi vào lịch sử để Quay lại.</summary>
+    private void GoTo(string dir)
+    {
+        _history.Went(_dir, dir);
+        _dir = dir;
+        _ = LoadDirAsync();
+    }
+
+    /// <summary>Nút lùi của chuột thì Quay lại (chuột phải chọn dòng: RowMenus).</summary>
+    private void OnFilesPointer(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(Files).Properties.IsXButton1Pressed) return;
+        GoBack();
+        e.Handled = true;
     }
 
     // Thanh đường dẫn (SubjectsPresenter.Crumbs): các cấp trên là HyperlinkButton có sẵn của Avalonia, cấp đang xem là chữ thường.
@@ -275,7 +349,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
                 continue;
             }
             var link = new HyperlinkButton { Content = new TextBlock { Text = name }, Padding = new Thickness(2, 0) };
-            link.Click += (_, _) => { _dir = path; _ = LoadDirAsync(); };
+            link.Click += (_, _) => GoTo(path);
             PathBar.Children.Add(link);
         }
     }
@@ -285,7 +359,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private async void OnFileOpen(object? sender, TappedEventArgs e)
     {
         if (Files.SelectedItem is not FileRow f) return;
-        if (f.Dir) { _dir += "/" + f.Name; _ = LoadDirAsync(); }
+        if (f.Dir) GoTo(_dir + "/" + f.Name);
         else
         {
             DocReads.Set(_dir + "/" + f.Name, f.Modified, read: true);
@@ -293,10 +367,10 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         }
     }
 
-    /// <summary>Enter mở, Backspace lên thư mục cha (như trình quản lý file).</summary>
+    /// <summary>Enter mở, Backspace thì Quay lại (như trình quản lý file). Alt+Trái để cho cửa sổ (quay lại trang trước), không xử lý hai lần.</summary>
     private void OnFilesKey(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Back) { OnUp(sender, e); e.Handled = true; }
+        if (e.Key == Key.Back) { GoBack(); e.Handled = true; }
         else if (e.Key == Key.Enter) { OnFileOpen(sender, null!); e.Handled = true; }
     }
 
@@ -307,9 +381,44 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         await Opener.OpenAsync(this, r.Path);
     }
 
+    /// <summary>
+    /// Menu chuột phải của tab Tài liệu. File: Mở, Mở thư mục chứa, đánh dấu đã đọc, sao chép tên và đường dẫn. Thư mục: Mở,
+    /// Mở trong trình quản lý file, sao chép. Chỗ trống: Quay lại, Mở thư mục này, Làm mới.
+    /// </summary>
     private void OnFileMenu(object? sender, EventArgs e)
     {
-        if (sender is MenuFlyout m) Fill(m, Files.SelectedItem is FileRow f ? (f.Name, _dir + "/" + f.Name) : null);
+        if (sender is not MenuFlyout m) return;
+        m.Items.Clear();
+        if (Files.SelectedItem is not FileRow f)
+        {
+            m.Items.Add(Item(L.T("subjects.back"), () => GoBack(), _history.CanGoBack(_dir)));
+            m.Items.Add(Item(L.T("subjects.openFolder"), () => _ = Opener.OpenAsync(this, _dir)));
+            m.Items.Add(Item(L.T("subjects.refresh"), () => _ = LoadDirAsync()));
+            return;
+        }
+        var rel = _dir + "/" + f.Name;
+        if (f.Dir)
+        {
+            m.Items.Add(Item(L.T("common.open"), () => GoTo(rel)));
+            m.Items.Add(Item(L.T("subjects.openInFiles"), () => _ = Opener.OpenAsync(this, rel)));
+        }
+        else
+        {
+            m.Items.Add(Item(L.T("common.open"), () => { DocReads.Set(rel, f.Modified, read: true); _ = Opener.OpenAsync(this, rel); }));
+            m.Items.Add(Item(L.T("files.reveal"), () => _ = Opener.RevealAsync(this, rel)));
+            var read = DocReads.Marks.IsRead(rel, f.Modified);
+            m.Items.Add(Item(L.T(read ? "subjects.markUnread" : "subjects.markRead"), () => DocReads.Set(rel, f.Modified, !read)));
+        }
+        m.Items.Add(new Separator());
+        m.Items.Add(Item(L.T("common.copyName"), () => _ = Copy(f.Name)));
+        m.Items.Add(Item(L.T("common.copyPath"), () => _ = Copy(Paths.StudyPath(rel) ?? rel)));
+
+        static MenuItem Item(string header, Action run, bool enabled = true)
+        {
+            var i = new MenuItem { Header = header, IsEnabled = enabled };
+            i.Click += (_, _) => run();
+            return i;
+        }
     }
 
     private void OnRecentMenu(object? sender, EventArgs e)
@@ -350,9 +459,31 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (Due.SelectedItem is CalendarRow { Url: { } url }) await OpenUrl(url);
     }
 
+    /// <summary>Menu chuột phải của tab Cần làm: Xem đề bài (bản lưu, đọc được khi LMS sập), Mở trên LMS.</summary>
+    private void OnDueMenu(object? sender, EventArgs e)
+    {
+        if (sender is not MenuFlyout menu) return;
+        menu.Items.Clear();
+        if (Due.SelectedItem is not CalendarRow row) return;
+        if (_state.Lms?.Events.FirstOrDefault(x => x.Id == row.Id) is { } ev && SubjectsPresenter.IntroReading(ev) is { } intro)
+        {
+            var read = new MenuItem { Header = L.T("reader.intro") };
+            read.Click += (_, _) => ReaderWindow.Open(this, intro);
+            menu.Items.Add(read);
+        }
+        if (row.Url is { Length: > 0 } url)
+        {
+            var open = new MenuItem { Header = L.T("reader.openLms") };
+            open.Click += async (_, _) => await OpenUrl(url);
+            menu.Items.Add(open);
+        }
+    }
+
     private async void OnNewsOpen(object? sender, TappedEventArgs e)
     {
-        if (News.SelectedItem is SubjectNews { Url: { } url }) await OpenUrl(url);
+        // Đọc trong app (bản đã lưu, đọc được cả khi LMS sập); trong đó có nút Mở trên LMS.
+        if (News.SelectedItem is SubjectNews { Read: { } read }) ReaderWindow.Open(this, read);
+        else if (News.SelectedItem is SubjectNews { Url: { } url }) await OpenUrl(url);
     }
 
     // ------------------------------------------------------------------ tab Video và liên kết
@@ -390,6 +521,12 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         if (Media.SelectedItem is not MediaRow { Url.Length: > 0 } m) return;
         MarkSeen(m, true);
+        // Trang LMS đã lưu nội dung: đọc trong app (cả khi LMS sập), trong đó có nút Mở trên LMS.
+        if (m.Kind == SoHocTap.Sources.Lms.MediaKind.Page && _subject is { } s && SubjectsPresenter.PageReading(m.Url, m.Name, s.Name) is { } page)
+        {
+            ReaderWindow.Open(this, page);
+            return;
+        }
         await OpenUrl(m.Url);
     }
 

@@ -313,7 +313,7 @@ public static partial class MybkNormalize
             var text = cells.Where(c => !times.Contains(c) && !c.All(char.IsDigit)).ToList();
             // Giờ trên trang là giờ VN: đổi bằng offset cố định, không theo múi giờ của máy. Ngày sai (31/02) thì bỏ dòng, không throw.
             if (VnTime.ParseDateTime(times[0]) is not { } start || VnTime.ParseDateTime(times[1]) is not { } end) continue;
-            list.Add(new JsonObject { ["code"] = text.ElementAtOrDefault(0) ?? "", ["name"] = text.ElementAtOrDefault(1) ?? "", ["start"] = start, ["end"] = end });
+            list.Add((JsonNode)new JsonObject { ["code"] = text.ElementAtOrDefault(0) ?? "", ["name"] = text.ElementAtOrDefault(1) ?? "", ["start"] = start, ["end"] = end });
         }
         return list;
     }

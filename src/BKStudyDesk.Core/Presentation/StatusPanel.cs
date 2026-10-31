@@ -8,7 +8,8 @@ namespace SoHocTap.Presentation;
 /// chi tiết kỹ thuật, và có cần đăng nhập lại không (View hiện nút Đăng nhập lại, còn lại là Thử lại).
 /// </summary>
 /// <param name="Id">Tên nguồn trong SourceHub (SourceIds), để đồng bộ riêng nguồn này từ bảng Thông báo.</param>
-public sealed record SourceState(string Label, string State, string? Problem, string? Detail, bool Syncing, bool NeedsLogin, string Id = "");
+/// <param name="Partial">Đồng bộ xong nhưng một phần không đọc được (cảnh báo): không tính là lỗi trên thanh trên cùng.</param>
+public sealed record SourceState(string Label, string State, string? Problem, string? Detail, bool Syncing, bool NeedsLogin, string Id = "", bool Partial = false);
 
 /// <summary>Một thông báo trong app (nhắc hạn, có bản mới, đăng nhập xong); Page là trang mở khi bấm.</summary>
 public sealed record Notice(long Time, string Title, string Body, string Page);
@@ -29,12 +30,21 @@ public static class StatusPanel
             state = L.F("status.syncedAt", label, Format.DayDiff(t) == 0 ? Format.Hm(t) : Format.DateTime(t));
         else state = L.F("status.neverSynced", label);
         string? problem = null, detail = null;
-        if (!syncing && s.ExplainError(name, label) is { } err) (problem, detail) = err;
-        else if (!syncing && s.Warnings(name) is { Count: > 0 } w) (problem, detail) = (string.Join("; ", w.Select(x => x.What).Distinct()), string.Join("\n", w.Select(x => x.Detail)));
+        if (!syncing && s.ExplainError(name, label) is { } err)
+        {
+            (problem, detail) = err;
+            if (s.SyncedAt(name) is { } saved) state = L.F("status.savedCopy", label, When(saved));   // không vào được: đang xem bản lưu
+        }
+        var partial = false;
+        if (problem is null && !syncing && s.Warnings(name) is { Count: > 0 } w)
+            (problem, detail, partial) = (string.Join("; ", w.Select(x => x.What).Distinct()), string.Join("\n", w.Select(x => x.Detail)), true);
         var need = s.Account;
         var login = !syncing && problem is not null && (need == AccountNeed.Both || (name == SourceIds.Lms ? need == AccountNeed.Lms : need == AccountNeed.Mybk));
-        return new SourceState(label, state, problem, detail, syncing, login, name);
+        return new SourceState(label, state, problem, detail, syncing, login && !partial, name, partial);
     }
+
+    /// <summary>Giờ đồng bộ ngắn gọn: hôm nay ghi giờ, ngày khác ghi ngày giờ.</summary>
+    public static string When(long t) => Format.DayDiff(t) == 0 ? Format.Hm(t) : Format.DateTime(t);
 
     /// <summary>
     /// Chữ trên nút ở thanh trên cùng (ngắn, một dòng): đang đồng bộ, lỗi ở nguồn nào, hay giờ xong gần nhất; có thông báo chưa xem thì
@@ -42,13 +52,14 @@ public static class StatusPanel
     /// </summary>
     public static (string Text, bool Attention) Bar(IReadOnlyList<SourceState> rows, int unread, long? lastSynced)
     {
-        var failed = rows.Where(r => r.Problem is not null).Select(r => r.Label).ToList();
+        var failed = rows.Where(r => r.Problem is not null && !r.Partial).Select(r => r.Label).ToList();
+        var partial = rows.Any(r => r.Partial);
         var text = rows.Any(r => r.Syncing) ? L.T("status.bar.syncing")
             : failed.Count > 0 ? L.F("status.bar.failed", string.Join(", ", failed))
             : lastSynced is { } t ? L.F("status.bar.synced", Format.DayDiff(t) == 0 ? Format.Hm(t) : Format.Local(t).ToString("dd/MM", System.Globalization.CultureInfo.InvariantCulture))
             : L.T("status.bar.never");
         if (unread > 0) text += $" ({unread})";
-        return (text, failed.Count > 0 || unread > 0);
+        return (text, failed.Count > 0 || partial || unread > 0);
     }
 }
 

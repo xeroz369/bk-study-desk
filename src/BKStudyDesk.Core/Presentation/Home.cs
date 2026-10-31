@@ -5,7 +5,8 @@ using SoHocTap.Ui;
 namespace SoHocTap.Presentation;
 
 /// <summary>Một việc cần làm: ô ngày, tên, dòng phụ (môn, nhãn, giờ), còn bao lâu và trạng thái nộp; Url mở bằng trình duyệt.</summary>
-public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub, string Left, Urgency Level, string State, string? Url)
+/// <param name="Group">Dòng gom nhiều việc giống nhau (TodoGroups); Indent: việc con của một nhóm đang xổ ra.</param>
+public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub, string Left, Urgency Level, string State, string? Url, bool Group = false, bool Indent = false)
 {
     /// <summary>Cột phải màu Danger (quá hạn, rất gấp) hay Warn (gấp): View gắn class theo hai cờ này.</summary>
     public bool IsDanger => Level is Urgency.Overdue or Urgency.Urgent;
@@ -18,7 +19,7 @@ public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub,
 /// <summary>Một mốc sắp tới (buổi học, thi): ô giờ bắt đầu và kết thúc, tên, dòng phụ (phòng), cột phải (Hôm nay, còn N ngày).</summary>
 public sealed record AgendaItem(string Id, DateTime Day, string Start, string End, string Title, string Sub, string Right);
 
-public sealed record NewsItem(string Title, string Sub, string Ago, string? Url);
+public sealed record NewsItem(string Title, string Sub, string Ago, string? Url, Reading? Read = null);
 
 public sealed record RegItem(string Code, string Name, string When, string Status, bool Open);
 
@@ -69,7 +70,7 @@ public static class HomePresenter
         }
 
         var newsItems = news.Where(a => a.Time > now - NewsDays * 86400L).OrderByDescending(a => a.Time)
-            .Select(a => new NewsItem(a.Title, a.Subject, Format.Ago(a.Time), a.Url)).ToList();
+            .Select(a => new NewsItem(a.Title, a.Subject, Format.Ago(a.Time), a.Url, SubjectsPresenter.ReadingOf(a))).ToList();
 
         var regs = Registrations.Upcoming(mybk?.Registrations ?? [], now).Select(r =>
         {
@@ -79,6 +80,13 @@ public static class HomePresenter
         }).ToList();
 
         return new HomeModel(hasLms, mybk is not null, todo, [.. upcoming.OrderBy(u => u.Time).Select(u => u.Item)], newsItems, regs);
+    }
+
+    /// <summary>Dòng dưới ngày ở Hôm nay: giờ đồng bộ gần nhất của LMS và MyBK (hôm nay ghi giờ, ngày khác ghi ngày giờ).</summary>
+    public static string SyncLine(long? lms, long? mybk)
+    {
+        static string At(long? t) => t is { } x ? StatusPanel.When(x) : L.T("home.sync.never");
+        return L.F("home.sync", At(lms), At(mybk));
     }
 
     /// <summary>"Giải tích 2, Hạn nộp 23:59"; mốc không rõ giờ thì bỏ giờ.</summary>

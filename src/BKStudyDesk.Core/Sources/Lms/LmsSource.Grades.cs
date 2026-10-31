@@ -40,7 +40,7 @@ public sealed partial class LmsSource
                     }).ToArray();
                 // Chỉ có row tổng (giảng viên chưa tạo mục điểm nào) thì bỏ.
                 if (!items.Any(i => i!["kind"]?.GetValue<string>() is not ("course" or "category"))) continue;
-                list.Add(new JsonObject { ["course"] = c.Id, ["subject"] = c.Subject, ["part"] = c.Part, ["items"] = new JsonArray(items) });
+                list.Add((JsonNode)new JsonObject { ["course"] = c.Id, ["subject"] = c.Subject, ["part"] = c.Part, ["items"] = new JsonArray(items) });
             }
             catch (Exception e) when (Recoverable(e, ct)) { Warn($"sổ điểm {c.Subject}", e); }
         }

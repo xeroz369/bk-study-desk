@@ -14,6 +14,26 @@ public sealed partial class LmsSource
     /// <summary>Sync và tải theo mục cùng ghi vào index file (lms-files.json) nên không được chạy song song.</summary>
     private static readonly SemaphoreSlim Gate = new(1, 1);
 
+    /// <summary>
+    /// Chỉ đọc tin nhắn riêng (sources.lms.messagesMinutes phút một lần, ngoài lượt đồng bộ LMS đầy đủ 3 giờ): 2 request, cộng 1 mỗi
+    /// hội thoại có tin mới. Lượt đầy đủ đang chạy thì bỏ qua (lượt đó cũng đọc tin nhắn). true nếu đã ghi file tin nhắn.
+    /// </summary>
+    public static async Task<bool> SyncMessagesAsync(CancellationToken ct)
+    {
+        if (!HasToken || !await Gate.WaitAsync(0, ct)) return false;
+        try
+        {
+            var info = await CallAsync("core_webservice_get_site_info", [], ct);
+            if (info["userid"]?.GetValue<long>() is not { } uid) return false;
+            if (await OptionalAsync("tin nhắn LMS", () => CollectMessagesAsync(uid, LmsMessagesStore.Raw(), ct), ct) is not { } messages) return false;
+            if (!HasToken) return false;   // vừa đăng xuất trong lúc đọc: không ghi lại tin nhắn của tài khoản cũ
+            LmsMessagesStore.Write(messages);
+            return true;
+        }
+        catch (Exception e) when (Recoverable(e, ct) || e is SessionExpiredException) { Log.Debug($"Tin nhắn LMS (lượt nhanh): {e.Message}"); return false; }
+        finally { Gate.Release(); }
+    }
+
     public async Task SyncAsync(Action<string> log, bool force, CancellationToken ct)
     {
         await Gate.WaitAsync(ct);
@@ -50,6 +70,17 @@ public sealed partial class LmsSource
         catch (Exception e) when (Recoverable(e, ct)) { Warn(what, e); return fallback; }
     }
 
+    /// <summary>
+    /// Phần thêm không bắt buộc (tin nhắn, trang): như <see cref="PartAsync"/>, nhưng LMS báo không có quyền gọi API
+    /// (SessionExpiredException từ accessexception) cũng chỉ cảnh báo. Phiên hết thật thì các bước trước đã báo rồi.
+    /// </summary>
+    private static async Task<JsonObject?> OptionalAsync(string what, Func<Task<JsonObject>> work, CancellationToken ct)
+    {
+        try { return await work(); }
+        catch (SessionExpiredException e) { Warn(what, e); return null; }
+        catch (Exception e) when (Recoverable(e, ct)) { Warn(what, e); return null; }
+    }
+
     /// <summary>Bản đồng bộ (không async) của <see cref="PartAsync"/>, cho việc ghi file trên máy.</summary>
     private static bool Part(string what, Action work, CancellationToken ct)
     {
@@ -71,6 +102,7 @@ public sealed partial class LmsSource
             .Add("sync.lms.events", 2)
             .Add("sync.lms.quizzes", 2)
             .Add("sync.lms.news", weight: null)
+            .Add("sync.lms.messages", 2)
             .Add("sync.lms.grades", weight: null);
         if (autoDownload) plan.Add("sync.lms.files", weight: null, reserved: true).Add("sync.lms.assign");
         plan.CapUntilDone("sync.lms.check", 0.33);
@@ -161,6 +193,14 @@ public sealed partial class LmsSource
             Report(plan.Enter("sync.lms.news"));
             announcements = await PartAsync("thông báo LMS", () => CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct),
                 prev["announcements"]?.DeepClone() as JsonArray ?? [], ct);
+            await PartAsync("file thông báo LMS", async () => { await SaveAnnouncementFilesAsync(announcements, ct); return true; }, false, ct);
+            Report(plan.Enter("sync.lms.messages"));
+            // Tin nhắn riêng (data/lms-messages.json) và nội dung trang (data/lms-pages.json): phần thêm, lỗi thì giữ bản đã lưu.
+            // OptionalAsync: LMS chặn API (accessexception, LmsClient coi như hết phiên) thì chỉ cảnh báo, không dừng cả lượt đồng bộ.
+            if (await OptionalAsync("tin nhắn LMS", () => CollectMessagesAsync(uid, LmsMessagesStore.Raw(), ct), ct) is { } messages)
+                Part("lưu tin nhắn LMS", () => LmsMessagesStore.Write(messages), ct);
+            if (current.Count > 0 && await OptionalAsync("trang LMS", () => CollectPagesAsync(current, LmsPagesStore.Raw(), ct), ct) is { } pages)
+                Part("lưu trang LMS", () => LmsPagesStore.Write(pages), ct);
             Report(plan.Enter("sync.lms.grades"));
             grades = await PartAsync("sổ điểm LMS", () => CollectGradesAsync(classes, uid, ct), prev["grades"]?.DeepClone() as JsonArray ?? [], ct);
         }

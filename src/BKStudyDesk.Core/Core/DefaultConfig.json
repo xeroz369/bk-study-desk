@@ -25,7 +25,11 @@
       "saveQuizzes": true,
       "groupPattern": "(?<![A-Za-z0-9])L[0-9]{2,3}(?![A-Za-z0-9])",
       "announcementDays": 120,
-      "announcementsPerForum": 10
+      "announcementsPerForum": 10,
+      "announcementFiles": true,
+      "announcementFileMb": 25,
+      "conversations": 50,
+      "messagesMinutes": 30
     },
     "mybk": {
       "site": "https://mybk.hcmut.edu.vn",
@@ -202,11 +206,18 @@
           "post": "share/ket-qua-hoc-tap/thong-tin-tinh-trang-diem-thanh-phan-mon-hoc/v2",
           "body": "{id}"
         },
+        "refreshGrades": {
+          "post": "share/ket-qua-hoc-tap/cap-nhat-diem-trung-binh-tich-luy-hoc-ky-chung/v2?tuychon=BANGDIEM"
+        },
+        "refreshCurriculum": {
+          "post": "share/ket-qua-hoc-tap/cap-nhat-tien-do-hoan-thanh-ctdt/v2"
+        },
         "decisions": "v1/student/status-decision/by-student-code/{mssv}",
         "socialWork": "v1/student-activities/social-workdays/by-student-code/{mssv}",
         "fees": "v1/tuition-fees/by-student-code/{mssv}",
         "registered": "v1/course-register-results/by-student-code/{mssv}"
       },
+      "refreshOnForce": false,
       "syncHours": 12,
       "minSyncHours": 6,
       "gapMs": 100,
@@ -240,6 +251,7 @@
     "archiveOldVersions": "_Lưu trữ/Bản cũ",
     "lmsSubfolder": "Tài liệu LMS",
     "downloadsSubfolder": "Tải ngoài",
+    "announcementsSubfolder": "Thông báo",
     "archiveArchives": "_Lưu trữ/File nén đã giải nén",
     "librarySubfolder": "Thư viện"
   },

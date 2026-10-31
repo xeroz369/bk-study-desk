@@ -24,6 +24,8 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 
     internal CalendarView(AppState state) : this()
     {
+        RowMenus.Attach(Upcoming, OnUpcomingMenu);
+        RowMenus.Attach(Week, OnWeekMenu);
         _state = state;
         ShowClasses.IsChecked = _showClasses;
         ShowDone.IsChecked = _showDone;

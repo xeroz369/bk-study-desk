@@ -296,14 +296,14 @@ public sealed partial class LmsSource
                     if (f["type"]?.GetValue<string>() == "file")
                     {
                         var p = local.GetValueOrDefault(f["fileurl"]?.GetValue<string>() ?? "");
-                        files.Add(new JsonObject { ["name"] = f["filename"]?.GetValue<string>(), ["size"] = f["filesize"]?.GetValue<long>(), ["path"] = p is not null && File.Exists(p) ? Paths.RelativeToStudy(p) : null });
+                        files.Add((JsonNode)new JsonObject { ["name"] = f["filename"]?.GetValue<string>(), ["size"] = f["filesize"]?.GetValue<long>(), ["path"] = p is not null && File.Exists(p) ? Paths.RelativeToStudy(p) : null });
                     }
                     else if (f["type"]?.GetValue<string>() == "url")
-                        files.Add(new JsonObject { ["name"] = f["filename"]?.GetValue<string>(), ["url"] = f["fileurl"]?.GetValue<string>() });
+                        files.Add((JsonNode)new JsonObject { ["name"] = f["filename"]?.GetValue<string>(), ["url"] = f["fileurl"]?.GetValue<string>() });
                 }
                 var html = mod["description"]?.GetValue<string>() ?? "";
                 var text = type == "label" ? TagRx().Replace(WebUtility.HtmlDecode(html), " ").Trim() : "";
-                mods.Add(new JsonObject
+                mods.Add((JsonNode)new JsonObject
                 {
                     ["id"] = mod["id"]?.GetValue<long>(),
                     ["name"] = WebUtility.HtmlDecode(mod["name"]?.GetValue<string>() ?? ""),
@@ -315,7 +315,7 @@ public sealed partial class LmsSource
                     ["links"] = type == "label" ? new JsonArray([.. LmsMedia.LinksIn(html).Select(l => (JsonNode)l)]) : null,
                 });
             }
-            if (mods.Count > 0) sections.Add(new JsonObject { ["name"] = WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? ""), ["modules"] = mods });
+            if (mods.Count > 0) sections.Add((JsonNode)new JsonObject { ["name"] = WebUtility.HtmlDecode(sec["name"]?.GetValue<string>() ?? ""), ["modules"] = mods });
         }
         var d = m.ToJson();
         d["savedAt"] = Now();
