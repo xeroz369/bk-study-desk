@@ -8,6 +8,43 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-06
+
+### Added
+
+- New, more compact interface: the top bar has Today, LMS, MyBK, Calendar, a search box in the middle (Ctrl+K), the status button, and Inbox and Settings icons.
+- The Inbox opens as a right-hand drawer and shows conversations like the LMS messaging panel.
+- The LMS page holds Subjects and Library. A subject card has Overview, Files, Upcoming, Announcements, Videos and links, Practice and LMS grades tabs.
+- The Files tab has search, type filters, and an all files or by folder view.
+- LMS and MyBK pages open inside the app with an address bar and back, forward and reload buttons; Settings can switch to the default browser.
+- To do shows when a quiz opens. Submitted or answered items stay listed with a green tag instead of a red warning.
+- Grouped rows (such as surveys for several subjects) show the due time, the subjects still to do and the ones already sent.
+- Export the timetable through BKalendar to add it to Google Calendar.
+- Offline mode: stop connecting to the university and keep browsing saved data.
+- A Sync MyBK switch in Settings: turn it off to keep LMS only.
+- Deadline reminders keep data refreshed at least once a day (adjustable).
+- Back up your data to a zip file.
+- Images in announcements, forum replies, messages and LMS pages are saved and show even when LMS is down.
+
+### Changed
+
+- On-demand sync: MyBK loads only the section you are viewing when its saved copy is stale, with requests spaced out instead of in one burst; opening a subject checks only that course on LMS.
+- While you are away from the computer, the app does not sync or sign in.
+- No more hourly SSO keep-alive: the app uses the current session until the university ends it, then signs in once through a single portal. LMS and MyBK no longer fill in the password at the same time.
+- A compact status panel: one row per source with an open icon and a sync icon.
+- Settings are split into sections chosen from the left column instead of one long page.
+- Shorter, more consistent interface text; near-square corners and a denser layout.
+- The Linux AppImage is smaller.
+
+### Fixed
+
+- An empty MyBK timetable in the middle of a term no longer wipes the saved one; the Calendar page states the real reason when the timetable is missing.
+- A slow MyBK API is no longer reported as an expired session. MyBK syncs right after you sign in.
+- The timetable no longer scrolls to an empty evening.
+- The BKalendar export skips classes with broken times instead of breaking the whole paste, and gets the weeks right for the summer term.
+- Organize Downloads moves files only when there are matches, and writes to the activity log.
+- Exams list upcoming terms first. LMS submission receipts no longer count as unread.
+
 ## [1.2.8] - 2026-10-31
 
 ### Added
@@ -442,7 +479,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...v1.3.0
 [1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6

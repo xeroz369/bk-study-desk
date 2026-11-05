@@ -1,5 +1,5 @@
-<!-- Trang của trường trong cửa sổ app (bản 1.x: Ui/SchoolWindow): dùng chung phiên đăng nhập của app. Một dòng trạng thái (đang tải chậm,
-     lỗi tải) có nút Thử lại; nút Mở trên trình duyệt. Chữ: lang/*.json. -->
+<!-- Trang của trường trong cửa sổ app (bản 1.x: Ui/SchoolWindow): dùng chung phiên đăng nhập của app. Thanh trên như trình duyệt: lùi, tiến,
+     tải lại, thanh địa chỉ (Enter để đi), mở bằng trình duyệt của máy; tải chậm hay lỗi thì báo bên phải kèm Thử lại. Chữ: lang/*.json. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
@@ -10,11 +10,25 @@
         <Border DockPanel.Dock="Top" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1"
                 MinHeight="{StaticResource CardHeaderHeight}" Padding="16,8">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="Retry" Content="{l:T web.retry}" IsVisible="False" Click="OnRetry" />
-                    <Button Content="{l:T common.openWeb}" Click="OnBrowser" />
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="2" Margin="0,0,8,0">
+                    <Button x:Name="BackButton" Classes="icon" ToolTip.Tip="{l:T web.back}" AutomationProperties.Name="{l:T web.back}" Click="OnBack" IsEnabled="False">
+                        <PathIcon Data="{StaticResource IconBack}" />
+                    </Button>
+                    <Button x:Name="ForwardButton" Classes="icon" ToolTip.Tip="{l:T web.forward}" AutomationProperties.Name="{l:T web.forward}" Click="OnForward" IsEnabled="False">
+                        <PathIcon Data="{StaticResource IconForward}" />
+                    </Button>
+                    <Button Classes="icon" ToolTip.Tip="{l:T web.reload}" AutomationProperties.Name="{l:T web.reload}" Click="OnRetry">
+                        <PathIcon Data="{StaticResource IconRefresh}" />
+                    </Button>
                 </StackPanel>
-                <TextBlock x:Name="Status" Classes="meta" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" Margin="8,0,0,0">
+                    <TextBlock x:Name="Status" Classes="meta" VerticalAlignment="Center" MaxWidth="320" TextTrimming="CharacterEllipsis" IsVisible="False" />
+                    <Button x:Name="Retry" Content="{l:T web.retry}" IsVisible="False" Click="OnRetry" />
+                    <Button Classes="icon" ToolTip.Tip="{l:T common.openWeb}" AutomationProperties.Name="{l:T common.openWeb}" Click="OnBrowser">
+                        <PathIcon Data="{StaticResource IconOpenNew}" />
+                    </Button>
+                </StackPanel>
+                <TextBox x:Name="Address" VerticalAlignment="Center" KeyDown="OnAddressKey" />
             </DockPanel>
         </Border>
         <Border x:Name="Host" />

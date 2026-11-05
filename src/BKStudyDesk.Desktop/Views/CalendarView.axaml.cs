@@ -6,6 +6,7 @@ using SoHocTap.Core;
 using SoHocTap.Data;
 using SoHocTap.Presentation;
 using SoHocTap.Shell;
+using SoHocTap.Sources.Mybk;
 using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
@@ -43,6 +44,24 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
     public void SelectTab(int index) => Tabs.SelectedIndex = Math.Clamp(index, 0, Tabs.ItemCount - 1);
 
     public int Tab { get => Tabs.SelectedIndex; set => SelectTab(value); }
+
+    /// <summary>
+    /// Xuất qua BKalendar (bkalendar.github.io): chép thời khóa biểu theo đúng bảng của MyBK vào bộ nhớ tạm rồi mở trang bằng trình
+    /// duyệt; người dùng dán vào, BKalendar đưa vào Google Calendar. App không đăng nhập Google, không gửi gì đi.
+    /// </summary>
+    private async void OnBkalendar(object? sender, RoutedEventArgs e)
+    {
+        // Nothing to export: give the same cause as the timetable tab, not always "sign in".
+        if (BkalendarExport.Text(_state.Mybk) is not { } text)
+        {
+            Say((_state.Mybk?.Schedule.Count > 0 ? null : NoteFor(0).Text) ?? L.T("calendar.bkalendarNoData"));
+            return;
+        }
+        if (TopLevel.GetTopLevel(this) is not { Clipboard: { } clipboard } top) return;
+        await Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync(clipboard, text);
+        await top.Launcher.LaunchUriAsync(new Uri(Config.Str("app.bkalendarUrl", "https://bkalendar.github.io/")));
+        Say(L.F("calendar.bkalendarDone", text.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length - 2));
+    }
 
     private void Say(string text)
     {
@@ -91,15 +110,27 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
         {
             Week.IsVisible = false;
             var blocks = WeekGridPresenter.Blocks(_state.Mybk, CustomEventsData.Store.All(), monday, _state.Courses());
+            var note = NoteFor(blocks.Count);
             WeekGrid.Show(monday, blocks);
-            WeekGrid.IsVisible = true;
-            WeekEmpty.Text = _state.NoDataReason(SourceIds.Mybk, "MyBK") ?? L.T("calendar.weekEmpty");
-            WeekEmpty.IsVisible = blocks.Count == 0;
+            WeekGrid.IsVisible = note.ShowGrid;   // empty term, nothing of the user's own: no empty 0:00 to 24:00 grid
+            ShowWeekNote(note.Text);
             return;
         }
         WeekGrid.IsVisible = false;
         var rows = WeekPresenter.Rows(_state.Mybk, CustomEventsData.Store.All(), monday);
-        Tables.Show(Week, WeekEmpty, Tables.Grouped(rows, nameof(WeekRow.Group)), _state.NoDataReason(SourceIds.Mybk, "MyBK") ?? L.T("calendar.termEmpty"));
+        // The list holds every class of the term, so only an empty term has a line to say.
+        Tables.Show(Week, WeekEmpty, Tables.Grouped(rows, nameof(WeekRow.Group)), "");
+        ShowWeekNote(NoteFor(rows.Count).Text);
+    }
+
+    /// <summary>Why the timetable is empty: sync off, signed out, no data yet, MyBK has none for the term, or no class this week.</summary>
+    private TimetableNote NoteFor(int shown) => WeekPresenter.Note(_state.Mybk, Settings.Sync.MybkEnabled,
+        MybkSource.SignedIn && _state.Account is not (AccountNeed.Mybk or AccountNeed.Both), _state.NoDataReason(SourceIds.Mybk, "MyBK"), shown);
+
+    private void ShowWeekNote(string? text)
+    {
+        WeekEmpty.Text = text ?? "";
+        WeekEmpty.IsVisible = text is not null;
     }
 
     private void OnView(object? sender, SelectionChangedEventArgs e)

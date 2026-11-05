@@ -196,7 +196,7 @@ public static class SubjectsPresenter
             string.Join(", ", s.Courses.Select(c => c.Code.Split('_')[0]).Distinct()),
             s.Files is { } n ? L.F("subjects.docs", n) : "",
             // Tên đã mở đầu bằng loại ("Quiz 3: ...") thì bỏ chữ loại để khỏi lặp "Quiz Quiz 3".
-            next is null ? "" : L.F("subjects.next", next.Name.StartsWith(next.KindName, StringComparison.CurrentCultureIgnoreCase) ? "" : next.KindName, next.Name, next.Left).Trim(),
+            next is null ? "" : L.F("subjects.next", next.Name.StartsWith(next.KindName, StringComparison.CurrentCultureIgnoreCase) ? "" : next.KindName, Short(TodoGroups.Clean(next.Name)), next.Left).Trim(),
             total is null ? "" : L.F("subjects.lmsScore", Format.Score(total.Grade), Format.Score(total.Max)));
     }
 
@@ -204,7 +204,10 @@ public static class SubjectsPresenter
     /// <summary>Tab Tổng quan: <paramref name="take"/> hạn chưa xong gần nhất, <paramref name="take"/> thông báo mới nhất, dòng điểm tổng.</summary>
     public static SubjectOverview Overview(IReadOnlyList<TimelineItem> timeline, LmsData? lms, MybkData? mybk, SubjectRow s, long now, int take = 3)
     {
-        var due = Due(timeline, s, now).Where(r => r.State != L.T("timeline.done")).Take(take).ToList();
+        // Mốc mở (quiz, khảo sát) không phải hạn: bỏ, kẻo một bài hiện hai dòng (mở và đóng). Tên bỏ mã kỳ "[261] " như ở Hôm nay.
+        var opens = timeline.Where(t => t.Opens).Select(t => t.Id).ToHashSet();
+        var due = Due(timeline, s, now).Where(r => r.State != L.T("timeline.done") && !opens.Contains(r.Id))
+            .Take(take).Select(r => r with { Name = TodoGroups.Clean(r.Name) }).ToList();
         var news = News(lms, s).Take(take).ToList();
         var grades = Grades(lms, s).Where(g => g.Total && g.GradeText.Length > 0)
             .Select(g => L.F("subjects.overview.lmsGrade", g.Part, g.GradeText, g.MaxText)).ToList();
@@ -259,16 +262,20 @@ public static class SubjectsPresenter
         if (a.Posts is not { Count: > 0 } posts) return main;
         // Chuỗi trả lời: mỗi trả lời một dòng đầu "Trả lời của X, giờ" rồi nội dung; link, file gộp xuống cuối.
         var paragraphs = main.Paragraphs.ToList();
+        var blocks = (main.Blocks ?? []).ToList();
         var links = main.Links.ToList();
         var files = main.Attachments.ToList();
         foreach (var p in posts.Where(p => p is not null))
         {
-            paragraphs.Add(L.F("reader.reply", p.Author ?? "", Format.DateTime(p.Time)));
+            var head = L.F("reader.reply", p.Author ?? "", Format.DateTime(p.Time));
+            paragraphs.Add(head);
             paragraphs.AddRange(LmsReading.Paragraphs(p.Message));
+            blocks.Add(new ReadingBlock(head));
+            blocks.AddRange(LmsReading.Blocks(p.Message));
             links.AddRange(LmsReading.Links(p.Message).Select(LmsReading.Browsable));
             files.AddRange((p.Attachments ?? []).Where(f => f is not null).Select(LmsReading.Browsable));
         }
-        return main with { Paragraphs = paragraphs, Links = [.. links.DistinctBy(l => l.Url)], Attachments = files };
+        return main with { Paragraphs = paragraphs, Links = [.. links.DistinctBy(l => l.Url)], Attachments = files, Blocks = blocks };
     }
 
     public static IReadOnlyList<GradeRow> Grades(LmsData? lms, SubjectRow s) =>
@@ -293,6 +300,9 @@ public static class SubjectsPresenter
             .Where(r => !unreadOnly || !r.Read)];
 
     private static IEnumerable<LmsGradeBook> Books(LmsData? lms, SubjectRow s) => (lms?.Grades ?? []).Where(b => NameMatch.Same(b.Subject, s.Name));
+
+    /// <summary>Tên dài (khảo sát kèm tên giảng viên, mã lớp) cắt còn 48 ký tự cho dòng mô tả.</summary>
+    private static string Short(string s) => s.Length <= 48 ? s : s[..45].TrimEnd() + "...";
 
     private static string Join(params string[] parts) => string.Join(", ", parts.Where(x => x.Length > 0));
 }

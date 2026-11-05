@@ -36,4 +36,33 @@ public class LmsReadingTests
         Assert.Equal(["Link học online", "mailto:gv@hcmut.edu.vn"], links.Select(l => l.Name));
         Assert.Equal("https://meet.google.com/abc", links[0].Url);
     }
+
+    [Fact]
+    public void Links_whose_text_is_the_address_are_not_repeated()
+    {
+        var html = "<p>Khảo sát: <a href=\"https://forms.gle/abc\">https://forms.gle/abc</a></p>"
+                 + "<a href=\"https://meet.google.com/x\">Link học online</a><a href=\"www.x.vn\">www.x.vn</a>";
+        Assert.Equal(["Link học online"], LmsReading.Links(html).Select(l => l.Name));
+    }
+
+    [Fact]
+    public void Links_stay_inside_the_text_as_spans()
+    {
+        var html = "<p>Vào <a href=\"https://meet.google.com/abc\">link học <b>online</b></a> lúc 9h.</p><p>Không link</p>";
+        var blocks = LmsReading.Blocks(html);
+        Assert.Equal("Vào link học online lúc 9h.", blocks[0].Text);
+        Assert.Equal(["Vào ", "link học online", " lúc 9h."], blocks[0].Spans!.Select(x => x.Text));
+        Assert.Equal("https://meet.google.com/abc", blocks[0].Spans![1].Url);
+        Assert.Null(blocks[0].Spans![0].Url);
+        Assert.Null(blocks[1].Spans);
+        Assert.Equal(["Vào link học online lúc 9h.", "Không link"], LmsReading.Paragraphs(html));
+    }
+
+    [Fact]
+    public void Script_links_and_empty_anchor_text()
+    {
+        var blocks = LmsReading.Blocks("<a href=\"javascript:x()\">bấm</a> và <a href=\"https://lms.hcmut.edu.vn/x\"></a>");
+        Assert.Equal("bấm và https://lms.hcmut.edu.vn/x", blocks[0].Text);
+        Assert.Single(blocks[0].Spans!, x => x.Url is not null);
+    }
 }

@@ -18,18 +18,20 @@ public static class WeekMath
     }
 
     /// <summary>
-    /// Phút ở mép trên khi mở một tuần. Lưới luôn đủ 0:00 tới 24:00 (có lớp học tối, sự kiện khuya), chỉ cuộn tới chỗ cần xem:
-    /// mặc định là giờ chẵn trước buổi sớm nhất; tuần có hôm nay mà giờ hiện tại không lọt khung nhìn thì cuộn sao cho vạch bây giờ
-    /// nằm dưới mép trên 1 giờ. <paramref name="visibleMin"/> là số phút vừa khung nhìn.
+    /// Minute shown at the top when a week opens. The grid always spans 0:00 to 24:00; default anchor is the hour before the
+    /// earliest class. In the current week, if now is outside the view, scroll so the now line sits 1 hour below the top.
+    /// <paramref name="visibleMin"/>: minutes that fit the viewport. <paramref name="lastEndMin"/>: latest class end of the week;
+    /// once past it, do not follow now (an empty evening looked like an empty calendar, 05/11/2026).
     /// </summary>
-    public static int ScrollAnchor(DateTime monday, DateTime now, int? firstStartMin, int visibleMin)
+    public static int ScrollAnchor(DateTime monday, DateTime now, int? firstStartMin, int visibleMin, int? lastEndMin = null)
     {
         var anchor = firstStartMin is { } f ? f / 60 * 60 : 7 * 60;
         var column = (int)Math.Floor((now.Date - monday.Date).TotalDays);
         if (column is >= 0 and <= 6)
         {
             var minute = now.Hour * 60 + now.Minute;
-            if (minute < anchor || minute > anchor + visibleMin) anchor = Math.Max(0, minute / 60 * 60 - 60);
+            var nothingLeft = lastEndMin is { } last && minute >= last;
+            if (!nothingLeft && (minute < anchor || minute > anchor + visibleMin)) anchor = Math.Max(0, minute / 60 * 60 - 60);
         }
         return Math.Clamp(anchor, 0, Math.Max(0, 24 * 60 - visibleMin));
     }

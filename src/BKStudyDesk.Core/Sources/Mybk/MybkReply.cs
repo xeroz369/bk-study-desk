@@ -24,7 +24,7 @@ public static class MybkReply
     {
         if (r.Status != 200)
         {
-            if (r.Status is 401 or 403 || !r.HasToken) throw new SessionExpiredException("Phiên MyBK hết hạn, cần đăng nhập HCMUT lại.");
+            if (Expired(r)) throw new SessionExpiredException("Phiên MyBK hết hạn, cần đăng nhập HCMUT lại.");
             var why = r.Status <= 0 ? "không kết nối được" : $"HTTP {r.Status}";
             return new(null, why, r.Status <= 0 || (r.Status >= 500 && !Pace.IsThrottle(r.Status)));
         }
@@ -38,6 +38,12 @@ public static class MybkReply
     }
 
     /// <summary>
+    /// Hết phiên: MyBK trả 401, 403, hay trả lời lỗi mà trang không có token. Không có phản hồi (Status 0 hay âm: mất mạng, fetch lỗi,
+    /// quá giờ) thì không phải hết phiên: trước đây một API treo quá giờ bị báo là hết phiên dù SSO và LMS vẫn còn (05/11/2026).
+    /// </summary>
+    public static bool Expired(FetchResult r) => r.Status is 401 or 403 || (r.Status > 0 && r.Status != 200 && !r.HasToken);
+
+    /// <summary>
     /// Gọi các API; API lỗi có thể thoáng qua (Read().Retry) thì gọi lại đúng các API đó một lần sau <paramref name="retryAfter"/>, trước
     /// khi báo. Mọi API trong sources.mybk.api chỉ đọc nên gọi lại không đổi gì trên trường; tối đa một lần mỗi lượt để không dồn request.
     /// Retried: tên các API đã gọi lại (để ghi log).
@@ -46,17 +52,27 @@ public static class MybkReply
         IReadOnlyList<FetchRequest> requests, TimeSpan retryAfter, CancellationToken ct, Action<string>? onEach = null)
     {
         var res = new Dictionary<string, FetchResult>(await browser.FetchAsync(requests, ct, onEach));
-        var again = requests.Where(q => res.TryGetValue(q.Name, out var r) && r.Status is not (401 or 403) && r.HasToken && Read(r).Retry).ToList();
-        if (again.Count == 0) return (res, []);
+        // MyBK báo hết phiên (401, 403, trang không có token): chưa báo người dùng ngay. Vào lại MyBK (trang /app mới, hết thì qua SSO)
+        // rồi gọi lại đúng các API đó một lần. SSO đòi mật khẩu thì trình duyệt ném SessionExpiredException: lúc đó mới là hết phiên thật.
+        var expired = requests.Where(q => res.TryGetValue(q.Name, out var r) && Expired(r)).ToList();
+        if (expired.Count > 0)
+        {
+            browser.Reenter();
+            foreach (var (k, v) in await browser.FetchAsync(expired, ct)) res[k] = v;
+        }
+        var again = requests.Where(q => !expired.Contains(q) && res.TryGetValue(q.Name, out var r) && !Expired(r) && Read(r).Retry).ToList();
+        if (again.Count == 0) return (res, [.. expired.Select(q => q.Name)]);
         await Task.Delay(retryAfter, ct);
         foreach (var (k, v) in await browser.FetchAsync(again, ct)) res[k] = v;
-        return (res, [.. again.Select(q => q.Name)]);
+        return (res, [.. expired.Concat(again).Select(q => q.Name)]);
     }
 
     /// <summary>
     /// API lỗi thì chỉ ghi log, không báo người dùng: curriculumInfo chỉ là phần đầu của chương trình đào tạo (tên, khoa, tín chỉ, điểm
     /// trung bình); MybkSource.Build giữ phần đầu của lần trước và vẫn cập nhật danh sách môn (một người dùng bị báo lỗi chương trình đào
     /// tạo, 09/10/2026).
+    /// Các API phụ (điểm thành phần, quyết định học vụ, ngày CTXH, học phí) cũng vậy: MyBK hay lỗi phía máy chủ (mã 500 kèm câu Java,
+    /// 05/11/2026), báo lên chỉ làm người dùng hoang mang; phần đó giữ bản lưu lần trước.
     /// </summary>
-    public static bool Silent(string api) => api == "curriculumInfo";
+    public static bool Silent(string api) => api is "curriculumInfo" or "components" or "decisions" or "socialWork" or "fees";
 }

@@ -21,6 +21,9 @@ public interface ISource
     /// <summary>Chu kỳ tự động sync.</summary>
     TimeSpan Interval { get; }
 
+    /// <summary>Runs on the background scheduler. MyBK does not: it loads by section when a page is opened (on-demand sync, 06/11/2026).</summary>
+    bool Scheduled => true;
+
     /// <summary>App thoát: ghi phần chỉ giữ trong RAM (lần kiểm tra cuối của lượt không có gì mới).</summary>
     void Flush() { }
 }
@@ -41,6 +44,12 @@ public interface IBrowserRunner
 
     /// <summary>HTML của trang url (mở trong WebView ẩn). mustContain: chữ phải có trong trang mới coi là đã tới (trang trung gian thì mở lại).</summary>
     Task<string> PageAsync(string url, CancellationToken ct, string? mustContain = null);
+
+    /// <summary>
+    /// Bỏ trang /app đang giữ: lần fetch sau mở lại /app (token mới); phiên MyBK hết thì đi qua SSO, và chỉ khi SSO đòi mật khẩu mới
+    /// là hết phiên thật.
+    /// </summary>
+    void Reenter() { }
 }
 
 /// <summary>Dòng log đặc biệt: nguồn đã lưu phần dữ liệu chính (đang làm tiếp phần chậm như tải tài liệu), giao diện nên đọc lại ngay.</summary>
@@ -96,6 +105,7 @@ public static class SyncSignal
 /// <summary>Phiên đăng nhập trên server trường đã hết (gặp trang đăng nhập SSO). Khác lỗi mạng: cần người dùng đăng nhập lại.</summary>
 public sealed class SessionExpiredException(string message) : InvalidOperationException(message);
 
-public sealed record FetchRequest(string Name, string Url, string Method = "GET", string? Body = null);
+/// <param name="Timeout">Chờ tối đa bao lâu; null là sources.mybk.timeoutSeconds. API phụ chờ ngắn hơn để một API treo không giữ cả lượt.</param>
+public sealed record FetchRequest(string Name, string Url, string Method = "GET", string? Body = null, TimeSpan? Timeout = null);
 
 public sealed record FetchResult(int Status, string Body, bool HasToken);

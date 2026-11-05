@@ -1,6 +1,7 @@
 using Avalonia.Threading;
 using BKStudyDesk.Desktop.Views;
 using SoHocTap.Core;
+using SoHocTap.Shell;
 
 namespace BKStudyDesk.Desktop.Web;
 
@@ -33,25 +34,35 @@ internal sealed class LoginService(Action<LoginView?> present, Action<string, st
         if (_view is null) Run(silent: true);
     }
 
-    private void Run(bool silent)
+    private IDisposable? _lane;   // SsoGate lane held while this sign-in runs
+    private bool _filled;         // this run used the shared automatic fill (SsoGate claim)
+
+    private async void Run(bool silent)
     {
         if (_busy) return;
         _busy = true;
+        // One SSO pass at a time with MyBK (SsoGate): wait for a MyBK sign-in in progress, then its fresh session usually needs no password.
+        try { _lane = await SsoGate.EnterAsync(CancellationToken.None); }
+        catch (Exception e) when (e is not OutOfMemoryException) { _busy = false; Log.Warn($"Đăng nhập: {e.Message}"); return; }
         if (!silent) progress("check", "");
-        var filled = false;
+        _filled = false;
         var page = _hidden.Open(allow: null);
+        // Silent refresh only happens for an expired LMS token: LMS only. User sign-in includes MyBK unless it is turned off.
         var flow = new LoginFlow(page, (stage, message) =>
         {
             if (stage == "error" && _busy) { Fallback(silent, message); return; }
+            if (stage == "done" && _filled) { SsoGate.FillResult(true); _filled = false; }
             if (!silent) progress(stage, message);
             else if (stage == "done") progress("refresh", "");
-        });
+        }, mybk: !silent && Settings.Sync.MybkEnabled);
         page.Loaded += (_, ok) => { if (!ok && _busy) Dispatcher.UIThread.Post(() => Fallback(silent, "không mở được trang trường")); };   // khỏi chờ 25 giây
         flow.NeedPassword += async () =>
         {
             if (!silent) { Show(); return; }
-            if (filled || Platform.Credentials.Usable() is not { } c) { Fallback(silent, "cần mật khẩu"); return; }
-            filled = true;   // một lần: sai mật khẩu, captcha thì trang mật khẩu hiện lại và dừng, tránh bị trường khóa tài khoản
+            // Shared with MyBK: one automatic fill per run, only while the user is at the computer. A wrong password or captcha
+            // brings the password page back: then stop, never fill again by itself (the school locks accounts).
+            if (_filled || Platform.Credentials.Usable() is not { } c || !SsoGate.TryClaimFill(UserActivity.Active)) { Fallback(silent, "cần mật khẩu"); return; }
+            _filled = true;
             // Handler của event (async void): lỗi script phải bắt ở đây, không thì lọt ra UI thread.
             try { if (await page.EvalAsync(SsoForm.FillScript(c.User, c.Password)) != "true") Fallback(silent, "trang đăng nhập không có form như mong đợi"); }
             catch (Exception e) when (e is not OutOfMemoryException) { Fallback(silent, e.Message); }
@@ -64,6 +75,7 @@ internal sealed class LoginService(Action<LoginView?> present, Action<string, st
     /// <summary>Thử ngầm không xong: lượt người dùng bấm thì hiện trang đăng nhập; lượt làm mới ngầm thì dừng, ghi log.</summary>
     private void Fallback(bool silent, string why)
     {
+        if (_filled) { SsoGate.FillResult(false); _filled = false; }
         if (!silent) { Show(); return; }
         Log.Info($"Làm mới đăng nhập ngầm: không được ({why})");
         StopHidden();
@@ -73,6 +85,8 @@ internal sealed class LoginService(Action<LoginView?> present, Action<string, st
     {
         _hidden.Close();
         _busy = false;
+        _lane?.Dispose();
+        _lane = null;
     }
 
     private void Show()

@@ -49,6 +49,8 @@ public class MybkReplyTests
     private sealed class FakeRunner(Dictionary<string, FetchResult[]> replies) : IBrowserRunner
     {
         public Dictionary<string, int> Calls { get; } = [];
+        public int Reentered;
+        public void Reenter() => Reentered++;
 
         public Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct, Action<string>? onEach = null)
         {
@@ -92,6 +94,25 @@ public class MybkReplyTests
         Assert.Equal(2, runner.Calls["curriculum"]);   // một lần, không lặp
     }
 
+    /// <summary>MyBK báo 401 giữa chừng: vào lại MyBK rồi gọi lại một lần, đọc được thì không báo hết phiên.</summary>
+    [Fact]
+    public async Task Expired_reply_reenters_and_retries_once()
+    {
+        var (got, retried, runner) = await Run([Good], [new(401, "", true), Good]);
+        Assert.Null(MybkReply.Read(got["curriculum"]).Why);
+        Assert.Equal(1, runner.Reentered);
+        Assert.Equal(["curriculum"], retried);
+        Assert.Equal(1, runner.Calls["curriculumInfo"]);
+    }
+
+    [Fact]
+    public async Task Still_expired_after_reentry_is_session_end()
+    {
+        var (got, _, runner) = await Run([Good], [new(401, "", true)]);
+        Assert.Equal(2, runner.Calls["curriculum"]);
+        Assert.Throws<SessionExpiredException>(() => MybkReply.Read(got["curriculum"]));
+    }
+
     [Fact]
     public async Task Throttle_is_not_retried()
     {
@@ -115,4 +136,25 @@ public class MybkReplyTests
     [InlineData(500, false)]                                      // lỗi mà trang không có token: phiên đã hết
     public void Session_end_throws(int status, bool token) =>
         Assert.Throws<SessionExpiredException>(() => MybkReply.Read(R(status, "", token)));
+
+    /// <summary>Một API treo quá giờ hay mất mạng giữa chừng (không có phản hồi) không phải hết phiên, dù không biết trang có token (05/11/2026).</summary>
+    [Theory]
+    [InlineData(-1, false)]
+    [InlineData(0, false)]
+    [InlineData(-1, true)]
+    public void No_reply_is_not_session_end(int status, bool token)
+    {
+        var r = MybkReply.Read(R(status, "không có phản hồi (quá giờ)", token));
+        Assert.NotNull(r.Why);
+        Assert.True(r.Retry);
+    }
+
+    [Fact]
+    public async Task Timed_out_api_is_retried_once()
+    {
+        var (got, retried, runner) = await Run([Good], [new(-1, "không có phản hồi (quá giờ)", false), Good]);
+        Assert.Null(MybkReply.Read(got["curriculum"]).Why);
+        Assert.Equal(["curriculum"], retried);
+        Assert.Equal(2, runner.Calls["curriculum"]);
+    }
 }

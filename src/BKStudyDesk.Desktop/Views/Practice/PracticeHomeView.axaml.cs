@@ -53,6 +53,17 @@ public partial class PracticeHomeView : UserControl
         _disarm.Tick += (_, _) => Disarm();
     }
 
+    /// <summary>Nằm trong tab Luyện tập của thẻ môn: bỏ tiêu đề trang (thẻ môn đã có tên), lề trong như các tab khác.</summary>
+    public void SetEmbedded(bool on)
+    {
+        HeaderTitle.IsVisible = !on;
+        RootPanel.Margin = on ? new Avalonia.Thickness(16, 12) : default;
+        RootPanel.Spacing = on ? 12 : 24;
+    }
+
+    /// <summary>Lọc danh sách môn (tab Luyện tập trong thẻ môn: chỉ môn đó).</summary>
+    public void SetCourseFilter(string text) => CourseFilter.Text = text;
+
     public void SelectTab(int i) => Tabs.SelectedIndex = Math.Clamp(i, 0, Tabs.ItemCount - 1);
 
     public int SelectedTab => Tabs.SelectedIndex;

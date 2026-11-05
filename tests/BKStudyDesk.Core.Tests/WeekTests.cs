@@ -52,7 +52,80 @@ public class WeekTests
     {
         TimelineItem Exam(string name, long t) => new("e" + name, "exam", name, name, t, "H6", null, "mybk");
         var rows = WeekPresenter.Exams([Exam("B", Format.Now + 86400), Exam("A", Format.Now - 86400)], Format.Now);
-        Assert.Equal(["A", "B"], rows.Select(r => r.Subject));
-        Assert.True(rows[0].Past);
+        Assert.Equal(["B", "A"], rows.Select(r => r.Subject));
+        Assert.True(rows[1].Past);
+    }
+
+    [Fact]
+    public void Exams_UpcomingNearestFirstThenPastMostRecentFirst()
+    {
+        TimelineItem Exam(string name, long t) => new("e" + name, "exam", name, name, t, "H6", null, "mybk");
+        var rows = WeekPresenter.Exams([Exam("old", Format.Now - 5 * 86400), Exam("far", Format.Now + 9 * 86400), Exam("recent", Format.Now - 86400), Exam("near", Format.Now + 86400)], Format.Now);
+        Assert.Equal(["near", "far", "recent", "old"], rows.Select(r => r.Subject));
+    }
+
+    // ------------------------------------------------------------------ timetable note (bug 06/11/2026)
+
+    private static readonly MybkData Classes = Data(Class("Giải tích 2", 2, "7:00", "9:00", 42));
+    private static readonly MybkData NoClasses = Data();
+
+    [Fact]
+    public void Note_TermHasClasses_ThisWeekToo_SaysNothing()
+    {
+        var n = WeekPresenter.Note(Classes, syncOn: true, signedIn: true, noData: null, shown: 1);
+        Assert.Equal(new TimetableNote(TimetableGap.None, null, true), n);
+    }
+
+    [Fact]
+    public void Note_TermHasClasses_NoneThisWeek_SaysWeekEmpty_KeepsGrid()
+    {
+        // Saved classes still show when sync is off or signed out: only the week is empty.
+        foreach (var (on, signedIn) in new[] { (true, true), (false, true), (true, false) })
+        {
+            var n = WeekPresenter.Note(Classes, on, signedIn, null, shown: 0);
+            Assert.Equal(TimetableGap.WeekEmpty, n.Gap);
+            Assert.Equal(L.T("calendar.weekEmpty"), n.Text);
+            Assert.True(n.ShowGrid);
+        }
+    }
+
+    [Fact]
+    public void Note_SignedIn_MybkHasNoTimetable_NamesTerm_NoGrid()
+    {
+        var n = WeekPresenter.Note(NoClasses, syncOn: true, signedIn: true, noData: null, shown: 0);
+        Assert.Equal(TimetableGap.TermEmpty, n.Gap);
+        Assert.Equal(L.F("calendar.mybkNoTimetable", "HK261"), n.Text);
+        Assert.False(n.ShowGrid);
+        Assert.DoesNotContain(L.T("calendar.weekEmpty"), n.Text);
+    }
+
+    [Fact]
+    public void Note_TermEmpty_OwnEventsThisWeek_KeepsGridAndNote()
+    {
+        var n = WeekPresenter.Note(NoClasses, syncOn: true, signedIn: true, noData: null, shown: 2);
+        Assert.Equal(TimetableGap.TermEmpty, n.Gap);
+        Assert.True(n.ShowGrid);
+    }
+
+    [Fact]
+    public void Note_SignedOut_SaysSignIn()
+    {
+        var n = WeekPresenter.Note(NoClasses, syncOn: true, signedIn: false, noData: "x", shown: 0);
+        Assert.Equal(new TimetableNote(TimetableGap.SignedOut, L.T("calendar.mybkSignedOut"), false), n);
+    }
+
+    [Fact]
+    public void Note_SyncOff_WinsOverSignedOut()
+    {
+        var n = WeekPresenter.Note(null, syncOn: false, signedIn: false, noData: "x", shown: 0);
+        Assert.Equal(new TimetableNote(TimetableGap.SyncOff, L.T("calendar.mybkOff"), false), n);
+    }
+
+    [Fact]
+    public void Note_SignedIn_NoDataYet_PassesReasonThrough_TermFallback()
+    {
+        Assert.Equal(new TimetableNote(TimetableGap.NoData, "loading", false), WeekPresenter.Note(null, true, true, "loading", 0));
+        var unnamed = NoClasses with { Term = new MybkTerm("20261", "") };
+        Assert.Equal(L.F("calendar.mybkNoTimetable", L.T("calendar.thisTerm")), WeekPresenter.Note(unnamed, true, true, null, 0).Text);
     }
 }

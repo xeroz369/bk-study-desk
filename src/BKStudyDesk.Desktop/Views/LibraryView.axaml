@@ -6,14 +6,13 @@
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.LibraryView">
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,24">
+        <StackPanel x:Name="PageTitle" DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,16">
             <TextBlock Classes="title" Text="{l:T nav.library}" />
-            <TextBlock Classes="meta" Text="{l:T library.subtitle}" />
         </StackPanel>
         <Grid x:Name="Columns" RowDefinitions="*,Auto">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="{StaticResource ListMinWidth}" MaxWidth="{StaticResource ListMaxWidth}" />
-                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
 
@@ -72,7 +71,19 @@
                             <DataGridTextColumn Header="{l:T library.col.chapter}" Binding="{Binding Chapter}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
                             <DataGridTextColumn Header="{l:T library.col.exam}" Binding="{Binding Exam}" Width="Auto" MinWidth="80" x:DataType="p:LibraryRow" />
                             <DataGridTextColumn Header="{l:T col.size}" Binding="{Binding SizeText}" Width="Auto" MinWidth="72" SortMemberPath="Size" x:DataType="p:LibraryRow" />
-                            <DataGridTextColumn Header="{l:T library.col.local}" Binding="{Binding Local}" Width="Auto" MinWidth="96" x:DataType="p:LibraryRow" />
+                            <DataGridTemplateColumn Header="{l:T library.col.local}" Width="Auto" MinWidth="72" SortMemberPath="Local">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="p:LibraryRow">
+                                        <Button Classes="icon" Click="OnItemButton" ToolTip.Tip="{Binding ActionTip}" HorizontalAlignment="Center">
+                                            <Panel>
+                                                <PathIcon Data="{StaticResource IconCheck}" IsVisible="{Binding HasLocal}" Foreground="{DynamicResource Ok}" />
+                                                <PathIcon Data="{StaticResource IconDownload}" IsVisible="{Binding CanDownload}" />
+                                                <PathIcon Data="{StaticResource IconOpenNew}" IsVisible="{Binding WebOnly}" />
+                                            </Panel>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

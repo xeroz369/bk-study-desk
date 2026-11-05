@@ -31,10 +31,14 @@ public class HomeTests
     }
 
     [Fact]
-    public void Todo_OverdueFirst_ExcludesDoneAndFar()
+    public void Todo_OverdueFirst_DoneLastWithTag_ExcludesFar()
     {
         var m = Build([Assign("soon", Now + 3 * H), Assign("late", Now - 2 * D), Assign("done", Now + H, done: true), Assign("far", Now + 20 * D)]);
-        Assert.Equal(["late", "soon"], m.Todo.Select(t => t.Id));
+        // Việc đã nộp vẫn hiện (giữ hạn), xếp cuối, có nhãn, không màu gấp (người dùng nhờ 05/11/2026).
+        Assert.Equal(["late", "soon", "done"], m.Todo.Select(t => t.Id));
+        Assert.True(m.Todo[2].Done);
+        Assert.False(m.Todo[2].ChipDanger || m.Todo[2].ChipSoon);
+        Assert.Equal(SoHocTap.Ui.L.T("state.submitted"), m.Todo[2].State);
         Assert.Equal(Urgency.Overdue, m.Todo[0].Level);
         Assert.Equal("https://lms.example/soon", m.Todo[1].Url);
     }

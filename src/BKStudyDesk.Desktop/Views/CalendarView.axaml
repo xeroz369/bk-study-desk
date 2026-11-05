@@ -8,14 +8,15 @@
              xmlns:v="clr-namespace:BKStudyDesk.Desktop.Views"
              x:Class="BKStudyDesk.Desktop.Views.CalendarView">
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                 <Button Content="{l:T events.add}" ToolTip.Tip="{l:T events.addTip}" Click="OnAddEvent" />
                 <Button Content="{l:T calendar.export}" ToolTip.Tip="{l:T calendar.exportTip}" Click="OnExport" />
+                <!-- Đưa thời khóa biểu vào Google Calendar qua BKalendar (Presentation/BkalendarExport): chép bảng rồi mở trang. -->
+                <Button Content="{l:T calendar.bkalendar}" ToolTip.Tip="{l:T calendar.bkalendarTip}" Click="OnBkalendar" />
             </StackPanel>
             <StackPanel Spacing="2">
                 <TextBlock Classes="title" Text="{l:T nav.calendar}" />
-                <TextBlock Classes="meta" Text="{l:T calendar.intro}" />
                 <TextBlock x:Name="Note" Classes="meta" IsVisible="False" />
             </StackPanel>
         </DockPanel>

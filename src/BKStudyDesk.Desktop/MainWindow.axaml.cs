@@ -23,28 +23,36 @@ public partial class MainWindow : Window
     private readonly (string Title, Func<Control> Build)[] _pages;
     private int _current;
     private int _shownIndex = -1;
-    /// <summary>Số mục trang trên thanh trên cùng; trang ngay sau đó là Cài đặt (nút bên phải).</summary>
-    private const int NavCount = 7;
+    /// <summary>Số mục trang chữ trên thanh trên cùng (đứng đầu _pages): Hôm nay, Môn học, Lịch, MyBK. Sau đó là Ôn tập (mở từ Hôm nay) và Cài đặt.</summary>
+    private const int NavCount = 4;
     private SubjectsView? _subjects;   // trang Môn học đang hiện: dựng lại (dữ liệu mới) thì giữ môn, tab, thư mục đang xem
     private LibraryView? _library;     // như trên: giữ chữ tìm, khoa, môn đang xem
+    private bool _showLibrary;         // trang Môn học đang ở phần Thư viện (SubjectsHost)
+    private string? _libraryPick;      // môn cần chọn ở Thư viện khi dựng xong (nút Xem trong Thư viện)
     private Views.Practice.PracticeHost? _practice;   // giữ một instance: chuyển trang không mất bài đang làm
     private InboxView? _inbox;   // giữ một instance: đồng bộ xong không mất ô lọc, chỗ đang đọc
 
     public MainWindow()
     {
         InitializeComponent();
-        // Thứ tự theo mức dùng thường ngày (người dùng chốt 07/10): Hôm nay, Môn học, Lịch, Thư viện, Luyện tập, MyBK. Ctrl+số theo thứ tự này.
+        // Mục chữ trên thanh theo mức dùng thường ngày: Hôm nay, Môn học, Lịch, Luyện tập, MyBK. Hộp thư và Cài đặt là icon bên phải
+        // (người dùng chốt 05/11/2026); Thư viện là phần thứ hai của trang Môn học (SubjectsHost). Ctrl+số theo đúng thứ tự _pages.
         _pages =
         [
-            (L.T("nav.today"), () => new HomeView(_host.State, Login, OpenInbox)),
-            // Hộp thư ngay sau Hôm nay (người dùng chốt 31/10/2026): tin nhắn, thông báo môn, thông báo LMS; đọc được khi LMS sập.
-            (L.T("nav.inbox"), () => { (_inbox ??= new InboxView()).Reload(_host.State.Lms); return _inbox; }),
-            (L.T("nav.subjects"), () => _subjects = new SubjectsView(_host.State, _subjects, Download, OpenLibrary)),
-            (L.T("nav.calendar"), () => new CalendarView(_host.State)),
-            (L.T("nav.library"), () => _library = new LibraryView(_host.State, _host.Library, _library)),
-            (L.T("nav.practice"), () => _practice ??= new Views.Practice.PracticeHost(_host.Router)),
+            (L.T("nav.today"), () => new HomeView(_host.State, Login, OpenInbox, () => Show(PageOf("luyen-tap")))),
+            ("LMS", () => new SubjectsHost(_showLibrary,
+                () => _subjects = new SubjectsView(_host.State, _subjects, Download, OpenLibrary, PracticeFor),
+                () =>
+                {
+                    _library = new LibraryView(_host.State, _host.Library, _library);
+                    if (_libraryPick is { } pick) { _library.SelectSubject(pick); _libraryPick = null; }
+                    return _library;
+                },
+                on => _showLibrary = on)),
             ("MyBK", () => new MybkView(_host.State, () => { SoHocTap.Sources.Mybk.MybkSource.RequestRefresh(); _host.Hub.Start(SourceIds.Mybk, force: true); })),
-            (L.T("nav.settings"), () => new SettingsView(SettingsActions())),   // nút bên phải thanh trên cùng, Ctrl+8
+            (L.T("nav.calendar"), () => new CalendarView(_host.State)),
+            (L.T("nav.practice"), () => PracticeFor(null)),
+            (L.T("nav.settings"), () => new SettingsView(SettingsActions())),
         ];
         for (var i = 0; i < NavCount; i++)
         {
@@ -52,33 +60,55 @@ public partial class MainWindow : Window
             var item = new Button { Classes = { "bar" }, Content = BarLabel(_pages[i].Title) };   // gạch chân mục đang xem: style Button.bar.on
             item.Click += (_, _) => Show(index);
             Nav.Children.Add(item);
+        }
+        for (var i = 0; i < _pages.Length && i < 9; i++)
+        {
+            var index = i;
             KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + i, KeyModifiers.Control), Command = new Command(() => Show(index)) });
         }
-        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.D1 + NavCount, KeyModifiers.Control), Command = new Command(() => Show(NavCount)) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.F5), Command = new Command(SyncNow) });   // như 1.x
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Left, KeyModifiers.Alt), Command = new Command(Back) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.K, KeyModifiers.Control), Command = new Command(OpenQuick) });
         ApplyZoom(Config.Int("app.zoom", Config.Int("practice.zoom", 100)));   // practice.zoom: cỡ chữ riêng Luyện tập trước 1.2.5
         foreach (var (key, step) in new[] { (Key.OemPlus, 1), (Key.Add, 1), (Key.OemMinus, -1), (Key.Subtract, -1), (Key.D0, 0), (Key.NumPad0, 0) })
             KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(key, KeyModifiers.Control), Command = new Command(() => ZoomStep(step)) });
+        SubjectsView.CoursesOpened = _host.CheckCoursesOnOpen;   // LMS: check a course when it is opened (on-demand sync)
+        // Input and focus in this window tell UserActivity someone is here (used where system idle time is not available).
+        AddHandler(PointerMovedEvent, (_, _) => UserActivity.Touch(), Avalonia.Interactivity.RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(KeyDownEvent, (_, _) => UserActivity.Touch(), Avalonia.Interactivity.RoutingStrategies.Tunnel, handledEventsToo: true);
+        Activated += (_, _) => UserActivity.SetFocused(true);
+        Deactivated += (_, _) => UserActivity.SetFocused(false);
         Scroller.AddHandler(PointerWheelChangedEvent, (_, e) =>
         {
             if (!e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
             ZoomStep(e.Delta.Y > 0 ? 1 : -1);
             e.Handled = true;
         }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
-        SettingsButton.Content = BarLabel(L.T("nav.settings"));
-        SettingsButton.Click += (_, _) => Show(NavCount);
-        MoreSettings.Click += (_, _) => Show(NavCount);
+        SettingsButton.Click += (_, _) => Show(SettingsPage);
+        MoreSettings.Click += (_, _) => Show(SettingsPage);
+        InboxButton.Click += (_, _) => ToggleInbox();
+        SearchButton.Click += (_, _) => OpenQuick();
+        Drawer.Width = InboxView.DrawerWidth;
+        DrawerScrim.PointerPressed += (_, _) => CloseInbox();
+        KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Escape), Command = new Command(() => { if (Drawer.IsVisible) CloseInbox(); }) });
+        // Nút gạt Offline cạnh trạng thái đồng bộ: đổi ở khay hay ở đây thì hai chỗ cùng theo.
+        OfflineMode.Changed += _ => Avalonia.Threading.Dispatcher.UIThread.Post(ShowSync);
         // Dữ liệu mới: dựng lại trang đang xem. Cài đặt không vẽ dữ liệu đồng bộ: giữ nguyên (đang gõ dở trong ô thì không mất chữ).
-        _host.State.Changed += () => { if (_current != NavCount) Show(_current); ShowSync(); };
+        _host.State.Changed += () => { if (_current != SettingsPage) Show(_current); ShowSync(); UpdateInbox(popup: true); };
         _host.State.StatusChanged += ShowSync;
         _host.State.Progress += ShowSync;
         var moreMenu = (MenuFlyout)More.Flyout!;
         moreMenu.Opening += (_, _) => FillMore(moreMenu);
         _host.LoginProgress += OnLoginProgress;
         _host.State.Changed += ShowInfo;
-        _host.MessagesChanged += () => { if (_current == PageOf("hom-nay") || _current == PageOf("hop-thu")) Show(_current); };   // Hôm nay, Hộp thư: dựng lại với tin nhắn mới
+        _host.MessagesChanged += () =>
+        {
+            if (_current == PageOf("hom-nay")) Show(_current);   // Hôm nay: dựng lại với tin nhắn mới
+            if (Drawer.IsVisible) _inbox?.Reload(_host.State.Lms);
+            UpdateInbox(popup: true);
+        };
+        _inboxPopHide.Tick += (_, _) => { _inboxPopHide.Stop(); _inboxPop?.Hide(); };
+        UpdateInbox(popup: false);
         _host.State.StatusChanged += ShowInfo;
         InfoClose.Click += (_, _) => { _infoClosed = _info?.Key; _loginStage = ""; ShowInfo(); };
         InfoPrimary.Click += (_, _) => Run(_info?.Primary ?? InfoAction.None);
@@ -134,8 +164,15 @@ public partial class MainWindow : Window
 
     private void Back()
     {
+        // Ngăn Hộp thư đang mở: đang xem một tin thì về danh sách, không thì đóng ngăn.
+        if (Drawer.IsVisible)
+        {
+            if (_inbox?.CanGoBack == true) _inbox.BackToList();
+            else CloseInbox();
+            return;
+        }
         // Đang ở trong Luyện tập có màn con (làm câu, bài học...): lùi trong Luyện tập trước, như khung Svelte cũ.
-        if (Page.Child is Views.Practice.PracticeHost { CanGoBack: true } practice) { practice.GoBack(); return; }
+        if (_practice is { CanGoBack: true } practice && TopLevel.GetTopLevel(practice) is not null) { practice.GoBack(); return; }   // cả khi nằm trong tab của thẻ môn
         if (_back.Count == 0) return;
         var to = _back[^1];
         _back.RemoveAt(_back.Count - 1);
@@ -160,7 +197,7 @@ public partial class MainWindow : Window
         if (_practice is { } practice) items.AddRange(practice.QuickItems());
         items.AddRange(InboxQuickItems());
         ((QuickSearchPanel)_quick.Content!).Reset(items);
-        _quick.ShowAt(Bar);
+        _quick.ShowAt(SearchButton);
     }
 
     /// <summary>Tin nhắn, thông báo trong Ctrl+K: mở đúng dòng ở Hộp thư.</summary>
@@ -177,6 +214,7 @@ public partial class MainWindow : Window
                 await ShowAsync(index, true);
                 break;
             case "subject":
+                _showLibrary = false;   // môn của mình: phần Môn của bạn, không phải Thư viện
                 await ShowAsync(PageOf("mon"), true);   // theo route, không theo số thứ tự (thứ tự trang có thể đổi)
                 _subjects?.SelectSubject(value);
                 break;
@@ -184,7 +222,7 @@ public partial class MainWindow : Window
                 OpenInbox(value);
                 break;
             case "lesson":
-                await ShowAsync(PageOf("luyen-tap"), true);
+                await ShowAsync(PageOf("luyen-tap"), true);   // trang Ôn tập chung: mở đúng bài
                 _practice?.OpenLessonById(value);
                 break;
         }
@@ -197,7 +235,7 @@ public partial class MainWindow : Window
         var gen = ++_navGen;
         // Rời Luyện tập: khung bị hủy khi gỡ khỏi cửa sổ, nên ghi nốt kết quả đang chờ trước. Bấm sang trang khác trong lúc chờ thì lượt
         // này bỏ, lượt bấm sau cùng thắng (không thì lượt nào chờ xong sau sẽ đè, hiện sai trang).
-        if (index != _shownIndex && Page.Child is Views.Practice.PracticeHost practice)
+        if (index != _shownIndex && _practice is { } practice && TopLevel.GetTopLevel(practice) is not null)   // trang Ôn tập hay tab Luyện tập của môn
         {
             await practice.FlushAsync();
             if (gen != _navGen) return;
@@ -213,8 +251,8 @@ public partial class MainWindow : Window
             var b = (Button)Nav.Children[i];
             b.Classes.Set("on", i == index);
         }
-        SettingsButton.Classes.Set("on", index == NavCount);
-        More.Classes.Set("on", index == NavCount);   // Cài đặt nằm trong nút Thêm khi thanh hẹp
+        SettingsButton.Classes.Set("on", index == SettingsPage);
+        More.Classes.Set("on", index < NavCount && !Nav.Children[index].IsVisible);
         if (index != _shownIndex) FitBar();   // trang đang xem luôn có mục trên thanh
         var old = Page.Child as ITabbedPage;
         if (index != _shownIndex && old is not null) SaveTab(_shownIndex, old.Tab);
@@ -230,6 +268,19 @@ public partial class MainWindow : Window
         if (changed) Scroller.Offset = default;   // trang khác: về đầu trang (dựng lại cùng trang vì dữ liệu mới thì giữ chỗ đang xem)
         _shownIndex = index;
         if (changed) ShowInfo();   // MyBK hết phiên chỉ bật dải khi đang ở trang MyBK (MybkLoginPrompt)
+        WantMybk(page);
+        if (page.FindControl<TabControl>("Tabs") is { } tabs)
+            tabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.Source, tabs)) WantMybk(page); };   // inner lists raise it too
+    }
+
+    /// <summary>
+    /// MyBK on demand: tell MybkSource which sections this page and tab show; if one is stale, load it now (the saved copy stays on
+    /// screen and the page redraws when the fresh one lands). Pages without MyBK data ask for nothing.
+    /// </summary>
+    private void WantMybk(Control page)
+    {
+        var sections = SoHocTap.Sources.Mybk.MybkSections.ForPage(Routes[_current], page is ITabbedPage t ? t.Tab : 0);
+        if (SoHocTap.Sources.Mybk.MybkSource.Show(sections)) _host.Hub.Start(SourceIds.Mybk, force: true, soon: true);
     }
 
     private int _zoom = 100;
@@ -264,9 +315,16 @@ public partial class MainWindow : Window
     {
         var rows = Sources();
         var last = new[] { _host.State.SyncedAt(SourceIds.Lms), _host.State.SyncedAt(SourceIds.Mybk) }.Max();
-        var (text, attention) = StatusPanel.Bar(rows, _notices.Unread, last);
+        var (text, attention) = StatusPanel.Bar(rows, _notices.Unread, last, OfflineMode.On);
         StatusText.Text = text;
         StatusText.FontWeight = attention ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal;
+        var problem = rows.Any(r => r.Problem is not null && !r.Partial);
+        var busy = rows.Any(r => r.Syncing) || OfflineMode.On;
+        StatusDot.Fill = this.TryFindResource(problem ? "Danger" : busy ? "Warn" : "Ok", ActualThemeVariant, out var dot) ? dot as Avalonia.Media.IBrush : null;   // màu theo giao diện sáng, tối
+        // Chữ luôn hiện: việc cần để ý, đang đồng bộ, Offline, hay Online (giờ đồng bộ ở tooltip). Chấm nhấp nháy khi đang kết nối.
+        var syncing = rows.Any(r => r.Syncing);
+        if (!problem && !syncing) StatusText.Text = L.T(OfflineMode.On ? "status.bar.offline" : "status.online");
+        ToolTip.SetTip(StatusButton, text + Environment.NewLine + string.Join(Environment.NewLine, rows.Select(r => r.Problem is { } p ? $"{r.State}. {p}" : r.State)));
         ToolTip.SetTip(StatusButton, string.Join(Environment.NewLine, rows.Select(r => r.Problem is { } p ? $"{r.State}. {p}" : r.State)));
         var bar = SyncStatus.Progress([.. new[] { SourceIds.Lms, SourceIds.Mybk }.Select(n => (_host.State.Syncing(n), _host.State.Step(n)))]);
         SyncBar.IsVisible = bar.Visible;
@@ -279,8 +337,8 @@ public partial class MainWindow : Window
         [StatusPanel.Source(_host.State, SourceIds.Lms, "LMS"), StatusPanel.Source(_host.State, SourceIds.Mybk, "MyBK")];
 
     /// <summary>
-    /// Bảng của nút Thông báo (Flyout có sẵn): Đồng bộ ngay; từng nguồn một dòng (trạng thái, vấn đề, nút sửa chỉ khi có vấn đề);
-    /// hàng Mở LMS, Mở MyBK; rồi mọi thông báo đang giữ (NoticeLog), cuộn trong bảng, Xóa hết. Thông báo có trang thì bấm để mở trang,
+    /// Bảng của nút Thông báo (Flyout có sẵn): Offline, Đồng bộ ngay; từng nguồn một dòng và một nút (sửa khi có vấn đề, không thì Mở);
+    /// rồi mọi thông báo đang giữ (NoticeLog), cuộn trong bảng, Tắt nhắc, Xóa hết. Thông báo có trang thì bấm để mở trang,
     /// không có trang thì chỉ để đọc. Mở bảng là đã xem các thông báo.
     /// </summary>
     private Control StatusPanelContent(Flyout owner)
@@ -308,35 +366,51 @@ public partial class MainWindow : Window
             t.Classes.AddRange(classes);
             return t;
         }
-        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.sync"), Classes = { "card-title" } }, Act(L.T("status.panel.syncNow"), SyncNow)));
+        // Offline toggle at the top; what it does is in its tooltip, one short line only while it is on.
+        var offline = new ToggleSwitch { IsChecked = OfflineMode.On, OnContent = L.T("offline.label"), OffContent = L.T("offline.label"), MinWidth = 0 };
+        ToolTip.SetTip(offline, L.T("offline.tip"));
+        var offlineHelp = Wrap(L.T("offline.on"), "meta");
+        offlineHelp.IsVisible = OfflineMode.On;
+        offline.IsCheckedChanged += (_, _) =>
+        {
+            OfflineMode.Set(offline.IsChecked == true);
+            offlineHelp.IsVisible = OfflineMode.On;
+        };
+        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.sync"), Classes = { "card-title" } }, offline));
+        panel.Children.Add(offlineHelp);
         foreach (var r in Sources())
         {
             var text = new StackPanel { Spacing = 2, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Children = { Wrap(r.State) } };
             if (r.Problem is { } p) text.Children.Add(Wrap(p, "meta", "danger"));
             if (r.Detail is { Length: > 0 } d) text.Children.Add(Wrap(d, "sub"));
-            // Có vấn đề: nút sửa (đăng nhập lại, thử lại nguồn đó); không thì nút đồng bộ riêng nguồn này (ẩn khi đang đồng bộ).
+            // Minimal row (user, 06/11/2026): an icon to open the site (app window, shares the app sign-in) and an icon to sync this
+            // source (also the retry after an error). Text only for "sign in again", the one thing an icon cannot say.
             var id = r.Id;
-            var fix = r.Problem is not null ? Act(L.T(r.NeedsLogin ? "status.panel.relogin" : "web.retry"), r.NeedsLogin ? Login : () => _host.Hub.Start(id, force: true))
-                : r.Syncing ? null : Act(L.F("status.panel.syncOne", r.Label), () => _host.Hub.Start(id, force: true));
-            panel.Children.Add(Row(text, fix));
+            var (site, page) = id == SourceIds.Mybk ? ("sources.mybk.home", "MyBK") : ("sources.lms.site", "LMS");
+            var actions = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 4 };
+            if (r.NeedsLogin) actions.Children.Add(Act(L.T("status.panel.relogin"), Login));
+            var open = Icons.Button("OpenNew", L.F("status.panel.open", page));
+            open.Click += (_, _) => { owner.Hide(); _ = Files.Links.OpenAsync(this, Config.Str(site), page); };
+            actions.Children.Add(open);
+            if (!r.Off && !r.Syncing)
+            {
+                var sync = Icons.Button("Refresh", L.T(id == SourceIds.Mybk ? "status.panel.syncMybk" : "status.panel.syncLms"));
+                sync.Click += (_, _) => { owner.Hide(); SyncSource(id); };
+                actions.Children.Add(sync);
+            }
+            panel.Children.Add(Row(text, actions));
         }
-        // Trang chủ của từng nguồn (như nút Mở LMS, Mở MyBK ở thanh trạng thái 1.x): mở trong cửa sổ app, dùng chung đăng nhập.
-        panel.Children.Add(new StackPanel
+        panel.Children.Add(new Separator { Margin = default });   // hết bề ngang, như vạch kẻ của thẻ
+        // Notices title row carries the reminder switch (DeadlineNotifier.Mute until tomorrow morning) and Clear all.
+        var muted = _host.RemindersMutedUntil;
+        var noticeActions = new StackPanel
         {
             Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8,
-            Children =
-            {
-                Act(L.F("status.panel.open", "LMS"), () => _ = Files.Links.OpenAsync(this, Config.Str("sources.lms.site"), "LMS")),
-                Act(L.F("status.panel.open", "MyBK"), () => _ = Files.Links.OpenAsync(this, Config.Str("sources.mybk.home"), "MyBK")),
-            },
-        });
-        panel.Children.Add(new Separator { Margin = default });   // hết bề ngang, như vạch kẻ của thẻ
-        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.notices"), Classes = { "card-title" } },
-            _notices.Items.Count == 0 ? null : Act(L.T("status.panel.clear"), _notices.Clear)));
-        // Tạm im nhắc hạn tới sáng mai (DeadlineNotifier.Mute): đang im thì ghi tới giờ nào và cho bật lại.
-        var muted = _host.RemindersMutedUntil;
-        panel.Children.Add(Row(Wrap(muted is { } until ? L.F("status.panel.mutedUntil", Format.Hm(until)) : L.T("status.panel.reminders"), "meta"),
-            Act(L.T(muted is null ? "status.panel.mute" : "status.panel.unmute"), () => { _host.MuteReminders(muted is null); ShowSync(); })));
+            Children = { Act(L.T(muted is null ? "status.panel.mute" : "status.panel.unmute"), () => { _host.MuteReminders(muted is null); ShowSync(); }) },
+        };
+        if (_notices.Items.Count > 0) noticeActions.Children.Add(Act(L.T("status.panel.clear"), _notices.Clear));
+        panel.Children.Add(Row(new TextBlock { Text = L.T("status.panel.notices"), Classes = { "card-title" } }, noticeActions));
+        if (muted is { } until) panel.Children.Add(Wrap(L.F("status.panel.mutedUntil", Format.Hm(until)), "meta"));
         if (_notices.Items.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("status.panel.noNotices"), Classes = { "meta" } });
         foreach (var n in _notices.Items)
         {
@@ -346,17 +420,28 @@ public partial class MainWindow : Window
             panel.Children.Add(new Button
             {
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch, HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                Content = body, Command = new Command(() => { owner.Hide(); Show(PageOf(n.Page)); }),
+                Content = body, Command = new Command(() => { owner.Hide(); Go(n.Page); }),
             });
         }
         _notices.MarkRead();
         return new ScrollViewer { MaxHeight = (double)this.FindResource("PanelMaxHeight")!, Content = panel };
     }
 
+    /// <summary>F5, tray menu, Settings: both sources, each the light way (SyncSource).</summary>
     private void SyncNow()
     {
-        _host.Hub.Start(SourceIds.Lms, force: true);
-        _host.Hub.Start(SourceIds.Mybk, force: true);
+        SyncSource(SourceIds.Lms);
+        SyncSource(SourceIds.Mybk);
+    }
+
+    /// <summary>
+    /// One source's sync button. LMS: incremental sync now. MyBK: reload the sections of the page in view; the rest reload when their
+    /// page is next opened (MybkSource.RefreshButton).
+    /// </summary>
+    private void SyncSource(string id)
+    {
+        if (id == SourceIds.Mybk) SoHocTap.Sources.Mybk.MybkSource.RefreshButton();
+        _host.Hub.Start(id, force: true);
     }
 
     // ------------------------------------------------------------------ dải báo, đăng nhập
@@ -414,7 +499,7 @@ public partial class MainWindow : Window
                 await Files.Links.OpenAsync(this, Config.Str(mybk ? "sources.mybk.home" : "sources.lms.site"), mybk ? "MyBK" : "LMS");
                 break;
             case InfoAction.AutoLoginOn:
-                await ShowAsync(NavCount, remember: true);
+                await ShowAsync(SettingsPage, remember: true);
                 (Page.Child as SettingsView)?.OpenAutoLogin();
                 break;
             case InfoAction.AutoLoginNo:
@@ -426,22 +511,120 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Thanh trên cùng không đặt mốc độ rộng cứng: đo chữ thật (đổi theo ngôn ngữ, cỡ chữ, chữ đồng bộ) rồi chọn cách đầy đủ nhất còn vừa.
-    /// Thứ tự bỏ bớt: Cài đặt vào nút Thêm, rồi mục trang từ cuối lên (trang đang xem luôn còn trên thanh).
+    /// Icon Hộp thư, Cài đặt, nút gạt Offline và trạng thái luôn còn; chật thì mục trang từ cuối lên (trừ trang đang xem) vào nút Thêm.
     /// </summary>
     private void FitBar()
     {
         var room = Bar.Bounds.Width - 32;   // lề hai bên 16
         if (room <= 0) return;
         foreach (var b in Nav.Children) b.IsVisible = true;
-        SettingsButton.IsVisible = true;
         More.IsVisible = false;
         double W(Control c) { c.Measure(Size.Infinity); return c.DesiredSize.Width; }   // DesiredSize đã gồm Margin
-        if (W(Nav) + W(StatusButton) + W(SettingsButton) <= room) return;
-        SettingsButton.IsVisible = false;
+        SearchButton.IsVisible = true;
+        double Right() => W(StatusButton) + W(InboxButton) + W(SettingsButton) + (SearchButton.IsVisible ? W(SearchButton) : 0);
+        // Ô Tìm nằm đúng giữa: chỉ giữ khi nửa bên nào cũng còn chỗ cho nửa ô Tìm (không đè lên mục trang hay nút bên phải).
+        var rightOnly = W(StatusButton) + W(InboxButton) + W(SettingsButton);
+        if (Math.Max(W(Nav), rightOnly) + W(SearchButton) / 2 + 24 > room / 2) SearchButton.IsVisible = false;   // vẫn còn Ctrl+K
+        if (W(Nav) + Right() <= room) return;
         More.IsVisible = true;
-        // Vẫn chật: mục trang từ cuối lên (trừ trang đang xem) chuyển vào nút Thêm.
-        for (var i = NavCount - 1; i >= 0 && W(Nav) + W(StatusButton) + W(More) > room; i--)
+        for (var i = NavCount - 1; i >= 0 && W(Nav) + Right() + W(More) > room; i--)
             if (i != _current) Nav.Children[i].IsVisible = false;
+    }
+
+    private int SettingsPage => PageOf("cai-dat");
+
+    /// <summary>
+    /// Trang Luyện tập (một bản dùng chung, giữ bài đang làm dở): <paramref name="course"/> là môn khi đặt vào tab Luyện tập của thẻ môn,
+    /// null khi mở trang Ôn tập chung. Gỡ khỏi chỗ cũ trước khi đặt vào chỗ mới (một control chỉ có một cha).
+    /// </summary>
+    private Views.Practice.PracticeHost PracticeFor(string? course)
+    {
+        _practice ??= new Views.Practice.PracticeHost(_host.Router);
+        switch (_practice.Parent)
+        {
+            case ContentControl c: c.Content = null; break;
+            case Decorator d: d.Child = null; break;
+            case Panel p: p.Children.Remove(_practice); break;
+        }
+        _practice.FocusCourse(course);
+        return _practice;
+    }
+
+    private void ToggleInbox()
+    {
+        if (Drawer.IsVisible) CloseInbox();
+        else OpenInboxDrawer();
+    }
+
+    /// <summary>Mở ngăn Hộp thư bên phải (như ngăn tin nhắn của LMS), đọc lại tin mới nhất.</summary>
+    private void OpenInboxDrawer()
+    {
+        var inbox = InboxPage();
+        inbox.Reload(_host.State.Lms);
+        if (!ReferenceEquals(Drawer.Child, inbox)) Drawer.Child = inbox;
+        Drawer.IsVisible = DrawerScrim.IsVisible = true;
+        InboxButton.Classes.Set("on", true);
+        _inboxPop?.Hide();
+    }
+
+    private void CloseInbox()
+    {
+        Drawer.IsVisible = DrawerScrim.IsVisible = false;
+        InboxButton.Classes.Set("on", false);
+    }
+
+    /// <summary>Đi tới một route từ thông báo, lời nhắc, khung Luyện tập: hop-thu (tin-nhan) mở ngăn Hộp thư, còn lại là trang.</summary>
+    private void Go(string route)
+    {
+        if (route.Split('/')[0] is "hop-thu" or "tin-nhan") OpenInboxDrawer();
+        else Show(PageOf(route));
+    }
+
+    /// <summary>Trang Hộp thư dùng một instance (giữ ô lọc, chỗ đang đọc); đọc một dòng thì số trên icon Hộp thư giảm ngay.</summary>
+    private InboxView InboxPage()
+    {
+        if (_inbox is not null) return _inbox;
+        _inbox = new InboxView { SyncNow = _host.SyncMessagesNowAsync };
+        _inbox.ReadChanged += () => UpdateInbox(popup: false);
+        _inbox.CloseRequested += CloseInbox;
+        return _inbox;
+    }
+
+    // Tin mới (có sau lần xem trước) thì hiện lên dưới icon Hộp thư vài giây; bấm một tin là mở đúng tin đó. Mở app không dội tin cũ:
+    // chỉ tin có sau lúc mở app.
+    private long _inboxSeen = Format.Now;
+    private Flyout? _inboxPop;
+    private readonly Avalonia.Threading.DispatcherTimer _inboxPopHide = new() { Interval = TimeSpan.FromSeconds(8) };
+
+    /// <summary>Số tin chưa đọc trên icon Hộp thư; <paramref name="popup"/> thì hiện các tin mới đến (không hiện khi đang ở Hộp thư).</summary>
+    private void UpdateInbox(bool popup)
+    {
+        var rows = Inbox.Rows(SoHocTap.Data.LmsMessagesStore.Read(), _host.State.Lms?.Announcements ?? [], InboxReads.Load(), Format.Now,
+            Config.Int("app.inbox.newsDays", 14));
+        var unread = rows.Count(r => r.Unread);
+        InboxBadge.IsVisible = unread > 0;
+        InboxCount.Text = unread > 99 ? "99+" : unread.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        ToolTip.SetTip(InboxButton, unread > 0 ? L.F("inbox.unreadTip", unread) : L.T("nav.inbox"));
+        var fresh = rows.Where(r => r.Unread && r.Time > _inboxSeen).OrderByDescending(r => r.Time).Take(3).ToList();
+        if (rows.Count > 0) _inboxSeen = Math.Max(_inboxSeen, rows.Max(r => r.Time));
+        if (!popup || fresh.Count == 0 || Drawer.IsVisible || !IsVisible) return;
+        var panel = new StackPanel { Spacing = 8, Width = 340 };
+        panel.Children.Add(new TextBlock { Text = L.F("inbox.popup", fresh.Count), Classes = { "card-title" } });
+        foreach (var r in fresh)
+        {
+            var body = new StackPanel { Spacing = 2 };
+            body.Children.Add(new TextBlock { Text = r.Title, FontWeight = Avalonia.Media.FontWeight.SemiBold, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
+            if (r.Preview.Length > 0) body.Children.Add(new TextBlock { Text = r.Preview, Classes = { "sub" }, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
+            var open = new Button { Content = body, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch, HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+            var key = r.Key;
+            open.Click += (_, _) => { _inboxPop?.Hide(); OpenInbox(key); };
+            panel.Children.Add(open);
+        }
+        _inboxPop ??= new Flyout { Placement = PlacementMode.BottomEdgeAlignedRight };
+        _inboxPop.Content = panel;
+        _inboxPop.ShowAt(InboxButton);
+        _inboxPopHide.Stop();
+        _inboxPopHide.Start();
     }
 
     /// <summary>
@@ -472,8 +655,6 @@ public partial class MainWindow : Window
             item.Click += (_, _) => Show(index);
             menu.Items.Add(item);
         }
-        if (menu.Items.Count > 0) menu.Items.Add(new Separator());
-        menu.Items.Add(MoreSettings);
     }
 
     /// <summary>Dòng tình trạng ở thẻ Tài khoản của Cài đặt: tên trên LMS, đã đăng nhập, hay cần đăng nhập.</summary>
@@ -499,7 +680,7 @@ public partial class MainWindow : Window
         }
         else if (type == "navigate")
         {
-            Show(PageOf(m["route"]?.GetValue<string>() ?? ""));
+            Go(m["route"]?.GetValue<string>() ?? "");
         }
     }
 
@@ -517,13 +698,16 @@ public partial class MainWindow : Window
         var open = new NativeMenuItem(L.F("tray.open", AppInfo.Name));
         open.Click += (_, _) => ShowFromTray();
         var sync = new NativeMenuItem(L.T("status.panel.syncNow"));
-        sync.Click += (_, _) => { _host.Hub.Start(SourceIds.Lms, force: true); _host.Hub.Start(SourceIds.Mybk, force: true); };
+        sync.Click += (_, _) => SyncNow();
+        var offline = new NativeMenuItem(L.T("offline.label")) { ToggleType = MenuItemToggleType.CheckBox, IsChecked = OfflineMode.On };
+        offline.Click += (_, _) => OfflineMode.Set(!OfflineMode.On);
+        OfflineMode.Changed += on => Avalonia.Threading.Dispatcher.UIThread.Post(() => offline.IsChecked = on);
         var exit = new NativeMenuItem(L.T("tray.exit"));
         exit.Click += (_, _) => { _exiting = true; Close(); };
         var tray = new TrayIcon
         {
             Icon = Icon, ToolTipText = AppInfo.Name,
-            Menu = new NativeMenu { Items = { open, sync, new NativeMenuItemSeparator(), exit } },
+            Menu = new NativeMenu { Items = { open, sync, offline, new NativeMenuItemSeparator(), exit } },
         };
         tray.Clicked += (_, _) => ShowFromTray();
         TrayIcon.SetIcons(Application.Current!, [tray]);
@@ -539,7 +723,7 @@ public partial class MainWindow : Window
             // Lần đầu thu xuống khay trong lần chạy này: báo app vẫn chạy (như 1.x), không thì tưởng đã tắt.
             if (!_trayHintShown) { _trayHintShown = true; _notifier?.Show(AppInfo.Name, L.T("tray.stillRunning"), ""); }
         };
-        _notifier = new Platform.Notifier(this, page => { ShowFromTray(); Show(PageOf(page)); });
+        _notifier = new Platform.Notifier(this, page => { ShowFromTray(); Go(page); });
         _host.UpdateOffered += v => Notify(L.F("update.available", v), L.T("notice.updateBody"), "cai-dat");
         // Update.exe đang đợi app thoát để cài bản mới: thoát hẳn (không thu xuống khay).
         _host.Updates.Restarting += _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _exiting = true; Close(); });
@@ -592,28 +776,52 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Route của từng trang, cùng thứ tự với _pages (route của 1.x: lời nhắc, khung Luyện tập, data/window.json).</summary>
-    private static readonly string[] Routes = ["hom-nay", "hop-thu", "mon", "lich", "thu-vien", "luyen-tap", "mybk", "cai-dat"];
+    private static readonly string[] Routes = ["hom-nay", "mon", "mybk", "lich", "luyen-tap", "cai-dat"];
 
     /// <summary>Route ("lich", "mon/...", "luyen-tap"...) thành số thứ tự trang; tên khác của 1.x cũng nhận; lạ thì Hôm nay.</summary>
     /// <summary>Mở Hộp thư ở đúng một dòng (thẻ ở Hôm nay).</summary>
     private void OpenInbox(string key)
     {
         // Chọn dòng trước (tạo trang nếu chưa có) rồi mới chuyển trang: Show có thể chờ (rời Luyện tập), chọn sau thì mất dòng.
-        (_inbox ??= new InboxView()).Select(key);
-        Show(PageOf("hop-thu"));
+        OpenInboxDrawer();
+        InboxPage().Select(key);
     }
 
     private static int PageOf(string route)
     {
-        var key = route.Split('/')[0] switch { "tl" or "mon-hoc" => "mon", "luyen" => "luyen-tap", "diem" or "dich-vu" => "mybk", "tin-nhan" => "hop-thu", var k => k };
+        var key = route.Split('/')[0] switch { "tl" or "mon-hoc" => "mon", "luyen" => "luyen-tap", "diem" or "dich-vu" => "mybk", "thu-vien" => "mon", var k => k };
         return Math.Max(0, Array.IndexOf(Routes, key));
     }
 
-    /// <summary>Nút Xem trong Thư viện ở trang Môn học: mở trang Thư viện và chọn môn thư viện khớp môn đó.</summary>
+    /// <summary>Nút Xem trong Thư viện ở trang Môn học: chuyển sang phần Thư viện và chọn môn thư viện khớp môn đó.</summary>
     private void OpenLibrary(string subject)
     {
-        Show(PageOf("thu-vien"));
-        _library?.SelectSubject(subject);
+        _showLibrary = true;
+        _libraryPick = subject;
+        Show(PageOf("mon"));
+    }
+
+    /// <summary>Sao lưu dữ liệu (Cài đặt, mục Dữ liệu): chọn chỗ lưu rồi ghi .zip ở luồng nền. Trả câu báo hiện dưới nút.</summary>
+    private async Task<string?> BackupAsync()
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = L.T("settings.backup"),
+            SuggestedFileName = $"{AppInfo.Name} {DateTime.Now:yyyy-MM-dd}.zip",
+            FileTypeChoices = [new FilePickerFileType("ZIP") { Patterns = ["*.zip"] }],
+        });
+        if (file?.TryGetLocalPath() is not { } path) return null;
+        try
+        {
+            var (count, skipped) = await Task.Run(() => DataBackup.Write(Paths.Data, path, AppInfo.Version, DateTime.Now));
+            Log.Info($"Sao lưu dữ liệu: {count} file{(skipped.Count > 0 ? $", bỏ qua {skipped.Count}" : "")}");
+            return L.F("settings.backupDone", count, path) + (skipped.Count > 0 ? " " + L.F("settings.backupSkipped", string.Join(", ", skipped)) : "");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn($"Sao lưu dữ liệu: {e.Message}");
+            return L.F("settings.backupFailed", e.Message);
+        }
     }
 
     /// <summary>Việc của trang Cài đặt cần tới cửa sổ và phần chạy nền.</summary>
@@ -630,6 +838,7 @@ public partial class MainWindow : Window
         OpenLog: async () => { if (File.Exists(Log.LogFile)) await Launcher.LaunchFileInfoAsync(new FileInfo(Log.LogFile)); },
         SetLibraryUrl: _host.Library.SetBaseUrl,
         ClearLibrary: _host.Library.ClearCache,
+        Backup: BackupAsync,
         AutostartGet: () => Platform.Autostart.Enabled,
         AutostartSet: Platform.Autostart.Set,
         AutoLoginSupported: Platform.Credentials.Supported,
@@ -646,7 +855,7 @@ public partial class MainWindow : Window
             return L.F("update.installing", _host.Updates.Offer?.Version ?? "");
         },
         PageCount: _pages.Length,
-        Refresh: () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Show(NavCount)),   // dựng lại trang Cài đặt sau khi ô chọn xong việc
+        Refresh: () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Show(SettingsPage)),   // dựng lại trang Cài đặt sau khi ô chọn xong việc
         Restart: () => { if (Platform.SingleInstance.StartRestart()) { _exiting = true; Close(); } },
         Fonts: App.InstalledFonts,
         ApplyFont: (family, size) =>

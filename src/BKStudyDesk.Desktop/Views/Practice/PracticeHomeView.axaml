@@ -95,7 +95,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <StackPanel Spacing="24">
+    <StackPanel x:Name="RootPanel" Spacing="16">
         <DockPanel>
             <!-- Trang tĩnh của sổ (ví dụ Lộ trình ôn), mỗi trang một nút. -->
             <ItemsControl DockPanel.Dock="Right" VerticalAlignment="Top" ItemsSource="{Binding Pages}">
@@ -104,7 +104,7 @@
                     <DataTemplate x:DataType="pr:PageEntry"><Button Content="{Binding Title}" Tag="{Binding Id}" Click="OnPage" /></DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <StackPanel Spacing="2">
+            <StackPanel x:Name="HeaderTitle" Spacing="2">
                 <TextBlock Classes="title" Text="{l:T practice.title}" />
                 <TextBlock x:Name="MetaText" Classes="meta" />
             </StackPanel>
@@ -123,7 +123,7 @@
                 <Grid x:Name="TodayColumns" Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
-                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="16" />
                         <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
                     </Grid.ColumnDefinitions>
                     <Border x:Name="TodayCard" Classes="card" VerticalAlignment="Top">
@@ -177,7 +177,7 @@
                 </Grid>
             </TabItem>
             <TabItem Header="{l:T practice.tab.courses}">
-                <StackPanel Margin="0,16,0,0" Spacing="24">
+                <StackPanel Margin="0,16,0,0" Spacing="16">
                     <TextBlock x:Name="CoursesEmpty" Classes="empty" Text="{l:T practice.empty.courses}" />
                     <!-- Lọc bài (PracticeHome.Filter), mở hay thu gọn mọi môn một lần -->
                     <DockPanel x:Name="CoursesBar">
@@ -189,12 +189,12 @@
                     </DockPanel>
                     <TextBlock x:Name="CoursesNoMatch" Classes="empty" Text="{l:T practice.courses.noMatch}" IsVisible="False" />
                     <ItemsControl x:Name="CourseList" ItemTemplate="{StaticResource CourseCard}">
-                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="24" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="16" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </StackPanel>
             </TabItem>
             <TabItem Header="{l:T practice.tab.quizzes}">
-                <StackPanel Margin="0,16,0,0" Spacing="24">
+                <StackPanel Margin="0,16,0,0" Spacing="16">
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
@@ -211,7 +211,8 @@
                 <!-- Kho quiz LMS (port QuizArchive.svelte): quiz đã nộp trên LMS, lưu sau mỗi lần đồng bộ. -->
                 <Border Classes="card">
                     <StackPanel>
-                        <Border Classes="card-head"><DockPanel>
+                        <!-- How the archive works: tooltip on the header instead of a paragraph. -->
+                        <Border Classes="card-head" ToolTip.Tip="{l:T practice.archive.hint}"><DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                 <ToggleSwitch x:Name="AutoSave" OnContent="{l:T practice.archive.autoSave}" OffContent="{l:T practice.archive.autoSave}" IsCheckedChanged="OnAutoSave" />
                                 <Button x:Name="SaveNowButton" Content="{l:T practice.archive.saveNow}" Click="OnSaveNow" />
@@ -219,7 +220,6 @@
                             <TextBlock Classes="card-title" VerticalAlignment="Center" Text="{l:T practice.archive.card}" />
                         </DockPanel></Border>
                         <TextBlock x:Name="ArchiveNote" Classes="sub" Margin="16,12,16,0" TextWrapping="Wrap" IsVisible="False" />
-                        <TextBlock Classes="sub" Margin="16,12" TextWrapping="Wrap" Text="{l:T practice.archive.hint}" />
                         <ItemsControl ItemsSource="{Binding Archive}" ItemTemplate="{StaticResource ArchiveGroup}" />
                         <TextBlock x:Name="ArchiveEmpty" Classes="empty" />
                     </StackPanel>
@@ -227,7 +227,7 @@
                 </StackPanel>
             </TabItem>
             <TabItem Header="{l:T practice.tab.results}">
-                <StackPanel Margin="0,16,0,0" Spacing="24">
+                <StackPanel Margin="0,16,0,0" Spacing="16">
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><TextBlock Classes="card-title" Text="{l:T practice.progress.card}" /></Border>

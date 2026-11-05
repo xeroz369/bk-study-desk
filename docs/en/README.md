@@ -6,7 +6,9 @@
 
 ![BK Study Desk](../hero.png)
 
-A Windows app for HCMUT students: BK-LMS and MyBK in one place, plus a few extras. Versions for macOS and Linux are experimental and not stable yet (see [below](#macos-and-linux-experimental)).
+**BK-LMS and MyBK in one app. Never miss a deadline, even offline.**
+
+A Windows app for HCMUT students. Versions for macOS and Linux are experimental and not stable yet (see [below](#macos-and-linux-experimental)).
 - Deadlines, quizzes, timetable, exam schedule, grades.
 - Course documents, download only the parts you pick.
 - Practice: write your own quizzes, review LMS quizzes, mock exams.

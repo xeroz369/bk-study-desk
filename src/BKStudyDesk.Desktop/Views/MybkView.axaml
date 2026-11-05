@@ -6,7 +6,7 @@
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.MybkView">
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
             <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T mybk.openWeb}" Click="OnOpenWeb" />
             <StackPanel Spacing="2">
                 <TextBlock Classes="title" Text="MyBK" />

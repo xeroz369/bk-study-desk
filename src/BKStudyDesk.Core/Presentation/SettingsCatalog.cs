@@ -26,6 +26,15 @@ public sealed record ChoiceItem(string Label, string? Note, IReadOnlyList<(strin
 /// <summary>Nút làm một việc (đăng nhập, mở file log, xóa bộ nhớ đệm); Run trả câu báo kết quả (null là không báo).</summary>
 public sealed record ActionItem(string Label, string? Note, string Button, Func<Task<string?>> Run) : SettingItem(Label, Note);
 
+/// <summary>
+/// Two-step action: Check reads only and returns a message; when it finds work it also returns the label of a second button
+/// and the action behind it (shown only then). Nothing to do means no second button.
+/// </summary>
+public sealed record CheckItem(string Label, string? Note, string Button, Func<Task<CheckStep>> Check) : SettingItem(Label, Note);
+
+/// <summary>Result of a check: message to show, and the confirm button (label, action returning message and error flag) if any.</summary>
+public sealed record CheckStep(string Message, string? Confirm = null, Func<Task<(string Message, bool Error)>>? Apply = null);
+
 /// <summary>Dòng chỉ đọc: tên bên trái, giá trị bên phải (bảng phím tắt).</summary>
 public sealed record InfoItem(string Label, string Value) : SettingItem(Label, null);
 
@@ -48,7 +57,7 @@ public sealed record SettingsActions(
     bool AutoLoginSupported = false, Func<string, string, string?>? AutoLoginSave = null, Action? ForgetCredentials = null,
     bool UpdateSupported = false, Func<Task<string?>>? UpdateCheck = null, Func<Task<string?>>? UpdateInstall = null,
     int PageCount = 0, Action? Refresh = null, Action? Restart = null,
-    Func<IReadOnlyList<string>>? Fonts = null, Action<string, double>? ApplyFont = null);
+    Func<IReadOnlyList<string>>? Fonts = null, Action<string, double>? ApplyFont = null, Func<Task<string?>>? Backup = null);
 
 /// <summary>
 /// Danh sách mục của trang Cài đặt (cùng khóa cài đặt với 1.x, Ui/Settings/*): Thường dùng (tài khoản, giao diện, nhắc hạn, cập nhật,
@@ -61,6 +70,30 @@ public static class SettingsCatalog
         [("dark", L.T("set.themeDark")), ("light", L.T("set.themeLight")), ("system", L.T("set.themeSystem"))];
 
     private static Task<string?> Done(string? message) => Task.FromResult(message);
+
+    /// <summary>Downloads check: list what would move (name and subject); the move runs on exactly this list.</summary>
+    public static CheckStep OrganizeCheck()
+    {
+        var plan = Organizer.PlanDownloads();
+        return OrganizeStep(plan, () => Organizer.MoveDownloads(plan));
+    }
+
+    public static CheckStep OrganizeStep(IReadOnlyList<Organizer.DownloadMove> plan, Func<Organizer.DownloadResult> move)
+    {
+        if (plan.Count == 0) return new(L.T("organize.none"));
+        const int Shown = 8;
+        var lines = plan.Take(Shown).Select(m => L.F("organize.line", Path.GetFileName(m.Source), m.Subject)).ToList();
+        if (plan.Count > Shown) lines.Add(L.F("organize.more", plan.Count - Shown));
+        return new(string.Join(Environment.NewLine, lines), L.F("organize.move", plan.Count), () => Task.Run(() => OrganizeResult(move())));
+    }
+
+    public static (string, bool) OrganizeResult(Organizer.DownloadResult r)
+    {
+        var parts = new List<string> { L.F("organize.moved", r.Moved) };
+        if (r.Duplicates > 0) parts.Add(L.F("organize.dups", r.Duplicates));
+        if (r.Failed.Count > 0) parts.Add(L.F("organize.failed", r.Failed.Count));
+        return (string.Join(" ", parts), r.Failed.Count > 0);
+    }
 
     /// <summary>Phông (mặc định của hệ điều hành rồi mọi phông trên máy), cỡ chữ, nút về mặc định. Đổi là áp ngay và lưu.</summary>
     private static SettingItem[] FontItems(IReadOnlyList<string> fonts, Action<string, double> apply, Action? refresh)
@@ -99,12 +132,13 @@ public static class SettingsCatalog
                     Settings.Sso.RememberDays = on ? Settings.Sso.DefaultRememberDays : 0;
                     if (!on) a.ForgetCredentials?.Invoke();   // không ghi nhớ đăng nhập thì cũng không giữ mật khẩu để tự đăng nhập
                 }),
-            new ToggleItem(L.T("settings.keepAlive"), null, () => Settings.Sso.KeepAliveMinutes > 0,
-                on => Settings.Sso.KeepAliveMinutes = on ? Settings.Sso.DefaultKeepAliveMinutes : 0),
             .. a.AutoLoginSupported && a.AutoLoginSave is { } save
                 ? new SettingItem[] { new CredentialItem(L.T("set.autoLogin"), L.T(Settings.Sso.AutoLogin ? "set.autoLoginOn" : "set.autoLoginOff"),
                     () => Settings.Sso.AutoLogin, save, () => { a.ForgetCredentials?.Invoke(); return L.T("set.autoLoginOffDone"); }) }
                 : [],
+            new ToggleItem(L.T("set.mybkSync"), L.T("set.mybkSyncNote"), () => Settings.Sync.MybkEnabled, on => Settings.Sync.MybkEnabled = on),
+            new ChoiceItem(L.T("set.openSchoolIn"), L.T("set.openSchoolInNote"), [("browser", L.T("set.openBrowser")), ("app", L.T("set.openApp"))],
+                () => Settings.App.OpenSchoolIn, v => Settings.App.OpenSchoolIn = v),
             new ActionItem(L.T("settings.logout"), L.T("set.logoutNote"), L.T("settings.logout"), async () => { await a.Logout(); return L.T("set.loggedOut"); }),
         ]),
         new(L.T("set.appearance"), null,
@@ -143,6 +177,14 @@ public static class SettingsCatalog
             new ToggleItem(L.T("set.autostart"), L.T("set.autostartNote"), a.AutostartGet, on => a.AutostartSet(on)),
             new ToggleItem(L.T("settings.closeToTray"), L.T("set.closeToTrayNote"), () => Settings.App.CloseToTray, v => Settings.App.CloseToTray = v),
         ]),
+        // Sao lưu ra .zip (DataBackup): không kèm tin nhắn riêng, phiên đăng nhập, tài khoản.
+        .. a.Backup is { } backup ? new SettingGroup[]
+        {
+            new(L.T("settings.data"), null,
+            [
+                new ActionItem(L.T("settings.backup"), L.T("settings.backupNote"), L.T("settings.backupButton"), backup),
+            ]),
+        } : [],
         // Chỉ ghi phím app thật sự có (MainWindow, bảng DataGrid, danh sách tài liệu ở trang Môn học).
         new(L.T("settings.keys"), null,
         [
@@ -162,8 +204,9 @@ public static class SettingsCatalog
         new(L.T("settings.sync"), null,
         [
             new NumberItem(L.T("settings.lmsHours"), L.T("settings.lmsHoursNote"), 1, () => Settings.Sync.LmsHours, v => Settings.Sync.LmsHours = v),
-            // MyBK đổi chậm: đồng bộ dày hơn sources.mybk.minSyncHours chỉ tốn request của trường.
-            new NumberItem(L.T("settings.mybkHours"), L.T("settings.mybkHoursNote"), Config.Int("sources.mybk.minSyncHours", 1), () => Settings.Sync.MybkHours, v => Settings.Sync.MybkHours = v),
+            // No MyBK period: MyBK loads each section when its page is opened (on-demand sync, 06/11/2026).
+            // Reminders keep fresh data even while the user is away: at least every N days (KeepFresh).
+            new NumberItem(L.T("settings.minFreshDays"), L.T("settings.minFreshDaysNote"), 1, () => Settings.Sync.MinFreshDays, v => Settings.Sync.MinFreshDays = v),
             new NumberItem(L.T("settings.maxMb"), null, 1, () => Settings.Sync.MaxFileMB, v => Settings.Sync.MaxFileMB = v),
             new ToggleItem(L.T("settings.autoDownload"), null, () => Settings.Sync.AutoDownload, v => Settings.Sync.AutoDownload = v),
             new ToggleItem(L.T("settings.autoExtract"), null, () => Settings.Archives.Extract, v => Settings.Archives.Extract = v),
@@ -182,14 +225,9 @@ public static class SettingsCatalog
             }),
             new TextItem(L.T("settings.pdfApp"), L.T("set.pdfNote"), () => Settings.OpenDocs.PdfApp, s => s.Trim(), v => Settings.OpenDocs.PdfApp = v, ""),
         ], Advanced: true),
-        new(L.T("settings.organize"), L.T("set.organizeNote"),
+        new(L.T("settings.organize"), null,
         [
-            new ActionItem(L.T("settings.preview"), null, L.T("settings.preview"), () =>
-            {
-                var lines = Organizer.ImportDownloads(apply: false);
-                return Done(lines.Count == 0 ? L.T("settings.planEmpty") : string.Join(Environment.NewLine, lines));
-            }),
-            new ActionItem(L.T("settings.apply"), null, L.T("settings.apply"), () => Done(L.F("settings.applied", Organizer.ImportDownloads(apply: true).Count))),
+            new CheckItem(L.T("organize.row"), L.T("organize.note"), L.T("organize.check"), () => Task.Run(OrganizeCheck)),
         ], Advanced: true),
         new(L.T("settings.library"), L.T("settings.library.note"),
         [

@@ -9,8 +9,9 @@ namespace SoHocTap.Presentation;
 public enum InboxKind { Message, News, System }
 
 /// <summary>Một dòng của Hộp thư: hội thoại tin nhắn, bài thông báo của môn, hay thông báo hệ thống của LMS. Key: "msg:id" hay "news:id".</summary>
-public sealed record InboxRow(string Key, InboxKind Kind, string Title, string Sub, string Preview, string When, long Time, bool Unread)
+public sealed record InboxRow(string Key, InboxKind Kind, string Title, string Sub, string Preview, string When, long Time, bool Unread, bool Quiet = false)
 {
+    // Quiet: thông báo tự động của LMS (vd. biên nhận nộp bài): vẫn ở Hộp thư, nhưng không tính chưa đọc, không vào thẻ Hôm nay.
     public string KindText => L.T(Kind switch { InboxKind.Message => "inbox.kind.message", InboxKind.News => "inbox.kind.news", _ => "inbox.kind.system" });
 }
 
@@ -49,6 +50,7 @@ public static class Inbox
     public static IReadOnlyList<InboxRow> Rows(LmsMessages? messages, IReadOnlyList<LmsAnnouncement> news, InboxReads reads, long now, int days)
     {
         var rows = new List<InboxRow>();
+        var quietEvents = Config.List("sources.lms.quietEvents");
         foreach (var c in messages?.Conversations ?? [])
         {
             var key = "msg:" + c.Id;
@@ -60,11 +62,12 @@ public static class Inbox
         foreach (var a in news)
         {
             var key = "news:" + a.Id;
-            var unread = reads.ReadAt(key) is null && a.Time > now - days * 86400L;
+            var quiet = a.Event is { Length: > 0 } ev && quietEvents.Contains(ev, StringComparer.OrdinalIgnoreCase);
+            var unread = !quiet && reads.ReadAt(key) is null && a.Time > now - days * 86400L;
             var kind = a.Kind == "system" ? InboxKind.System : InboxKind.News;
             var preview = string.Join(" ", LmsReading.Paragraphs(a.Message)).Replace('\n', ' ');
             if (preview.Length > 90) preview = preview[..90] + "...";
-            rows.Add(new(key, kind, a.Title, string.Join(", ", new[] { a.Subject, a.Author ?? "" }.Where(x => x.Length > 0)), preview, Format.Ago(a.Time), a.Time, unread));
+            rows.Add(new(key, kind, a.Title, string.Join(", ", new[] { a.Subject, a.Author ?? "" }.Where(x => x.Length > 0)), preview, Format.Ago(a.Time), a.Time, unread, quiet));
         }
         return [.. rows.OrderByDescending(r => r.Time)];
     }
@@ -89,7 +92,7 @@ public static class Inbox
 
     /// <summary>Thẻ "Mới trong hộp thư" ở Hôm nay: dòng chưa đọc, hay mới trong <paramref name="days"/> ngày; tối đa <paramref name="max"/>.</summary>
     public static IReadOnlyList<InboxRow> Recent(IReadOnlyList<InboxRow> rows, long now, int days, int max = 6) =>
-        [.. rows.Where(r => r.Unread || r.Time > now - days * 86400L).Take(max)];
+        [.. rows.Where(r => !r.Quiet && (r.Unread || r.Time > now - days * 86400L)).Take(max)];
 
     public static int UnreadCount(IReadOnlyList<InboxRow> rows) => rows.Count(r => r.Unread);
 }

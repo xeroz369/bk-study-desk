@@ -83,4 +83,9 @@ public class WeekMathTests
     [Fact]
     public void Scroll_EmptyWeekStartsAtSeven() =>
         Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday.AddDays(14), new DateTime(2026, 10, 3, 19, 0, 0), null, 600));
+
+    [Fact]
+    public void ScrollAnchor_StaysOnClasses_WhenEveningHasNothingLeft() =>
+        // 19:38, buổi muộn nhất kết thúc 17:50: giữ ở buổi sớm nhất, không cuộn xuống vùng tối trống.
+        Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 3, 19, 38, 0), 7 * 60, 240, 17 * 60 + 50));
 }

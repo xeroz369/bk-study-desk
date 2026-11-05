@@ -18,16 +18,16 @@ public sealed record InfoBarState(string Key, InfoSeverity Severity, string Text
     string? Source = null, bool AutoHide = false);
 
 /// <summary>
-/// Đầu vào của InfoBar.Decide (InfoBar.Input đọc từ AppState). Failure: lỗi đồng bộ gần nhất, đã bỏ MyBK khi MyBK hết phiên mà không cần.
-/// Closed: Key của dải người dùng vừa đóng.
+/// Đầu vào của InfoBar.Decide (InfoBar.Input đọc từ AppState). Closed: Key của dải người dùng vừa đóng.
 /// </summary>
 public sealed record InfoInput(string LoginStage, string LoginMessage, AccountNeed Need, bool MybkNeeded, bool FirstRun,
-    (string Text, string? Detail, string Source, string Label)? Failure, bool OfferAutoLogin, string? Closed);
+    bool OfferAutoLogin, string? Closed);
 
 /// <summary>
-/// Dải báo của app (cùng quy tắc với InfoBar bản 1.x, Ui/MainWindow.UpdateInfoBar). Thứ tự ưu tiên: lượt đăng nhập đang chạy, lỗi đồng bộ,
-/// mời bật tự đăng nhập lại, cần đăng nhập. MyBK hết phiên mà lúc này không cần MyBK (MybkLoginPrompt) thì không bật dải, LMS vẫn chạy.
-/// Hàm thuần, có test.
+/// Dải báo của app: chỉ hiện khi người dùng cần làm gì đó. Thứ tự ưu tiên: lượt đăng nhập đang chạy, cần đăng nhập, mời bật tự đăng nhập
+/// lại. Lỗi đồng bộ (mất mạng, trường chậm, LMS sập) không bật dải: nút trạng thái ở thanh trên cùng báo, bảng Thông báo ghi chi tiết
+/// và lúc của bản lưu (05/11/2026: dải đỏ trên mọi trang lặp lại đúng điều nút trạng thái đã báo). MyBK hết phiên mà lúc này không cần
+/// MyBK (MybkLoginPrompt) thì không bật dải. Hàm thuần, có test.
 /// </summary>
 public static class InfoBar
 {
@@ -37,8 +37,7 @@ public static class InfoBar
     /// </summary>
     public static InfoInput Input(AppState s, string stage, string message, bool mybkNeeded, bool autoLoginSupported, string? closed)
     {
-        var quietMybk = s.Account == AccountNeed.Mybk && !mybkNeeded;
-        return new(stage, message, s.Account, mybkNeeded, s.Lms is null && s.Mybk is null, FirstFailure(s, quietMybk ? SourceIds.Mybk : null),
+        return new(stage, message, s.Account, mybkNeeded, s.Lms is null && s.Mybk is null,
             autoLoginSupported && !Settings.Sso.AutoLoginAsked && !Settings.Sso.AutoLogin && Settings.Sso.RememberDays > 0 && s.Mybk is not null, closed);
     }
 
@@ -47,8 +46,6 @@ public static class InfoBar
         if (Login(i.LoginStage, i.LoginMessage) is { } login) return login;
         var need = i.Need == AccountNeed.Mybk && !i.MybkNeeded ? AccountNeed.None : i.Need;
         var bar = need != AccountNeed.None ? NeedLogin(need, i.FirstRun)
-            : i.Failure is { } f ? new InfoBarState("fail:" + f.Text, InfoSeverity.Error, f.Text, f.Detail, InfoAction.Retry, L.T("web.retry"),
-                InfoAction.OpenSource, L.F("info.openSource", f.Label), f.Source)
             : i.OfferAutoLogin ? new InfoBarState("autologin", InfoSeverity.Info, L.T("info.autoLogin"), null,
                 InfoAction.AutoLoginOn, L.T("info.autoLogin.on"), InfoAction.AutoLoginNo, L.T("info.autoLogin.no"))
             : null;
@@ -72,18 +69,4 @@ public static class InfoBar
         "error" => new("login:error:" + message, InfoSeverity.Error, L.F("info.error", message), null, InfoAction.Login, L.T("web.retry")),   // chữ lỗi bảo "chọn Thử lại"
         _ => null,
     };
-
-    /// <summary>Lỗi đồng bộ gần nhất của LMS, MyBK (đang đồng bộ thì chưa tính; skip: nguồn không xét): câu dễ hiểu và chi tiết kỹ thuật.</summary>
-    private static (string Text, string? Detail, string Source, string Label)? FirstFailure(AppState s, string? skip)
-    {
-        foreach (var (name, label) in new[] { (SourceIds.Lms, "LMS"), (SourceIds.Mybk, "MyBK") })
-        {
-            if (s.Syncing(name) || name == skip) continue;
-            // Lỗi mà đã có bản lưu: nói rõ đang xem bản lưu lúc nào (app là bản dự phòng khi LMS, MyBK sập).
-            if (s.ExplainError(name, label) is var (text, detail))
-                return (L.F("info.syncFailed", label, text) + (s.SyncedAt(name) is { } t ? " " + L.F("info.savedCopy", StatusPanel.When(t)) : ""), detail, name, label);
-            // Chỉ một phần không đọc được (đợt đăng ký môn...): không hiện dải đỏ, chỉ báo ở nút trạng thái trên cùng (StatusPanel).
-        }
-        return null;
-    }
 }

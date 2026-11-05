@@ -45,8 +45,8 @@ public partial class LoginView : UserControl
             _slow.Stop();
         };
         Host.Child = page.View;
-        var flow = new LoginFlow(page, _progress);
-        flow.Finished += async () => { _done = true; await Task.Delay(800); Finished?.Invoke(); };   // đủ lâu để thấy trang xong
+        var flow = new LoginFlow(page, _progress, mybk: Settings.Sync.MybkEnabled);
+        flow.Finished += () => { _done = true; Finished?.Invoke(); };
         flow.Start();
         _slow.Start();
     }
