@@ -4,7 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
              x:Class="BKStudyDesk.Desktop.Views.Practice.ExamView">
-    <StackPanel Spacing="24">
+    <StackPanel Spacing="16">
         <DockPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12" VerticalAlignment="Top">
                 <TextBlock x:Name="ClockText" Classes="verdict" VerticalAlignment="Center" />
@@ -37,7 +37,7 @@
         <Grid x:Name="Columns">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
-                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
             </Grid.ColumnDefinitions>
             <Border x:Name="QuestionCard" Classes="card" VerticalAlignment="Top">

@@ -12,9 +12,9 @@
   <ItemGroup>
     <!-- Giữ 3.x như Math.Tests: Avalonia.Headless.XUnit 12.1.x không chạy với xunit.v3 4.x. -->
     <PackageReference Include="xunit.v3" Version="3.2.2" />
-    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Skia" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
   </ItemGroup>
   <ItemGroup>

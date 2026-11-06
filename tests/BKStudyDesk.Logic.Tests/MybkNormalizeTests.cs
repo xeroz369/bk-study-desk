@@ -14,6 +14,16 @@ public class MybkNormalizeTests
     private static readonly Dictionary<string, string> Special = new() { ["13"] = "MT" };
 
     [Fact]
+    public void EmptySchedule_SameTerm_KeepsSaved_NewTermTakesFresh()
+    {
+        var saved = new JsonArray(new JsonObject { ["code"] = "CO1027" });
+        Assert.True(MybkNormalize.KeepOldSchedule([], saved, sameTerm: true));
+        Assert.False(MybkNormalize.KeepOldSchedule([], saved, sameTerm: false));
+        Assert.False(MybkNormalize.KeepOldSchedule([], new JsonArray(), sameTerm: true));
+        Assert.False(MybkNormalize.KeepOldSchedule(new JsonArray(new JsonObject()), saved, sameTerm: true));
+    }
+
+    [Fact]
     public void Schedule_OrdersByDay_ParsesWeeks_ToleratesNullsAndJunk()
     {
         var s = MybkNormalize.Schedule(Study["schedule"] as JsonArray);

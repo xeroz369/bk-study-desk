@@ -233,4 +233,25 @@ public class SmokeTests
         Ui.Pump(w);
         w.Close();
     }
+
+    [AvaloniaFact]
+    public void Reader_shows_saved_lms_image_and_link_when_missing()
+    {
+        // Ảnh LMS đã tải về (LmsImages): hiện thành Image; ảnh chưa tải: link mở trên LMS.
+        const string saved = "https://lms.hcmut.edu.vn/pluginfile.php/1/mod_forum/post/1/lich.png";
+        const string missing = "https://lms.hcmut.edu.vn/pluginfile.php/2/mod_forum/post/2/khac.png";
+        var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
+        System.IO.Directory.CreateDirectory(SoHocTap.Sources.Lms.LmsImages.Dir);
+        var html = $"<p>Lịch thi</p><img src=\"{saved}?token=abc\"><img src=\"{missing}\">";
+        foreach (var f in System.IO.Directory.GetFiles(SoHocTap.Sources.Lms.LmsImages.Dir)) System.IO.File.Delete(f);
+        var target = SoHocTap.Sources.Lms.LmsImages.PathFor(saved);
+        System.IO.File.WriteAllBytes(target, png);
+        var reading = SoHocTap.Presentation.LmsReading.Of("Bài", "", html, null, null);
+        var body = ReaderWindow.Body(reading, new Panel());
+        var w = Ui.Show(body);
+        Ui.Pump(w);
+        Assert.Single(body.GetVisualDescendants().OfType<Image>());
+        Assert.Contains(body.GetVisualDescendants().OfType<HyperlinkButton>(), b => b.Content is string t && t.Length > 0);
+        w.Close();
+    }
 }

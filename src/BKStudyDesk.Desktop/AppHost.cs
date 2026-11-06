@@ -16,9 +16,9 @@ namespace BKStudyDesk.Desktop;
 /// </summary>
 internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
 {
+    // Sessions (SSO, MyBK, LMS): never guess expiry and never ping SSO on a timer. Use the current session until the server
+    // itself rejects it, then go through SSO once. Every SSO pass counts as a MyBK sign-in (hourly keep-alive pushed it to 85/month).
     private readonly MybkBrowser _mybk = new();
-    private DateTime _ssoAliveAt = DateTime.MinValue;   // lần cuối biết chắc phiên SSO còn (đăng nhập, giữ phiên, đồng bộ MyBK)
-    private bool _ssoExpired;                           // đã thấy phiên hết: thôi giữ phiên cho tới khi đăng nhập lại
 
     public SoHocTap.Library.LibraryService Library { get; } = new();
 
@@ -27,7 +27,7 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
 
     /// <summary>Có bản mới ở chế độ "báo khi có bản mới": cửa sổ chính báo người dùng (số phiên bản).</summary>
     public event Action<string>? UpdateOffered;
-    private readonly CancellationTokenSource _stop = new();   // dừng các vòng nền (giữ phiên, thư viện, cập nhật) khi đóng app
+    private readonly CancellationTokenSource _stop = new();   // dừng các vòng nền (thư viện, cập nhật) khi đóng app
 
     /// <summary>API của 1.x gọi thẳng (không qua HTTP): trang Luyện tập native đọc ghi kết quả, gói, quiz LMS qua đây.</summary>
     public SoHocTap.Api.ApiRouter Router => _router ??= new SoHocTap.Api.ApiRouter(this);
@@ -62,17 +62,152 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     {
         State.Reload();
         Hub.StartScheduler();
-        StartKeepAlive();
         StartLibrary();
         StartUpdates();
         // Có mạng lại: chạy ngay một lượt nguồn tới hạn, không đợi tới tick kế (API .NET, có trên cả ba hệ điều hành).
-        System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += OnNetworkChanged;
+        // Đăng ký ở luồng nền: lần đầu .NET khởi tạo theo dõi mạng mất 50 đến 100 ms, không để chậm lúc mở cửa sổ (đo 01/11/2026).
+        _ = Task.Run(() => System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += OnNetworkChanged);
+        OfflineMode.Changed += OnOfflineChanged;
+        StartActivityWatch();
+    }
+
+    /// <summary>
+    /// A subject was opened (Subjects page): check its LMS courses for updates, one at a time, each at most every 20 minutes
+    /// (LmsSource.CheckCourseOnOpenAsync). Not while Offline or away. A changed course reloads the pages.
+    /// </summary>
+    public void CheckCoursesOnOpen(IReadOnlyList<long> ids)
+    {
+        if (OfflineMode.On || !UserActivity.Active || !LmsClient.HasToken) return;
+        _ = Task.Run(async () =>
+        {
+            var changed = false;
+            foreach (var id in ids)
+                try { changed |= await LmsSource.CheckCourseOnOpenAsync(id, _stop.Token); }
+                catch (OperationCanceledException) { return; }
+            if (changed) Dispatcher.UIThread.Post(State.Reload);
+        });
+    }
+
+    private Avalonia.Threading.DispatcherTimer? _activityTimer;
+
+    /// <summary>
+    /// Background work runs only while someone is at the computer (UserActivity, docs/plans/2026-11-06-on-demand-sync.md).
+    /// Windows reads system-wide idle time; other systems use input and focus in the app window (MainWindow feeds them).
+    /// Checked every 15 seconds: going away closes the hidden MyBK browser, coming back runs one due check a few seconds later.
+    /// </summary>
+    private void StartActivityWatch()
+    {
+        UserActivity.IdleLimit = TimeSpan.FromMinutes(Math.Max(1, Config.Int("app.idleMinutes", 10)));
+        if (OperatingSystem.IsWindows()) UserActivity.SystemIdle = Platform.IdleTime.Read;
+        UserActivity.Changed += OnActivityChanged;
+        // A failed automatic fill stops all automatic sign-ins; the sign-in bar (InfoBar, session expired) asks the user.
+        SsoGate.AutoFillFailed += () => Log.Warn("Tự đăng nhập không được: dừng tự đăng nhập, chờ người dùng đăng nhập trong app");
+        _activityTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+        _activityTimer.Tick += (_, _) => UserActivity.Poll();
+        _activityTimer.Start();
+    }
+
+    private void OnActivityChanged(bool active)
+    {
+        Log.Info(active ? "Người dùng quay lại: chạy lại việc nền" : "Người dùng vắng: dừng việc nền");
+        if (active && _lmsRefreshWaiting && Hub.ErrorKind(SourceIds.Lms) == SoHocTap.Data.SyncErrorKind.SessionExpired) RefreshLmsSignIn();
+        if (active) Hub.RunDueSoon(TimeSpan.FromSeconds(3));
+        else _mybk.Release();
+        State.RefreshStatusOnly();   // "next sync" times depend on activity
+    }
+
+    /// <summary>
+    /// Bật Offline: đóng trình duyệt ẩn của MyBK ngay (không giữ kết nối nào tới trường). Tắt: chạy lại một lượt nguồn tới hạn sau
+    /// ít giây; giữ phiên SSO và tin nhắn quay lại theo lịch.
+    /// </summary>
+    private void OnOfflineChanged(bool on)
+    {
+        if (on) _mybk.Release();
+        else Hub.RunDueSoon(TimeSpan.FromSeconds(3));
+        Dispatcher.UIThread.Post(State.RefreshStatus);
     }
 
     /// <summary>Cùng quy tắc với bản 1.x (Shell/AppHost): lượt không có gì mới thì chỉ báo trạng thái, không đọc lại, không vẽ lại trang.</summary>
     private DeadlineNotifier? _notifier;
     private MessageNotifier? _messages;
     private Avalonia.Threading.DispatcherTimer? _messagesTimer;
+
+    /// <summary>Đọc nhanh tin nhắn riêng LMS (lượt 30 phút, lần đầu chưa có tin, nút Tải tin nhắn ngay ở Hộp thư). true nếu đã ghi file.</summary>
+    public Task<bool> SyncMessagesNowAsync() => SyncMessagesAsync(manual: true);
+
+    /// <summary>Lượt tự chạy (manual false) thì bỏ khi đang Offline; nút bấm tay thì vẫn đọc.</summary>
+    private async Task<bool> SyncMessagesAsync(bool manual)
+    {
+        if (!manual && (OfflineMode.On || !UserActivity.Active)) return false;   // timed poll: not while Offline or away
+        if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) return false;
+        if (!await Task.Run(() => LmsSource.SyncMessagesAsync(CancellationToken.None))) return false;
+        _messages?.Check();
+        State.RefreshStatusOnly();
+        MessagesChanged?.Invoke();
+        return true;
+    }
+
+    private Action<string, string, string>? _show;
+    private Avalonia.Threading.DispatcherTimer? _freshTimer;
+    private readonly HashSet<string> _freshDue = [], _freshWaiting = [], _freshSignedOut = [];
+    private bool _freshWarned;   // told the user once; cleared when they sign in
+
+    /// <summary>
+    /// Minimum freshness for reminders (KeepFresh): LMS deadlines and quizzes (a light run), and MyBK timetable and exams when MyBK
+    /// is on, refreshed when older than app.minFreshDays days, whether or not the user is at the computer. Existing sessions only:
+    /// automatic password fill stays tied to activity (SsoGate). Not while Offline (the user asked for no connections).
+    /// </summary>
+    private void KeepFreshTick()
+    {
+        if (OfflineMode.On || _freshWaiting.Count > 0) return;
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var days = SoHocTap.Core.Settings.Sync.MinFreshDays;
+        _freshDue.Clear();
+        _freshSignedOut.Clear();
+        var lms = SoHocTap.Data.LmsStore.Latest();
+        if (lms.Count > 0 && KeepFresh.Due(KeepFresh.Latest(SoHocTap.Sources.Mybk.MybkNormalize.Long(lms["syncedAt"]), SoHocTap.Sources.Mybk.MybkNormalize.Long(lms["lightAt"])), now, days))
+        {
+            _freshDue.Add(SourceIds.Lms);
+            if (!LmsClient.HasToken) _freshSignedOut.Add(SourceIds.Lms);
+            else
+            {
+                LmsSource.LightNext();
+                if (Hub.Start(SourceIds.Lms)) _freshWaiting.Add(SourceIds.Lms);
+                else LmsSource.CancelLight();   // a sync is running (it refreshes deadlines too) or just ran
+            }
+        }
+        var mybk = SoHocTap.Data.MybkStore.Latest();
+        if (SoHocTap.Core.Settings.Sync.MybkEnabled && mybk.Count > 0
+            && KeepFresh.Due(KeepFresh.Oldest(MybkSections.FetchedAt(mybk, MybkSections.Schedule), MybkSections.FetchedAt(mybk, MybkSections.Exams)), now, days))
+        {
+            _freshDue.Add(SourceIds.Mybk);
+            if (!MybkSource.SignedIn) _freshSignedOut.Add(SourceIds.Mybk);
+            else
+            {
+                MybkSource.Want([MybkSections.Schedule, MybkSections.Exams], force: false);
+                if (Hub.Start(SourceIds.Mybk, force: true, soon: true)) _freshWaiting.Add(SourceIds.Mybk);
+            }
+        }
+        if (_freshDue.Count > 0) Log.Info($"Cập nhật tối thiểu cho nhắc hạn: {string.Join(", ", _freshDue)}");
+        if (_freshWaiting.Count == 0) WarnIfAllSignedOut();
+    }
+
+    /// <summary>A keep-fresh run ended: note a signed-out result, and once every due source has answered, tell the user if none worked.</summary>
+    private void OnFreshDone(string name)
+    {
+        if (!_freshWaiting.Remove(name)) return;
+        if (Hub.ErrorKind(name) == SoHocTap.Data.SyncErrorKind.SessionExpired) _freshSignedOut.Add(name);
+        if (_freshWaiting.Count == 0) WarnIfAllSignedOut();
+    }
+
+    private void WarnIfAllSignedOut()
+    {
+        if (_freshWarned || !KeepFresh.AllSignedOut(_freshDue, _freshSignedOut)) return;
+        _freshWarned = true;
+        Log.Warn("Cập nhật tối thiểu: mọi phiên đăng nhập đều hết, nhắc hạn đang dùng dữ liệu cũ");
+        _show?.Invoke(L.T("fresh.allSignedOutTitle"), L.T("fresh.allSignedOutBody"), "");   // status bar already says "cần đăng nhập"
+        State.RefreshStatus();
+    }
 
     /// <summary>Lượt đọc nhanh tin nhắn vừa ghi file mới: trang Hộp thư, thẻ ở Hôm nay đọc lại.</summary>
     public event Action? MessagesChanged;   // tin nhắn riêng LMS mới, xem sau mỗi lượt đồng bộ LMS
@@ -89,17 +224,19 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         _messages = new MessageNotifier(show);
         // Tin nhắn riêng: đọc nhanh mỗi sources.lms.messagesMinutes phút (lượt LMS đầy đủ chỉ 3 giờ một lần), có tin mới thì báo ngay.
         _messagesTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(Math.Max(10, Config.Int("sources.lms.messagesMinutes", 30))) };
-        _messagesTimer.Tick += async (_, _) =>
-        {
-            if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) return;
-            if (await Task.Run(() => LmsSource.SyncMessagesAsync(CancellationToken.None)))
-            {
-                _messages?.Check();
-                State.RefreshStatusOnly();
-                MessagesChanged?.Invoke();
-            }
-        };
+        _messagesTimer.Tick += async (_, _) => await SyncMessagesAsync(manual: false);
         _messagesTimer.Start();
+        // Chưa có tin nhắn lưu trên máy (mới cập nhật lên bản có Hộp thư, mới đăng nhập): đọc ngay sau ít giây, không chờ lượt LMS 3 giờ
+        // hay lượt nhanh 30 phút (31/10/2026: cập nhật xong mở Hộp thư thấy trống).
+        if (!File.Exists(SoHocTap.Data.LmsMessagesStore.FilePath))
+            Avalonia.Threading.DispatcherTimer.RunOnce(() => _ = SyncMessagesAsync(manual: false), TimeSpan.FromSeconds(15));
+        _show = show;
+        // Reminders read saved data: keep it at most app.minFreshDays old, even while the user is away (KeepFresh). First look after
+        // 2 minutes, then every 30 minutes; it only sends requests when something is older than the limit.
+        _freshTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(30) };
+        _freshTimer.Tick += (_, _) => KeepFreshTick();
+        _freshTimer.Start();
+        Avalonia.Threading.DispatcherTimer.RunOnce(KeepFreshTick, TimeSpan.FromMinutes(2));
         _notifyTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
         _notifyTimer.Tick += (_, _) => _notifier.Check();
         _notifyTimer.Start();
@@ -124,18 +261,16 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         else if (stage == "start" && State.SyncedAt(name) is not null) State.RefreshStatusOnly();
         else State.RefreshStatus();
         if (name == SourceIds.Lms && stage == "done") { _notifier?.Check(); _messages?.Check(); }
+        if (stage == "done") OnFreshDone(name);
         // Token LMS hết hạn: phiên SSO còn thì trường tự cấp vé mới, lấy lại token ngầm (một lần), không bắt người dùng đăng nhập.
+        // Only while the user is at the computer: otherwise wait, OnActivityChanged retries when they are back.
         if (name == SourceIds.Lms && stage == "done" && Hub.ErrorKind(SourceIds.Lms) == SoHocTap.Data.SyncErrorKind.SessionExpired && !_lmsRefreshTried)
-        {
-            _lmsRefreshTried = true;
-            Service.Refresh();
-        }
+            RefreshLmsSignIn();
         if (name == SourceIds.Mybk && stage == "done")
         {
+            // The user moved to another page or tab while MyBK was loading: load what that one needs, else close the hidden browser.
+            if (MybkSource.NeedsRun() && Hub.Start(SourceIds.Mybk, force: true, soon: true)) return;
             _mybk.Release();
-            // Lượt MyBK vừa đi qua SSO: biết chắc phiên còn, khỏi giữ phiên ngay sau đó. Hết phiên thì thôi giữ phiên.
-            if (!Hub.Failed(SourceIds.Mybk)) { _ssoAliveAt = DateTime.UtcNow; _ssoExpired = false; }
-            else if (Hub.ErrorKind(SourceIds.Mybk) == SoHocTap.Data.SyncErrorKind.SessionExpired) _ssoExpired = true;
         }
     }
 
@@ -145,7 +280,15 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     private Action<Views.LoginView?>? _present;   // chỗ hiện trang đăng nhập (cửa sổ chính đưa vào lần bấm Đăng nhập đầu tiên)
     private LoginService Service => _login ??= new LoginService(v => _present?.Invoke(v), OnLogin);
     private LoginService? _login;
-    private bool _lmsRefreshTried;   // token LMS hết hạn: đã thử làm mới ngầm một lần, chờ đăng nhập xong mới thử lại
+    private bool _lmsRefreshTried, _lmsRefreshWaiting;
+
+    private void RefreshLmsSignIn()
+    {
+        if (!UserActivity.Active) { _lmsRefreshWaiting = true; Log.Info("Token LMS hết hạn: chờ người dùng quay lại mới đăng nhập lại"); return; }
+        _lmsRefreshWaiting = false;
+        _lmsRefreshTried = true;
+        Service.Refresh();
+    }   // token LMS hết hạn: đã thử làm mới ngầm một lần, chờ đăng nhập xong mới thử lại
 
     /// <summary>Đăng nhập HCMUT: thử ngầm trước, cần mật khẩu thì đưa trang đăng nhập cho <paramref name="present"/> (null: gỡ).</summary>
     public void Login(Action<Views.LoginView?> present)
@@ -184,45 +327,14 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
         if (stage is "done" or "refresh")   // refresh: lượt làm mới ngầm (LoginService.Refresh) xong, như đăng nhập xong
         {
             _lmsRefreshTried = false;
-            _ssoAliveAt = DateTime.UtcNow;
-            _ssoExpired = false;
+            SsoGate.SignedIn();   // signed in again: one automatic fill is allowed for a later expiry
+            _freshWarned = false;
+            Hub.ForgetSessionExpired();   // clear the stale "session expired" status now, not after the sync below
             Hub.Start(SourceIds.Lms, force: true);
             Hub.Start(SourceIds.Mybk, force: true);
         }
         State.RefreshStatus();
         LoginProgress?.Invoke(stage, message);
-    }
-
-    /// <summary>Giữ phiên SSO như bản 1.x: mỗi 5 phút xem đã quá sso.keepAliveMinutes kể từ lần cuối biết còn phiên chưa.</summary>
-    private void StartKeepAlive()
-    {
-        var ct = _stop.Token;
-        _ = Task.Run(async () =>
-        {
-            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
-            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
-            {
-                try { await KeepAliveTickAsync(ct); }
-                catch (Exception e) when (e is not (OutOfMemoryException or OperationCanceledException)) { Log.Warn($"Giữ phiên SSO: {e.Message}"); }
-            }
-        }, ct);
-    }
-
-    private async Task KeepAliveTickAsync(CancellationToken ct)
-    {
-        var minutes = Settings.Sso.KeepAliveMinutes;
-        if (minutes <= 0 || _ssoExpired || !MybkSource.SignedIn) return;
-        if (DateTime.UtcNow - _ssoAliveAt < TimeSpan.FromMinutes(minutes)) return;
-        if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) return;
-        var alive = await _mybk.KeepAliveAsync(ct);
-        _mybk.Release();
-        if (alive == true) _ssoAliveAt = DateTime.UtcNow;
-        else if (alive == false)
-        {
-            _ssoExpired = true;
-            SsoSession.Expired();
-            Hub.Start(SourceIds.Mybk, force: true);   // MyBK báo "phiên hết hạn", app mời đăng nhập lại
-        }
     }
 
     /// <summary>Thư viện: đọc index (cache trước, tới hạn thì hỏi mạng) lúc mở app rồi mỗi giờ xem đã quá một ngày chưa (như 1.x).</summary>
@@ -234,7 +346,7 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
             using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
             do
             {
-                try { await Library.RefreshAsync(SoHocTap.Library.LibraryRefresh.IfDue, ct); }
+                try { if (!OfflineMode.On && UserActivity.Active) await Library.RefreshAsync(SoHocTap.Library.LibraryRefresh.IfDue, ct); }
                 catch (Exception e) when (e is not (OutOfMemoryException or OperationCanceledException)) { Log.Warn($"Thư viện: {e.Message}"); }
             }
             while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false));
@@ -261,7 +373,7 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     {
         try
         {
-            if (!Updates.Due()) return;
+            if (OfflineMode.On || !UserActivity.Active || !Updates.Due()) return;
             if (await Updates.CheckAsync(manual: false, default) is not { } offer) return;
             if (SoHocTap.Updates.UpdateService.Mode == UpdateMode.Auto && SoHocTap.Updates.UpdateService.CanSelfUpdate)
                 await Updates.DownloadAsync(userAsked: false, default);
@@ -278,6 +390,10 @@ internal sealed class AppHost : IDisposable, SoHocTap.Api.IShellActions
     public void Dispose()
     {
         System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged -= OnNetworkChanged;
+        OfflineMode.Changed -= OnOfflineChanged;
+        UserActivity.Changed -= OnActivityChanged;
+        _activityTimer?.Stop();
+        _freshTimer?.Stop();
         _stop.Cancel();
         _notifyTimer?.Stop();
         _messagesTimer?.Stop();

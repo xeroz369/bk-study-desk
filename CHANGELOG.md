@@ -6,6 +6,43 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.3.0] - 2026-11-06
+
+### Thêm
+
+- Giao diện mới, gọn hơn: thanh trên cùng có Hôm nay, LMS, MyBK, Lịch, ô Tìm ở giữa (Ctrl+K), nút trạng thái, icon Hộp thư và Cài đặt.
+- Hộp thư mở thành ngăn bên phải, hiện hội thoại như khung tin nhắn của LMS.
+- Trang LMS gồm Môn học và Thư viện. Thẻ môn có các tab Tổng quan, Tài liệu, Sắp tới, Thông báo, Video và liên kết, Luyện tập, Điểm LMS.
+- Tab Tài liệu có ô tìm, nút lọc theo loại, xem tất cả file hay theo thư mục.
+- Mở trang LMS, MyBK ngay trong app, có thanh địa chỉ và nút lùi, tiến, tải lại; đổi sang trình duyệt mặc định trong Cài đặt.
+- Cần làm ghi giờ mở của quiz. Việc đã nộp hay đã phản hồi vẫn hiện kèm nhãn xanh, không còn báo đỏ.
+- Dòng gộp (như khảo sát của nhiều môn) ghi giờ hạn, môn chưa làm, môn đã gửi.
+- Xuất thời khóa biểu qua BKalendar để đưa vào Google Calendar.
+- Chế độ Offline: thôi tự kết nối tới trường, vẫn xem được dữ liệu đã lưu.
+- Nút gạt Đồng bộ MyBK trong Cài đặt: tắt thì chỉ giữ LMS.
+- Nhắc hạn giữ dữ liệu mới tối thiểu mỗi ngày (chỉnh được).
+- Sao lưu dữ liệu ra file zip.
+- Ảnh trong thông báo, trả lời diễn đàn, tin nhắn và trang LMS được lưu về máy, xem được cả khi LMS sập.
+
+### Thay đổi
+
+- Đồng bộ theo nhu cầu: MyBK chỉ tải mục bạn đang xem khi bản lưu đã cũ, các lần gọi giãn ra thay vì dồn một lúc; mở một môn thì chỉ kiểm môn đó trên LMS.
+- Khi bạn không dùng máy, app không đồng bộ và không đăng nhập.
+- Bỏ giữ phiên SSO mỗi giờ: app dùng phiên đang có tới khi trường báo hết, rồi mới đăng nhập lại một lần, chỉ qua một cổng. LMS và MyBK không còn cùng điền mật khẩu một lúc.
+- Bảng trạng thái gọn: mỗi nguồn một dòng với icon mở trang và icon đồng bộ.
+- Cài đặt chia mục, chọn ở cột bên trái thay vì cuộn một trang dài.
+- Chữ giao diện ngắn và thống nhất hơn; góc gần vuông, bố cục dày hơn.
+- AppImage cho Linux nhẹ hơn.
+
+### Sửa lỗi
+
+- MyBK trả lịch học rỗng giữa kỳ không còn xóa thời khóa biểu đã lưu; trang Lịch báo đúng lý do khi thiếu thời khóa biểu.
+- API MyBK chạy quá giờ không còn bị báo là hết phiên. Đăng nhập xong thì MyBK đồng bộ ngay, không bị chặn.
+- Thời khóa biểu không còn cuộn xuống buổi tối trống.
+- Bảng xuất BKalendar bỏ lớp có giờ lỗi thay vì làm hỏng cả lần dán; đúng tuần cho học kỳ hè.
+- Xếp file Tải xuống chỉ chuyển khi có file khớp, có ghi nhật ký.
+- Lịch thi đặt kỳ sắp tới lên trước. Biên nhận nộp bài không còn tính là tin chưa đọc.
+
 ## [1.2.8] - 2026-10-31
 
 ### Thêm
@@ -439,7 +476,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...v1.3.0
 [1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.5...v1.2.6

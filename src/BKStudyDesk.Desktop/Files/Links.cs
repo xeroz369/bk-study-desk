@@ -5,8 +5,9 @@ using SoHocTap.Web;
 namespace BKStudyDesk.Desktop.Files;
 
 /// <summary>
-/// Mở một link từ bất kỳ trang nào (như Shell/Links và AppHost.OpenWeb của 1.x): trang của trường (LMS, MyBK, sso.hosts) mở trong cửa sổ
-/// của app (SchoolWindow, dùng chung phiên đăng nhập của app); http trần tới trường đổi sang https; trang khác mở bằng trình duyệt mặc định.
+/// Mở một link từ bất kỳ trang nào: trang của trường (LMS, MyBK, sso.hosts) mặc định mở trong cửa sổ của app (SchoolWindow, dùng chung
+/// phiên đăng nhập của app; trình duyệt ngoài có thể chưa đăng nhập). Cài đặt app.openSchoolIn = "browser" thì mở bằng trình duyệt của máy.
+/// http trần tới trường đổi sang https.
 /// </summary>
 internal static class Links
 {
@@ -22,11 +23,14 @@ internal static class Links
         }
         if (u.Scheme is not ("http" or "https")) return;
         url = SchoolUrls.Secure(url);
-        if (SchoolUrls.IsSchoolHost(url) && TopLevel.GetTopLevel(from) is Window owner)
+        if (SoHocTap.Core.Settings.App.OpenSchoolIn == "app" && SchoolUrls.IsSchoolHost(url) && TopLevel.GetTopLevel(from) is Window owner)
         {
             new SchoolWindow(url, title).Show(owner);
             return;
         }
+        // Trang LMS mở bằng trình duyệt: kèm khóa tự đăng nhập (như ứng dụng Moodle) để khỏi đăng nhập lại trong trình duyệt.
+        // Offline thì không xin khóa (không gọi LMS), mở địa chỉ thường.
+        if (!SoHocTap.Core.OfflineMode.On && await SoHocTap.Sources.Lms.LmsClient.AutoLoginUrlAsync(url, CancellationToken.None) is { } auto) url = auto;
         if (TopLevel.GetTopLevel(from) is { } top) await top.Launcher.LaunchUriAsync(new Uri(url));
     }
 }

@@ -4,13 +4,24 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation;
 
-/// <summary>Một việc cần làm: ô ngày, tên, dòng phụ (môn, nhãn, giờ), còn bao lâu và trạng thái nộp; Url mở bằng trình duyệt.</summary>
-/// <param name="Group">Dòng gom nhiều việc giống nhau (TodoGroups); Indent: việc con của một nhóm đang xổ ra.</param>
-public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub, string Left, Urgency Level, string State, string? Url, bool Group = false, bool Indent = false)
+/// <summary>One to-do row: date box, title, sub line (subject, tag, time), time left and submit state; Url opens in the browser.</summary>
+/// <param name="Group">Row that groups similar items (TodoGroups); Indent: child of an expanded group.</param>
+/// <param name="Hour">Due time ("23:59"), so a grouped row can show the exact deadline.</param>
+public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub, string Left, Urgency Level, string State, string? Url, bool Group = false, bool Indent = false,
+    bool Done = false, string Hour = "")
 {
     /// <summary>Cột phải màu Danger (quá hạn, rất gấp) hay Warn (gấp): View gắn class theo hai cờ này.</summary>
     public bool IsDanger => Level is Urgency.Overdue or Urgency.Urgent;
     public bool IsSoon => Level == Urgency.Soon;
+
+    /// <summary>Số ngày từ hôm nay tới hạn (âm: đã quá).</summary>
+    public int DaysLeft => (Day.Date - Format.Today).Days;
+
+    /// <summary>Nhãn ngày nền đỏ: quá hạn, rất gấp hay còn từ 3 ngày trở xuống.</summary>
+    public bool ChipDanger => !Done && (IsDanger || DaysLeft <= 3);
+
+    /// <summary>Nhãn ngày nền vàng: còn từ 7 ngày trở xuống (chưa tới mức đỏ).</summary>
+    public bool ChipSoon => !Done && !ChipDanger && (IsSoon || DaysLeft <= 7);
 
     /// <summary>Chữ tháng dưới số ngày trong ô ngày: "th 10", "Oct" (lang home.monthOf).</summary>
     public string Month => L.F("home.monthOf", Day);
@@ -48,10 +59,14 @@ public static class HomePresenter
     public static HomeModel Build(IReadOnlyList<TimelineItem> timeline, bool hasLms, IReadOnlyList<LmsAnnouncement> news, MybkPart? mybk, long now)
     {
         var today = VnTime.ToWall(now).Date;
+        // Giờ mở của quiz: lấy từ mục "mở" cùng tên, cùng lớp, để dòng phụ ghi đủ "mở ..., đóng ...".
+        var opens = timeline.Where(e => e.Kind == "quiz" && e.Opens).GroupBy(e => (e.Name, e.Course)).ToDictionary(g => g.Key, g => g.Min(e => e.Time));
         var todo = timeline
-            .Where(e => e.Kind is "assign" or "quiz" or "event" && !e.Opens && !e.Done && (e.Overdue || (e.Time >= now && e.Time <= now + TodoDays * 86400L)))
-            .OrderBy(e => e.GroupRank).ThenBy(e => e.Time)
-            .Select(e => new TodoItem(e.Id, VnTime.ToWall(e.Time).Date, e.Name, Sub(e), e.Left, e.Urgency, e.StateText, e.Url))
+            .Where(e => e.Kind is "assign" or "quiz" or "event" && !e.Opens && (!e.Done && e.Overdue || (e.Time >= now && e.Time <= now + TodoDays * 86400L)))
+            .OrderBy(e => e.Done).ThenBy(e => e.GroupRank).ThenBy(e => e.Time)
+            .Select(e => new TodoItem(e.Id, VnTime.ToWall(e.Time).Date, e.Name,
+                e.Kind == "quiz" && opens.TryGetValue((e.Name, e.Course), out var open) && open < e.Time ? QuizSub(e, open) : Sub(e),
+                e.Done ? Ui.Due.LeftText(e.Time, now) : e.Left, e.Done ? Urgency.None : e.Urgency, e.Done ? DoneTag(e.Kind) : e.StateText, e.Url, Done: e.Done, Hour: Format.Hm(e.Time)))
             .ToList();
 
         var upcoming = new List<(long Time, AgendaItem Item)>();
@@ -90,6 +105,17 @@ public static class HomePresenter
     }
 
     /// <summary>"Giải tích 2, Hạn nộp 23:59"; mốc không rõ giờ thì bỏ giờ.</summary>
+    /// <summary>Nhãn việc đã xong: bài tập "Đã nộp", quiz "Đã làm", khảo sát và mốc khác "Đã phản hồi".</summary>
+    private static string DoneTag(string kind) => L.T(kind switch { "assign" => "state.submitted", "quiz" => "home.done.quiz", _ => "home.done.event" });
+
+    /// <summary>Quiz: "Giải tích 2, mở 00:01, đóng 23:59"; mở khác ngày đóng thì ghi cả thứ và ngày mở.</summary>
+    private static string QuizSub(TimelineItem e, long open)
+    {
+        var sameDay = VnTime.ToWall(open).Date == VnTime.ToWall(e.Time).Date;
+        var window = L.F("home.quizWindow", sameDay ? Format.Hm(open) : Format.DateTime(open), Format.Hm(e.Time));
+        return e.Subject.Length == 0 ? window : $"{e.Subject}, {window}";
+    }
+
     private static string Sub(TimelineItem e)
     {
         var hour = e.Hour;

@@ -90,4 +90,18 @@ public class PaceTests
         using var cts = new CancellationTokenSource(50);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pace.WaitAsync(cts.Token));
     }
+
+    [Fact]
+    public void PausedFor_counts_down_with_clock()
+    {
+        var now = new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc);
+        using var pace = new Pace(() => TimeSpan.Zero, () => now);
+        Assert.Equal(TimeSpan.Zero, pace.PausedFor);
+        pace.PauseFor(TimeSpan.FromMinutes(2));
+        Assert.Equal(TimeSpan.FromMinutes(2), pace.PausedFor);
+        now = now.AddSeconds(100);
+        Assert.Equal(TimeSpan.FromSeconds(20), pace.PausedFor);
+        now = now.AddMinutes(1);
+        Assert.Equal(TimeSpan.Zero, pace.PausedFor);
+    }
 }

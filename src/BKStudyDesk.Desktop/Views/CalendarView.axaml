@@ -8,14 +8,24 @@
              xmlns:v="clr-namespace:BKStudyDesk.Desktop.Views"
              x:Class="BKStudyDesk.Desktop.Views.CalendarView">
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-                <Button Content="{l:T events.add}" ToolTip.Tip="{l:T events.addTip}" Click="OnAddEvent" />
-                <Button Content="{l:T calendar.export}" ToolTip.Tip="{l:T calendar.exportTip}" Click="OnExport" />
+                <!-- Icons with tooltips (user, 06/11/2026). Both exports share one menu: .ics file, or BKalendar for Google Calendar. -->
+                <Button Classes="icon" ToolTip.Tip="{l:T events.addTip}" AutomationProperties.Name="{l:T events.titleNew}" Click="OnAddEvent">
+                    <PathIcon Data="{StaticResource IconPlus}" />
+                </Button>
+                <Button Classes="icon" ToolTip.Tip="{l:T calendar.exportMenu}" AutomationProperties.Name="{l:T calendar.exportMenu}">
+                    <PathIcon Data="{StaticResource IconExport}" />
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuItem Header="{l:T calendar.export}" ToolTip.Tip="{l:T calendar.exportTip}" Click="OnExport" />
+                            <MenuItem Header="{l:T calendar.bkalendar}" ToolTip.Tip="{l:T calendar.bkalendarTip}" Click="OnBkalendar" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
             </StackPanel>
             <StackPanel Spacing="2">
                 <TextBlock Classes="title" Text="{l:T nav.calendar}" />
-                <TextBlock Classes="meta" Text="{l:T calendar.intro}" />
                 <TextBlock x:Name="Note" Classes="meta" IsVisible="False" />
             </StackPanel>
         </DockPanel>

@@ -31,10 +31,41 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     public SubjectsView() => InitializeComponent();
 
+    /// <summary>Nằm trong SubjectsHost: tên trang đã là phần chọn ở đầu trang, bỏ tiêu đề riêng (cả lề dưới của nó).</summary>
+    public void HideTitle() { if (PageTitle.Parent is Control head) head.IsVisible = false; }
+
+    // Menu Thêm ở đầu thẻ môn: việc ít dùng, để đầu thẻ chỉ còn một nút chính (Mở trên LMS).
+    private readonly MenuItem DownloadButton = new() { Header = L.T("subjects.download"), IsVisible = false };
+    private readonly MenuItem ExamsButton = new() { Header = L.T("subjects.downloadExams"), IsVisible = false };
+    private readonly MenuItem LibraryButton = new() { Header = L.T("subjects.openLibrary"), IsVisible = false };
+    private readonly MenuItem DownloadAllButton = new() { Header = L.T("subjects.downloadAll"), IsVisible = false };
+
+    private void BuildMore()
+    {
+        ToolTip.SetTip(ExamsButton, L.T("subjects.downloadExamsTip"));
+        ToolTip.SetTip(DownloadAllButton, L.T("subjects.downloadAll.tip"));
+        DownloadButton.Click += OnDownload;
+        ExamsButton.Click += OnDownloadExams;
+        LibraryButton.Click += OnOpenLibrary;
+        DownloadAllButton.Click += OnDownloadAll;
+        MoreButton.Flyout = new MenuFlyout
+        {
+            Placement = Avalonia.Controls.PlacementMode.BottomEdgeAlignedRight,
+            Items = { DownloadButton, ExamsButton, LibraryButton, new Separator(), DownloadAllButton },
+        };
+        // Menu rỗng thì không mở được (Avalonia): không có việc nào thì ẩn luôn nút.
+        MoreButton.IsVisible = DownloadButton.IsVisible || LibraryButton.IsVisible;
+    }
+
     /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ môn, tab, thư mục người dùng đang xem.</param>
     /// <param name="openLibrary">Mở trang Thư viện đúng môn này (nút Xem trong Thư viện); null thì ẩn nút.</param>
-    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?, bool>? download, Action<string>? openLibrary) : this()
+    private Func<string, Control?>? _practice;   // trang Luyện tập lọc theo môn (MainWindow); null thì ẩn tab
+
+    internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?, bool>? download, Action<string>? openLibrary,
+        Func<string, Control?>? practice = null) : this()
     {
+        _practice = practice;
+        PracticeTab.IsVisible = practice is not null;
         _keepDir = previous?._dir;
         if (previous is not null) _history = previous._history;
         if (previous is not null) Tabs.SelectedIndex = previous.Tabs.SelectedIndex;
@@ -54,6 +85,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         };
         DownloadButton.IsVisible = DownloadAllButton.IsVisible = ExamsButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
+        BuildMore();
         _wanted = previous?.Selected;
         // Kỳ đang xem: giữ của trang cũ khi dựng lại; mở mới thì theo lần trước (chỉ nhớ "tất cả" hay "kỳ đang học").
         _termKey = previous?._termKey ?? (Config.Str("ui.subjectsTerms", "current") == "all" ? SubjectsPresenter.AllTerms : null);
@@ -65,6 +97,9 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     private string? _keepDir;   // thư mục đang xem ở trang cũ (dùng một lần khi chọn lại đúng môn đó)
 
     /// <summary>Mở một tab theo thứ tự (tham số --tab=N khi chụp kiểm tra).</summary>
+    /// <summary>Mở tab Luyện tập của môn đang chọn (tìm nhanh một bài, thẻ Ôn tập).</summary>
+    public void SelectPractice() => Tabs.SelectedItem = PracticeTab;
+
     public void SelectTab(int index) => Tabs.SelectedIndex = Math.Clamp(index, 0, Tabs.ItemCount - 1);
 
     public int Tab { get => Tabs.SelectedIndex; set => SelectTab(value); }
@@ -143,10 +178,16 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         DetailCard.IsVisible = Subjects.SelectedItem is not null;
     }
 
+    /// <summary>A subject with LMS courses was opened: the shell checks those courses for updates (AppHost.CheckCoursesOnOpen).</summary>
+    public static Action<IReadOnlyList<long>>? CoursesOpened { get; set; }
+
     private void OnPick(object? sender, SelectionChangedEventArgs e)
     {
         if (Subjects.SelectedItem is not SubjectRow s) return;
         var changed = _subject?.Name != s.Name;
+        if (changed && s.Current && s.OnLms) CoursesOpened?.Invoke([.. s.Courses.Select(c => c.Id)]);   // current term only
+        // Bấm sang môn khác thì mở tab Tổng quan (hạn gần nhất, điểm, thông báo mới): thứ cần nhất khi vừa chọn môn.
+        if (changed && _subject is not null) Tabs.SelectedIndex = 0;
         _subject = s;
         SubjectName.Text = s.Name;
         SubjectMeta.Text = SubjectsPresenter.Meta(s, _state.Timeline, _state.Lms, Format.Now);
@@ -181,6 +222,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             Tables.Show(News, NewsEmpty, SubjectsPresenter.News(_state.Lms, s), L.T(s.OnLms ? "subjects.newsEmpty" : "subjects.notOnLms"));
         else if (tab == MediaTab)
             ShowMedia(s);
+        else if (tab == PracticeTab)
+            PracticeSlot.Content = _practice?.Invoke(s.Name);
         else if (tab == GradesTab)
             Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
     }
@@ -259,7 +302,50 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         }
         if (gen != _gen) return;
         if (d["missing"] is not null) { Status(Files, FilesEmpty, L.T("subjects.filesEmpty")); return; }
-        Tables.Show(Files, FilesEmpty, SubjectsPresenter.FileRows(d), L.T("subjects.folderEmpty"));
+        _dirRows = SubjectsPresenter.FileRows(d);
+        ShowDir();
+    }
+
+    // Tab Tài liệu: chữ tìm, nhóm loại đang chọn, hàng của thư mục đang xem (lọc lại không đọc lại đĩa).
+    private FileGroup _group = FileGroup.All;
+    private IReadOnlyList<FileRow> _dirRows = [];
+
+    private void ShowDir() =>
+        Tables.Show(Files, FilesEmpty, FileFilter.Apply(_dirRows, FileSearch.Text ?? "", _group), L.T(Filtering ? "subjects.noFileMatch" : "subjects.folderEmpty"));
+
+    private bool Filtering => (FileSearch.Text ?? "").Trim().Length > 0 || _group != FileGroup.All;
+
+    /// <summary>Gõ ô tìm: tìm trong mọi file của môn (đang xem theo thư mục thì chuyển sang Tất cả file).</summary>
+    private void OnFileSearch(object? sender, TextChangedEventArgs e)
+    {
+        if ((FileSearch.Text ?? "").Trim().Length > 0 && RecentToggle.IsChecked != true) { SetView(all: true); return; }
+        if (RecentToggle.IsChecked == true) ShowRecent();
+        else ShowDir();
+    }
+
+    /// <summary>Nút loại (Tất cả, Tài liệu, Ảnh, Khác): chỉ một nút được chọn.</summary>
+    private void OnKind(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Avalonia.Controls.Primitives.ToggleButton b || !Enum.TryParse<FileGroup>(b.Tag as string, out var g)) return;
+        _group = g;
+        foreach (var t in KindBar.Children.OfType<Avalonia.Controls.Primitives.ToggleButton>()) t.IsChecked = ReferenceEquals(t, b);
+        if (RecentToggle.IsChecked == true) ShowRecent();
+        else ShowDir();
+    }
+
+    private void OnViewAll(object? sender, RoutedEventArgs e) => SetView(all: true);
+
+    private void OnViewFolders(object? sender, RoutedEventArgs e) => SetView(all: false);
+
+    /// <summary>Tất cả file (mới nhất trước, có cột thư mục) hay duyệt theo thư mục.</summary>
+    private void SetView(bool all)
+    {
+        RecentToggle.IsChecked = all;
+        FolderToggle.IsChecked = !all;
+        Recent.IsVisible = UnreadOnly.IsVisible = all;
+        Files.IsVisible = FolderBar.IsVisible = !all;
+        _filled.Remove(FilesTab);
+        FillTab();
     }
 
     private async Task LoadRecentAsync(SubjectRow s)
@@ -269,7 +355,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         Status(Recent, FilesEmpty, L.T("subjects.scanning"));
         try
         {
-            var recent = await Documents.SubjectFilesAsync(s.Name, 200);
+            var recent = await Documents.SubjectFilesAsync(s.Name, 1000);   // mọi file của môn để tìm, không chỉ vài file mới
             if (gen != _gen) return;
             _recent = recent;
             ShowRecent();
@@ -288,7 +374,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         if (_recent is null) return;
         var unread = UnreadOnly.IsChecked == true;
-        Tables.Show(Recent, FilesEmpty, SubjectsPresenter.RecentRows(_recent, DocReads.Marks, unread), L.T(unread ? "subjects.allRead" : "subjects.recentEmpty"));
+        var rows = FileFilter.Apply(SubjectsPresenter.RecentRows(_recent, DocReads.Marks, unread), FileSearch.Text ?? "", _group);
+        Tables.Show(Recent, FilesEmpty, rows, L.T(Filtering ? "subjects.noFileMatch" : unread ? "subjects.allRead" : "subjects.recentEmpty"));
     }
 
     private void OnUnreadOnly(object? sender, RoutedEventArgs e) => ShowRecent();
@@ -299,14 +386,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         ShowRecent();
     }
 
-    private void OnRecentToggle(object? sender, RoutedEventArgs e)
-    {
-        var recent = RecentToggle.IsChecked == true;
-        Recent.IsVisible = UnreadOnly.IsVisible = recent;
-        Files.IsVisible = UpButton.IsVisible = PathBar.IsVisible = !recent;
-        _filled.Remove(FilesTab);
-        FillTab();
-    }
 
     private void OnUp(object? sender, RoutedEventArgs e) => GoBack();
 

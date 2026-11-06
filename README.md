@@ -4,12 +4,22 @@
 
 ![BK Study Desk](docs/hero.png)
 
-App Windows cho sinh viên Bách Khoa TP.HCM: kết hợp BK-LMS và MyBK và vài tính năng khác. Bản cho macOS và Linux đang thử nghiệm, chưa ổn định (xem [mục bên dưới](#bản-cho-macos-và-linux-thử-nghiệm)).
-- Deadline, quiz, thời khóa biểu, lịch thi, điểm.
-- Tài liệu từng môn, chọn mục nào tải mục đó.
+**LMS và MyBK gọn trong một app. Không sót hạn nộp, xem được cả khi mất mạng.**
+
+App Windows cho sinh viên Bách Khoa TP.HCM. Bản cho macOS và Linux đang thử nghiệm, chưa ổn định (xem [mục bên dưới](#bản-cho-macos-và-linux-thử-nghiệm)).
+- Hôm nay: việc cần làm theo độ gấp (giờ mở, giờ đóng của quiz), lịch học, đợt đăng ký môn; việc đã nộp vẫn hiện kèm nhãn.
+- Hộp thư: tin nhắn của thầy cô và thông báo môn, đọc ngay trong ngăn bên phải như trên LMS, lưu lại để đọc khi LMS sập.
+- Tìm nhanh (Ctrl+K) môn, tài liệu, bài luyện, tin nhắn.
+- Môn học: tài liệu của từng môn (tìm, lọc theo loại), hạn nộp, thông báo, luyện tập, điểm; thư viện tài liệu chung theo môn ([hcmut-library](https://bk-study-library.github.io/hcmut-library/)).
 - Luyện tập: tự soạn quiz, ôn quiz LMS, thi thử.
-- Thư viện tài liệu chung theo môn ([hcmut-library](https://bk-study-library.github.io/hcmut-library/)).
-- Xem được khi mất mạng: lịch, điểm, tài liệu đã tải, luyện tập theo lần đồng bộ gần nhất.
+- Lịch: thời khóa biểu, lịch thi; xuất .ics hay đưa vào Google Calendar qua [BKalendar](https://bkalendar.github.io/).
+- MyBK: điểm, chương trình đào tạo, học phí, tính thử GPA.
+- Chế độ Offline (thôi tự kết nối tới trường) và sao lưu dữ liệu ra file.
+
+| | |
+|---|---|
+| ![Hộp thư](docs/anh/hop-thu.png) | ![Tài liệu của môn](docs/anh/tai-lieu.png) |
+| ![Luyện tập trong môn](docs/anh/luyen-tap.png) | ![Trạng thái và Offline](docs/anh/trang-thai.png) |
 
 > **Không chính thức.** Dự án cá nhân, không do trường hay Moodle HQ xác nhận. App chỉ đọc những gì tài khoản của bạn vốn xem được. Địa chỉ và API app gọi: Wiki [Cách app hoạt động](../../wiki/Cách-app-hoạt-động).
 

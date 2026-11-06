@@ -6,7 +6,7 @@
              x:Class="BKStudyDesk.Desktop.Views.Practice.LessonView">
     <!-- Cột đọc tối đa ReadingMaxWidth, căn giữa vùng trang (màn hình rộng thì cột không dạt về trái, ảnh người dùng 11/10/2026). -->
     <Grid MaxWidth="{StaticResource ReadingMaxWidth}">
-    <StackPanel Spacing="24">
+    <StackPanel Spacing="16">
         <DockPanel>
             <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T practice.back}" Click="OnBack" />
             <StackPanel Spacing="2">
@@ -21,7 +21,7 @@
         <Border x:Name="EmptyCard" Classes="card" IsVisible="False">
             <TextBlock x:Name="EmptyText" Classes="empty" />
         </Border>
-        <StackPanel x:Name="Sections" Spacing="24" />
+        <StackPanel x:Name="Sections" Spacing="16" />
         <Button x:Name="QuestionsButton" Classes="accent" Click="OnQuestions" />
         <DockPanel>
             <Button x:Name="NextButton" DockPanel.Dock="Right" Click="OnNext" />

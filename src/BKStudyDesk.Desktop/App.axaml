@@ -13,5 +13,6 @@
         </FluentTheme>
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
         <StyleInclude Source="avares://BKStudyDesk/Styles/Tokens.axaml" />
+        <StyleInclude Source="avares://BKStudyDesk/Styles/Icons.axaml" />
     </Application.Styles>
 </Application>

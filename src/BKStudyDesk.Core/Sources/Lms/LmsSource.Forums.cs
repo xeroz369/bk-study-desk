@@ -126,6 +126,7 @@ public sealed partial class LmsSource
                     ["message"] = x["fullmessagehtml"]?.GetValue<string>() is { Length: > 0 } h ? h : x["smallmessage"]?.GetValue<string>() ?? "",
                     ["attachments"] = new JsonArray(),
                     ["url"] = x["contexturl"]?.GetValue<string>(),
+                    ["event"] = x["component"]?.GetValue<string>() is { Length: > 0 } comp && x["eventtype"]?.GetValue<string>() is { Length: > 0 } ev ? $"{comp}/{ev}" : null,
                 });
             }
         }

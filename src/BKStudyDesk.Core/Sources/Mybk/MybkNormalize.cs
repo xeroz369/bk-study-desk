@@ -40,6 +40,13 @@ public static partial class MybkNormalize
 
     // ------------------------------------------------------------------ thời khóa biểu, lịch thi
 
+    /// <summary>
+    /// Fresh schedule is empty while the saved one for the same term has classes: treat as a bad MyBK reply (seen 05/11/2026,
+    /// same run had other APIs failing with 500) and keep the saved schedule. A new term always takes the fresh one.
+    /// </summary>
+    public static bool KeepOldSchedule(JsonArray fresh, JsonNode? old, bool sameTerm) =>
+        sameTerm && fresh.Count == 0 && old is JsonArray { Count: > 0 };
+
     public static JsonArray Schedule(JsonArray? rows) => new((rows ?? []).OfType<JsonObject>().Select(r =>
     {
         var subj = r["subject"] as JsonObject; var room = r["room"] as JsonObject; var emp = r["employee"] as JsonObject;

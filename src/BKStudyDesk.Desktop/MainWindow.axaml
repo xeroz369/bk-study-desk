@@ -6,26 +6,54 @@
         Title="BK Study Desk" Width="1280" Height="820" MinWidth="480" MinHeight="480"
         Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
     <DockPanel>
-        <!-- Thanh trên cùng (design-system/bk mục 4): mục trang bên trái; phải là nút Thông báo (trạng thái đồng bộ ngắn, bấm ra bảng
-             từng nguồn và các thông báo, đăng nhập lại), Cài đặt (có mục Tài khoản). Hẹp thì Cài đặt và các mục trang cuối gom vào nút
-             Thêm (MainWindow.FitBar). -->
+        <!-- Thanh trên cùng (design-system/bk mục 4): mục trang bên trái; phải là trạng thái đồng bộ (bấm ra bảng từng nguồn và các thông
+             báo), nút gạt Offline, icon Hộp thư (số tin chưa đọc, tin mới thì hiện lên), icon Cài đặt. Hẹp thì các mục trang cuối gom vào
+             nút Thêm (MainWindow.FitBar). -->
         <Border x:Name="Bar" DockPanel.Dock="Top" Background="{DynamicResource Bar}" MinHeight="{StaticResource BarHeight}">
+          <Grid>
             <DockPanel Margin="16,0">
-                <Button x:Name="SettingsButton" DockPanel.Dock="Right" Classes="bar" Margin="20,0,0,0" />
+                <Button x:Name="SettingsButton" DockPanel.Dock="Right" Classes="bar icon" Margin="16,0,0,0" ToolTip.Tip="{l:T nav.settings}">
+                    <PathIcon Data="{StaticResource IconSettings}" Classes="bar-text" />
+                </Button>
+                <!-- Hộp thư: chuông, số tin chưa đọc ở góc; bấm thì mở ngăn bên phải (Drawer). -->
+                <Button x:Name="InboxButton" DockPanel.Dock="Right" Classes="bar icon" Margin="16,0,0,0" ToolTip.Tip="{l:T nav.inbox}">
+                    <Panel>
+                        <PathIcon Data="{StaticResource IconMail}" Classes="bar-text" />
+                        <Border x:Name="InboxBadge" Classes="bar-badge" IsVisible="False">
+                            <TextBlock x:Name="InboxCount" Classes="bar-text" />
+                        </Border>
+                    </Panel>
+                </Button>
                 <Button x:Name="More" DockPanel.Dock="Right" Classes="bar" IsVisible="False" Margin="20,0,0,0">
-                    <TextBlock Text="{l:T nav.more}" VerticalAlignment="Center" />
+                    <TextBlock Text="{l:T nav.more}" Classes="bar-text" VerticalAlignment="Center" />
                     <Button.Flyout>
                         <MenuFlyout>
                             <MenuItem x:Name="MoreSettings" Header="{l:T nav.settings}" />
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-                <!-- Nút Thông báo: bảng dựng lại mỗi lần mở (MainWindow.FillStatus). -->
+                <!-- Trạng thái: chấm màu (xanh đã đồng bộ, vàng đang đồng bộ hay Offline, đỏ cần làm gì đó), chữ ngắn chỉ khi cần để ý.
+                     Bấm ra bảng từng nguồn, nút gạt Offline, các thông báo (MainWindow.StatusPanelContent). -->
                 <Button x:Name="StatusButton" DockPanel.Dock="Right" Classes="bar" Margin="20,0,0,0">
-                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" />
+                    <Border Classes="status-pill">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Ellipse x:Name="StatusDot" Width="10" Height="10" VerticalAlignment="Center" />
+                            <TextBlock x:Name="StatusText" Classes="bar-text" VerticalAlignment="Center" />
+                            <PathIcon Data="{StaticResource IconChevronDown}" Width="12" Height="12" Foreground="White" />
+                        </StackPanel>
+                    </Border>
                 </Button>
-                <StackPanel x:Name="Nav" Orientation="Horizontal" Spacing="24" />
+                <StackPanel x:Name="Nav" DockPanel.Dock="Left" Orientation="Horizontal" Spacing="16" />
+                <Panel />
             </DockPanel>
+            <!-- Ô Tìm đúng giữa thanh (lớp riêng, không bị hai bên đẩy lệch): bấm (hay Ctrl+K) ra tìm nhanh. -->
+            <Button x:Name="SearchButton" Classes="search" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <PathIcon Data="{StaticResource IconSearch}" Width="16" Height="16" Classes="bar-text" />
+                    <TextBlock Text="{l:T search.placeholder}" Classes="bar-text" />
+                </StackPanel>
+            </Button>
+          </Grid>
         </Border>
         <!-- Thanh tiến độ đồng bộ (SyncStatus.Progress): % thật khi biết tổng, vô định khi đang mở trang trường; ẩn khi không đồng bộ. -->
         <ProgressBar x:Name="SyncBar" DockPanel.Dock="Top" Height="3" MinHeight="3" Minimum="0" Maximum="1" CornerRadius="0" IsVisible="False" />
@@ -46,9 +74,13 @@
             <!-- Cỡ chữ cả vùng nội dung (Ctrl+cộng, Ctrl+trừ, Ctrl+0, Ctrl+lăn chuột): MainWindow.SetZoom, config app.zoom. -->
             <ScrollViewer x:Name="Scroller">
                 <LayoutTransformControl x:Name="Zoom">
-                    <Border x:Name="Page" Margin="24,24,24,32" />
+                    <Border x:Name="Page" Margin="16,16,16,20" />
                 </LayoutTransformControl>
             </ScrollViewer>
+            <!-- Ngăn Hộp thư bên phải (InboxView): nền mờ phía sau, bấm ra ngoài thì đóng. -->
+            <Border x:Name="DrawerScrim" Background="#33000000" IsVisible="False" />
+            <Border x:Name="Drawer" HorizontalAlignment="Right" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}"
+                    BorderThickness="1,0,0,0" IsVisible="False" />
             <Border x:Name="LoginHost" Background="{DynamicResource PageBg}" IsVisible="False" />
         </Panel>
     </DockPanel>

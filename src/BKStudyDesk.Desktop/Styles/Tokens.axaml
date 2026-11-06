@@ -12,6 +12,9 @@
                     <SolidColorBrush x:Key="Link" Color="#044CC8" />
                     <SolidColorBrush x:Key="PageBg" Color="#F4F6F8" />
                     <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
+                    <!-- Fluent flyout surface follows the card surface (status panel, search). -->
+                    <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="FlyoutBorderThemeBrush" Color="#E3E7EB" />
                     <SolidColorBrush x:Key="Line" Color="#E3E7EB" />
                     <SolidColorBrush x:Key="Text" Color="#1F2328" />
                     <SolidColorBrush x:Key="Sub" Color="#59636E" />
@@ -19,11 +22,15 @@
                     <SolidColorBrush x:Key="Warn" Color="#8A5C00" />
                     <SolidColorBrush x:Key="Ok" Color="#1A7F37" />
                     <SolidColorBrush x:Key="GroupBg" Color="#F4F6F8" />
+                    <SolidColorBrush x:Key="DangerSoft" Color="#1FC4314B" />
+                    <SolidColorBrush x:Key="WarnSoft" Color="#268A5C00" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="Link" Color="#6CB6FF" />
                     <SolidColorBrush x:Key="PageBg" Color="#14181D" />
                     <SolidColorBrush x:Key="Surface" Color="#1E232A" />
+                    <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="#1E232A" />
+                    <SolidColorBrush x:Key="FlyoutBorderThemeBrush" Color="#2F363F" />
                     <SolidColorBrush x:Key="Line" Color="#2F363F" />
                     <SolidColorBrush x:Key="Text" Color="#E6EDF3" />
                     <SolidColorBrush x:Key="Sub" Color="#9AA4AF" />
@@ -32,6 +39,8 @@
                     <SolidColorBrush x:Key="Ok" Color="#3FB950" />
                     <!-- Dải nhóm của bảng: sáng hơn nền bảng một bậc (tối hơn thì trông như một lỗ trên bảng) -->
                     <SolidColorBrush x:Key="GroupBg" Color="#262C34" />
+                    <SolidColorBrush x:Key="DangerSoft" Color="#33FF6B7A" />
+                    <SolidColorBrush x:Key="WarnSoft" Color="#33D29922" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <x:Double x:Key="DataGridRowSelectedBackgroundOpacity">1</x:Double>
@@ -60,11 +69,14 @@
             <!-- Cửa sổ hẹp: danh sách (môn học, môn thư viện) lên trên chi tiết, cao tối đa chừng này rồi tự cuộn -->
             <x:Double x:Key="ListStackedMaxHeight">220</x:Double>
             <x:Double x:Key="DetailMinWidth">480</x:Double>
-            <x:Double x:Key="CardHeaderHeight">48</x:Double>
-            <x:Double x:Key="RowHeight">64</x:Double>
-            <x:Double x:Key="TableHeaderHeight">40</x:Double>
-            <x:Double x:Key="TableRowHeight">48</x:Double>
-            <x:Double x:Key="DateBoxSize">48</x:Double>
+            <!-- Bo góc gần vuông cho mọi control Fluent (nút, ô nhập, menu), giống giao diện LMS (người dùng chọn 05/11/2026). -->
+            <CornerRadius x:Key="ControlCornerRadius">2</CornerRadius>
+            <CornerRadius x:Key="OverlayCornerRadius">2</CornerRadius>
+            <x:Double x:Key="CardHeaderHeight">40</x:Double>
+            <x:Double x:Key="RowHeight">52</x:Double>
+            <x:Double x:Key="TableHeaderHeight">34</x:Double>
+            <x:Double x:Key="TableRowHeight">40</x:Double>
+            <x:Double x:Key="DateBoxSize">40</x:Double>
             <!-- Lưới tuần (Views/WeekGridView): cột giờ, lề trên dưới, tỉ lệ dọc (px mỗi phút: 0,7 là 1 giờ 42 px, buổi 50 phút vừa hai dòng chữ).
                  Màu môn: CourseN, khối là màu đó pha trong suốt, viền trái đậm; đủ tương phản với chữ ở cả hai chế độ vì nền khối nhạt. -->
             <x:Double x:Key="WeekGutter">52</x:Double>
@@ -111,8 +123,19 @@
     <Style Selector="TextBlock.right.danger"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
     <Style Selector="TextBlock.right.soon"><Setter Property="Foreground" Value="{DynamicResource Warn}" /></Style>
     <Style Selector="TextBlock.right.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /></Style>
+    <!-- Nhãn việc đã xong ở Cần làm (Đã nộp, Đã làm, Đã phản hồi). -->
+    <Style Selector="TextBlock.sub.ok"><Setter Property="Foreground" Value="{DynamicResource Ok}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
     <!-- Tab (TabControl có sẵn): chữ thân 14 thay cỡ 24 mặc định của Fluent, để tab không lấn nội dung -->
     <Style Selector="TabItem"><Setter Property="FontSize" Value="{DynamicResource FontBody}" /><Setter Property="MinHeight" Value="40" /><Setter Property="Padding" Value="16,0" /></Style>
+    <!-- Lists take the surface they sit on (card, drawer, page): no lighter Fluent grey of their own. -->
+    <Style Selector="ListBox"><Setter Property="Background" Value="Transparent" /></Style>
+    <!-- Flyouts (status panel): card surface and line, normal text. Content inherits from the bar button otherwise (white, bold). -->
+    <Style Selector="FlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
     <!-- ListBox: mục chọn cùng nền với dòng bảng đang chọn (chỉ đổi màu phần trình bày của template có sẵn) -->
     <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter, ListBoxItem:selected:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource RowSelected}" />
@@ -143,7 +166,7 @@
         <Setter Property="Background" Value="{DynamicResource Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="2" />
         <Setter Property="ClipToBounds" Value="True" />
     </Style>
     <Style Selector="Border.card-head">
@@ -162,12 +185,12 @@
     <!-- Trang Tin nhắn: tin của người khác nền trang, tin của mình nền nhóm; số tin chưa đọc là ô nhỏ màu link. -->
     <Style Selector="Border.bubble, Border.bubble-mine">
         <Setter Property="Padding" Value="12,8" />
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Background" Value="{DynamicResource PageBg}" />
     </Style>
-    <Style Selector="Border.bubble-mine"><Setter Property="Background" Value="{DynamicResource GroupBg}" /></Style>
+    <Style Selector="Border.bubble-mine"><Setter Property="Background" Value="{DynamicResource RowSelected}" /></Style>
     <Style Selector="Border.row.indent"><Setter Property="Padding" Value="48,8,16,8" /></Style>
     <Style Selector="TextBlock.name.unread"><Setter Property="FontWeight" Value="Bold" /></Style>
     <Style Selector="Border.badge">
@@ -181,7 +204,7 @@
     <Style Selector="Border.datebox">
         <Setter Property="Width" Value="{StaticResource DateBoxSize}" />
         <Setter Property="Height" Value="{StaticResource DateBoxSize}" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="2" />
         <Setter Property="Background" Value="{DynamicResource DateBox}" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
@@ -275,8 +298,71 @@
     <Style Selector="Button.bar.on /template/ ContentPresenter, Button.bar.on:pointerover /template/ ContentPresenter, Button.bar.on:pressed /template/ ContentPresenter">
         <Setter Property="BorderBrush" Value="White" />
     </Style>
-    <Style Selector="Button.bar TextBlock"><Setter Property="Foreground" Value="White" /><Setter Property="Opacity" Value="0.85" /></Style>
-    <Style Selector="Button.bar.on TextBlock"><Setter Property="Opacity" Value="1" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <!-- Only the bar's own labels (class bar-text): a flyout opened from a bar button is its logical child and must keep normal text. -->
+    <Style Selector="Button.bar TextBlock.bar-text"><Setter Property="Foreground" Value="White" /><Setter Property="Opacity" Value="0.85" /></Style>
+    <!-- Icon trên thanh (Hộp thư, Cài đặt): nét trắng 1.6, khung 20, hình tự vẽ bằng đoạn thẳng; số chưa đọc là chấm tròn ở góc. -->
+    <Style Selector="Button.bar.icon"><Setter Property="Padding" Value="2,3,2,0" /></Style>
+    <Style Selector="Path.bar-icon">
+        <Setter Property="Stroke" Value="White" />
+        <Setter Property="StrokeThickness" Value="1.6" />
+        <Setter Property="StrokeJoin" Value="Round" />
+        <Setter Property="StrokeLineCap" Value="Round" />
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.bar-badge">
+        <Setter Property="Background" Value="{DynamicResource Danger}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="MinWidth" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Margin" Value="0,-6,-10,0" />
+    </Style>
+    <Style Selector="Border.bar-badge TextBlock"><Setter Property="Foreground" Value="White" /><Setter Property="FontSize" Value="11" /><Setter Property="Opacity" Value="1" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+    <!-- Nhãn ngày ở Cần làm: viền và chữ theo độ gấp. -->
+    <Style Selector="Border.chip">
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Padding" Value="7,3" />
+        <Setter Property="Background" Value="{DynamicResource GroupBg}" />
+    </Style>
+    <Style Selector="Border.chip TextBlock"><Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /></Style>
+    <Style Selector="Border.chip.soon"><Setter Property="Background" Value="{DynamicResource WarnSoft}" /></Style>
+    <Style Selector="Border.chip.soon TextBlock"><Setter Property="Foreground" Value="{DynamicResource Warn}" /></Style>
+    <Style Selector="Border.chip.danger"><Setter Property="Background" Value="{DynamicResource DangerSoft}" /></Style>
+    <Style Selector="Border.chip.danger TextBlock"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <!-- Nút lọc dạng viên thuốc (tab Tài liệu): gọn hơn nút thường; đang chọn thì nền màu nhấn của Fluent. -->
+    <Style Selector="ToggleButton.chip">
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <!-- Nút trạng thái: viền mảnh như một nút, để thấy bấm được. -->
+    <Style Selector="Border.status-pill">
+        <Setter Property="BorderBrush" Value="#66FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Padding" Value="10,3" />
+    </Style>
+    <!-- Ô Tìm trên thanh: trông như ô nhập, bấm thì mở tìm nhanh. -->
+    <Style Selector="Button.search">
+        <Setter Property="Background" Value="#26FFFFFF" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="MinWidth" Value="320" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.search:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="#40FFFFFF" /></Style>
+    <Style Selector="Button.search TextBlock.bar-text"><Setter Property="Foreground" Value="White" /><Setter Property="Opacity" Value="0.85" /></Style>
+    <Style Selector="Button.search PathIcon.bar-text"><Setter Property="Foreground" Value="White" /><Setter Property="Opacity" Value="0.85" /></Style>
+    <Style Selector="ToggleSwitch.bar"><Setter Property="Foreground" Value="White" /><Setter Property="MinWidth" Value="0" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+    <Style Selector="Button.bar.on TextBlock.bar-text"><Setter Property="Opacity" Value="1" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
 
     <!-- Bảng (DataGrid chính thức, chỉ đổi màu và canh): dải nhóm nền nhạt, tiêu đề cột cho phép canh phải -->
     <Style Selector="DataGridColumnHeader"><Setter Property="AreSeparatorsVisible" Value="False" /><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="MinHeight" Value="{StaticResource TableHeaderHeight}" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Foreground" Value="{DynamicResource Sub}" /><Setter Property="FontSize" Value="{DynamicResource FontMeta}" /></Style>

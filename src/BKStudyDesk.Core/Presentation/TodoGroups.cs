@@ -45,15 +45,24 @@ public static partial class TodoGroups
             }
             if (!done.Add(key)) continue;
             var open = expanded.Contains(key);
-            var subjects = members.Select(m => m.t.Sub.Split(", ")[0]).Distinct();
-            output.Add(t with
+            // Grouped row is specific: due time, subjects still to do, subjects already sent (not just "4 subjects").
+            static string Subject(TodoItem m) => m.Sub.Split(", ")[0];
+            var todo = members.Where(m => !m.t.Done).Select(m => Subject(m.t)).Distinct().ToList();
+            var finished = members.Where(m => m.t.Done).Select(m => Subject(m.t)).Distinct().ToList();
+            var parts = new List<string>();
+            if (t.Hour.Length > 0) parts.Add(L.F("home.group.hour", t.Hour));
+            if (todo.Count > 0) parts.Add(L.F("home.group.todo", string.Join(", ", todo)));
+            if (finished.Count > 0) parts.Add(L.F("home.group.finished", string.Join(", ", finished)));
+            var first = members.Select(m => m.t).FirstOrDefault(m => !m.Done) ?? t;
+            output.Add(first with
             {
                 Id = key,
                 Title = L.F(open ? "home.group.open" : "home.group", Stem(t.Title)!, members.Count),
-                Sub = string.Join(", ", subjects),
+                Sub = string.Join(". ", parts),
                 Url = null,
-                State = "",
+                State = finished.Count == 0 ? "" : L.F("home.group.progress", finished.Count, members.Count),
                 Group = true,
+                Done = todo.Count == 0,
             });
             if (open) output.AddRange(members.Select(m => m.t with { Title = Clean(m.t.Title), Indent = true }));
         }

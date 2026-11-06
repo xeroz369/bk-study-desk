@@ -59,6 +59,15 @@ public static class PracticeHome
             .Where(c => c.Units.Count > 0)];
     }
 
+    /// <summary>Subject card tab: the course whose name or code matches, never other courses' lessons that mention it.</summary>
+    public static IReadOnlyList<PracticeCourseRow> OnlyCourse(IReadOnlyList<PracticeCourseRow> courses, string subject)
+    {
+        var q = subject.Trim();
+        if (q.Length == 0) return [];
+        return [.. courses.Where(c => Files.NameMatch.ContainsFolded(c.Name, q)
+                                      || c.Code is { Length: > 0 } code && Files.NameMatch.ContainsFolded(q, code))];
+    }
+
     public static PracticeHomeModel Build(StudyRegistry study, PracticeProgress progress, IReadOnlyList<InstalledPack> packs, IReadOnlyList<QuizInfo> quizzes)
     {
         var today = new PracticeToday(progress.DueQuestions(limit: int.MaxValue).Count, progress.ReviewCount(), progress.NextLesson());

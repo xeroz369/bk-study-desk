@@ -55,6 +55,9 @@ public partial class LibraryView : UserControl, IFillPage
     private string? _keepFaculty;
 
     /// <summary>Mở đúng môn của trang Môn học (nút Xem trong Thư viện): chọn môn thư viện khớp môn đó, xóa chữ tìm đang gõ.</summary>
+    /// <summary>Nằm trong SubjectsHost: tên trang đã là phần chọn ở đầu trang, bỏ tiêu đề riêng.</summary>
+    public void HideTitle() => PageTitle.IsVisible = false;
+
     public void SelectSubject(string subject)
     {
         _wantedSubject = subject;
@@ -237,6 +240,14 @@ public partial class LibraryView : UserControl, IFillPage
     }
 
     // ------------------------------------------------------------------ lệnh
+
+    /// <summary>Icon ở cột Trên máy: như bấm đúp dòng đó (mở file đã tải, tải về, hay mở web).</summary>
+    private void OnItemButton(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is not LibraryRow r) return;
+        Items.SelectedItem = r;
+        Run(() => DoAsync(r, LibraryActions.Primary(r.Item, r.State)));
+    }
 
     private void OnItemOpen(object? sender, TappedEventArgs e)
     {
