@@ -87,8 +87,8 @@ public sealed class OrganizeDownloadsTests : IDisposable
         Put(Path.Combine("Giải tích 2 tài liệu", "b.pdf"));
         Put("Giai tich 2 c.pdf");
         var plan = Plan();
-        Organizer.DownloadResult r;
-        using (new FileStream(a, FileMode.Open, FileAccess.Read, FileShare.None)) r = Organizer.MoveDownloads(plan, Downloads, Move);
+        // Simulate a locked file: only Windows blocks moving an open file, Linux and macOS do not.
+        var r = Organizer.MoveDownloads(plan, Downloads, m => m.Source == a ? throw new IOException("file đang mở") : Move(m));
         Assert.Equal(2, r.Moved);
         var failed = Assert.Single(r.Failed);
         Assert.Equal(Path.Combine("Giải tích 2 tài liệu", "a.pdf"), failed.File);
