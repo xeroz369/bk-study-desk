@@ -83,12 +83,32 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         if (_service.Loaded && _service.Progress.Pending) await _service.Progress.FlushAsync();
     }
 
+    private string? _course;   // đang nằm trong tab Luyện tập của một môn: chỉ hiện môn đó
+
+    /// <summary>
+    /// Đặt vào tab Luyện tập của môn <paramref name="course"/> (null: trang Ôn tập chung). Có môn thì mở tab Môn học của Luyện tập, lọc
+    /// đúng môn; đang làm dở một bài thì giữ nguyên màn đó.
+    /// </summary>
+    public void FocusCourse(string? course)
+    {
+        _course = course;
+        if (course is not null) _tab = 1;
+        if (Screen is PracticeHomeView home)
+        {
+            home.SetCourseFilter(course ?? "");
+            home.SetEmbedded(course is not null);
+            if (course is not null) home.SelectTab(1);
+        }
+    }
+
     // Dựng lại trang chính (số liệu đổi sau mỗi lượt làm), giữ tab đang mở.
     private void ShowHome()
     {
         if (Screen is PracticeHomeView old) Tab = old.SelectedTab;
         var home = new PracticeHomeView(_service.Home(), _service.Problems());
         home.SelectTab(Tab);
+        if (_course is not null) home.SetCourseFilter(_course);
+        home.SetEmbedded(_course is not null);
         home.Go += Go;
         home.ArchiveRequested += on => _ = ArchiveAsync(home, on);
         _back.Clear();

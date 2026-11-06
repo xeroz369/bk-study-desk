@@ -26,6 +26,19 @@ public class InboxTests
     }
 
     [Fact]
+    public void Assignment_receipt_stays_in_inbox_but_is_quiet()
+    {
+        var receipt = News("nt9", Now - 100, "system") with { Event = "mod_assign/assign_notification" };
+        var other = News("nt8", Now - 200, "system") with { Event = "moodle/notice" };
+        var rows = Inbox.Rows(null, [receipt, other, News("fd1", Now - 300)], new InboxReads(new JsonObject()), Now, 7);
+        Assert.Equal(["news:nt9", "news:nt8", "news:fd1"], rows.Select(r => r.Key));
+        Assert.Equal([false, true, true], rows.Select(r => r.Unread));
+        Assert.Equal(1, rows.Count(r => r.Quiet));
+        Assert.Equal(2, Inbox.UnreadCount(rows));
+        Assert.Equal(["news:nt8", "news:fd1"], Inbox.Recent(rows, Now, 7).Select(r => r.Key));
+    }
+
+    [Fact]
     public void Reading_in_app_clears_unread_until_a_newer_message_arrives()
     {
         var reads = new InboxReads(new JsonObject());
@@ -62,8 +75,13 @@ public class InboxTests
         Assert.Equal(2, collapsed.Count);
         Assert.True(collapsed[0].Group);
         Assert.StartsWith("KHẢO SÁT HỌC PHẦN (3", collapsed[0].Title);
-        Assert.Equal("Vật lý, Giải tích 2, Kỹ thuật số", collapsed[0].Sub);
+        Assert.Equal("Chưa làm: Vật lý, Giải tích 2, Kỹ thuật số", collapsed[0].Sub);
         Assert.Equal("Nộp bài PreLab #4", collapsed[1].Title);
+        var oneDone = items.Select(t => t.Id == "b" ? t with { Done = true } : t).ToArray();
+        var g = TodoGroups.Collapse(oneDone, new HashSet<string>())[0];
+        Assert.Equal("Chưa làm: Vật lý, Kỹ thuật số. Đã gửi: Giải tích 2", g.Sub);
+        Assert.Equal("Đã gửi 1/3", g.State);
+        Assert.False(g.Done);
         var open = TodoGroups.Collapse(items, new HashSet<string> { collapsed[0].Id });
         Assert.Equal(5, open.Count);
         Assert.True(open[1].Indent);

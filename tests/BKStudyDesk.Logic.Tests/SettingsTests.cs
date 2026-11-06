@@ -53,9 +53,7 @@ namespace SoHocTap.Tests
         {
             Fresh();
             Settings.Sso.RememberDays = 0;
-            Settings.Sso.KeepAliveMinutes = 0;
             Assert.Equal(30, Settings.Sso.DefaultRememberDays);
-            Assert.Equal(60, Settings.Sso.DefaultKeepAliveMinutes);
         }
 
         [Fact]

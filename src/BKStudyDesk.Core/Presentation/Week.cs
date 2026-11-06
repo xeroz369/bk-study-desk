@@ -14,6 +14,12 @@ public sealed record WeekRow(int Order, string Group, string Time, int StartMin,
 /// <summary>Một buổi thi (MyBK) trong tab Lịch thi; Past: đã thi (View làm nhạt).</summary>
 public sealed record ExamRow(string Subject, string When, long Time, string Label, string Left, bool Past);
 
+/// <summary>Why the timetable tab shows nothing, or less than a normal week.</summary>
+public enum TimetableGap { None, SyncOff, SignedOut, NoData, TermEmpty, WeekEmpty }
+
+/// <summary>Line shown above the timetable (null: none) and whether the week grid is worth drawing.</summary>
+public sealed record TimetableNote(TimetableGap Gap, string? Text, bool ShowGrid);
+
 /// <summary>
 /// Tab Thời khóa biểu và Lịch thi của trang Lịch (cùng quy tắc với bản 1.x, Ui/Pages/CalendarPage, dạng danh sách): mọi môn có giờ
 /// cố định của kỳ, nhóm theo ngày trong tuần, sắp theo phút bắt đầu; sự kiện tự thêm của tuần xen vào; môn không có giờ cố định ghi riêng.
@@ -41,13 +47,32 @@ public static class WeekPresenter
         return [.. rows.OrderBy(r => r.Order).ThenBy(r => r.StartMin)];
     }
 
+    /// <summary>
+    /// Truthful line for the timetable tab. The term has classes: only say so when this week has none. The term has none: give the
+    /// real cause, MyBK sync turned off, not signed in, no data yet (<paramref name="noData"/>, from AppState.NoDataReason), or MyBK
+    /// itself has no timetable for the term. <paramref name="shown"/> counts items on screen (classes and own events): an empty
+    /// term with nothing of the user's own this week draws no grid.
+    /// </summary>
+    public static TimetableNote Note(MybkData? mybk, bool syncOn, bool signedIn, string? noData, int shown)
+    {
+        if (mybk?.Schedule.Count > 0)
+            return shown > 0 ? new(TimetableGap.None, null, true) : new(TimetableGap.WeekEmpty, L.T("calendar.weekEmpty"), true);
+        var term = mybk?.Term.Name is { Length: > 0 } name ? name : L.T("calendar.thisTerm");
+        var (gap, text) = !syncOn ? (TimetableGap.SyncOff, L.T("calendar.mybkOff"))
+            : !signedIn ? (TimetableGap.SignedOut, L.T("calendar.mybkSignedOut"))
+            : noData is not null ? (TimetableGap.NoData, noData)
+            : (TimetableGap.TermEmpty, L.F("calendar.mybkNoTimetable", term));
+        return new(gap, text, shown > 0);
+    }
+
     /// <summary>Môn không đặt được lên tuần (MyBK ghi thứ ngoài 2 tới 8 hay giờ đọc không ra): ghi tên riêng, không bỏ im lặng.</summary>
     public static IReadOnlyList<string> NoSlot(MybkData? mybk) =>
         [.. (mybk?.Schedule ?? []).Where(c => c.Day is < 2 or > 8 || VnTime.ParseClock(c.Start) is null || VnTime.ParseClock(c.End) is null)
             .Select(c => c.Name).Distinct()];
 
+    /// <summary>Kỳ thi sắp tới trước (gần nhất trước), đã qua xuống cuối (mới qua nhất trước).</summary>
     public static IReadOnlyList<ExamRow> Exams(IReadOnlyList<TimelineItem> timeline, long now) =>
-        [.. timeline.Where(e => e.Kind == "exam").OrderBy(e => e.Time).Select(e => new ExamRow(e.Subject, e.When, e.Time, e.Label, e.Left, e.Time < now))];
+        [.. timeline.Where(e => e.Kind == "exam").OrderBy(e => e.Time < now).ThenBy(e => e.Time < now ? -e.Time : e.Time).Select(e => new ExamRow(e.Subject, e.When, e.Time, e.Label, e.Left, e.Time < now))];
 
     /// <summary>
     /// Sự kiện để xuất .ics: thời khóa biểu cả kỳ (mỗi buổi một sự kiện), lịch thi, sự kiện tự thêm. Mục không đặt được lên lịch (giờ, ngày

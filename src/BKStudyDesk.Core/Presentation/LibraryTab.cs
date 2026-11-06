@@ -17,6 +17,16 @@ public sealed record LibraryRow(CourseRef Course, LibraryItem Item, string Group
         ItemLocal.Outdated => L.T("library.local.outdated"),
         _ => "",
     };
+    /// <summary>Cột icon: đã tải (mở file), cần tải (chưa có hay có bản mới), chỉ có trên web.</summary>
+    public bool HasLocal => State == ItemLocal.Downloaded;
+    public bool CanDownload => State != ItemLocal.Downloaded && Item.Files is { Count: > 0 };
+    public bool WebOnly => State != ItemLocal.Downloaded && Item.Files is not { Count: > 0 };
+    public string ActionTip => State switch
+    {
+        ItemLocal.Downloaded => L.T("library.tip.open"),
+        ItemLocal.Outdated => L.T("library.tip.update"),
+        _ => Item.Files is { Count: > 0 } ? L.T("library.tip.download") : L.T("library.tip.web"),
+    };
     public override string ToString() => Title;
 }
 

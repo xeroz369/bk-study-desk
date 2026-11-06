@@ -21,6 +21,7 @@
            Library/LibraryService.cs: gọi Config, Paths, Organizer
            Sources/SourceHub.cs: kéo theo LmsSource và MybkSource
            Sources/Lms/LmsClient.cs: gọi Config, Paths
+           Sources/Lms/LmsImages.cs: gọi Config, Paths, LmsClient (Core.Tests có test)
            Sources/Lms/LmsSource*.cs: gọi Config, Paths, Organizer
            Sources/Mybk/MybkSource.cs: gọi Config, Paths
          Thêm file mới vào đây chỉ khi nó thật sự cần Config/Paths. -->
@@ -29,6 +30,7 @@
       $(Src)Core\Paths.cs;
       $(Src)Core\SettingsConfigStore.cs;
       $(Src)Core\Log.cs;
+      $(Src)Core\OfflineMode.cs;
       $(Src)Core\AppEvents.cs;
       $(Src)Core\JsonStore.cs;
       $(Src)Core\SecretStore.cs;
@@ -36,6 +38,7 @@
       $(Src)Library\LibraryService.cs;
       $(Src)Sources\SourceHub.cs;
       $(Src)Sources\Lms\LmsClient.cs;
+      $(Src)Sources\Lms\LmsImages.cs;
       $(Src)Sources\Lms\LmsSource*.cs;
       $(Src)Sources\Mybk\MybkSource.cs;
     </LogicExclude>

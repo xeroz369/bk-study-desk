@@ -18,9 +18,10 @@ public sealed record LmsEvent(string Id, long Course, string Subject, string Nam
 public sealed record LmsAttempt(long Id, long Finished, double? Grade);
 public sealed record LmsQuiz(long Id, long Course, string Subject, string Name, long? Open, long? Close, List<LmsAttempt> Attempts, string Url);
 public sealed record LmsNewFile(string Name, string Path, string Subject, long At, bool? Updated);
-/// <summary>Message: nội dung bài (HTML của LMS), Attachments: file đính kèm (link LMS, mở cần mạng). Đọc offline trong app.</summary>
+/// <summary>Message: nội dung bài (HTML của LMS), Attachments: file đính kèm (link LMS, mở cần mạng). Đọc offline trong app.
+/// Event: "component/eventtype" của thông báo LMS (vd. "mod_assign/assign_notification"), null với bài diễn đàn.</summary>
 public sealed record LmsAnnouncement(string Id, string Kind, string Subject, string Forum, string Title, string? Author, long Time, string? Url,
-    string? Message = null, List<LmsLink>? Attachments = null, List<LmsPost>? Posts = null);
+    string? Message = null, List<LmsLink>? Attachments = null, List<LmsPost>? Posts = null, string? Event = null);
 /// <summary>Path: bản đã tải về thư mục học (đường dẫn tương đối), mở được khi LMS sập.</summary>
 public sealed record LmsLink(string? Name, string? Url, string? Path = null);
 /// <summary>Một trả lời trong chuỗi bài diễn đàn.</summary>

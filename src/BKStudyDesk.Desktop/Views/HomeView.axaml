@@ -10,20 +10,18 @@
         <!-- Dòng 64, lưới 48,12,*,12,112: ô ngày | tên và dòng phụ | còn bao lâu và trạng thái -->
         <DataTemplate x:Key="TodoRow" x:DataType="p:TodoItem">
             <Border Classes="row" Classes.indent="{Binding Indent}" Tapped="OnRowTapped" Cursor="Hand">
-                <Grid ColumnDefinitions="48,12,*,12,112">
-                    <Border Classes="datebox">
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Classes="day" Text="{Binding Day.Day}" />
-                            <TextBlock Classes="month" Text="{Binding Month}" />
-                        </StackPanel>
+                <Grid ColumnDefinitions="52,12,*,12,112">
+                    <!-- Nhãn ngày: đỏ khi gấp, vàng khi sắp tới, xám khi còn xa. -->
+                    <Border Classes="chip" Classes.danger="{Binding ChipDanger}" Classes.soon="{Binding ChipSoon}" VerticalAlignment="Center" HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding Day, StringFormat='{}{0:dd/MM}'}" />
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
                         <TextBlock Classes="name" Text="{Binding Title}" />
                         <TextBlock Classes="sub" Text="{Binding Sub}" />
                     </StackPanel>
                     <StackPanel Grid.Column="4" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Classes="right" Classes.danger="{Binding IsDanger}" Classes.soon="{Binding IsSoon}" Text="{Binding Left}" />
-                        <TextBlock Classes="sub" HorizontalAlignment="Right" Text="{Binding State}" />
+                        <TextBlock Classes="right" Classes.danger="{Binding ChipDanger}" Classes.soon="{Binding ChipSoon}" Text="{Binding Left}" />
+                        <TextBlock Classes="sub" Classes.ok="{Binding Done}" HorizontalAlignment="Right" Text="{Binding State}" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -31,13 +29,13 @@
         <!-- Ô giờ thay ô ngày: giờ bắt đầu (màu Link), giờ kết thúc -->
         <DataTemplate x:Key="AgendaRow" x:DataType="p:AgendaItem">
             <Border Classes="row">
-                <Grid ColumnDefinitions="48,12,*,12,112">
+                <Grid ColumnDefinitions="44,12,*,8,Auto">
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Classes="start" Text="{Binding Start}" />
                         <TextBlock Classes="sub" Text="{Binding End}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Classes="name" Text="{Binding Title}" />
+                        <TextBlock Classes="name" Text="{Binding Title}" TextWrapping="Wrap" />
                         <TextBlock Classes="sub" Text="{Binding Sub}" />
                     </StackPanel>
                     <TextBlock Grid.Column="4" Classes="right" VerticalAlignment="Center" Text="{Binding Right}" />
@@ -57,9 +55,9 @@
         </DataTemplate>
         <DataTemplate x:Key="RegRow" x:DataType="p:RegItem">
             <Border Classes="row" Tapped="OnRowTapped" Cursor="Hand">
-                <Grid ColumnDefinitions="*,12,112">
+                <Grid ColumnDefinitions="*,8,Auto">
                     <StackPanel VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Classes="name" Text="{Binding Name}" />
+                        <TextBlock Classes="name" Text="{Binding Name}" TextWrapping="Wrap" />
                         <TextBlock Classes="sub" Text="{Binding When}" />
                     </StackPanel>
                     <TextBlock Grid.Column="2" Classes="right" Classes.ok="{Binding Open}" VerticalAlignment="Center" Text="{Binding Status}" />
@@ -68,12 +66,10 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <StackPanel Spacing="24">
-        <StackPanel Spacing="2">
-            <TextBlock Classes="title" Text="{l:T nav.today}" />
-            <TextBlock x:Name="DateText" Classes="meta" />
-            <!-- Giờ đồng bộ gần nhất của từng nguồn: biết đang xem dữ liệu mới hay bản lưu (LMS, MyBK sập). -->
-            <TextBlock x:Name="SyncLine" Classes="meta" />
+    <StackPanel Spacing="16">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Classes="title" Text="{l:T nav.today}" VerticalAlignment="Bottom" />
+            <TextBlock x:Name="DateText" Classes="meta" VerticalAlignment="Bottom" Margin="0,0,0,4" />
         </StackPanel>
 
         <!-- Chưa có dữ liệu nào: một khối giới thiệu thay cho bốn thẻ trống -->
@@ -89,10 +85,10 @@
             <!-- Trái 2 phần, phải 1 phần (320 tới 400); HomeView đổi sang một cột khi không đủ chỗ cho cả hai mức tối thiểu. -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
-                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" MinWidth="{StaticResource SideMinWidth}" MaxWidth="{StaticResource SideMaxWidth}" />
             </Grid.ColumnDefinitions>
-            <StackPanel x:Name="Main" Spacing="24">
+            <StackPanel x:Name="Main" Spacing="16">
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
@@ -132,7 +128,17 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
-            <StackPanel x:Name="Side" Grid.Column="2" Spacing="24">
+            <StackPanel x:Name="Side" Grid.Column="2" Spacing="16">
+                <!-- Ôn tập: câu tới hạn ôn và câu làm sai (Luyện tập, tab Hôm nay). Luyện tập theo môn nằm trong thẻ môn. -->
+                <Border Classes="card">
+                    <StackPanel>
+                        <!-- Explanation lives in the tooltip: the card stays one line. -->
+                        <Border Classes="card-head" ToolTip.Tip="{l:T home.reviewNote}"><DockPanel>
+                            <Button DockPanel.Dock="Right" Content="{l:T home.reviewStart}" Click="OnReview" />
+                            <TextBlock Classes="card-title" Text="{l:T home.review}" VerticalAlignment="Center" />
+                        </DockPanel></Border>
+                    </StackPanel>
+                </Border>
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>

@@ -19,25 +19,25 @@ public partial class HomeView : UserControl
     // Nhóm việc (khảo sát của nhiều môn...) người dùng đã bấm xổ ra; giữ qua lần dựng lại trang sau đồng bộ.
     private static readonly HashSet<string> Expanded = [];
 
-    internal HomeView(AppState state, Action login, Action<string> openInbox) : this()
+    private Action? _review;
+
+    private void OnReview(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _review?.Invoke();
+
+    internal HomeView(AppState state, Action login, Action<string> openInbox, Action? review = null) : this()
     {
+        _review = review;
         _login = login;
         _openInbox = openInbox;
-        var inbox = Inbox.Recent(Inbox.Rows(SoHocTap.Data.LmsMessagesStore.Read(), state.Lms?.Announcements ?? [], InboxReads.Load(), Format.Now, HomePresenter.NewsDays),
-            Format.Now, HomePresenter.NewsDays);
-        InboxList.ItemsSource = inbox;
-        InboxMeta.Text = L.F("home.inboxMeta", inbox.Count(r => r.Unread), HomePresenter.NewsDays);
-        SyncLine.Text = HomePresenter.SyncLine(state.SyncedAt(SoHocTap.Core.SourceIds.Lms), state.SyncedAt(SoHocTap.Core.SourceIds.Mybk));
+        _ = FillInboxAsync(state);
         var m = HomePresenter.Build(state.Timeline, state.Lms, state.Mybk, Format.Now);
         DataContext = m;
         _todo = m.Todo;
         TodoList.ItemsSource = TodoGroups.Collapse(_todo, Expanded);
-        Empty(InboxEmpty, inbox.Count, m.HasLms ? L.F("home.inboxEmpty", HomePresenter.NewsDays) : L.T("home.noLms"));
         DateText.Text = Format.DateLong(Format.Today);
         var none = !m.HasLms && !m.HasMybk;
         Intro.IsVisible = none;
         Columns.IsVisible = !none;
-        TodoMeta.Text = L.F("home.todoMeta", m.Todo.Count, HomePresenter.TodoDays);
+        TodoMeta.Text = L.F("home.todoMeta", m.Todo.Count(t => !t.Done), HomePresenter.TodoDays);   // việc đã xong vẫn hiện nhưng không đếm
         Empty(TodoEmpty, m.Todo.Count, m.HasLms ? L.F("home.todoEmpty", HomePresenter.TodoDays) : L.T("home.noLms"));
         Empty(UpcomingEmpty, m.Upcoming.Count, m.HasMybk ? L.F("home.upcomingEmpty", HomePresenter.ExamDays) : L.T("home.noMybk"));
         Empty(RegEmpty, m.Registrations.Count, m.HasMybk ? L.T("home.regEmpty") : L.T("home.noMybk"));
@@ -70,6 +70,21 @@ public partial class HomeView : UserControl
     /// Bấm một dòng có link: trang trường mở trong cửa sổ app (dùng chung phiên đăng nhập), trang khác bằng trình duyệt.
     /// Đợt đăng ký môn mở trang Đăng ký môn học của MyBK (danh sách các đợt; MyBK không có link riêng cho từng đợt).
     /// </summary>
+    /// <summary>
+    /// Thẻ Mới trong hộp thư: giải mã, đọc tin nhắn (DPAPI) ở luồng nền rồi mới điền, không làm chậm lúc mở app (khoảng 130 ms, đo 01/11/2026).
+    /// </summary>
+    private async Task FillInboxAsync(AppState state)
+    {
+        var news = state.Lms?.Announcements ?? [];
+        var hasLms = state.Lms is not null;
+        var inbox = await Task.Run(() => Inbox.Recent([.. Inbox.Rows(SoHocTap.Data.LmsMessagesStore.Read(), news, InboxReads.Load(), Format.Now, HomePresenter.NewsDays)
+            .Where(r => r.Kind != InboxKind.System)], Format.Now, HomePresenter.NewsDays));
+        InboxList.ItemsSource = inbox;
+        var unread = inbox.Count(r => r.Unread);
+        InboxMeta.Text = unread > 0 ? L.F("home.inboxUnread", unread) : "";
+        Empty(InboxEmpty, inbox.Count, hasLms ? L.F("home.inboxEmpty", HomePresenter.NewsDays) : L.T("home.noLms"));
+    }
+
     private void OnInboxTapped(object? sender, TappedEventArgs e)
     {
         if ((sender as Control)?.DataContext is InboxRow r) _openInbox(r.Key);

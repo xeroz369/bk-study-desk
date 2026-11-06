@@ -11,10 +11,12 @@ namespace BKStudyDesk.Desktop.Web;
 /// Token LMS: lấy cookie LMS của trang rồi gọi launch.php (LmsTokenGrab), vì trình duyệt nhúng không cho bắt link scheme lạ.
 /// Gặp trang mật khẩu SSO thì báo NeedPassword; app không đọc mật khẩu. Các bước báo ra: mybk, lms, done, error.
 /// </summary>
-internal sealed class LoginFlow(WebPage page, Action<string, string> progress)
+/// <param name="mybk">false: skip MyBK and go straight to the LMS CAS entry (LMS token refresh, or MyBK sync turned off),
+/// so an LMS refresh is not counted as a MyBK sign-in.</param>
+internal sealed class LoginFlow(WebPage page, Action<string, string> progress, bool mybk = true)
 {
     private readonly LoginHosts _hosts = LoginHosts.FromConfig();
-    private LoginStage _stage = LoginStage.Sso;
+    private LoginStage _stage = mybk ? LoginStage.Sso : LoginStage.LmsCas;
     private bool _sawPassword;   // lượt này đã gặp trang mật khẩu: xong là một lần đăng nhập đầy đủ (đo thời gian sống của phiên SSO)
     private bool _busy;          // đang làm một bước async (lấy token), bỏ qua các lần tải trang chen vào
 
@@ -25,7 +27,7 @@ internal sealed class LoginFlow(WebPage page, Action<string, string> progress)
     public void Start()
     {
         page.Loaded += (u, ok) => { if (ok && u is not null) _ = OnLoadedAsync(u); };
-        page.Navigate(Config.Str("sources.mybk.casLogin"));
+        page.Navigate(Config.Str(mybk ? "sources.mybk.casLogin" : "sources.lms.casLogin"));
     }
 
     private async Task OnLoadedAsync(Uri u)

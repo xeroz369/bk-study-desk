@@ -9,66 +9,93 @@ namespace BKStudyDesk.Desktop.Views;
 
 /// <summary>
 /// Trang Cài đặt: vẽ SettingsCatalog (BKStudyDesk.Core/Presentation/SettingsCatalog.cs) thành các thẻ bằng control có sẵn: ToggleSwitch,
-/// TextBox (số, chữ; lưu khi rời ô hay Enter, sai thì báo và giữ giá trị cũ), ComboBox, Button. Phần Nâng cao nằm trong Expander đóng sẵn.
+/// TextBox (số, chữ; lưu khi rời ô hay Enter, sai thì báo và giữ giá trị cũ), ComboBox, Button. Trái là danh sách mục (mục Nâng cao
+/// xếp sau dòng Nâng cao), phải chỉ hiện thẻ của mục đang chọn, không phải cuộn cả trang dài. Gõ vào ô tìm thì hiện mọi thẻ có dòng khớp.
 /// Thêm, bớt mục cài đặt thì sửa SettingsCatalog, không sửa file này.
 /// </summary>
-public sealed class SettingsView : UserControl
+public sealed class SettingsView : UserControl, IFillPage
 {
     public SettingsView() { }
 
     internal SettingsView(SettingsActions actions)
     {
         var groups = SettingsCatalog.Groups(actions);
-        var page = new StackPanel { Spacing = 24 };
-        page.Children.Add(new StackPanel
+        var ordered = groups.Where(g => !g.Advanced).Concat(groups.Where(g => g.Advanced)).ToList();
+        var cards = new StackPanel { Spacing = 24 };
+        foreach (var g in ordered) cards.Children.Add(Card(g));
+
+        // Danh sách mục bên trái: dòng "Nâng cao" chỉ là tiêu đề, không chọn được.
+        var items = new List<ListBoxItem>();
+        foreach (var g in ordered)
         {
-            Spacing = 2,
-            Children = { new TextBlock { Text = L.T("set.title"), Classes = { "title" } }, new TextBlock { Text = L.T("set.subtitle"), Classes = { "meta" } } },
-        });
-        var search = new TextBox { PlaceholderText = L.T("set.search"), Width = (double)Application.Current!.FindResource("ListMaxWidth")!, HorizontalAlignment = HorizontalAlignment.Left };
-        search.TextChanged += (_, _) => Filter(search.Text ?? "");
-        page.Children.Add(search);
-        page.Children.Add(_noMatch);
-        foreach (var g in groups.Where(g => !g.Advanced)) page.Children.Add(Card(g));
-        var advanced = new StackPanel { Spacing = 24, Margin = new Thickness(0, 16, 0, 0) };
-        foreach (var g in groups.Where(g => g.Advanced)) advanced.Children.Add(Card(g));
-        page.Children.Add(_advanced = new Expander { Header = L.T("set.advanced"), Content = advanced, HorizontalAlignment = HorizontalAlignment.Stretch });
+            if (g.Advanced && !items.Any(i => !i.IsEnabled))
+                items.Add(new ListBoxItem { Content = new TextBlock { Text = L.T("set.advancedNav"), Classes = { "meta" } }, IsEnabled = false, Margin = new Thickness(0, 12, 0, 0) });
+            var title = new TextBlock { Text = g.Title, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis };
+            ToolTip.SetTip(title, g.Title);
+            items.Add(new ListBoxItem { Content = title, Tag = g });
+        }
+        _nav.ItemsSource = items;
+        _nav.SelectionChanged += (_, _) => { if (_nav.SelectedItem is ListBoxItem { Tag: SettingGroup }) Filter(_search.Text ?? ""); };
+        _search.TextChanged += (_, _) => Filter(_search.Text ?? "");
+        var left = new DockPanel { Margin = new Thickness(0, 0, 24, 0) };
+        DockPanel.SetDock(_search, Dock.Top);
+        left.Children.Add(_search);
+        left.Children.Add(_nav);
+
+        var right = new ScrollViewer { Content = new StackPanel { Spacing = 12, Children = { _noMatch, cards } } };
+        var body = new Grid { ColumnDefinitions = new ColumnDefinitions("240,*") };
+        Grid.SetColumn(right, 1);
+        body.Children.Add(left);
+        body.Children.Add(right);
+
+        var header = new TextBlock { Text = L.T("set.title"), Classes = { "title" }, Margin = new Thickness(0, 0, 0, 16) };
+        var page = new DockPanel();
+        DockPanel.SetDock(header, Dock.Top);
+        page.Children.Add(header);
+        page.Children.Add(body);
         Content = page;
+        _nav.SelectedIndex = 0;
     }
 
-    // Ô tìm (SettingsCatalog.Matches): ẩn dòng không khớp, ẩn thẻ không còn dòng nào; đang tìm thì mở sẵn Nâng cao để thấy mục trong đó.
+    private readonly ListBox _nav = new();
+    private readonly TextBox _search = new() { PlaceholderText = L.T("set.search"), Margin = new Thickness(0, 0, 0, 8) };
+
+    /// <summary>Chọn mục đầu tiên thỏa điều kiện ở danh sách bên trái (bỏ ô tìm).</summary>
+    private void Pick(Func<SettingGroup, bool> which)
+    {
+        _search.Text = "";
+        _nav.SelectedItem = (_nav.ItemsSource as IEnumerable<ListBoxItem>)?.FirstOrDefault(i => i.Tag is SettingGroup g && which(g));
+    }
+
+    // Không tìm: chỉ hiện thẻ của mục đang chọn. Đang tìm (SettingsCatalog.Matches): mọi thẻ có dòng khớp, ẩn dòng không khớp.
     private readonly List<(SettingGroup Group, Border Card, List<(SettingItem Item, Border Row)> Rows)> _cards = [];
     private readonly TextBlock _noMatch = new() { Text = L.T("set.searchNone"), Classes = { "meta" }, IsVisible = false };
-    private bool? _wasExpanded;
 
     private void Filter(string query)
     {
+        var searching = !string.IsNullOrWhiteSpace(query);
+        var picked = (_nav.SelectedItem as ListBoxItem)?.Tag as SettingGroup;
         var any = false;
         foreach (var (g, card, rows) in _cards)
         {
-            foreach (var (item, row) in rows) row.IsVisible = SettingsCatalog.Matches(g, item, query);
-            card.IsVisible = rows.Any(r => r.Row.IsVisible);
+            foreach (var (item, row) in rows) row.IsVisible = !searching || SettingsCatalog.Matches(g, item, query);
+            card.IsVisible = searching ? rows.Any(r => r.Row.IsVisible) : ReferenceEquals(g, picked);
             any |= card.IsVisible;
         }
-        _noMatch.IsVisible = !any;
-        if (_advanced is null) return;
-        var searching = !string.IsNullOrWhiteSpace(query);
-        if (searching) { _wasExpanded ??= _advanced.IsExpanded; _advanced.IsExpanded = true; }
-        else if (_wasExpanded is { } was) { _advanced.IsExpanded = was; _wasExpanded = null; }
-        _advanced.IsVisible = !searching || _cards.Any(c => c.Group.Advanced && c.Card.IsVisible);
+        _noMatch.IsVisible = searching && !any;
     }
 
-    private readonly Expander? _advanced;
     private Action? _openCredential;   // mở form tài khoản của mục CredentialItem (dải báo mời bật tự đăng nhập lại)
 
-    /// <summary>Mở phần Nâng cao (tham số --tab=1 khi chụp kiểm tra).</summary>
-    public void ExpandAdvanced()
-    {
-        if (_advanced is not null) _advanced.IsExpanded = true;
-    }
+    /// <summary>Mở mục Nâng cao đầu tiên (tham số --tab=1 khi chụp kiểm tra).</summary>
+    public void ExpandAdvanced() => Pick(g => g.Advanced);
 
-    /// <summary>Mở sẵn form tự đăng nhập lại (nút Bật trên dải báo); máy không hỗ trợ thì không có gì.</summary>
-    public void OpenAutoLogin() => _openCredential?.Invoke();
+    /// <summary>Mở sẵn form tự đăng nhập lại (nút Bật trên dải báo): chọn mục có dòng đó rồi mở form; máy không hỗ trợ thì không có gì.</summary>
+    public void OpenAutoLogin()
+    {
+        Pick(g => g.Items.Any(i => i is CredentialItem));
+        _openCredential?.Invoke();
+    }
 
     private Border Card(SettingGroup g)
     {
@@ -113,6 +140,7 @@ public sealed class SettingsView : UserControl
             }),
             ChoiceItem c => Choice(c),
             ActionItem a => Action(a, Say),
+            CheckItem c => Check(c, Say),
             InfoItem i => new TextBlock { Text = i.Value, Classes = { "meta" } },
             CredentialItem c => new Button(),   // dựng ở Credential: nút và form đi cùng nhau
             _ => new TextBlock(),
@@ -202,6 +230,37 @@ public sealed class SettingsView : UserControl
         box.SelectedIndex = Math.Max(0, c.Options.ToList().FindIndex(o => o.Value == current));
         box.SelectionChanged += (_, _) => { if (box.SelectedIndex >= 0) c.Set(c.Options[box.SelectedIndex].Value); };
         return box;
+    }
+
+    /// <summary>Check button; the accent confirm button appears only when the check found work, and hides after it runs.</summary>
+    private static StackPanel Check(CheckItem c, Action<string?, bool> say)
+    {
+        var check = new Button { Content = c.Button };
+        var confirm = new Button { Classes = { "accent" }, IsVisible = false };
+        Func<Task<(string Message, bool Error)>>? apply = null;
+        check.Click += async (_, _) =>
+        {
+            check.IsEnabled = false;
+            confirm.IsVisible = false;
+            try
+            {
+                var step = await c.Check();
+                say(step.Message, false);
+                apply = step.Apply;
+                if (step.Confirm is { } label && apply is not null) { confirm.Content = label; confirm.IsVisible = true; }
+            }
+            catch (Exception e) when (e is not OutOfMemoryException) { say(e.Message, true); }
+            finally { check.IsEnabled = true; }
+        };
+        confirm.Click += async (_, _) =>
+        {
+            if (apply is null) return;
+            check.IsEnabled = confirm.IsEnabled = false;
+            try { var (text, error) = await apply(); say(text, error); }
+            catch (Exception e) when (e is not OutOfMemoryException) { say(e.Message, true); }
+            finally { apply = null; confirm.IsVisible = false; check.IsEnabled = confirm.IsEnabled = true; }
+        };
+        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { confirm, check } };
     }
 
     private static Button Action(ActionItem a, Action<string?, bool> say)

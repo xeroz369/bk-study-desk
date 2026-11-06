@@ -22,19 +22,25 @@
       "gapMs": 100,
       "fileGapMs": 1000,
       "timeoutSeconds": 45,
+      "autoLoginMinutes": 6,
+      "courseFreshMinutes": 20,
       "saveQuizzes": true,
       "groupPattern": "(?<![A-Za-z0-9])L[0-9]{2,3}(?![A-Za-z0-9])",
       "announcementDays": 120,
+      "quietEvents": ["mod_assign/assign_notification"],
       "announcementsPerForum": 10,
       "announcementFiles": true,
       "announcementFileMb": 25,
       "conversations": 50,
-      "messagesMinutes": 30
+      "messagesMinutes": 30,
+      "images": true,
+      "imageMb": 5,
+      "imagesPerSync": 60
     },
     "mybk": {
+      "enabled": true,
       "site": "https://mybk.hcmut.edu.vn",
-      "casLogin": "https://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Fmybk.hcmut.edu.vn%2Fmy%2FhomeSSO.action",
-      "portal": "https://mybk.hcmut.edu.vn/my/homeSSO.action",
+      "casLogin": "https://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Fmybk.hcmut.edu.vn%2Fapp%2Flogin%2Fcas",
       "home": "https://mybk.hcmut.edu.vn/app/",
       "appLogin": "https://mybk.hcmut.edu.vn/app/login?type=cas",
       "registration": "https://mybk.hcmut.edu.vn/dkmh/dangKyMonHocForm.action",
@@ -220,8 +226,11 @@
       "refreshOnForce": false,
       "syncHours": 12,
       "minSyncHours": 6,
-      "gapMs": 100,
+      "gapMs": 1500,
+      "gapJitterMs": 500,
       "timeoutSeconds": 45,
+      "contentSeconds": 10,
+      "extraTimeoutSeconds": 15,
       "specialScores": {
         "12": "MT",
         "13": "VT",
@@ -241,8 +250,7 @@
       "account.hcmut.edu.vn",
       "wiki.hcmut.edu.vn"
     ],
-    "rememberDays": 30,
-    "keepAliveMinutes": 60
+    "rememberDays": 30
   },
   "folders": {
     "root": "",
@@ -328,10 +336,15 @@
   "app": {
     "debugLog": false,
     "debugLogUntil": 0,
+    "bkalendarUrl": "https://bkalendar.github.io/",
+    "offline": false,
     "virtualHost": "sohoc.example",
     "schedulerMinutes": 10,
+    "idleMinutes": 10,
+    "minFreshDays": 1,
     "language": "vi",
     "closeToTray": true,
+    "openSchoolIn": "app",
     "theme": "dark",
     "webSlowSeconds": 10,
     "home": { "todoDays": 14, "examDays": 14, "newsDays": 7 },

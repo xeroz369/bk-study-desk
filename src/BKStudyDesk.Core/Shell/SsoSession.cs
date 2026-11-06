@@ -52,6 +52,16 @@ internal static class SsoSession
         o["expiredAt"] = Now();
     });
 
+    /// <summary>Lần cuối app biết chắc phiên SSO còn (đăng nhập, giữ phiên, vào MyBK qua SSO); null nếu chưa biết hay đã thấy hết.</summary>
+    public static DateTime? AliveAt()
+    {
+        lock (Gate)
+        {
+            var o = JsonStore.ReadObject(StateFile);
+            return o["expiredAt"] is null ? Local(o["aliveAt"]) : null;
+        }
+    }
+
     private static long Now() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     private static DateTime? Local(JsonNode? n) =>

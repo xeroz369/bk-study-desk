@@ -6,8 +6,10 @@
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.MybkView">
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
-            <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="{l:T mybk.openWeb}" Click="OnOpenWeb" />
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <Button DockPanel.Dock="Right" VerticalAlignment="Top" Classes="icon" ToolTip.Tip="{l:T mybk.openWeb}" AutomationProperties.Name="{l:T mybk.openWeb}" Click="OnOpenWeb">
+                <PathIcon Data="{StaticResource IconOpenNew}" />
+            </Button>
             <StackPanel Spacing="2">
                 <TextBlock Classes="title" Text="MyBK" />
                 <TextBlock x:Name="Subtitle" Classes="meta" />

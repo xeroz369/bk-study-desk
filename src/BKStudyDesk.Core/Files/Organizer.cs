@@ -249,6 +249,15 @@ public static partial class Organizer
 
     // ------------------------------------------------------------------ nhận file từ thư mục Tải xuống
 
+    /// <summary>One file to move from Downloads: source path, subject folder name, destination path.</summary>
+    public sealed record DownloadMove(string Source, string Subject, string Dest);
+
+    /// <summary>Result of a move: moved, duplicates (sent to the duplicates archive), failed with reason.</summary>
+    public sealed record DownloadResult(int Moved, int Duplicates, IReadOnlyList<(string File, string Error)> Failed);
+
+    public static string DownloadsFolder =>
+        Environment.ExpandEnvironmentVariables(Config.Str("downloads.folder").Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
+
     /// <summary>Tên môn và mã môn đã biết (lấy từ data LMS và các thư mục môn).</summary>
     private static Dictionary<string, HashSet<string>> KnownSubjects()
     {
@@ -256,7 +265,8 @@ public static partial class Organizer
         // tên trên đĩa (NTFS coi NFC và NFD là hai tên khác nhau, dùng tên LMS thì tạo thêm một thư mục trùng).
         var map = new Dictionary<string, HashSet<string>>(NameMatch.NfcIgnoreCase);
         if (Directory.Exists(SubjectsRoot))
-            foreach (var d in Directory.GetDirectories(SubjectsRoot)) map.TryAdd(Path.GetFileName(d), []);
+            foreach (var d in Directory.GetDirectories(SubjectsRoot))
+                if (IsSubjectFolder(Path.GetFileName(d))) map.TryAdd(Path.GetFileName(d), []);
         foreach (var c in LmsStore.Read()?.Courses ?? [])
             if (c.Subject is { } s)
             {
@@ -266,41 +276,71 @@ public static partial class Organizer
         return map;
     }
 
+    // Skip helper folders ("_Lưu trữ", ".git") and names too short to match safely.
+    public static bool IsSubjectFolder(string name) => name.Length >= 4 && name[0] is not ('_' or '.');
+
     // Tên file tải về hay mất dấu hoặc ở dạng NFD: so bỏ dấu.
     internal static string? MatchSubject(string name, Dictionary<string, HashSet<string>> subjects) =>
         subjects.Where(kv => kv.Value.Any(c => name.Contains(c, StringComparison.OrdinalIgnoreCase)) || NameMatch.ContainsFolded(name, kv.Key))
                 .Select(kv => kv.Key).OrderByDescending(s => s.Length).FirstOrDefault();
 
-    /// <summary>Xếp file trong thư mục Tải xuống vào môn (khớp theo tên hoặc mã môn). apply=false thì chỉ liệt kê, không chuyển.</summary>
-    public static List<string> ImportDownloads(bool apply)
+    /// <summary>Danh sách file trong Tải xuống sẽ chuyển (khớp tên hoặc mã môn). Chỉ đọc, không chuyển gì.</summary>
+    public static List<DownloadMove> PlanDownloads() =>
+        PlanDownloads(DownloadsFolder, SubjectsRoot, Config.Str("folders.downloadsSubfolder"), Config.List("downloads.extensions"), KnownSubjects());
+
+    /// <summary>Pure planner: a matching file, or every allowed file inside a matching folder (links skipped).</summary>
+    public static List<DownloadMove> PlanDownloads(string folder, string subjectsRoot, string subfolder,
+        IReadOnlyCollection<string> exts, Dictionary<string, HashSet<string>> subjects)
     {
-        var lines = new List<string>();
-        var folder = Environment.ExpandEnvironmentVariables(Config.Str("downloads.folder").Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
-        if (!Directory.Exists(folder)) return lines;
-        var exts = Config.List("downloads.extensions");
-        var subjects = KnownSubjects();
-        var known = new Dictionary<string, Dictionary<string, string>>();
-        foreach (var entry in Directory.EnumerateFileSystemEntries(folder).ToList())
+        var plan = new List<DownloadMove>();
+        if (!Directory.Exists(folder) || subjects.Count == 0) return plan;
+        foreach (var entry in Directory.EnumerateFileSystemEntries(folder).Order(StringComparer.OrdinalIgnoreCase).ToList())
         {
-            var subject = MatchSubject(Path.GetFileName(entry), subjects);
-            if (subject is null) continue;
-            var files = Directory.Exists(entry)
-                ? Directory.EnumerateFiles(entry, "*", SearchOption.AllDirectories).ToList()
-                : [entry];
+            if (File.GetAttributes(entry).HasFlag(FileAttributes.ReparsePoint)) continue;
+            if (MatchSubject(Path.GetFileName(entry), subjects) is not { } subject) continue;
+            var files = Directory.Exists(entry) ? Directory.EnumerateFiles(entry, "*", NoLinks).Order(StringComparer.OrdinalIgnoreCase).ToList() : [entry];
             foreach (var f in files.Where(f => exts.Any(e => f.EndsWith(e, StringComparison.OrdinalIgnoreCase))))
-            {
-                var rel = Path.GetRelativePath(folder, f);
-                var dest = Path.Combine(SubjectsRoot, subject, Config.Str("folders.downloadsSubfolder"), rel);
-                lines.Add($"{rel} -> {Paths.RelativeToStudy(dest)}");
-                if (!apply) continue;
-                var subjDir = Path.Combine(SubjectsRoot, subject);
-                if (!known.TryGetValue(subjDir, out var k)) known[subjDir] = k = HashesIn(subjDir);
-                PlaceFile(f, dest, k, Path.Combine("Tải xuống", rel));
-            }
-            if (apply && Directory.Exists(entry)) RemoveEmptyTree(entry);
+                plan.Add(new(f, subject, Path.Combine(subjectsRoot, subject, subfolder, Path.GetRelativePath(folder, f))));
         }
+        return plan;
+    }
+
+    /// <summary>Chuyển theo danh sách đã kiểm; lỗi từng file (đang mở, bị khóa) không dừng các file khác. Ghi log số file và lỗi.</summary>
+    public static DownloadResult MoveDownloads(IReadOnlyList<DownloadMove> plan)
+    {
+        var folder = DownloadsFolder;
+        var known = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        var result = MoveDownloads(plan, folder, m =>
+        {
+            var subjDir = Path.Combine(SubjectsRoot, m.Subject);
+            if (!known.TryGetValue(subjDir, out var k)) known[subjDir] = k = HashesIn(subjDir);
+            return PlaceFile(m.Source, m.Dest, k, Path.Combine("Tải xuống", Path.GetRelativePath(folder, m.Source))) is not null;
+        });
         SaveHashCache();
-        return lines;
+        Log.Info($"Tải xuống: chuyển {result.Moved} file vào môn, {result.Duplicates} file trùng, {result.Failed.Count} lỗi");
+        foreach (var (file, error) in result.Failed) Log.Warn($"Tải xuống: không chuyển được {file}: {error}");
+        return result;
+    }
+
+    /// <summary>Move core: <paramref name="place"/> returns false for a duplicate. Empty matched folders in Downloads are removed.</summary>
+    public static DownloadResult MoveDownloads(IReadOnlyList<DownloadMove> plan, string folder, Func<DownloadMove, bool> place)
+    {
+        int moved = 0, dup = 0;
+        var failed = new List<(string, string)>();
+        foreach (var m in plan)
+        {
+            var name = Path.GetRelativePath(folder, m.Source);
+            if (!File.Exists(m.Source)) { failed.Add((name, "file không còn trong Tải xuống")); continue; }
+            try { if (place(m)) moved++; else dup++; }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failed.Add((name, e.Message)); }
+        }
+        // Only the top folders this plan came from, and only when empty.
+        var tops = plan.Select(m => Path.GetRelativePath(folder, m.Source).Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                       .Where(p => p.Length > 1).Select(p => Path.Combine(folder, p[0])).Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (var top in tops)
+            try { if (Directory.Exists(top)) RemoveEmptyTree(top); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        return new(moved, dup, failed);
     }
 
     /// <summary>Dọn cây folder trong Tải xuống sau khi đã chuyển hết file (chỉ gọi cho folder app vừa xử lý).</summary>

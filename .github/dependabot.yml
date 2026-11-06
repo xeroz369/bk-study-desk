@@ -3,9 +3,10 @@
 version: 2
 updates:
   - package-ecosystem: nuget
-    directories: ['/src/BKStudyDesk.Core', '/src/BKStudyDesk.Desktop', '/src/BKStudyDesk.Setup', '/tests/BKStudyDesk.Logic.Tests', '/tests/BKStudyDesk.Core.Tests', '/tests/BKStudyDesk.Math.Tests']
+    directories: ['/src/BKStudyDesk.Core', '/src/BKStudyDesk.Desktop', '/src/BKStudyDesk.Setup', '/tests/BKStudyDesk.Logic.Tests', '/tests/BKStudyDesk.Core.Tests', '/tests/BKStudyDesk.Math.Tests', '/tests/BKStudyDesk.Ui.Tests', '/src/ThirdParty/XamlMath/AvaloniaMath', '/src/ThirdParty/XamlMath/XamlMath.Shared']
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    # Một nhóm cho mọi project: Avalonia nâng lẻ ở vài project thì NuGet báo hạ phiên bản (NU1605, PR 61 và 64, 31/10/2026).
     groups:
       nuget: { patterns: ['*'] }
     # Math.Tests phải ở xunit.v3 3.x cho tới khi Avalonia.Headless.XUnit có bản build trên xunit 4 (PR 52 đã đóng vì lỗi này).
@@ -22,3 +23,6 @@ updates:
     directory: /
     schedule: { interval: monthly }
     cooldown: { default-days: 7 }
+    # Mọi bước github/codeql-action (init, analyze, upload-sarif) phải cùng phiên bản; nâng lẻ thì CodeQL báo lỗi (PR 60, 31/10/2026).
+    groups:
+      codeql: { patterns: ['github/codeql-action*'] }

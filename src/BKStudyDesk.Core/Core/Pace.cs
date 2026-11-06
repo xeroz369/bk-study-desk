@@ -34,6 +34,9 @@ public sealed class Pace(Func<TimeSpan> gap, Func<DateTime>? clock = null) : IDi
         if (until > _pausedUntil) _pausedUntil = until;
     }
 
+    /// <summary>Còn phải nghỉ bao lâu vì server báo quá tải (PauseFor); không nghỉ thì 0.</summary>
+    public TimeSpan PausedFor => _pausedUntil > _now() ? _pausedUntil - _now() : TimeSpan.Zero;
+
     /// <summary>
     /// Thời gian chờ khi server báo 429/503. Có Retry-After thì chờ ít nhất bằng đó (Azure "transient faults": Retry-After được ưu tiên),
     /// kẹp tối đa 5 phút. Không có thì "full jitter" (AWS Architecture Blog): ngẫu nhiên trong [1, min(60, 2·2^lần)] giây.

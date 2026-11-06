@@ -21,7 +21,7 @@ internal static class Program
         if (OperatingSystem.IsWindows()) SoHocTap.Updates.UpdateService.EnsureUninstaller();
         // Một bản: mở bản thứ hai thì nó chỉ đưa cửa sổ đang mở lên trước rồi thoát.
         using var instance = Platform.SingleInstance.Acquire(args);
-        if (instance is null) return;
+        if (instance is null) { Log.Debug("Đã có bản khác đang chạy: báo nó rồi thoát"); return; }
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
             Log.Error($"Unhandled exception{(e.IsTerminating ? " (app sẽ tắt)" : "")}", e.ExceptionObject as Exception);
         // Task chạy nền bị lỗi mà không ai await: không ghi log thì lỗi biến mất im lặng khi GC dọn task.
@@ -38,7 +38,9 @@ internal static class Program
             // Lockdown tạo thư mục nếu chưa có: chỉ khóa content khi có (bản này không còn ui của khung Svelte).
             _ = Task.Run(() => { foreach (var d in new[] { AppContext.BaseDirectory, Paths.Content }.Distinct().Where(Directory.Exists)) SecretStore.Lockdown(d); });
         }
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        Log.Info($"Khởi động: {Environment.OSVersion}, {System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier}, kiểu cài {Paths.Kind}");
+        var code = BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        Log.Info($"Thoát: mã {code}");   // app tự thoát ngay sau khi mở (thấy trên WSL 31/10/2026): biết là thoát bình thường hay giữa chừng
     }
 
     public static AppBuilder BuildAvaloniaApp() =>

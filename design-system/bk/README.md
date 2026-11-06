@@ -9,7 +9,7 @@ Giao diện 1.x xấu không phải vì thiếu tính năng mà vì **tự chế
 ## 1. Nguyên tắc
 
 1. **Không tự chế.** Chỉ dùng control của Avalonia và theme Fluent có sẵn. Không viết control mới, không viết lại template của control.
-2. **Không icon.** Nút, mục điều hướng, nhãn đều là chữ. Trạng thái báo bằng chữ kèm màu.
+2. **Chữ là chính, icon rất ít.** Nút, mục điều hướng, nhãn đều là chữ. Ngoại lệ duy nhất (người dùng chốt 05/11/2026): icon Hộp thư và Cài đặt ở bên phải thanh trên cùng, hình tự vẽ bằng đoạn thẳng (`Path.bar-icon` trong Tokens), luôn có tooltip. Trạng thái báo bằng chữ kèm màu.
 3. **Khung cố định.** Vùng, cột, chiều cao dòng, kích thước ô theo số đo ở mục 4; nội dung không làm khung co giãn.
 4. **Chỉ mượn một thứ của web trường: thanh ngang trên cùng**, để người dùng quen tay. Bố cục, thẻ, bảng không bắt chước LMS.
 5. **Không cắt dữ liệu.** Danh sách dài thì cuộn; không giới hạn số mục bằng con số đặt sẵn.
@@ -154,7 +154,7 @@ Màu nằm trong `ThemeDictionaries` của `Styles/Tokens.axaml`; View dùng `Dy
 ## 9. Kiểm trước khi bàn giao một trang
 
 - Ảnh chụp ở 900 px và phóng to.
-- Không icon, không cỡ chữ ngoài mục 3, không màu ngoài bảng token, không control tự chế.
+- Không icon ngoài hai icon của thanh trên cùng (mục 2), không cỡ chữ ngoài mục 3, không màu ngoài bảng token, không control tự chế.
 - Khung đúng số đo mục 4.
 - Đủ trạng thái trống, đang tải, lỗi.
 - Ảnh chụp cả nền sáng và tối, ở 1296 px và 900 px; trang Luyện tập chụp thêm ở cỡ chữ 130%.

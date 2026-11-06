@@ -43,8 +43,8 @@ internal sealed class ReaderWindow : Window
         panel.Children.Add(new SelectableTextBlock { Text = r.Title, Classes = { "title" }, TextWrapping = TextWrapping.Wrap });
         if (r.Meta.Length > 0) panel.Children.Add(new TextBlock { Text = r.Meta, Classes = { "meta" } });
         if (r.Paragraphs.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("reader.empty"), Classes = { "meta" } });
-        foreach (var p in r.Paragraphs) panel.Children.Add(new SelectableTextBlock { Text = p, TextWrapping = TextWrapping.Wrap });
-        AddLinks(panel, L.T("reader.links"), r.Links, owner);
+        ReadingBlocks.Add(panel, r.Blocks ?? [.. r.Paragraphs.Select(p => new ReadingBlock(p))], owner);
+        if (r.Blocks is null) AddLinks(panel, L.T("reader.links"), r.Links, owner);   // có Blocks thì link đã nằm trong chữ
         AddLinks(panel, L.T("reader.attachments"), r.Attachments, owner);
         if (r.WebUrl is { Length: > 0 } url)
         {

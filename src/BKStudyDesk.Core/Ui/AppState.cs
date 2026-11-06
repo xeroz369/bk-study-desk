@@ -164,6 +164,9 @@ public sealed partial class AppState(SourceHub hub)
     /// Lỗi đồng bộ gần nhất của nguồn <paramref name="name"/>, viết lại cho người dùng theo loại lỗi (chữ kỹ thuật để ở Detail);
     /// null nếu không lỗi. Dùng cái này thay cho <see cref="Explain(string, string)"/> để câu báo dựa trên loại lỗi.
     /// </summary>
+    /// <summary>Lúc app sẽ tự đồng bộ nguồn này (SourceHub.NextAutoAt); null khi Offline, chưa đăng nhập hay đang chạy.</summary>
+    public DateTimeOffset? NextAutoAt(string name) => hub.NextAutoAt(name);
+
     public (string Text, string? Detail)? ExplainError(string name, string label) =>
         Error(name) is { } raw ? Explain(label, ErrorKind(name), raw) : null;
 
@@ -218,7 +221,7 @@ public sealed partial class AppState(SourceHub hub)
         get
         {
             var lms = Source(SourceIds.Lms) is { } l && (l["connected"]?.GetValue<bool>() != true || NeedsLogin(SourceIds.Lms));
-            var mybk = NeedsLogin(SourceIds.Mybk);
+            var mybk = Settings.Sync.MybkEnabled && NeedsLogin(SourceIds.Mybk);
             return (lms, mybk) switch { (true, true) => AccountNeed.Both, (true, _) => AccountNeed.Lms, (_, true) => AccountNeed.Mybk, _ => AccountNeed.None };
         }
     }

@@ -171,7 +171,8 @@ public sealed class WeekGridView : UserControl
             _scrolledFor = _monday;
             var visible = (int)((_scroll.Bounds.Height - 2 * pad) / px);
             var first = _blocks.Count == 0 ? (int?)null : _blocks.Min(b => b.StartMin);
-            _scroll.Offset = new Vector(0, (WeekMath.ScrollAnchor(_monday, WallNow, first, visible) - From) * px);
+            var last = _blocks.Count == 0 ? (int?)null : _blocks.Max(b => b.EndMin);
+            _scroll.Offset = new Vector(0, (WeekMath.ScrollAnchor(_monday, WallNow, first, visible, last) - From) * px);
         }
     }
 

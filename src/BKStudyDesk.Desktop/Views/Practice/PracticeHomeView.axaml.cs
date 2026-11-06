@@ -53,6 +53,28 @@ public partial class PracticeHomeView : UserControl
         _disarm.Tick += (_, _) => Disarm();
     }
 
+    /// <summary>Nằm trong tab Luyện tập của thẻ môn: bỏ tiêu đề trang (thẻ môn đã có tên), lề trong như các tab khác.</summary>
+    public void SetEmbedded(bool on)
+    {
+        _embedded = on;
+        HeaderBar.IsVisible = !on;
+        RootPanel.Margin = on ? new Avalonia.Thickness(16, 12) : default;
+        RootPanel.Spacing = on ? 12 : 24;
+        // Only the course list of this subject: move it out of the tab strip (and back for the global page).
+        if (on && CoursesTab.Content is Control panel) { CoursesTab.Content = null; EmbeddedSlot.Content = panel; }
+        else if (!on && EmbeddedSlot.Content is Control back) { EmbeddedSlot.Content = null; CoursesTab.Content = back; }
+        Tabs.IsVisible = !on;
+        EmbeddedSlot.IsVisible = on;
+        CoursesPanel.Margin = on ? default : new Avalonia.Thickness(0, 16, 0, 0);
+        CoursesEmpty.Text = L.T(on ? "practice.empty.course" : "practice.empty.courses");
+        ShowCourses();
+    }
+
+    private bool _embedded;
+
+    /// <summary>Lọc danh sách môn (tab Luyện tập trong thẻ môn: chỉ môn đó).</summary>
+    public void SetCourseFilter(string text) => CourseFilter.Text = text;
+
     public void SelectTab(int i) => Tabs.SelectedIndex = Math.Clamp(i, 0, Tabs.ItemCount - 1);
 
     public int SelectedTab => Tabs.SelectedIndex;
@@ -104,9 +126,11 @@ public partial class PracticeHomeView : UserControl
 
     private void ShowCourses()
     {
-        var rows = PracticeHome.Filter(_courses, CourseFilter.Text ?? "");
+        var rows = _embedded ? PracticeHome.OnlyCourse(_courses, CourseFilter.Text ?? "") : PracticeHome.Filter(_courses, CourseFilter.Text ?? "");
         CourseList.ItemsSource = rows;
-        CoursesNoMatch.IsVisible = _courses.Count > 0 && rows.Count == 0;
+        CoursesNoMatch.IsVisible = !_embedded && _courses.Count > 0 && rows.Count == 0;
+        if (_embedded) { CoursesBar.IsVisible = false; CoursesEmpty.IsVisible = rows.Count == 0; }
+        else { CoursesBar.IsVisible = _courses.Count > 0; CoursesEmpty.IsVisible = _courses.Count == 0; }
     }
 
     private void OnCourseFilter(object? sender, TextChangedEventArgs e) => ShowCourses();

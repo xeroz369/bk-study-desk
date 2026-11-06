@@ -21,7 +21,7 @@ public sealed partial class LmsSource
 
     /// <param name="groups">Nhóm của mình trong từng lớp (<see cref="MyGroupsAsync"/>, một bước riêng của lượt đồng bộ): mốc của nhóm khác thì bỏ.
     /// Lớp không có trong map (đọc nhóm lỗi) hay có mà rỗng thì giữ mọi mốc (<see cref="GroupFilter.Keep"/>).</param>
-    private static async Task<JsonArray> CollectEventsAsync(List<CourseInfo> courses, Dictionary<long, HashSet<string>> groups, CancellationToken ct)
+    private static async Task<JsonArray> CollectEventsAsync(List<CourseInfo> courses, Dictionary<long, HashSet<string>> groups, long uid, CancellationToken ct)
     {
         var subj = courses.ToDictionary(c => c.Id, c => c.Subject + (c.Part is null ? "" : $" ({c.Part})"));
         var outMap = new Dictionary<string, JsonObject>();
@@ -67,6 +67,8 @@ public sealed partial class LmsSource
                     ["phase"] = e["eventtype"]?.GetValue<string>(),
                     ["url"] = e["url"]?.GetValue<string>(),
                 };
+                // Lịch hành động vẫn trả mốc nhưng không còn thao tác được (khảo sát đã gửi, bài đã làm): coi như đã xong.
+                if (e["action"]?["actionable"] is JsonValue act && act.TryGetValue<bool>(out var can) && !can) outMap["ev" + e["id"]]["done"] = true;
                 if (mod == "assign")
                 {
                     if (e["instance"]?.GetValue<long>() is { } inst) assignEvents[inst] = outMap["ev" + e["id"]];
@@ -120,8 +122,38 @@ public sealed partial class LmsSource
             await ApplySubmissionStatesAsync(toAsk, ct);
         }
         catch (Exception ex) when (Recoverable(ex, ct)) { Warn("bài tập LMS", ex); }
+        await MarkCompletedAsync(outMap.Values, uid, ct);
         foreach (var e in outMap.Values.Where(e => e["done"] is null).ToList()) e.Remove("done");
         return new JsonArray(outMap.Values.OrderBy(e => e["time"]?.GetValue<long>() ?? 0).Cast<JsonNode>().ToArray());
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"[?&]id=(\d+)")] private static partial System.Text.RegularExpressions.Regex CmidRx();
+
+    /// <summary>
+    /// Khảo sát, phản hồi... (mốc loại "event" trên lịch hành động) đã làm chưa: hỏi trạng thái hoàn thành của các hoạt động trong lớp
+    /// (core_completion_get_activities_completion_status, chỉ đọc, mỗi lớp một lần). Hoạt động có theo dõi hoàn thành và đã hoàn thành thì
+    /// đánh dấu done: vẫn hiện với hạn cũ, có nhãn, không còn báo gấp (người dùng nhờ 05/11/2026: khảo sát đã gửi vẫn báo còn 4 ngày).
+    /// Lớp không bật theo dõi hay LMS từ chối thì bỏ qua, không báo lỗi.
+    /// </summary>
+    private static async Task MarkCompletedAsync(IEnumerable<JsonObject> items, long uid, CancellationToken ct)
+    {
+        var open = items.Where(e => e["done"] is null && e["kind"]?.GetValue<string>() == "event"
+                                    && e["url"]?.GetValue<string>() is { } u && CmidRx().IsMatch(u)).ToList();
+        foreach (var byCourse in open.GroupBy(e => e["course"]!.GetValue<long>()))
+        {
+            JsonNode res;
+            try { res = await CallAsync("core_completion_get_activities_completion_status", [Arg("courseid", byCourse.Key), Arg("userid", uid)], ct); }
+            catch (Exception ex) when (ex is LmsException or SessionExpiredException or HttpRequestException or TimeoutException)
+            {
+                Log.Debug($"Trạng thái hoàn thành lớp {byCourse.Key}: {ex.Message}");
+                continue;
+            }
+            var completed = (res["statuses"] as JsonArray ?? []).OfType<JsonObject>()
+                .Where(x => x["state"]?.GetValue<int>() is 1 or 2)
+                .Select(x => x["cmid"]?.GetValue<long>() ?? 0).ToHashSet();
+            foreach (var e in byCourse)
+                if (long.TryParse(CmidRx().Match(e["url"]!.GetValue<string>()).Groups[1].Value, out var cmid) && completed.Contains(cmid)) e["done"] = true;
+        }
     }
 
     private static JsonArray AttachmentFiles(JsonObject a) => new((a["introattachments"] as JsonArray ?? []).OfType<JsonObject>()

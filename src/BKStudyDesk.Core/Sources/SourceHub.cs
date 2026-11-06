@@ -118,6 +118,25 @@ public sealed class SourceHub : IDisposable
     /// <summary>Loại lỗi của lượt sync gần nhất; null nếu không lỗi hay lỗi của bản cũ.</summary>
     public SyncErrorKind? ErrorKind(string name) => _state.TryGetValue(name, out var st) && st.Error is not null ? st.Kind : null;
 
+    /// <summary>
+    /// Just signed in: "session expired" errors belong to the old session, clear them so the status bar stops asking to sign in
+    /// while the next sync runs. A real expiry on that sync sets it again. Other errors (network, server) stay.
+    /// The restart gap (MinRestart) is cleared too: a run that just failed for lack of a session must not block the sync the new
+    /// session starts (06/11/2026: MyBK failed at 01:08:26, sign-in done at 01:08:31, the MyBK sync after it never ran).
+    /// </summary>
+    public void ForgetSessionExpired()
+    {
+        var changed = false;
+        foreach (var st in _state.Values)
+            lock (st)
+                if (st.Error is not null && st.Kind == SyncErrorKind.SessionExpired)
+                {
+                    st.Error = null; st.Kind = null; changed = true;
+                    if (!st.Running) st.StartedAt = default;
+                }
+        if (changed) SaveState();
+    }
+
     public JsonObject StatusJson()
     {
         var o = new JsonObject();
@@ -151,7 +170,7 @@ public sealed class SourceHub : IDisposable
     }
 
     /// <summary>Chạy sync dưới nền. Trả false nếu nguồn đang chạy, chưa kết nối, hoặc vừa sync xong (dưới 2 phút, trừ khi force).</summary>
-    public bool Start(string name, bool force = false)
+    public bool Start(string name, bool force = false, bool soon = false)
     {
         if (!_sources.TryGetValue(name, out var src)) return false;
         var status = src.Status();
@@ -160,7 +179,9 @@ public sealed class SourceHub : IDisposable
         var st = _state[name];
         lock (st)
         {
-            if (st.Running || DateTimeOffset.UtcNow - st.StartedAt < MinRestart) return false;
+            // soon: a page asked for one stale section (MyBK on demand). Each section is fresh for hours after it loads and a failed one
+            // waits 10 minutes, so the 30 second restart guard against repeated button presses is not needed there.
+            if (st.Running || (!soon && DateTimeOffset.UtcNow - st.StartedAt < MinRestart)) return false;
             st.Running = true; st.Error = null; st.Kind = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
             st.Progress = null; st.Warnings = []; st.DataChanged = false; st.Quiet = false;
         }
@@ -281,6 +302,33 @@ public sealed class SourceHub : IDisposable
 
     // ------------------------------------------------------------------ scheduler
 
+    /// <summary>
+    /// Lúc scheduler sẽ tự đồng bộ nguồn này (cùng quy tắc với RunDue: hết chu kỳ, hay tới lúc thử lại sau lỗi); null khi đang Offline,
+    /// chưa đăng nhập hay đang chạy. Scheduler xem mỗi app.schedulerMinutes phút nên thực tế có thể trễ hơn một chút.
+    /// </summary>
+    public DateTimeOffset? NextAutoAt(string name)
+    {
+        if (OfflineMode.On || !UserActivity.Active || !_sources.TryGetValue(name, out var src) || !src.Scheduled) return null;   // away or on demand: nothing runs on its own
+        var s = src.Status();
+        if (!s.Connected) return null;
+        var interval = IntervalOf(src);
+        var st = _state[name];
+        TimeSpan wait;
+        DateTimeOffset failedAt;
+        lock (st)
+        {
+            if (st.Running) return null;
+            wait = st.Error is null ? TimeSpan.Zero : RetryAfter(st.Kind, st.NetFails, interval);
+            failedAt = st.FailedAt;
+        }
+        var last = s.SyncedAt is { } t ? DateTimeOffset.FromUnixTimeSeconds(t) : DateTimeOffset.MinValue;
+        var byInterval = last == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : last + interval;
+        var next = wait <= TimeSpan.Zero ? byInterval
+            : wait < interval ? failedAt + wait
+            : (failedAt + wait > byInterval ? failedAt + wait : byInterval);
+        return next > DateTimeOffset.UtcNow ? next : DateTimeOffset.UtcNow;
+    }
+
     /// <summary>Chu kỳ thực tế của nguồn: gấp đôi khi bật Tiết kiệm pin.</summary>
     private TimeSpan IntervalOf(ISource src) => BatterySaverOn() ? src.Interval * 2 : src.Interval;
 
@@ -309,6 +357,9 @@ public sealed class SourceHub : IDisposable
     public void RunDue()
     {
         if (_stop.IsCancellationRequested) return;
+        if (OfflineMode.On) return;   // người dùng bật Offline: không tự đồng bộ, chỉ chạy khi bấm tay (Start force)
+        // Nobody at the computer: no scheduled sync. The shell runs RunDueSoon when the user comes back (UserActivity.Changed).
+        if (!UserActivity.Active) { Log.Debug("Scheduler: user away, skip"); return; }
         if (!Online())
         {
             Log.Debug("Scheduler: máy đang offline, bỏ lượt");
@@ -316,6 +367,7 @@ public sealed class SourceHub : IDisposable
         }
         foreach (var src in _sources.Values)
         {
+            if (!src.Scheduled) continue;   // on-demand source (MyBK): pages ask for it
             var s = src.Status();
             if (!s.Connected) continue;
             var interval = IntervalOf(src);

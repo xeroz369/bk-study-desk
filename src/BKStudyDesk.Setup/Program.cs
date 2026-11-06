@@ -201,7 +201,7 @@ internal sealed class SetupForm : Form
         var logo = new PictureBox { Image = Icon.ExtractAssociatedIcon(Application.ExecutablePath)?.ToBitmap(), SizeMode = PictureBoxSizeMode.Zoom,
             Size = new Size(Dpi.Px(this, 40), Dpi.Px(this, 40)), Margin = new Padding(0, 0, Dpi.Px(this, 12), 0) };
         var name = new Label { Text = "BK Study Desk", AutoSize = true, Font = new Font("Segoe UI Semibold", 15f) };
-        var tagline = new Label { Text = "Tài liệu, hạn nộp, lịch học của sinh viên Bách Khoa, lưu sẵn trên máy để xem cả khi không có mạng.",
+        var tagline = new Label { Text = "LMS và MyBK gọn trong một app. Không sót hạn nộp, xem được cả khi mất mạng.",
             AutoSize = true, MaximumSize = new Size(width - Dpi.Px(this, 52), 0), ForeColor = _c.Sub };
         var names = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = Padding.Empty };
         names.Controls.AddRange([name, tagline]);

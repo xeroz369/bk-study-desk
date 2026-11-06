@@ -34,8 +34,8 @@ public static partial class Settings
         "app.update.mode", "app.update.checkHours",
         "library.baseUrl", "library.contributePath",
         "app.language", "app.closeToTray", "app.theme", "app.accent",
-        "sso.rememberDays", "sso.keepAliveMinutes", "sso.autoLogin", "sso.autoLoginAsked",
-        "sources.lms.syncHours", "sources.mybk.syncHours", "sources.lms.maxFileMB", "sources.lms.autoDownload", "sources.lms.saveQuizzes", "sources.lms.groupPattern",
+        "sso.rememberDays", "sso.autoLogin", "sso.autoLoginAsked",
+        "sources.lms.syncHours", "sources.mybk.syncHours", "sources.mybk.enabled", "sources.lms.maxFileMB", "sources.lms.autoDownload", "sources.lms.saveQuizzes", "sources.lms.groupPattern",
         "archives.maxMB", "archives.extract",
         "viewer.pdfApp", "folders.root",
     ];
@@ -95,6 +95,8 @@ public static partial class Settings
         public static string Language { get => GetStr("app.language"); set => SetStr("app.language", value); }
         /// <summary>Nút X thu app xuống khay (true) hay thoát hẳn.</summary>
         public static bool CloseToTray { get => GetBool("app.closeToTray"); set => SetBool("app.closeToTray", value); }
+        /// <summary>Mở trang LMS, MyBK bằng "app" (cửa sổ trong app, dùng phiên đăng nhập của app, mặc định) hay "browser" (trình duyệt của máy).</summary>
+        public static string OpenSchoolIn { get => GetStr("app.openSchoolIn"); set => SetStr("app.openSchoolIn", value); }
         /// <summary>Chế độ màu của bản đa nền tảng: "dark" (mặc định), "light" hay "system" (theo hệ điều hành). Bản 1.x không đọc.</summary>
         public static string Theme { get => GetStr("app.theme"); set => SetStr("app.theme", value); }
         /// <summary>Màu nhấn của bản đa nền tảng: "#RRGGBB" hay "system" (màu nhấn của hệ điều hành); lựa chọn ở app.accentChoices.</summary>
@@ -106,10 +108,8 @@ public static partial class Settings
     public static class Sso
     {
         public static int RememberDays { get => GetInt("sso.rememberDays"); set => SetInt("sso.rememberDays", value); }
-        public static int KeepAliveMinutes { get => GetInt("sso.keepAliveMinutes"); set => SetInt("sso.keepAliveMinutes", value); }
         /// <summary>Số dùng khi bật lại Ghi nhớ đăng nhập, Giữ phiên (giá trị trong DefaultConfig.json).</summary>
         public static int DefaultRememberDays => DefaultInt("sso.rememberDays");
-        public static int DefaultKeepAliveMinutes => DefaultInt("sso.keepAliveMinutes");
         /// <summary>Tự đăng nhập lại khi phiên SSO hết (tài khoản trong SsoCredentials). Mặc định tắt.</summary>
         public static bool AutoLogin { get => GetBool("sso.autoLogin"); set => SetBool("sso.autoLogin", value); }
         /// <summary>Đã hỏi người dùng về tự đăng nhập lại chưa (thanh hỏi chỉ hiện một lần, kể cả người đang dùng bản cũ).</summary>
@@ -120,6 +120,10 @@ public static partial class Settings
     {
         public static int LmsHours { get => GetInt("sources.lms.syncHours"); set => SetInt("sources.lms.syncHours", value); }
         public static int MybkHours { get => GetInt("sources.mybk.syncHours"); set => SetInt("sources.mybk.syncHours", value); }
+        /// <summary>Off: never visit MyBK (no MyBK sign-ins), keep LMS only; saved MyBK data stays readable.</summary>
+        public static bool MybkEnabled { get => GetBool("sources.mybk.enabled"); set => SetBool("sources.mybk.enabled", value); }
+        /// <summary>Data reminders read is refreshed at least this often (days), even while the user is away (KeepFresh).</summary>
+        public static int MinFreshDays { get => GetInt("app.minFreshDays"); set => SetInt("app.minFreshDays", value); }
         public static int MaxFileMB { get => GetInt("sources.lms.maxFileMB"); set => SetInt("sources.lms.maxFileMB", value); }
         public static bool AutoDownload { get => GetBool("sources.lms.autoDownload"); set => SetBool("sources.lms.autoDownload", value); }
         public static bool SaveQuizzes { get => GetBool("sources.lms.saveQuizzes"); set => SetBool("sources.lms.saveQuizzes", value); }

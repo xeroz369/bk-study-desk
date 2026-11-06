@@ -55,4 +55,30 @@ public class MessagesTests
         Assert.Equal(Now - 5, next);
         Assert.Empty(MessagesPresenter.Fresh(data, next).Fresh);
     }
+
+    [Fact]
+    public void Thread_groups_by_day_and_sender_like_lms()
+    {
+        var day1 = SoHocTap.Core.VnTime.FromWall(new DateTime(2026, 10, 26, 11, 0, 0));
+        var day2 = SoHocTap.Core.VnTime.FromWall(new DateTime(2026, 11, 5, 9, 0, 0));
+        var c = new LmsConversation(1, "Nhóm GT2", true, ["Cô Như"], 0, day2, null,
+        [
+            new(1, 7, "Cô Như", null, "a", day1),
+            new(2, 7, "Cô Như", null, "b", day1 + 300),          // cùng người, 5 phút sau: cùng nhóm
+            new(3, 9, "Bạn", true, "c", day1 + 600),             // mình
+            new(4, 7, "Cô Như", null, "d", day1 + 600 + 3 * 3600), // người khác, sau 3 giờ: nhóm mới
+            new(5, 7, "Cô Như", null, "e", day2),               // ngày khác: vạch ngày mới
+        ]);
+        var (items, older) = MessagesPresenter.Thread(c, day2 + 60);
+        Assert.Equal(0, older);
+        Assert.Equal(["day", "group:2", "group:1", "group:1", "day", "group:1"],
+            items.Select(x => x is ThreadDay ? "day" : "group:" + ((ThreadGroup)x).Messages.Count));
+        Assert.True(((ThreadGroup)items[2]).Mine);
+        Assert.Equal(SoHocTap.Ui.L.T("messages.today"), ((ThreadDay)items[4]).Text);
+        Assert.Equal("11:05", ((ThreadGroup)items[1]).Messages[1].Hm);
+
+        var (lastTwo, rest) = MessagesPresenter.Thread(c, day2 + 60, last: 2);
+        Assert.Equal(3, rest);
+        Assert.Equal(2, lastTwo.OfType<ThreadGroup>().Sum(g => g.Messages.Count));
+    }
 }

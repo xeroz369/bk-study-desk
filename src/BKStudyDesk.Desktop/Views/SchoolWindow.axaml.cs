@@ -41,8 +41,8 @@ public partial class SchoolWindow : Window
 
     private void Go(string url)
     {
-        Retry.IsVisible = false;
-        Status.Text = SchoolUrls.Host(url);
+        Retry.IsVisible = Status.IsVisible = false;
+        Address.Text = url;
         _slow.Stop();
         _slow.Start();
         _page.Navigate(url);
@@ -53,8 +53,10 @@ public partial class SchoolWindow : Window
         _slow.Stop();
         if (u is null) return;
         if (!ok) { Problem(L.T("web.offline")); return; }
-        Retry.IsVisible = false;
-        Status.Text = u.Host + u.AbsolutePath;
+        Retry.IsVisible = Status.IsVisible = false;
+        Address.Text = u.AbsoluteUri;
+        BackButton.IsEnabled = _page.View.CanGoBack;
+        ForwardButton.IsEnabled = _page.View.CanGoForward;
         await SsoKeep.PersistAsync(_page);
         var where = u.AbsoluteUri;
         if (SchoolUrls.IsSsoLogin(where)) { _sawLogin = true; return; }
@@ -76,7 +78,22 @@ public partial class SchoolWindow : Window
     private void Problem(string text)
     {
         Status.Text = text;
-        Retry.IsVisible = true;
+        ToolTip.SetTip(Status, text);
+        Status.IsVisible = Retry.IsVisible = true;
+    }
+
+    private void OnBack(object? sender, RoutedEventArgs e) { if (_page.View.CanGoBack) _page.View.GoBack(); }
+
+    private void OnForward(object? sender, RoutedEventArgs e) { if (_page.View.CanGoForward) _page.View.GoForward(); }
+
+    /// <summary>Gõ địa chỉ rồi Enter: thiếu http thì thêm https; địa chỉ không hợp lệ thì giữ nguyên trang.</summary>
+    private void OnAddressKey(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (e.Key != Avalonia.Input.Key.Enter) return;
+        e.Handled = true;
+        var text = (Address.Text ?? "").Trim();
+        if (!text.Contains("://", StringComparison.Ordinal)) text = "https://" + text;
+        if (Uri.TryCreate(text, UriKind.Absolute, out var u) && u.Scheme is "http" or "https") Go(SchoolUrls.Secure(u.AbsoluteUri));
     }
 
     private void OnRetry(object? sender, RoutedEventArgs e) => Go(_page.Source?.AbsoluteUri is { } cur && cur != "about:blank" ? cur : _url);

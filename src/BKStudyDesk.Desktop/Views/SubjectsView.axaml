@@ -6,18 +6,13 @@
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
              x:Class="BKStudyDesk.Desktop.Views.SubjectsView">
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,24">
-            <Button x:Name="DownloadAllButton" DockPanel.Dock="Right" VerticalAlignment="Center" Content="{l:T subjects.downloadAll}"
-                    ToolTip.Tip="{l:T subjects.downloadAll.tip}" Click="OnDownloadAll" IsVisible="False" />
-            <StackPanel Spacing="2">
-                <TextBlock Classes="title" Text="{l:T nav.subjects}" />
-                <TextBlock Classes="meta" Text="{l:T subjects.subtitle}" />
-            </StackPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock x:Name="PageTitle" Classes="title" Text="{l:T nav.subjects}" />
         </DockPanel>
         <Grid x:Name="Columns" RowDefinitions="*,Auto">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="{StaticResource ListMinWidth}" MaxWidth="{StaticResource ListMaxWidth}" />
-                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
 
@@ -53,10 +48,13 @@
                     <Border DockPanel.Dock="Top" Classes="card-head">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Button x:Name="LmsButton" Content="{l:T subjects.openLms}" Click="OnOpenLms" />
-                                <Button x:Name="DownloadButton" Content="{l:T subjects.download}" Click="OnDownload" IsVisible="False" />
-                                <Button x:Name="ExamsButton" Content="{l:T subjects.downloadExams}" ToolTip.Tip="{l:T subjects.downloadExamsTip}" Click="OnDownloadExams" IsVisible="False" />
-                                <Button x:Name="LibraryButton" Content="{l:T subjects.openLibrary}" Click="OnOpenLibrary" IsVisible="False" />
+                                <Button x:Name="LmsButton" Classes="icon" ToolTip.Tip="{l:T subjects.openLms}" AutomationProperties.Name="{l:T subjects.openLms}" Click="OnOpenLms">
+                                    <PathIcon Data="{StaticResource IconOpenNew}" />
+                                </Button>
+                                <!-- Việc ít dùng (tải tài liệu, tải đề cũ, Thư viện, tải nhiều môn) gom vào menu Thêm (SubjectsView.BuildMore). -->
+                                <Button x:Name="MoreButton" Classes="icon" ToolTip.Tip="{l:T subjects.more}" AutomationProperties.Name="{l:T subjects.more}" IsVisible="False">
+                                    <PathIcon Data="{StaticResource IconMore}" />
+                                </Button>
                             </StackPanel>
                             <StackPanel VerticalAlignment="Center" Spacing="2">
                                 <TextBlock x:Name="SubjectName" Classes="card-title" />
@@ -72,19 +70,38 @@
                         </TabItem>
                         <TabItem x:Name="FilesTab" Header="{l:T subjects.tabFiles}">
                             <DockPanel>
-                                <DockPanel DockPanel.Dock="Top" Margin="16,8">
-                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
-                                        <CheckBox x:Name="UnreadOnly" Content="{l:T subjects.unreadOnly}" IsVisible="False" Click="OnUnreadOnly" />
-                                        <ToggleButton x:Name="RecentToggle" Content="{l:T subjects.tabRecent}" Click="OnRecentToggle" />
-                                        <Button Content="{l:T subjects.openFolder}" Click="OnOpenFolder" />
-                                    </StackPanel>
-                                    <Button x:Name="UpButton" DockPanel.Dock="Left" Content="{l:T subjects.back}" ToolTip.Tip="{l:T subjects.back.tip}" Click="OnUp" Margin="0,0,12,0" />
-                                    <!-- Đường dẫn từ thư mục môn: mỗi cấp trên là link bấm để lên thẳng cấp đó (như thanh địa chỉ của File Explorer). -->
-                                    <WrapPanel x:Name="PathBar" VerticalAlignment="Center" />
-                                </DockPanel>
+                                <!-- Thanh công cụ (FileFilter): ô tìm trong mọi file của môn, nút lọc loại, xem tất cả file (mới nhất trước) hay theo thư mục. -->
+                                <StackPanel DockPanel.Dock="Top" Margin="16,10,16,6" Spacing="8">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" Margin="12,0,0,0">
+                                            <ToggleButton x:Name="RecentToggle" Content="{l:T subjects.viewAll}" IsChecked="True" Click="OnViewAll" />
+                                            <ToggleButton x:Name="FolderToggle" Content="{l:T subjects.viewFolders}" Click="OnViewFolders" />
+                                            <Button Classes="icon" ToolTip.Tip="{l:T subjects.openFolder}" AutomationProperties.Name="{l:T subjects.openFolder}" Click="OnOpenFolder">
+                                                <PathIcon Data="{StaticResource IconFolder}" />
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBox x:Name="FileSearch" PlaceholderText="{l:T subjects.fileSearch}" TextChanged="OnFileSearch" />
+                                    </DockPanel>
+                                    <DockPanel>
+                                        <CheckBox x:Name="UnreadOnly" DockPanel.Dock="Right" Content="{l:T subjects.unreadOnly}" Click="OnUnreadOnly" />
+                                        <StackPanel x:Name="KindBar" Orientation="Horizontal" Spacing="4">
+                                            <ToggleButton Classes="chip" Tag="All" Content="{l:T subjects.kind.all}" IsChecked="True" Click="OnKind" />
+                                            <ToggleButton Classes="chip" Tag="Docs" Content="{l:T subjects.kind.docs}" Click="OnKind" />
+                                            <ToggleButton Classes="chip" Tag="Images" Content="{l:T subjects.kind.images}" Click="OnKind" />
+                                            <ToggleButton Classes="chip" Tag="Other" Content="{l:T subjects.kind.other}" Click="OnKind" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <DockPanel x:Name="FolderBar" IsVisible="False">
+                                        <Button x:Name="UpButton" DockPanel.Dock="Left" Classes="icon" ToolTip.Tip="{l:T subjects.back.tip}" AutomationProperties.Name="{l:T subjects.back}" Click="OnUp" Margin="0,0,8,0">
+                                            <PathIcon Data="{StaticResource IconBack}" />
+                                        </Button>
+                                        <!-- Đường dẫn từ thư mục môn: mỗi cấp trên là link bấm để lên thẳng cấp đó (như thanh địa chỉ của File Explorer). -->
+                                        <WrapPanel x:Name="PathBar" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </StackPanel>
                                 <TextBlock x:Name="FilesEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                                 <Panel>
-                                    <DataGrid x:Name="Files" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
+                                    <DataGrid x:Name="Files" IsVisible="False" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                               GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                               BorderThickness="0" SelectionMode="Single" DoubleTapped="OnFileOpen" KeyDown="OnFilesKey">
                                         <DataGrid.Columns>
@@ -94,7 +111,7 @@
                                             <DataGridTextColumn Header="{l:T col.modified}" Binding="{Binding ModifiedText}" Width="Auto" MinWidth="140" SortMemberPath="Modified" x:DataType="p:FileRow" />
                                         </DataGrid.Columns>
                                     </DataGrid>
-                                    <DataGrid x:Name="Recent" IsVisible="False" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
+                                    <DataGrid x:Name="Recent" IsReadOnly="True" AutoGenerateColumns="False" HeadersVisibility="Column" RowHeight="{StaticResource TableRowHeight}"
                                               GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" Background="{DynamicResource Surface}"
                                               BorderThickness="0" SelectionMode="Single" DoubleTapped="OnRecentOpen">
                                         <DataGrid.Columns>
@@ -168,6 +185,10 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>
+                        </TabItem>
+                        <!-- Luyện tập của môn: trang Luyện tập (một bản dùng chung) lọc sẵn theo môn, MainWindow cấp qua practice. -->
+                        <TabItem x:Name="PracticeTab" Header="{l:T subjects.tabPractice}">
+                            <ContentControl x:Name="PracticeSlot" />
                         </TabItem>
                         <TabItem x:Name="GradesTab" Header="{l:T subjects.tabGrades}">
                             <DockPanel>
