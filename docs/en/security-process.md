@@ -29,7 +29,7 @@ Principle: use existing, maintained tools (no home-made scanners), run them auto
 | Hidden WebView reading MyBK | only university domains over https; http within the same domain is upgraded to https; new windows are blocked |
 | Actions on LMS/MyBK | read-only by behaviour: view, open forms, load lists; never submit registrations, cancellations, saves or payments |
 | App updates | Velopack checks SHA-256; the only source is the GitHub repository over https; installers carry a GitHub Actions build attestation |
-| CI and supply chain | actions pinned to commit SHAs; default token permissions empty, granted per job; `main` only accepts PRs that pass checks; the Store submission job needs manual approval |
+| CI and supply chain | actions pinned to commit SHAs; default token permissions empty, granted per job; `main` only accepts PRs that pass checks |
 
 ## 3. Tools and when they run
 

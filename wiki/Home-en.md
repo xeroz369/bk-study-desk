@@ -6,7 +6,7 @@ A Windows app that brings Ho Chi Minh City University of Technology's **BK-LMS**
 
 ## Get started
 
-1. [Installation](Installation): download the installer from GitHub (recommended) or install from the Microsoft Store.
+1. [Installation](Installation): download the installer from GitHub.
 2. Open the app, select **Sign in to HCMUT**, and sign in on the university SSO page.
 3. [Practice](Practice): write your own quizzes, ask AI to write them, review submitted LMS quizzes.
 

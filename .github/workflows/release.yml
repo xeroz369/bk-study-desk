@@ -1,26 +1,20 @@
 name: release
 
 # Build bộ cài bản đa nền tảng (Avalonia, src/BKStudyDesk.Desktop): Windows x64, ARM64 (bộ cài tiếng Việt bọc Velopack),
-# Linux x64 (AppImage), macOS Apple Silicon, Intel (.pkg, chưa ký số); gói tự cập nhật cho từng kênh; gói MSIX cho Microsoft Store
-# (cùng app, target Windows).
-# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt (job checksums); gói cập nhật và MSIX để ở artifact.
+# Linux x64 (AppImage), macOS Apple Silicon, Intel (.pkg, chưa ký số); gói tự cập nhật cho từng kênh. Chỉ phát hành trên GitHub.
+# - Đẩy tag vX.Y.Z (hoặc chạy tay): tạo release NHÁP vX.Y.Z chỉ có bộ cài + SHA256SUMS.txt (job checksums); gói cập nhật để ở artifact.
 # - Bấm Publish release: job publish-feed mới đưa gói cập nhật lên release cố định "updates",
 #   nên app của người dùng chỉ thấy bản mới sau khi người làm app đã duyệt bản nháp.
-# - Cùng lúc đó job publish-store nộp MSIX lên Microsoft Store (chờ người làm app duyệt ở environment "microsoft-store").
-#   Store còn kiểm duyệt thêm vài ngày nên bản Store thường ra sau bản GitHub.
 on:
   push:
     tags: ['v*.*.*']
   workflow_dispatch:
     inputs:
       version:
-        description: 'Phiên bản (vd. 1.0.7). Để trống khi chỉ nộp Store.'
+        description: 'Phiên bản (vd. 1.0.7)'
         required: false
       tag:
         description: 'Tên tag cho release nháp (để trống = v<phiên bản>)'
-        required: false
-      store_tag:
-        description: 'Chỉ nộp lên Microsoft Store bản đã build của tag này (vd. v1.1.6), không build lại'
         required: false
   release:
     types: [published]
@@ -34,7 +28,7 @@ env:
 
 jobs:
   build:
-    if: github.event_name != 'release' && inputs.store_tag == ''
+    if: github.event_name != 'release'
     runs-on: windows-latest
     permissions:
       contents: write       # tạo bản nháp release
@@ -102,17 +96,6 @@ jobs:
         if: ${{ !github.event.repository.private }}
         with:
           subject-path: 'dist/*.exe'
-      # Gói MSIX cho Microsoft Store (x64, chưa ký: Store tự ký khi publish). Dùng chung script với máy dev.
-      - name: Store package
-        shell: pwsh
-        env:
-          V: ${{ steps.v.outputs.version }}
-        run: ./store/package-msix.ps1 -Version $env:V -Out msix
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: store-${{ steps.v.outputs.tag }}
-          path: msix/*.msix
-          retention-days: 90
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: feed-${{ steps.v.outputs.tag }}
@@ -245,88 +228,3 @@ jobs:
             gh release create updates -R "$REPO" --prerelease --title "Gói tự cập nhật (không cần tải)" \
               --notes "App tự tải các file ở đây khi bạn cho phép cập nhật. Muốn cài app thì tải bộ cài ở bản phát hành mới nhất."
           gh release upload updates -R "$REPO" --clobber $(find feed -type f)
-
-  # Nộp MSIX lên Microsoft Store bằng Microsoft Store Developer CLI (msstore), theo hướng dẫn chính thức:
-  # https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions
-  # - Chỉ chạy khi biến repo STORE_PUBLISH = 'true' (đặt sau khi đã cấu hình xong secret Partner Center).
-  # - Environment "microsoft-store" bắt người làm app bấm duyệt trước khi job chạy, secret chỉ job này đọc được.
-  # - msstore publish tạo submission mới từ bản đang có trên Store, thay package rồi commit; Store kiểm duyệt như nộp tay.
-  #   Đang có submission chờ duyệt thì job lỗi, không ghi đè: đợi Store duyệt xong rồi chạy lại job.
-  publish-store:
-    # Bấm Publish release, hoặc chạy tay với store_tag để nộp lại một bản đã build (vd. khi lần nộp trước lỗi).
-    if: vars.STORE_PUBLISH == 'true' && ((github.event_name == 'release' && !github.event.release.prerelease) || inputs.store_tag != '')
-    runs-on: windows-latest
-    environment: microsoft-store
-    permissions:
-      actions: read         # tải artifact MSIX của lần build
-    env:
-      STORE_PRODUCT_ID: 9NX0KRZRR850
-      MSSTORE_CLI_VERSION: v0.4.3
-    steps:
-      - name: Download MSIX
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name || inputs.store_tag }}
-          REPO: ${{ github.repository }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # Lọc bằng PowerShell, không dùng --jq: dấu \" trong chuỗi pwsh không phải escape nên gh nhận sai tham số.
-          $runs = gh run list -R $env:REPO --workflow release.yml --branch $env:TAG --limit 20 --json databaseId,conclusion,event | ConvertFrom-Json
-          $run = ($runs | Where-Object { $_.conclusion -eq 'success' -and $_.event -ne 'release' } | Select-Object -First 1).databaseId
-          if (!$run) { throw "Không tìm thấy lần build của $env:TAG" }
-          gh run download $run -R $env:REPO -n "store-$env:TAG" -D msix
-          if ($LASTEXITCODE) { throw 'Không tải được artifact MSIX' }
-          Get-ChildItem msix -Filter *.msix | ForEach-Object { "$($_.Name) $([math]::Round($_.Length / 1MB, 1)) MB" }
-      - uses: microsoft/microsoft-store-apppublisher@cc9910a8d59f2eb55cbb83df0a3800cf3b5300e0 # v1.4
-        with:
-          version: ${{ env.MSSTORE_CLI_VERSION }}
-      - name: Configure msstore
-        shell: pwsh
-        env:
-          TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
-          SELLER_ID: ${{ secrets.SELLER_ID }}
-          CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
-        run: |
-          # Chẩn đoán trước: xin token client credentials từ Microsoft Entra. Lỗi thì in mã AADSTS (sai secret, sai app, sai tenant,
-          # thiếu service principal của Partner Center...). Không in token hay secret.
-          foreach ($scope in 'https://manage.devcenter.microsoft.com/.default', 'https://api.store.microsoft.com/.default') {
-            try {
-              Invoke-RestMethod -Method Post "https://login.microsoftonline.com/$env:TENANT_ID/oauth2/v2.0/token" `
-                -Body @{ client_id = $env:CLIENT_ID; client_secret = $env:CLIENT_SECRET; scope = $scope; grant_type = 'client_credentials' } | Out-Null
-              Write-Host "Entra: lấy được token cho $scope"
-            } catch {
-              $err = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction SilentlyContinue
-              Write-Host "Entra: không lấy được token cho ${scope}: $($err.error) $(($err.error_description -split "`n")[0].Trim())"
-            }
-          }
-          msstore settings --enableTelemetry false
-          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET --verbose
-          if ($LASTEXITCODE) { throw 'Không đăng nhập được Partner Center. Xem dòng "Entra:" ở trên để biết sai secret, app hay tenant.' }
-      - name: Submit to Microsoft Store
-        shell: pwsh
-        env:
-          # Gói MSIX của app desktop cần quyền runFullTrust (restricted capability): Store cảnh báo và người kiểm duyệt cần lý do.
-          # Ghi vào notesForCertification của bản nộp trước khi commit, mỗi lần nộp đều có (cảnh báo thấy ở bản 1.2.4).
-          CERT_NOTES: >-
-            BK Study Desk is a desktop app built with .NET and Avalonia, packaged as MSIX. It needs runFullTrust to run as a desktop
-            process: it hosts WebView2 to sign in to the university portal, keeps its data in the user's local app data folder, and
-            uses a startup task and toast notifications. It does not install drivers or services and does not change system settings.
-            The app is read-only towards university systems.
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $id = $env:STORE_PRODUCT_ID
-          $msix = (Get-ChildItem msix -Filter *.msix | Select-Object -First 1).FullName
-          msstore publish $msix -id $id --noCommit
-          if ($LASTEXITCODE) { throw 'Nộp lên Store lỗi (xem log msstore ở trên).' }
-          # submission get in JSON kèm dòng trạng thái: lấy từ dấu { đầu tới dấu } cuối.
-          $raw = (msstore submission get $id | Out-String)
-          if ($LASTEXITCODE) { throw 'Không đọc được bản nháp vừa tạo.' }
-          $sub = $raw.Substring($raw.IndexOf('{'), $raw.LastIndexOf('}') - $raw.IndexOf('{') + 1) | ConvertFrom-Json
-          $sub | Add-Member -NotePropertyName notesForCertification -NotePropertyValue $env:CERT_NOTES -Force
-          $sub | ConvertTo-Json -Depth 100 | msstore submission update $id -
-          if ($LASTEXITCODE) { throw 'Không ghi được ghi chú kiểm duyệt vào bản nháp.' }
-          msstore submission publish $id
-          if ($LASTEXITCODE) { throw 'Không commit được bản nộp (bản nháp vẫn còn trong Partner Center).' }
-          msstore submission status $id

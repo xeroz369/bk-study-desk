@@ -17,7 +17,7 @@ body:
     id: source
     attributes:
       label: Cài từ
-      options: [GitHub, Microsoft Store]
+      options: [GitHub, Microsoft Store (bản cũ, không còn cập nhật)]
     validations: { required: true }
   - type: textarea
     id: what

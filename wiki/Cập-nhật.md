@@ -1,6 +1,6 @@
 **Tiếng Việt** | [English](Updating)
 
-**Cài từ Microsoft Store:** Store tự cập nhật app, không cần chỉnh gì trong app. Bản mới lên Store sau khi Microsoft duyệt (thường vài giờ, có khi tới 3 ngày làm việc), nên có thể chậm hơn bản trên GitHub một chút. Phần dưới dành cho bản cài từ GitHub.
+**Cài từ Microsoft Store:** bản Store không còn được cập nhật. Gỡ bản đó rồi cài bộ cài trên GitHub để nhận bản mới.
 
 Lần mở đầu, app hỏi bạn muốn làm gì khi có bản mới. **Chưa chọn thì app không gọi mạng để kiểm tra.**
 

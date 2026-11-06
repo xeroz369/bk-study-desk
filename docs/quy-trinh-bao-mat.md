@@ -27,7 +27,7 @@ Nguyên tắc: dùng công cụ có sẵn, được duy trì (không tự viết
 | WebView ẩn đọc MyBK | chỉ đi tới tên miền trường qua https; đổi http sang https trong cùng tên miền; chặn cửa sổ mới |
 | Thao tác lên LMS/MyBK | chỉ đọc theo hành vi: xem, mở form, tải danh sách; không gửi đăng ký, hủy, lưu, thanh toán |
 | Cập nhật app | Velopack kiểm SHA-256; nguồn chỉ là repo GitHub qua https; bộ cài có attestation build từ GitHub Actions |
-| CI và chuỗi cung ứng | action ghim theo SHA commit; quyền token mặc định rỗng, cấp riêng từng job; nhánh `main` chỉ nhận PR qua check; job nộp Store phải được duyệt tay |
+| CI và chuỗi cung ứng | action ghim theo SHA commit; quyền token mặc định rỗng, cấp riêng từng job; nhánh `main` chỉ nhận PR qua check |
 
 ## 3. Công cụ và khi nào chạy
 
