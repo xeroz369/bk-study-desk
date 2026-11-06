@@ -4,7 +4,7 @@
 
 **Requirements:** Windows 10 1809 or later, or Windows 11, x64 or ARM64. No .NET installation needed. Microsoft Edge WebView2 Runtime is required (included in Windows 11).
 
-## Option 1: installer from GitHub (recommended)
+## Installer from GitHub
 
 New versions appear here as soon as they're released, and the app tells you when the next one is out.
 
@@ -15,13 +15,9 @@ New versions appear here as soon as they're released, and the app tells you when
 
 ![Installer](images/bo-cai.png)
 
-## Option 2: Microsoft Store
+## Microsoft Store
 
-Open [BK Study Desk on the Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850) and select **Get**. Microsoft signs the package, so there's no SmartScreen warning. The Store has only an x64 package (ARM laptops run it through Windows emulation).
-
-Every new version waits for Microsoft review (sometimes a few days), so the Store version usually lags behind GitHub. Compare the version number on the Store page with [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) before installing.
-
-The two are separate installs with separate data. Install only one.
+The Microsoft Store version is no longer updated. If you installed it from the Store, uninstall it and use the GitHub installer.
 
 ## First launch
 

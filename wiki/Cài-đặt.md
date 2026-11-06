@@ -2,7 +2,7 @@
 
 **Yêu cầu:** Windows 10 1809 trở lên hoặc Windows 11, x64 hoặc ARM64. Không cần cài .NET. Cần Microsoft Edge WebView2 Runtime (Windows 11 có sẵn).
 
-## Cách 1: bộ cài trên GitHub (khuyên dùng)
+## Bộ cài trên GitHub
 
 Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản sau.
 
@@ -13,13 +13,9 @@ Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản 
 
 ![Bộ cài](images/bo-cai.png)
 
-## Cách 2: Microsoft Store
+## Microsoft Store
 
-Mở [BK Study Desk trên Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850), chọn **Tải**. Gói do Microsoft ký nên không có cảnh báo SmartScreen. Bản Store chỉ có gói x64 (máy ARM vẫn chạy được qua giả lập của Windows).
-
-Mỗi bản mới phải chờ Microsoft duyệt (có khi vài ngày), nên bản Store thường chậm hơn bản trên GitHub. So số phiên bản ở trang Store với [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) trước khi cài.
-
-Hai cách cài là hai bản riêng, dữ liệu không dùng chung. Chỉ nên cài một trong hai.
+Bản trên Microsoft Store không còn được cập nhật. Nếu đã cài từ Store, hãy gỡ bản đó rồi cài bộ cài trên GitHub.
 
 ## Lần mở đầu
 

@@ -6,6 +6,10 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Chỉ phát hành trên GitHub: bản trên Microsoft Store thôi cập nhật. Đã cài từ Store thì gỡ rồi cài bộ cài trên GitHub.
+
 ## [1.3.0] - 2026-11-06
 
 ### Thêm

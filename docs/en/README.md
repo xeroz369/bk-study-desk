@@ -21,15 +21,13 @@ The interface is Vietnamese by default; English is available in **Settings**. Th
 
 ## Install
 
-**Option 1: installer from GitHub (recommended).** New versions appear here as soon as they are released, and the app tells you when the next one is out.
+**Installer from GitHub.** New versions appear here as soon as they are released, and the app tells you when the next one is out.
 
 1. Download `BKStudyDesk-x.y.z-Setup-x64.exe` from [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) (ARM laptops: `-Setup-arm64.exe`).
 2. Run it, choose an install folder and click **Install**. No admin rights needed. The installer is not code-signed yet, so Windows SmartScreen shows a warning once: click **More info** > **Run anyway**.
 3. On first launch, choose how updates are handled and where documents are saved, then **Sign in to HCMUT**.
 
-**Option 2: Microsoft Store.** [BK Study Desk on the Microsoft Store](https://apps.microsoft.com/detail/9NX0KRZRR850): no SmartScreen warning. Every new version waits for Microsoft review (sometimes a few days), so the Store version is usually behind GitHub. Compare the version number with [Releases](https://github.com/xeroz369/bk-study-desk/releases/latest) before installing.
-
-The two are built from the same source but are separate installs with separate data. Install only one.
+The Microsoft Store version is no longer updated. If you installed it from the Store, uninstall it and use the GitHub installer.
 
 ### After installing
 

@@ -2,7 +2,7 @@
 
 > Translated from Cập-nhật (Vietnamese) for BK Study Desk 1.1.10.
 
-**Installed from the Microsoft Store:** the Store updates the app; there's nothing to set in the app. New versions reach the Store after Microsoft review (sometimes a few days), so the Store can lag behind GitHub. The rest of this page is for the GitHub installer.
+**Installed from the Microsoft Store:** the Store version is no longer updated. Uninstall it and use the GitHub installer to get new versions.
 
 On first launch the app asks what to do when a new version is out. **Until you choose, the app doesn't check online.**
 

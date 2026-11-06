@@ -8,6 +8,10 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+### Changed
+
+- Releases are on GitHub only: the Microsoft Store version is no longer updated. If you installed from the Store, uninstall it and use the GitHub installer.
+
 ## [1.3.0] - 2026-11-06
 
 ### Added

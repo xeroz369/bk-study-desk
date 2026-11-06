@@ -35,7 +35,7 @@ jobs:
         run: |
           dotnet format src/BKStudyDesk.Core/BKStudyDesk.Core.csproj --verify-no-changes --severity warn
           dotnet format src/BKStudyDesk.Desktop/BKStudyDesk.Desktop.csproj --verify-no-changes --severity warn
-      # Bản Windows (cũng là bản đóng MSIX cho Microsoft Store): không được có cảnh báo.
+      # Bản Windows: không được có cảnh báo.
       - name: Build (Windows target)
         run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -warnaserror
 
