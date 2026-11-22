@@ -11,7 +11,8 @@ internal static class WebCheck
         var loaded = new TaskCompletionSource();
         page.Loaded += (_, _) => loaded.TrySetResult();
         page.View.NavigateToString("<html><body><input id='hid_Token' value='abc'></body></html>", new Uri("https://example.test/"));
-        await Task.WhenAny(loaded.Task, Task.Delay(20000));
+        try { await loaded.Task.WaitAsync(TimeSpan.FromSeconds(20)); }
+        catch (TimeoutException) { }
         var token = await page.EvalAsync("document.getElementById('hid_Token').value");
         var late = await page.EvalAwaitAsync("new Promise(r => setTimeout(() => r('late'), 200))", TimeSpan.FromSeconds(5));
         var cookies = page.View.TryGetCookieManager() is not null;

@@ -265,7 +265,9 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         ShowPath(dir);
         UpButton.IsEnabled = _history.CanGoBack(dir);
         var task = Task.Run(() => Documents.ListDir(dir));
-        if (await Task.WhenAny(task, Task.Delay(150)) != task && gen == _gen) Status(Files, FilesEmpty, L.T("subjects.scanning"));
+        try { await task.WaitAsync(TimeSpan.FromMilliseconds(150)); }
+        catch (TimeoutException) { if (gen == _gen) Status(Files, FilesEmpty, L.T("subjects.scanning")); }
+        catch (Exception) when (task.IsCompleted) { }
         JsonObject d;
         try { d = await task; }
         catch (Exception e) when (e is not OutOfMemoryException)
