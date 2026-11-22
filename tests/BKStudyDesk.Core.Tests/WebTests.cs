@@ -33,7 +33,6 @@ public class WebTests
         Assert.Equal(LoginAction.Wait, LoginSteps.Next(LoginStage.Done, new Uri("https://mybk.hcmut.edu.vn/app/"), Hosts));
     }
 
-    /// <summary>Handler giả: ghi lại request, trả response cố định. Không gọi mạng.</summary>
     private sealed class FakeHandler(HttpResponseMessage response) : HttpMessageHandler
     {
         public HttpRequestMessage? Seen;
@@ -50,7 +49,7 @@ public class WebTests
     public async Task TokenGrab_Redirect_ReturnsCallback()
     {
         var r = new HttpResponseMessage(HttpStatusCode.SeeOther);
-        r.Headers.TryAddWithoutValidation("Location", "moodlemobile://token=YWJj");   // không phải URI hợp lệ với .NET: phải đọc header thô
+        r.Headers.TryAddWithoutValidation("Location", "moodlemobile://token=YWJj");
         var got = await LmsTokenGrab.LaunchCallbackAsync(new FakeHandler(r), Launch, [], "moodlemobile", CancellationToken.None);
         Assert.Equal("moodlemobile://token=YWJj", got);
     }
@@ -80,9 +79,9 @@ public class WebTests
         var now = new DateTime(2026, 10, 7, 9, 0, 0);
         Cookie[] cookies =
         [
-            new("TGC", "t", "/cas/", "sso.hcmut.edu.vn"),                                      // phiên: gia hạn
-            new("JSESSIONID", "j", "/", ".mybk.hcmut.edu.vn") { Expires = now.AddDays(90) },    // server cho xa hơn: giữ
-            new("ads", "a", "/", "example.com"),                                                // ngoài trường: bỏ
+            new("TGC", "t", "/cas/", "sso.hcmut.edu.vn"),
+            new("JSESSIONID", "j", "/", ".mybk.hcmut.edu.vn") { Expires = now.AddDays(90) },
+            new("ads", "a", "/", "example.com"),
         ];
         var changed = SsoCookies.Extend(cookies, ["hcmut.edu.vn"], 30, now);
         var tgc = Assert.Single(changed);

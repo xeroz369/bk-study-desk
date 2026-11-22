@@ -2,11 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Sources.Lms;
 
-/// <summary>
-/// Gọt HTML của LMS trước khi lưu (tin nhắn, trang): bài dán từ Word mang style, class, span, font, ghi chú điều kiện của Office
-/// cho từng chữ, một tin vài dòng nặng tới 50 KB (đo 31/10/2026: 161 tin thành 2,2 MB). App chỉ đọc chữ và link
-/// (Presentation.LmsReading) nên bỏ các phần đó không mất gì.
-/// </summary>
 public static partial class LmsHtml
 {
     [GeneratedRegex(@"<!--[\s\S]*?-->")] private static partial Regex Comments();
@@ -21,7 +16,6 @@ public static partial class LmsHtml
         var s = Embedded().Replace(html, "");
         s = Comments().Replace(s, "");
         s = Wrappers().Replace(s, "");
-        // Chỉ bỏ thuộc tính bên trong thẻ: chữ trong bài như "width = 10" phải giữ nguyên.
         return Tag().Replace(s, t => Attrs().Replace(t.Value, ""));
     }
 }

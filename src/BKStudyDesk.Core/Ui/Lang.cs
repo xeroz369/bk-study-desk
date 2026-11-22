@@ -4,13 +4,6 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Ui;
 
-/// <summary>
-/// Ngôn ngữ UI. Mỗi ngôn ngữ là một file JSON phẳng trong folder lang\ cạnh exe: lang\vi.json, lang\en.json…
-/// Key dạng "nhóm.tên" (vd "nav.today"), value là chữ hiển thị; {0}, {1} là placeholder cho string.Format.
-/// Key "_meta.name" là tên ngôn ngữ hiện ở Cài đặt, "_meta.culture" là culture để format số và ngày (vi-VN, en-US…).
-/// Thiếu key thì fallback về tiếng Việt (ngôn ngữ gốc), vẫn thiếu thì hiện luôn key để dễ thấy chỗ chưa dịch.
-/// Thêm ngôn ngữ: copy vi.json thành xx.json, dịch value, restart app rồi chọn ở Cài đặt (xem lang\README.md).
-/// </summary>
 public static class L
 {
     private static Dictionary<string, string> _current = [], _fallback = [];
@@ -21,7 +14,6 @@ public static class L
 
     private static string Dir => Path.Combine(AppContext.BaseDirectory, "lang");
 
-    /// <summary>Load ngôn ngữ theo config app.language (default tiếng Việt). Chỉ gọi một lần lúc khởi động.</summary>
     public static void Load()
     {
         _fallback = Read(Base);
@@ -50,14 +42,11 @@ public static class L
         }
     }
 
-    /// <summary>Lấy chữ theo key.</summary>
     public static string T(string key) =>
         _current.TryGetValue(key, out var v) ? v : _fallback.TryGetValue(key, out var f) ? f : key;
 
-    /// <summary>Chữ có placeholder: F("home.nextExamOf", "Giải tích 2").</summary>
     public static string F(string key, params object?[] args) => string.Format(Culture, T(key), args);
 
-    /// <summary>Các ngôn ngữ có trong folder lang\: (mã, tên).</summary>
     public static IReadOnlyList<(string Code, string Name)> Available() =>
         Directory.Exists(Dir)
             ? Directory.GetFiles(Dir, "*.json").Select(p => Path.GetFileNameWithoutExtension(p))

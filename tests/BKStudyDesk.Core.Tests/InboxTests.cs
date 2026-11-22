@@ -5,7 +5,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Hộp thư (Inbox, InboxReads) và gom việc giống nhau ở Hôm nay (TodoGroups).</summary>
 public class InboxTests
 {
     private const long Now = 1_793_400_000, Day = 86_400;

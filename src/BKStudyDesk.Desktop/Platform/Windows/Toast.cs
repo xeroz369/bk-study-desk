@@ -1,24 +1,16 @@
 using Microsoft.Win32;
 using SoHocTap.Core;
 using SoHocTap.Shell;
-using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
 
 namespace BKStudyDesk.Desktop.Platform.Windows;
 
-/// <summary>
-/// Thông báo hệ thống của Windows (toast). Bản cài thường: đăng ký tên hiện (AppUserModelId) dưới HKCU\Software\Classes, cách Windows
-/// App SDK làm cho app không đóng gói; bản Store: package đã có AUMID. Rồi gửi toast hai dòng. Chỉ biên dịch cho net10.0-windows. Bấm vào thông báo khi app
-/// đang chạy thì mở đúng trang.
-/// </summary>
 internal static class Toast
 {
     private static bool _registered;
 
-    /// <summary>Windows cho hiện thông báo của app không (người dùng, chính sách có thể tắt). Không gửi gì.</summary>
     public static string Setting() => Notifier().Setting.ToString();
 
-    /// <summary>Bản Store (MSIX): AUMID là của package, dùng notifier mặc định; bản cài thường: đăng ký AUMID của app rồi dùng nó.</summary>
     private static ToastNotifier Notifier()
     {
         if (AppPackage.IsPackaged) return ToastNotificationManager.CreateToastNotifier();

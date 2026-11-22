@@ -1,6 +1,3 @@
-// Check packs before sharing: node studypack/validate.ts <file.md | file.zip | file.studypack.json> [...]
-// Same rules as the app (lib/ here, ported to BKStudyDesk.Core/Presentation/Practice with tests), so a file that passes here imports in the app.
-// Exit code 1 on errors: an AI agent can run this, read the errors and fix the file itself.
 import { readFileSync, statSync } from 'node:fs';
 import { strFromU8, unzipSync } from 'fflate';
 import { parseMarkdown } from './lib/markdown.ts';

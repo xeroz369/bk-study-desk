@@ -9,10 +9,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>
-/// Một lượt làm câu (ôn câu sai, ôn theo lịch, luyện trộn, câu của bài, câu đã đánh dấu). Ghi kết quả qua <see cref="QuizSession"/>;
-/// view chỉ giữ câu đang hiện, chữ đang gõ và lúc câu hiện ra (đo thời gian làm).
-/// </summary>
 public partial class QuizRunView : UserControl
 {
     private const string Letters = "ABCDEFGH";
@@ -23,7 +19,6 @@ public partial class QuizRunView : UserControl
 
     private readonly PracticeService _service = null!;
     private readonly Func<ShufflePrefs, QuizSession> _make = null!;
-    private readonly string _title = "";
     private QuizSession _session = null!;
     private int _index;
     private DateTime _shownAt;
@@ -31,13 +26,8 @@ public partial class QuizRunView : UserControl
     private string? _noteFor;
     private readonly List<ToggleButton> _choices = [];
 
-    /// <param name="make">Dựng lượt mới với lựa chọn xáo (gọi lại khi bấm Lượt mới hay đổi ô xáo).</param>
-    /// <param name="shuffle">Có thì hiện hai ô Xáo câu, Xáo phương án với giá trị đầu này (bài học).</param>
-    /// <param name="newRound">Hiện nút Lượt mới (luyện trộn).</param>
-    // Đánh dấu: chép câu để báo lỗi. Null ở các chế độ khác.
     private Func<Question, bool>? _copyable;
 
-    /// <summary>Bật nút chép câu để báo lỗi (trang Đánh dấu). copyable: câu được chép (quiz LMS còn mở thì không).</summary>
     internal void EnableReport(Func<Question, bool> copyable)
     {
         _copyable = copyable;
@@ -78,8 +68,6 @@ public partial class QuizRunView : UserControl
     {
         _service = service;
         _make = make;
-        _title = title;
-        // Phím tắt (QuizKeys): nghe ở cửa sổ để bấm được ngay cả khi chưa bấm vào câu nào; rời trang thì gỡ.
         AttachedToVisualTree += (_, _) => { if (TopLevel.GetTopLevel(this) is { } top) top.KeyDown += OnQuizKey; };
         DetachedFromVisualTree += (_, _) => { if (TopLevel.GetTopLevel(this) is { } top) top.KeyDown -= OnQuizKey; };
         TitleText.Text = title;
@@ -123,7 +111,6 @@ public partial class QuizRunView : UserControl
         _shownAt = DateTime.UtcNow;
         Bar.Value = i + 1;
         NumberText.Text = L.F("practice.run.question", i + 1);
-        // Nhãn nguồn (ví dụ "GK251 câu 3"); bỏ khi chỉ lặp lại số câu.
         TagText.Text = q.Tag is { } tag && tag.Trim() != L.F("practice.run.question", i + 1) ? tag : "";
         WhereText.Text = Where(q);
         WhereText.IsVisible = WhereText.Text.Length > 0;
@@ -163,7 +150,6 @@ public partial class QuizRunView : UserControl
         SlideButton.Content = slide is { Page: > 0 } s ? L.F("practice.run.slidePage", s.Page) : L.T("practice.run.slide");
         SlideMissing.IsVisible = false;
         CopyOneButton.IsVisible = _copyable?.Invoke(q) == true;
-        // Câu đã trả lời trong lượt: chọn lại đáp án đã chọn và hiện lại kết quả.
         if (_session.Tried(q) is { } tried)
         {
             Restore(type, tried);
@@ -215,7 +201,6 @@ public partial class QuizRunView : UserControl
         _ = _service.Progress.FlushAsync();
     }
 
-    // Sai: báo và cho làm lại. Đúng: hiện lời giải, kèm đáp án theo chữ cái người học thấy khi cần.
     private void Feedback(Question q)
     {
         var ok = _session.Solved(q);
@@ -233,7 +218,6 @@ public partial class QuizRunView : UserControl
 
     private void SaveNote()
     {
-        // Chỉ ghi khi ô ghi chú đang chứa ghi chú của chính câu này (lần hiện đầu ô còn trống, ghi thì xóa mất ghi chú cũ).
         if (_session is null || _session.Shown.Count == 0 || _index >= _session.Shown.Count || _noteFor != Current.Id) return;
         var q = Current;
         var text = NoteBox.Text?.Trim() ?? "";
@@ -242,7 +226,6 @@ public partial class QuizRunView : UserControl
         _ = _service.Progress.FlushAsync();
     }
 
-    /// <summary>Chọn sẵn đáp án rồi chấm (chụp kiểm tra trạng thái sau khi trả lời).</summary>
     internal void Demo(int option)
     {
         foreach (var c in _choices) c.IsChecked = (int)c.Tag! == option;
@@ -265,7 +248,6 @@ public partial class QuizRunView : UserControl
         switch (SoHocTap.Presentation.Practice.QuizKeys.Of(e.Key.ToString(), typing, _choices.Count, out var option))
         {
             case SoHocTap.Presentation.Practice.QuizKey.Choose:
-                // Một đáp án: chọn ô đó; nhiều đáp án: bật tắt ô đó. Enter mới chấm, như bấm Kiểm tra.
                 if (_choices[option] is CheckBox box) box.IsChecked = box.IsChecked != true;
                 else foreach (var c in _choices) c.IsChecked = ReferenceEquals(c, _choices[option]);
                 break;

@@ -2,7 +2,6 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Hạn cookie SSO sau mỗi lượt qua SSO và dòng log đo phiên. Bản 1.1.9 giữ cookie tối đa 8 giờ, không gia hạn: MyBK tự đăng xuất.</summary>
 public class SsoLifetimeTests
 {
     private static readonly DateTime Now = new(2026, 10, 4, 12, 0, 0);
@@ -24,7 +23,6 @@ public class SsoLifetimeTests
     [Fact]
     public void PersistentCookie_IsExtendedOnEveryPass()
     {
-        // Cookie đổi lúc đăng nhập 8 giờ trước (hạn cũ sắp tới): lượt qua SSO này phải đẩy hạn tiếp, không để app tự xóa.
         Assert.Equal(Now.AddDays(30), SsoLifetime.CookieExpiry(isSession: false, Now.AddMinutes(5), Now, 30));
         Assert.Equal(Now.AddDays(30), SsoLifetime.CookieExpiry(isSession: false, Now.AddDays(29), Now, 30));
     }

@@ -44,7 +44,6 @@ Principle: use existing, maintained tools (no home-made scanners), run them auto
 | Semgrep (community rules) | dangerous code patterns in C#, TS/JS, secrets in code | yes | yes | `security.yml` (semgrep) |
 | BinSkim (Microsoft) | built .exe/.dll files: ASLR, DEP, CFG, safe compiler flags | yes | yes | `security.yml` (binskim) |
 | OpenSSF Scorecard | repository practices (branch protection, pinned actions, token permissions...) | on `main` | yes | `scorecard.yml` |
-| Dependabot | PRs for vulnerable or outdated packages | | yes | `.github/dependabot.yml` |
 | Personal-trace scan | names, student IDs, emails, machine paths in code and builds before exporting to the public repo | before each export | | `tools-dev/leak-scan.ps1` |
 
 Run manually: **Actions** > **security** > **Run workflow**.
@@ -65,7 +64,7 @@ Run manually: **Actions** > **security** > **Run workflow**.
 ## 5. Manual checks before each release
 
 - [ ] The `build`, `codeql` and `security` workflows are green on the release commit.
-- [ ] No open High/Critical alerts in Code scanning or Dependabot.
+- [ ] No open High/Critical alerts in Code scanning.
 - [ ] Changes to the Practice frame, `ApiRouter`, `WebUi`, `MybkRunner`, `Paths` or updates: re-read the table in section 2 and note why in the PR.
 - [ ] New LMS/MyBK actions: the button's JS was read and confirmed view-only, nothing is submitted.
 - [ ] The personal-trace scan is clean when exporting to the public repository.

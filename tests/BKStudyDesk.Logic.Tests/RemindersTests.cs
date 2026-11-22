@@ -2,7 +2,6 @@ using SoHocTap.Shell;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Phần thứ hai của RemindersTests (cùng class với NothingNewTests.cs): mục đã nộp không vào danh sách nhắc.</summary>
 public partial class RemindersTests
 {
     private static DueItem Submitted(string id, double hoursLeft, bool done) => Item(id, hoursLeft) with { Done = done };

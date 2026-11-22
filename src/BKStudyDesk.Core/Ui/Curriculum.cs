@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Ui;
 
-/// <summary>Trạng thái một môn trong chương trình đào tạo (quy tắc cố vấn học vụ, docs/archive/DESIGN-1.x.md mục 5).</summary>
 public enum CourseStatus { DangHoc, Dat, Mien, Rut, HocLai, ChuaHoc, LuaChon }
 
 public sealed record CourseView(MybkCurriculumCourse Course, CourseStatus Status, int Fails, MybkGrade? FromGrades)
@@ -27,10 +26,6 @@ public sealed record CourseView(MybkCurriculumCourse Course, CourseStatus Status
     public string Letter => FromGrades?.Letter ?? Course.Letter ?? "";
 }
 
-/// <summary>
-/// Một khối kiến thức. Tên theo trang Tiến độ CTĐT của MyBK (app/js/share/ketquahoctap/tien-do-hoan-thanh-ctdt.js): NGOAICTDT là các
-/// môn ngoài chương trình (MyBK để bảng riêng, không bắt buộc, không tín chỉ yêu cầu), TUCHON_TUDO hiện là "Tự chọn bổ sung / tự do".
-/// </summary>
 public sealed record BlockView(MybkBlock Block, List<CourseView> Courses)
 {
     public string Title => Block.Group == "NGOAICTDT" ? L.T("curriculum.outside")
@@ -62,7 +57,6 @@ public sealed record CurriculumView(List<BlockView> Blocks, List<CourseView> Cou
         var blocks = c.Blocks.Select(b =>
         {
             var list = courses.Where(x => x.Course.Block == b.Id).ToList();
-            // Khối tự chọn đã đủ tín chỉ: môn chưa học chỉ là lựa chọn, không phải nợ.
             if (!b.Required && b.CreditsNeed > 0 && b.CreditsDone >= b.CreditsNeed)
                 list = [.. list.Select(x => x.Status == CourseStatus.ChuaHoc ? x with { Status = CourseStatus.LuaChon } : x)];
             return new BlockView(b, list);

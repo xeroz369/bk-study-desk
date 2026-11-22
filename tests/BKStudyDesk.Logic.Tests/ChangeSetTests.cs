@@ -1,5 +1,3 @@
-using SoHocTap.Data;
-
 namespace SoHocTap.Tests;
 
 public class ChangeSetTests
@@ -65,7 +63,6 @@ public class ChangeSetTests
     [Fact]
     public void Schedule_TwoSessionsSameCourse_OnlyChangedOneReported()
     {
-        // Lý thuyết thứ 2 và bài tập thứ 5 cùng mã, cùng nhóm: đổi phòng buổi thứ 5 không được kéo theo buổi thứ 2.
         var before = Mybk([Class("A", 2, "07:00", "H1", 40), Class("A", 5, "09:00", "H2", 40)]);
         var after = Mybk([Class("A", 2, "07:00", "H1", 40), Class("A", 5, "09:00", "H9", 40)]);
         var change = Assert.Single(ChangeSet.Compare(before, after).Schedule);

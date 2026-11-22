@@ -4,17 +4,10 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Sources.Lms;
 
-/// <summary>Loại mục ở tab Video và liên kết: video (file hay link xem được), link ngoài, trang chữ của LMS, công cụ ngoài (LTI).</summary>
 public enum MediaKind { Video, Link, Page, Tool }
 
-/// <param name="Part">Phần của lớp (Kho chung, Thí nghiệm...), rỗng là lớp lý thuyết.</param>
-/// <param name="Url">Mở khi bấm: trang của mục trên LMS, hay link ngoài (YouTube...) khi LMS có.</param>
 public sealed record MediaItem(string Part, string Section, string Name, MediaKind Kind, string Url);
 
-/// <summary>
-/// Những gì trên LMS không phải file tài liệu: video bài giảng (file mp4, link YouTube, video nhúng trong nhãn), link ngoài, trang, công cụ ngoài.
-/// Đọc từ cấu trúc khóa đã lưu khi đồng bộ (data/lms-course/&lt;id&gt;.json, LmsSource.SaveStructure), không gọi mạng. Hàm thuần.
-/// </summary>
 public static partial class LmsMedia
 {
     [GeneratedRegex(@"(?:href|src)\s*=\s*[""']([^""']+)[""']", RegexOptions.IgnoreCase)] private static partial Regex LinkRx();
@@ -22,7 +15,6 @@ public static partial class LmsMedia
     [GeneratedRegex(@"youtube\.com|youtu\.be|vimeo\.com|drive\.google\.com/file|stream|\.mp4\b|video|record|bài giảng", RegexOptions.IgnoreCase)]
     private static partial Regex VideoHintRx();
 
-    /// <summary>Link http(s) trong HTML của nhãn, bỏ link vào chính trang module của LMS (đã có sẵn ở mục khác) và link trùng.</summary>
     public static IEnumerable<string> LinksIn(string html) =>
         LinkRx().Matches(html).Select(m => WebUtility.HtmlDecode(m.Groups[1].Value).Trim())
             .Where(u => u.StartsWith("http", StringComparison.OrdinalIgnoreCase) && !u.Contains("/pluginfile.php/", StringComparison.OrdinalIgnoreCase)
@@ -49,7 +41,6 @@ public static partial class LmsMedia
                         break;
                     case "url":
                         var target = files.Select(f => f["url"]?.GetValue<string>()).FirstOrDefault(u => !string.IsNullOrEmpty(u)) ?? url;
-                        // Link sang một khóa LMS khác (lớp chính trỏ tới lớp kho chung "..._Video") là liên kết, không phải video.
                         var toCourse = target.Contains("/course/view.php", StringComparison.OrdinalIgnoreCase);
                         list.Add(new(part, section, name, !toCourse && VideoHintRx().IsMatch(name + " " + target) ? MediaKind.Video : MediaKind.Link, target));
                         break;

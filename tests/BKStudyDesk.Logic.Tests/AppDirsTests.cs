@@ -22,14 +22,12 @@ public class AppDirsTests
     public void Resolve_Velopack_UsesParentOfCurrent()
     {
         var r = Resolve(P("Local", "BKStudyDesk", "current"), [], [P("Local", "BKStudyDesk", "Update.exe")]);
-        // Ngoài thư mục cài: chạy lại Setup.exe (cài đè) xóa cả thư mục cài, data phải nằm ở chỗ khác.
         Assert.Equal(P("Local", "BKStudyDesk.Data"), r.Root);
     }
 
     [Fact]
     public void Resolve_Velopack_CustomFolder_DataStaysInLocalAppData()
     {
-        // Người dùng chọn cài vào ổ khác: data vẫn ở LocalAppData (riêng tư theo tài khoản), theo pack id chứ không theo tên thư mục.
         var r = AppDirs.Resolve(P("Apps", "BK app", "current"), false, P("Local"), "BKStudyDeskTest", _ => false,
             f => f == P("Apps", "BK app", "Update.exe"));
         Assert.Equal(P("Local", "BKStudyDeskTest.Data"), r.Root);

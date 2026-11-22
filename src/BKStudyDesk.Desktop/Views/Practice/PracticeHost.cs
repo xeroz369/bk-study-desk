@@ -1,6 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using SoHocTap.Core;
 using SoHocTap.Presentation.Practice;
 using SoHocTap.Ui;
@@ -8,17 +6,12 @@ using BKStudyDesk.Desktop.Practice;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>
-/// Trang Luyện tập native (thay khung Svelte trong WebView): nạp dữ liệu một lần (PracticeService), hiện trang chính, mở màn con
-/// (làm câu, bài học, thi thử, soạn) và quay lại. MainWindow giữ một instance để chuyển trang không mất bài đang làm.
-/// </summary>
 public sealed class PracticeHost : UserControl, ITabbedPage
 {
     private readonly PracticeService _service;
     private readonly Stack<Control> _back = new();
     private readonly string? _demo;
 
-    // Cỡ chữ (Ctrl+cộng, Ctrl+trừ) nay áp cho cả app ở MainWindow (config app.zoom), không còn riêng Luyện tập.
     private Control? Screen
     {
         get => Content as Control;
@@ -28,7 +21,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
     public PracticeHost(SoHocTap.Api.ApiRouter router)
     {
         _service = new PracticeService(router);
-        // Chụp kiểm tra: --luyen-man=lam|bai|thi|soan mở thẳng màn con với dữ liệu đang có (thư mục demo).
         _demo = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--luyen-man=", StringComparison.Ordinal))?[12..];
         Screen = new TextBlock { Classes = { "empty" }, Text = L.T("practice.loading") };
         AttachedToVisualTree += async (_, _) =>
@@ -44,19 +36,15 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         };
     }
 
-    /// <summary>Đang ở một màn con (không phải trang chính): Alt+Mũi tên trái lùi trong Luyện tập trước.</summary>
     public bool CanGoBack => Screen is Control and not PracticeHomeView and not TextBlock;
 
-    /// <summary>Lùi một màn (như nút Quay lại).</summary>
     public void GoBack() => Back();
 
-    /// <summary>Bài đã soạn cho tìm nhanh Ctrl+K; rỗng khi sổ chưa nạp.</summary>
     public IEnumerable<SoHocTap.Presentation.QuickItem> QuickItems() => !_service.Loaded ? [] :
         _service.Study.Manifest.Courses.SelectMany(c => c.Units.SelectMany(u => u.Lessons))
             .Where(e => _service.Study.Lessons.ContainsKey(e.Id) && _service.Study.Entry(e.Id) is not null)
             .Select(e => new SoHocTap.Presentation.QuickItem(e.Title, L.F("quick.lesson", _service.Study.Entry(e.Id)!.CourseName), "lesson:" + e.Id));
 
-    /// <summary>Mở một bài từ tìm nhanh: về trang chính rồi mở bài, Quay lại về trang chính.</summary>
     public void OpenLessonById(string id)
     {
         if (!_service.Loaded) return;
@@ -64,7 +52,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         OpenLesson(id);
     }
 
-    /// <summary>Tab của trang chính: đang hiện trang chính thì đọc, ghi thẳng vào đó; đang ở màn con thì dùng khi quay về.</summary>
     public int Tab
     {
         get => Screen is PracticeHomeView h ? h.SelectedTab : _tab;
@@ -77,18 +64,13 @@ public sealed class PracticeHost : UserControl, ITabbedPage
 
     private int _tab;
 
-    /// <summary>Ghi nốt kết quả còn chờ (MainWindow gọi trước khi rời trang).</summary>
     public async Task FlushAsync()
     {
         if (_service.Loaded && _service.Progress.Pending) await _service.Progress.FlushAsync();
     }
 
-    private string? _course;   // đang nằm trong tab Luyện tập của một môn: chỉ hiện môn đó
+    private string? _course;
 
-    /// <summary>
-    /// Đặt vào tab Luyện tập của môn <paramref name="course"/> (null: trang Ôn tập chung). Có môn thì mở tab Môn học của Luyện tập, lọc
-    /// đúng môn; đang làm dở một bài thì giữ nguyên màn đó.
-    /// </summary>
     public void FocusCourse(string? course)
     {
         _course = course;
@@ -101,7 +83,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         }
     }
 
-    // Dựng lại trang chính (số liệu đổi sau mỗi lượt làm), giữ tab đang mở.
     private void ShowHome()
     {
         if (Screen is PracticeHomeView old) Tab = old.SelectedTab;
@@ -122,7 +103,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException) { Log.Warn($"Luyện tập: đọc công tắc lưu quiz: {e.Message}"); }
     }
 
-    // Công tắc tự lưu (true, false) hay Lưu ngay (null), như QuizArchive.svelte.
     private async Task ArchiveAsync(PracticeHomeView home, bool? on)
     {
         try
@@ -172,7 +152,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         ShowHome();
     }
 
-    // Lỗi khi mở một màn chỉ ghi log và giữ màn đang có, không làm sập app (async void không có ai bắt lỗi).
     private async void Go(string what)
     {
         try { await GoAsync(what); }
@@ -210,7 +189,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
                 OpenLesson(arg);
                 break;
             case "mix" when study.Course(arg) is { } c:
-                // Mỗi lượt rút lại: câu vừa làm xuống sau vì không còn "chưa làm".
                 Run($"{L.T("practice.mix")}, {c.Name}", RunMode.Mix, _ => Interleave.Run(study.UnitQuestions(c), Interleave.MixCount, PracticeActions.Fresh(progress)),
                     "practice.run.empty.mix", newRound: true, hint: L.T("practice.run.mixHint"));
                 break;
@@ -221,7 +199,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
                 OpenAuthor(int.TryParse(arg, out var tabNo) ? new AuthorPlace(null, null, null, tabNo, null) : null);
                 break;
             case "recall":
-                // Quiz LMS không cho xem lại: ghi câu còn nhớ vào bài "Ghi lại: tên quiz" của chương quiz LMS (chỉ trên máy này).
                 var (code, quizName) = arg.IndexOf('|') is var bar and >= 0 ? (arg[..bar], arg[(bar + 1)..]) : (arg, "");
                 if (study.Manifest.Courses.FirstOrDefault(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase)) is { } rc)
                     OpenAuthor(new AuthorPlace(rc.Id, LmsQuiz.UnitTitle, SoHocTap.Presentation.Practice.Transfer.RecallTitle(quizName), 0, null));
@@ -242,7 +219,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         }
     }
 
-    /// <param name="questions">Danh sách câu cho một lượt (gọi lại khi Lượt mới); danh sách chốt khi mở, như bản Svelte.</param>
     private QuizRunView Run(string title, RunMode mode, Func<ShufflePrefs, IReadOnlyList<Question>> questions, string emptyKey,
         ShufflePrefs? shuffle = null, bool newRound = false, string? hint = null)
     {
@@ -254,7 +230,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         return v;
     }
 
-    /// <param name="replace">Bài trước, bài sau: thay bài đang mở, Quay lại vẫn về chỗ đã mở bài đầu tiên.</param>
     private void OpenLesson(string id, bool replace = false)
     {
         if (_service.Study.Entry(id) is not { } entry) return;
@@ -267,10 +242,8 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         var v = new LessonView(_service, entry, l);
         v.BackRequested += Back;
         v.LessonRequested += next => OpenLesson(next, replace: true);
-        // Xáo theo gói cho tới khi người học tự chọn (hai ô trên màn làm câu).
         var qs = l?.Questions ?? [];
         v.QuestionsRequested += () => Run(l?.Title ?? entry.Title, RunMode.Lesson, _ => qs, "practice.run.empty.lesson",
-            // Lựa chọn người học đã đổi thì nhớ trên máy (config practice.shuffle), chưa đổi thì theo cài đặt của gói.
             new ShufflePrefs(Config.Bool("practice.shuffle.questions", l?.Shuffle?.Questions == true), Config.Bool("practice.shuffle.options", l?.Shuffle?.Options == true)));
         if (replace) Screen = v;
         else Open(v);
@@ -280,7 +253,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
     {
         var v = new AuthorView(_service, place);
         v.BackRequested += Back;
-        // Đã lưu gói: nạp lại sổ (gói mới, id câu mới) rồi mở lại Soạn đúng chỗ, Quay lại vẫn về trang chính.
         v.Saved += async after =>
         {
             try
@@ -316,7 +288,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
         return v;
     }
 
-    // Màn mẫu để chụp: lấy dữ liệu demo có sẵn, đặt sẵn trạng thái cho đủ phần cần duyệt.
     private void OpenDemo(string screen)
     {
         var study = _service.Study;
@@ -358,7 +329,6 @@ public sealed class PracticeHost : UserControl, ITabbedPage
                 a.Demo(@"Tính \(\int_0^2 3x^2\,dx\).", ["4", "6", "8", "12"], 2, @"\(x^3\big|_0^2=8\).");
                 break;
             case "soan-luu" when study.Manifest.Courses.FirstOrDefault() is { Units.Count: > 0 } lc && lc.Units[0].Lessons.Count > 0:
-                // Kiểm tra luồng lưu trên thư mục demo: điền câu rồi bấm Lưu câu như người dùng.
                 var la = OpenAuthor(new AuthorPlace(lc.Id, lc.Units[0].Title, lc.Units[0].Lessons[0].Title, 0, null));
                 la.Demo("Câu demo lưu thử: 1 + 1 bằng", ["1", "2"], 1, "Vì 1 + 1 = 2.");
                 la.DemoSave();

@@ -3,7 +3,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Nút trạng thái trên thanh trên cùng và danh sách thông báo.</summary>
 public class StatusPanelTests
 {
     private static SourceState Row(string label, bool syncing = false, string? problem = null, bool login = false) => new(label, "", problem, null, syncing, login);
@@ -63,7 +62,7 @@ public class StatusPanelTests
         for (var i = 0; i < 25; i++) log.Add(new Notice(i, "t" + i, "", ""));
         Assert.Equal(20, log.Items.Count);
         Assert.Equal("t24", log.Items[0].Title);
-        Assert.Equal(20, log.Unread);   // chỉ đếm thông báo còn trong danh sách
+        Assert.Equal(20, log.Unread);
         log.MarkRead();
         Assert.Equal(0, log.Unread);
     }

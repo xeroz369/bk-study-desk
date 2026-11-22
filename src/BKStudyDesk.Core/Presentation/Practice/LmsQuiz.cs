@@ -10,7 +10,6 @@ namespace SoHocTap.Presentation.Practice;
 
 public sealed record SavedQuizQuestion(string? Type, string Html, string? Mark = null, double? Maxmark = null, string? Status = null);
 
-/// <summary>Một lần làm quiz LMS đã lưu (data/lms-quiz, do LmsSource lưu, ApiRouter đọc kèm mã môn).</summary>
 public sealed record SavedQuiz(string File, string Quiz, string Subject, string? Code, long? Course, long Attempt, long? Finished,
     JsonNode? Grade, long? ClosesAt, long? SavedAt, bool? Answers, bool? NoReview, List<SavedQuizQuestion>? Questions)
 {
@@ -19,22 +18,12 @@ public sealed record SavedQuiz(string File, string Quiz, string Subject, string?
     public static List<SavedQuiz> ListFromJson(string json) => Js.Deserialize<List<SavedQuiz>>(json, Json) ?? [];
 }
 
-/// <param name="LessonId">Id đầy đủ của bài trong sổ (gói.bài), rỗng khi không có câu dùng được.</param>
-/// <param name="Usable">Câu biết đáp án đúng.</param>
-/// <param name="Unknown">Câu LMS giấu đáp án.</param>
-/// <param name="Shareable">Chỉ chia sẻ khi quiz đã đóng với mọi người.</param>
 public sealed record QuizInfo(SavedQuiz Quiz, string LessonId, int Usable, int Unknown, bool Shareable);
 
-/// <summary>
-/// Quiz LMS đã lưu (trang xem lại của Moodle) thành gói luyện tập, mỗi môn một gói (port <c>lmsquiz.ts</c>).
-/// Chỉ dùng những gì trang xem lại hiện; câu giấu đáp án đúng thì bỏ, không bao giờ đoán.
-/// </summary>
 public static partial class LmsQuiz
 {
-    /// <summary>Câu ghi lại từ trí nhớ cho quiz không cho xem lại (gói quiz-lms-ghi-mã).</summary>
     public const string RecallPrefix = "quiz-lms-ghi-";
 
-    /// <summary>Chương chứa quiz LMS đã lưu và bài ghi lại câu còn nhớ: dữ liệu khớp theo tên, như UNIT_TITLE của bản TS, không dịch.</summary>
     public const string UnitTitle = "Quiz LMS đã lưu";
 
     public static bool IsLmsQuizLesson(string lessonId) => lessonId.StartsWith("quiz-lms-", StringComparison.Ordinal);
@@ -62,7 +51,6 @@ public static partial class LmsQuiz
         return output.Length > 0 ? output : "quiz";
     }
 
-    /// <summary>Một câu của trang xem lại Moodle thành câu của gói; null khi trang không hiện đáp án.</summary>
     public static PackQuestion? ParseReview(string html)
     {
         var doc = Html.Parse(html);
@@ -125,7 +113,6 @@ public static partial class LmsQuiz
         return q;
     }
 
-    /// <summary>Mọi quiz đã lưu thành gói theo mã môn (chương "Quiz LMS đã lưu", mỗi lần làm một bài).</summary>
     public static (List<StudyPack> Packs, List<QuizInfo> Info) QuizPacks(IEnumerable<SavedQuiz> saved, DateTimeOffset now, TimeZoneInfo zone)
     {
         var byCode = new Dictionary<string, StudyPack>();
@@ -164,7 +151,6 @@ public static partial class LmsQuiz
             var finished = s.Finished is { } f && f != 0;
             pack.Units[0].Lessons.Add(new PackLesson
             {
-                // Thêm ngày khi tên quiz chưa có ngày.
                 Id = local,
                 Title = finished && !HasDate().IsMatch(s.Quiz) ? $"{s.Quiz} ({DateText(s.Finished)})" : s.Quiz,
                 Sources = [new PackSource(L.F("quiz.source", s.Quiz), finished ? L.F("quiz.doneOn", DateText(s.Finished)) : null)],

@@ -51,7 +51,6 @@ public class InstallTargetTests
     [Fact]
     public void Resolve_OtherAppInstalledThere_Refused()
     {
-        // Bản cài của gói khác (vd. bản test) trong thư mục đó: không cài đè, tránh ghi lẫn hai app.
         var r = Resolve(P("Apps", "BKStudyDesk"), [P("Apps", "BKStudyDesk")], [P("Apps", "BKStudyDesk", "Update.exe")], installedId: "BKStudyDeskTest");
         Assert.Null(r.Dir);
         Assert.NotNull(r.Error);

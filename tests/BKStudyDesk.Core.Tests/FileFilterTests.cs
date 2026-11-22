@@ -2,7 +2,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Ô tìm và nút lọc loại ở tab Tài liệu của thẻ môn.</summary>
 public class FileFilterTests
 {
     private static RecentRow R(string name, string folder = "") => new(name, folder, folder + "/" + name, 1, 0);

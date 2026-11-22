@@ -3,7 +3,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Trang Thư viện: mọi môn của thư viện, môn của người dùng lên đầu, tìm bỏ dấu cả tên cũ, lọc khoa, thư mục lưu tài liệu.</summary>
 public class LibraryPageTests
 {
     private static CourseRef C(string id, string code, string name, string? faculty = null, string? status = null, int items = 1,
@@ -46,7 +45,7 @@ public class LibraryPageTests
     {
         var f = LibraryPagePresenter.Faculties(Index);
         Assert.Null(f[0].Value);
-        Assert.Equal(["ud", "khmt"], f.Skip(1).Select(o => o.Value));   // theo tên tiếng Việt: "Khoa học Ứng dụng" trước "Khoa học và..."
+        Assert.Equal(["ud", "khmt"], f.Skip(1).Select(o => o.Value));
     }
 
     [Theory]

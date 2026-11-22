@@ -3,11 +3,6 @@ using System.Text.Json;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>
-/// Nạp nội dung có sẵn của app (thư mục <c>content/</c>): mục lục <c>manifest.json</c> và các file Study Markdown (bài, đề, trang)
-/// do <c>tools-dev/content-to-md.mjs</c> chuyển từ <c>content/*.js</c>. Id câu giữ như bản cũ (<c>bài.q1</c>, <c>đề.q1</c>),
-/// fingerprint tính trên HTML chưa lọc như bản TS, rồi mới lọc để hiển thị. File thiếu, lỗi đọc thì bỏ qua và báo, không ném lỗi.
-/// </summary>
 public static class ContentLibrary
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { TypeInfoResolver = PracticeJson.Default };
@@ -22,7 +17,6 @@ public static class ContentLibrary
 
     internal sealed record ManifestFile(string Term, List<string>? Priority, List<PageEntry>? Pages, List<ExamEntry>? Exams, List<CourseFile> Courses);
 
-    /// <summary>Nạp vào <paramref name="study"/>; trả về cảnh báo (file thiếu, đọc lỗi, id lệch).</summary>
     public static List<string> Load(string contentDir, StudyRegistry study)
     {
         var warnings = new List<string>();
@@ -109,7 +103,6 @@ public static class ContentLibrary
         return r.Pack;
     }
 
-    // Id câu như bản cũ: <bài hay đề>.<id trong file> (q1, q2... hay dòng id). Fingerprint trên HTML chưa lọc, rồi lọc để hiển thị.
     private static List<Question> Questions(List<PackQuestion>? qs, string owner) =>
         (qs ?? []).Select(pq =>
         {

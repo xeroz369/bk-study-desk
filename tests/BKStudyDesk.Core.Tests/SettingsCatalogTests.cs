@@ -2,7 +2,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Danh mục Cài đặt: kiểm ô số, ô địa chỉ thư viện, chia Thường dùng và Nâng cao. Không ghi cài đặt thật.</summary>
 public class SettingsCatalogTests
 {
     private static readonly SettingsActions None = new(() => "", () => { }, () => Task.CompletedTask, () => { }, _ => { }, _ => { }, () => false, _ => false,
@@ -45,7 +44,6 @@ public class SettingsCatalogTests
         var keys = SettingsCatalog.Groups(None with { PageCount = 6 }).SelectMany(g => g.Items).OfType<InfoItem>().ToList();
         Assert.Contains(keys, k => k.Value.Contains("Ctrl+1") && k.Value.Contains("Ctrl+6"));
         Assert.Contains(keys, k => k.Value == "F5");
-        // Không biết số trang thì không ghi dòng chuyển trang (không đoán số).
         Assert.DoesNotContain(SettingsCatalog.Groups(None).SelectMany(g => g.Items).OfType<InfoItem>(), k => k.Value.Contains("Ctrl+"));
     }
 

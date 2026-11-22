@@ -1,56 +1,38 @@
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation;
 
-/// <summary>One to-do row: date box, title, sub line (subject, tag, time), time left and submit state; Url opens in the browser.</summary>
-/// <param name="Group">Row that groups similar items (TodoGroups); Indent: child of an expanded group.</param>
-/// <param name="Hour">Due time ("23:59"), so a grouped row can show the exact deadline.</param>
 public sealed record TodoItem(string Id, DateTime Day, string Title, string Sub, string Left, Urgency Level, string State, string? Url, bool Group = false, bool Indent = false,
     bool Done = false, string Hour = "")
 {
-    /// <summary>Cột phải màu Danger (quá hạn, rất gấp) hay Warn (gấp): View gắn class theo hai cờ này.</summary>
     public bool IsDanger => Level is Urgency.Overdue or Urgency.Urgent;
     public bool IsSoon => Level == Urgency.Soon;
 
-    /// <summary>Số ngày từ hôm nay tới hạn (âm: đã quá).</summary>
     public int DaysLeft => (Day.Date - Format.Today).Days;
 
-    /// <summary>Nhãn ngày nền đỏ: quá hạn, rất gấp hay còn từ 3 ngày trở xuống.</summary>
     public bool ChipDanger => !Done && (IsDanger || DaysLeft <= 3);
 
-    /// <summary>Nhãn ngày nền vàng: còn từ 7 ngày trở xuống (chưa tới mức đỏ).</summary>
     public bool ChipSoon => !Done && !ChipDanger && (IsSoon || DaysLeft <= 7);
 
-    /// <summary>Chữ tháng dưới số ngày trong ô ngày: "th 10", "Oct" (lang home.monthOf).</summary>
     public string Month => L.F("home.monthOf", Day);
 }
 
-/// <summary>Một mốc sắp tới (buổi học, thi): ô giờ bắt đầu và kết thúc, tên, dòng phụ (phòng), cột phải (Hôm nay, còn N ngày).</summary>
 public sealed record AgendaItem(string Id, DateTime Day, string Start, string End, string Title, string Sub, string Right);
 
 public sealed record NewsItem(string Title, string Sub, string Ago, string? Url, Reading? Read = null);
 
 public sealed record RegItem(string Code, string Name, string When, string Status, bool Open);
 
-/// <summary>Toàn bộ trang Hôm nay. HasLms, HasMybk false thì View nói chưa có dữ liệu nguồn đó thay vì danh sách trống.</summary>
 public sealed record HomeModel(bool HasLms, bool HasMybk, IReadOnlyList<TodoItem> Todo, IReadOnlyList<AgendaItem> Upcoming,
     IReadOnlyList<NewsItem> News, IReadOnlyList<RegItem> Registrations);
 
-/// <summary>
-/// Trang Hôm nay hiện gì, theo thứ tự nào (thiết kế: design-system/bk). Thuần, không giao diện: View chỉ vẽ HomeModel.
-/// Cần làm: hạn chưa xong trong TodoDays ngày tới và hạn quá trong cửa sổ 7 ngày (TimelineItem.Overdue), quá hạn trước.
-/// Sắp tới: buổi học hôm nay và ngày mai, thi trong ExamDays ngày. Thông báo: NewsDays ngày, mới nhất trước. Không cắt số mục.
-/// Số ngày ở config (app.home.*), không viết cứng.
-/// </summary>
 public static class HomePresenter
 {
     public static int TodoDays => Config.Int("app.home.todoDays", 14);
     public static int ExamDays => Config.Int("app.home.examDays", 14);
     public static int NewsDays => Config.Int("app.home.newsDays", 7);
 
-    /// <summary>Phần MyBK trang cần (lịch học, thi, đợt đăng ký).</summary>
     public sealed record MybkPart(IReadOnlyList<MybkClass> Classes, IReadOnlyList<MybkExam> Exams, IReadOnlyList<MybkRegistration> Registrations);
 
     public static HomeModel Build(IReadOnlyList<TimelineItem> timeline, LmsData? lms, MybkData? mybk, long now) =>
@@ -59,7 +41,6 @@ public static class HomePresenter
     public static HomeModel Build(IReadOnlyList<TimelineItem> timeline, bool hasLms, IReadOnlyList<LmsAnnouncement> news, MybkPart? mybk, long now)
     {
         var today = VnTime.ToWall(now).Date;
-        // Giờ mở của quiz: lấy từ mục "mở" cùng tên, cùng lớp, để dòng phụ ghi đủ "mở ..., đóng ...".
         var opens = timeline.Where(e => e.Kind == "quiz" && e.Opens).GroupBy(e => (e.Name, e.Course)).ToDictionary(g => g.Key, g => g.Min(e => e.Time));
         var todo = timeline
             .Where(e => e.Kind is "assign" or "quiz" or "event" && !e.Opens && (!e.Done && e.Overdue || (e.Time >= now && e.Time <= now + TodoDays * 86400L)))
@@ -97,18 +78,14 @@ public static class HomePresenter
         return new HomeModel(hasLms, mybk is not null, todo, [.. upcoming.OrderBy(u => u.Time).Select(u => u.Item)], newsItems, regs);
     }
 
-    /// <summary>Dòng dưới ngày ở Hôm nay: giờ đồng bộ gần nhất của LMS và MyBK (hôm nay ghi giờ, ngày khác ghi ngày giờ).</summary>
     public static string SyncLine(long? lms, long? mybk)
     {
         static string At(long? t) => t is { } x ? StatusPanel.When(x) : L.T("home.sync.never");
         return L.F("home.sync", At(lms), At(mybk));
     }
 
-    /// <summary>"Giải tích 2, Hạn nộp 23:59"; mốc không rõ giờ thì bỏ giờ.</summary>
-    /// <summary>Nhãn việc đã xong: bài tập "Đã nộp", quiz "Đã làm", khảo sát và mốc khác "Đã phản hồi".</summary>
     private static string DoneTag(string kind) => L.T(kind switch { "assign" => "state.submitted", "quiz" => "home.done.quiz", _ => "home.done.event" });
 
-    /// <summary>Quiz: "Giải tích 2, mở 00:01, đóng 23:59"; mở khác ngày đóng thì ghi cả thứ và ngày mở.</summary>
     private static string QuizSub(TimelineItem e, long open)
     {
         var sameDay = VnTime.ToWall(open).Date == VnTime.ToWall(e.Time).Date;

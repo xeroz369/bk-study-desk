@@ -86,7 +86,7 @@ public class UpdatePolicyTests
     public void LoopbackHttp_OnlyIpv4Loopback(string src, bool expected)
     {
         Assert.Equal(expected, UpdatePolicy.IsLoopbackHttp(src));
-        Assert.False(UpdatePolicy.IsValidSource(src, _ => false));   // nguồn chung (cả bản Linux) không nhận
+        Assert.False(UpdatePolicy.IsValidSource(src, _ => false));
     }
 
     [Fact]
@@ -101,8 +101,6 @@ public class UpdatePolicyTests
     [InlineData("1.0.7", "1.0.8", ApplyOutcome.Updated)]
     public void ApplyResult_Values(string? applying, string current, ApplyOutcome expected) =>
         Assert.Equal(expected, UpdatePolicy.ApplyResult(applying, current));
-
-    // ------------------------------------------------------------------ 1.1.8: cài lúc mở app, chu kỳ 6/12/24, kiểm tra khi thức dậy
 
     [Fact]
     public void ShouldCheck_DefaultSixHours_DueAfterSix()
@@ -126,7 +124,7 @@ public class UpdatePolicyTests
         Assert.True(UpdatePolicy.WakeCheckAllowed(null, Now));
         Assert.False(UpdatePolicy.WakeCheckAllowed(Now.AddMinutes(-59), Now));
         Assert.True(UpdatePolicy.WakeCheckAllowed(Now.AddHours(-1), Now));
-        Assert.True(UpdatePolicy.WakeCheckAllowed(Now.AddHours(2), Now));   // đồng hồ bị chỉnh lùi
+        Assert.True(UpdatePolicy.WakeCheckAllowed(Now.AddHours(2), Now));
     }
 
     [Fact]

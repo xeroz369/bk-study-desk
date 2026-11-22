@@ -10,12 +10,8 @@ public class TablesTests
 {
     private sealed record Row(string Group, string Name);
 
-    // Dòng liền nhau theo nhóm như tab Sắp tới (đã xếp theo nhóm): mỗi nhóm `size` dòng.
     private static List<Row> Rows(int size, params string[] groups) => [.. groups.SelectMany(g => Enumerable.Range(0, size).Select(i => new Row(g, $"{g} {i}")))];
 
-    // Issue #43: bấm "Hiện buổi học", "Hiện việc đã làm" ở tab Sắp tới làm app tắt. Bảng đổi ItemsSource, dải nhóm cũ được tính lại
-    // style; style có đặt SublevelIndent thì giá trị trả về mặc định và DataGrid ném NullReferenceException. TestApp có style như vậy
-    // (như Tokens.axaml trước bản sửa): đổi dữ liệu nhiều lần không được ném lỗi, dòng dưới dải nhóm vẫn không thụt lề.
     [AvaloniaFact]
     public void Swapping_grouped_rows_never_throws_and_stays_flat()
     {

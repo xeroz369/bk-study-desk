@@ -9,12 +9,6 @@ using SoHocTap.Web;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Trang của trường trong cửa sổ app (cùng cách làm với 1.x, Ui/SchoolWindow), dùng chung phiên đăng nhập của app:
-/// - tải quá app.webSlowSeconds giây thì báo chậm, có nút Thử lại; tải lỗi thì báo và có nút Thử lại;
-/// - trang đăng nhập riêng của LMS, MyBK (phiên server hết sớm hơn cookie) thì đi qua cổng SSO một lần (SchoolUrls.SsoEntry);
-/// - sau mỗi lần tải xong giữ hạn cookie trường (SsoKeep); thấy trang mật khẩu SSO rồi vào lại được trường thì ghi là vừa đăng nhập.
-/// </summary>
 public partial class SchoolWindow : Window
 {
     private readonly WebPage _page = new();
@@ -62,7 +56,7 @@ public partial class SchoolWindow : Window
         if (SchoolUrls.IsSsoLogin(where)) { _sawLogin = true; return; }
         if (!_ssoTried && SchoolUrls.SsoEntry(where) is { } entry)
         {
-            _ssoTried = true;   // một lần: SSO còn phiên thì tự vào lại, không thì dừng ở trang mật khẩu cho người dùng tự gõ
+            _ssoTried = true;
             Log.Debug($"Cửa sổ trường: {Log.Where(where)} là trang đăng nhập riêng, đi qua SSO");
             Go(entry);
             return;
@@ -86,7 +80,6 @@ public partial class SchoolWindow : Window
 
     private void OnForward(object? sender, RoutedEventArgs e) { if (_page.View.CanGoForward) _page.View.GoForward(); }
 
-    /// <summary>Gõ địa chỉ rồi Enter: thiếu http thì thêm https; địa chỉ không hợp lệ thì giữ nguyên trang.</summary>
     private void OnAddressKey(object? sender, Avalonia.Input.KeyEventArgs e)
     {
         if (e.Key != Avalonia.Input.Key.Enter) return;

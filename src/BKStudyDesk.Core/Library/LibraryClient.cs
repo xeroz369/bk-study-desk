@@ -5,57 +5,36 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Files;
 
 namespace SoHocTap.Library;
 
-/// <summary>Cài đặt của client. Không đọc Config ở đây (test dựng trực tiếp); app lấy từ config "library.*".</summary>
-/// <param name="BaseUrl">https://..., file:///... hoặc đường dẫn thư mục tuyệt đối (dev). Có hay không có "v1/" ở cuối đều được.</param>
-/// <param name="CacheDir">data/library-cache: index và chi tiết từng môn, mỗi file kèm ETag.</param>
-/// <param name="ManifestPath">data/library-downloads.json: file nào trong Thư viện\ là do app tải (chỉ những file này mới được xóa).</param>
 public sealed record LibraryOptions(string BaseUrl, string CacheDir, string ManifestPath)
 {
-    /// <summary>Kiểm tra index định kỳ: tối đa mỗi ngày một lần.</summary>
     public TimeSpan RefreshEvery { get; init; } = TimeSpan.FromDays(1);
-    /// <summary>Mở tab Thư viện thì kiểm tra lại, nhưng chuyển qua lại giữa các môn thì không gọi lại trong khoảng này.</summary>
     public TimeSpan TabRefresh { get; init; } = TimeSpan.FromMinutes(10);
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
     public TimeSpan Gap { get; init; } = TimeSpan.FromMilliseconds(300);
     public long MaxFileBytes { get; init; } = 200L * 1024 * 1024;
 }
 
-/// <summary>Khi nào gọi mạng: không bao giờ (chỉ cache), tới hạn hằng ngày, mở tab (có chặn gọi dồn), hay bắt buộc.</summary>
 public enum LibraryRefresh { CacheOnly, IfDue, Tab, Force }
 
-/// <summary>Dữ liệu lấy từ đâu: vừa tải, server báo không đổi (304), cache (không gọi mạng hoặc mạng lỗi), không có gì.</summary>
 public enum LibraryOrigin { Network, NotModified, Cache, None }
 
-/// <param name="Error">Lỗi lần gọi mạng này (mạng, HTTP, JSON hỏng); vẫn có thể có Value từ cache.</param>
 public sealed record LibraryResult<T>(T? Value, LibraryOrigin Origin, string? Error, DateTimeOffset? CheckedAt) where T : class;
 
 public enum DownloadError { None, Network, Mismatch, TooLarge, NoFiles, BadName }
 
-/// <param name="Paths">File đã có trên máy sau lần tải (kể cả file đã có sẵn đúng nội dung).</param>
 public sealed record DownloadResult(IReadOnlyList<string> Paths, DownloadError Error, string? Detail)
 {
     public bool Ok => Error == DownloadError.None;
 }
 
-/// <summary>
-/// Một file app đã tải vào Thư viện\ (manifest). Sha256 là nội dung lúc tải: người dùng sửa file thì không còn là bản cache.
-/// Updated là ngày "updated" của mục lúc tải, để biết thư viện có bản mới hơn.
-/// </summary>
 public sealed record DownloadRecord(string Course, string Item, string File, string Path, string Sha256, long Size, long At, string? Updated);
 
-/// <summary>Mục trên máy: chưa tải, đã tải đúng bản mới nhất, hay đã tải nhưng thư viện có bản mới hơn.</summary>
 public enum ItemLocal { None, Downloaded, Outdated }
 
-/// <summary>
-/// Đọc thư viện /v1 (repo bk-study-library). Chỉ GET: index.json tối đa mỗi ngày một lần và khi mở tab Thư viện, chi tiết môn khi mở,
-/// file khi người dùng bấm Tải về. Có ETag/If-None-Match; lỗi mạng thì dùng cache; mỗi lần một request, cách nhau Gap.
-/// Không gửi gì ngoài HTTP GET thường (không id, không cookie). Mọi tên field JSON nằm ở đây và LibraryContract.cs.
-/// </summary>
 public sealed class LibraryClient : IDisposable
 {
     private const int MaxJsonBytes = 16 * 1024 * 1024;
@@ -64,10 +43,10 @@ public sealed class LibraryClient : IDisposable
     private readonly LibraryOptions _o;
     private readonly TimeProvider _time;
     private readonly Action<string>? _log;
-    private readonly SemaphoreSlim _gate = new(1, 1);   // một request mỗi lúc
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Pace _pace;
     private readonly object _manifestGate = new();
-    private readonly Dictionary<string, DateTimeOffset> _attempts = [];   // lần thử gần nhất (kể cả lỗi), để mở tab liên tục không gọi dồn
+    private readonly Dictionary<string, DateTimeOffset> _attempts = [];
 
     public LibraryClient(HttpClient http, LibraryOptions options, TimeProvider? time = null, Action<string>? log = null)
     {
@@ -79,7 +58,6 @@ public sealed class LibraryClient : IDisposable
         Root = RootOf(options.BaseUrl);
     }
 
-    /// <summary>Thư mục v1/ của thư viện (luôn có "/" ở cuối); null nếu chưa đặt địa chỉ hoặc địa chỉ không hợp lệ.</summary>
     public Uri? Root { get; }
 
     public static Uri? RootOf(string? baseUrl)
@@ -93,12 +71,9 @@ public sealed class LibraryClient : IDisposable
         return new Uri(text);
     }
 
-    // ------------------------------------------------------------------ index, chi tiết môn
-
     public Task<LibraryResult<LibraryIndex>> GetIndexAsync(LibraryRefresh mode, CancellationToken ct) =>
         GetAsync("index", Root is null ? null : new Uri(Root, "index.json"), LibraryJson.ParseIndex, mode, ct);
 
-    /// <summary>Chi tiết môn: <c>detail</c> trong index (tương đối so với v1/), không có thì courses/&lt;id&gt;.json.</summary>
     public Task<LibraryResult<CourseDetail>> GetCourseAsync(CourseRef course, LibraryRefresh mode, CancellationToken ct)
     {
         if (!LibraryJson.CourseId().IsMatch(course.Id)) return Task.FromResult(new LibraryResult<CourseDetail>(null, LibraryOrigin.None, "id môn không hợp lệ", null));
@@ -113,16 +88,13 @@ public sealed class LibraryClient : IDisposable
     {
         if (Root is null) return null;
         var rel = course.Detail is { Length: > 0 } d ? d : $"courses/{course.Id}.json";
-        // Chỉ nhận đường dẫn tương đối nằm dưới v1/: index hỏng hay bị sửa cũng không trỏ app đi chỗ khác.
         if (rel.Contains("..", StringComparison.Ordinal) || rel.Contains('\\') || Uri.TryCreate(rel, UriKind.Absolute, out _)) return null;
         var u = new Uri(Root, rel);
         return u.AbsoluteUri.StartsWith(Root.AbsoluteUri, StringComparison.Ordinal) ? u : null;
     }
 
-    /// <summary>Lần gần nhất kiểm tra index thành công (200 hoặc 304), theo cache.</summary>
     public DateTimeOffset? LastChecked => ReadMeta("index") is { } m && m.Base == Root?.AbsoluteUri ? m.CheckedAt : null;
 
-    /// <summary>Xóa cache index và chi tiết môn. Manifest file đã tải giữ lại: nó cho biết file nào trong Thư viện\ là của app.</summary>
     public void ClearCache()
     {
         if (!Directory.Exists(_o.CacheDir)) return;
@@ -166,7 +138,6 @@ public sealed class LibraryClient : IDisposable
     private async Task<LibraryResult<T>> GetAsync<T>(string key, Uri? uri, Func<string, T> parse, LibraryRefresh mode, CancellationToken ct) where T : class
     {
         var meta = ReadMeta(key);
-        // Cache của địa chỉ khác (người dùng đổi baseUrl) không dùng.
         if (meta is not null && (Root is null || meta.Base != Root.AbsoluteUri)) meta = null;
         T? cached = null;
         if (meta is not null && ReadBody(key) is { } text)
@@ -195,7 +166,6 @@ public sealed class LibraryClient : IDisposable
         try { fresh = parse(f.Text); }
         catch (DataReadException e)
         {
-            // Bản mới hỏng (đang deploy dở...): giữ bản cũ, không ghi đè cache.
             _log?.Invoke($"Thư viện: {uri.AbsolutePath} không đọc được: {e.Message}");
             return FromCache(e.Message);
         }
@@ -226,7 +196,6 @@ public sealed class LibraryClient : IDisposable
     {
         if (uri.IsFile)
         {
-            // Thư mục thư viện trên máy (dev): đọc thẳng, không ETag.
             try
             {
                 var info = new FileInfo(uri.LocalPath);
@@ -260,28 +229,19 @@ public sealed class LibraryClient : IDisposable
         finally { _gate.Release(); }
     }
 
-    // ------------------------------------------------------------------ link
-
-    /// <summary>Trang chủ thư viện (site trong index), chỉ http/https.</summary>
     public static Uri? SiteOf(LibraryIndex? index) =>
         index?.Site is { } s && Uri.TryCreate(s.EndsWith('/') ? s : s + "/", UriKind.Absolute, out var u) && u.Scheme is "https" or "http" ? u : null;
 
-    /// <summary>Trang gửi tài liệu: <paramref name="path"/> (library.contributePath) tính từ site, chỉ nhận đường dẫn tương đối.</summary>
     public static Uri? ContributeUrl(LibraryIndex? index, string path = "gui-tai-lieu/") =>
         SiteOf(index) is { } site && path.Length > 0 && !path.Contains("..", StringComparison.Ordinal) && !path.Contains(':')
             ? new Uri(site, path.TrimStart('/')) : null;
 
-    /// <summary>Trang của môn trên web: url trong index, không có thì &lt;site&gt;course/&lt;id&gt;/.</summary>
     public static Uri? CourseUrl(LibraryIndex? index, CourseRef course)
     {
         if (course.Url is { } s && Uri.TryCreate(s, UriKind.Absolute, out var u) && u.Scheme is "https" or "http") return u;
         return SiteOf(index) is { } site && LibraryJson.CourseId().IsMatch(course.Id) ? new Uri(site, $"course/{course.Id}/") : null;
     }
 
-    /// <summary>
-    /// "Mở trên web" của một mục: link thì chính url của link; mục khác thì trang môn, neo tới id mục (#&lt;id&gt;).
-    /// Hợp đồng v1 chưa có trang riêng cho từng mục, nên dùng neo trên trang môn.
-    /// </summary>
     public static Uri? ItemUrl(LibraryIndex? index, CourseRef course, LibraryItem item)
     {
         if (item.IsLink)
@@ -289,13 +249,6 @@ public sealed class LibraryClient : IDisposable
         return CourseUrl(index, course) is { } c ? new Uri(c, "#" + item.Id) : null;
     }
 
-    // ------------------------------------------------------------------ tải file
-
-    /// <summary>
-    /// Tải mọi file của mục vào <paramref name="targetDir"/> (Môn học\&lt;môn&gt;\Thư viện\). Mỗi file thử lần lượt các url, kiểm
-    /// cỡ và sha256 trước khi đặt vào chỗ thật (tải ra file tạm cùng thư mục rồi Move). Không bao giờ ghi đè file không phải của app:
-    /// trùng tên với file khác nội dung thì đặt tên " (bản dd-MM-yyyy)". File đã có đúng nội dung thì không tải lại.
-    /// </summary>
     public async Task<DownloadResult> DownloadAsync(CourseRef course, LibraryItem item, string targetDir, CancellationToken ct)
     {
         if (item.Removed || item.Files is not { Count: > 0 } files) return new([], DownloadError.NoFiles, null);
@@ -306,7 +259,6 @@ public sealed class LibraryClient : IDisposable
             if (file.Size > _o.MaxFileBytes) return new(paths, DownloadError.TooLarge, name);
             var dest = Path.Combine(targetDir, name);
             var mine = Record(course.Id, item.Id, name);
-            // Đã có đúng nội dung: không tải lại. Là bản app tải trước đây (có thể đã đặt tên khác vì trùng) thì ghi ngày updated mới.
             var present = new[] { mine?.Path, dest }.FirstOrDefault(p => p is not null && File.Exists(p) && Same(HashOf(p), file.Sha256));
             if (present is not null)
             {
@@ -359,7 +311,6 @@ public sealed class LibraryClient : IDisposable
     {
         if (Uri.TryCreate(raw, UriKind.Absolute, out var u))
             return u.Scheme is "https" or "http" || (u.IsFile && !u.IsUnc && Root is { IsFile: true }) ? u : null;
-        // Url tương đối chỉ có nghĩa với thư viện trên máy (dev): tính từ v1/.
         return Root is { IsFile: true } root && !raw.Contains("..", StringComparison.Ordinal) ? new Uri(root, raw) : null;
     }
 
@@ -382,7 +333,6 @@ public sealed class LibraryClient : IDisposable
                 {
                     await _pace.WaitAsync(ct).ConfigureAwait(false);
                     using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    // File lớn trên mạng chậm: chờ theo cỡ file (tối thiểu Timeout, thêm 1 phút mỗi 10 MB).
                     cts.CancelAfter(_o.Timeout + TimeSpan.FromMinutes(expected / (10.0 * 1024 * 1024)));
                     using var resp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
                     if (Pace.IsThrottle((int)resp.StatusCode))
@@ -397,7 +347,6 @@ public sealed class LibraryClient : IDisposable
         return (Convert.ToHexStringLower(sha.GetHashAndReset()), total);
     }
 
-    /// <summary>Chép và băm; dừng khi vượt cỡ khai báo (server trả file khác, hay vô tận) thay vì tải hết.</summary>
     private static async Task<long> CopyAsync(Stream input, Stream output, IncrementalHash sha, long expected, byte[] buffer, CancellationToken ct)
     {
         long total = 0;
@@ -412,10 +361,6 @@ public sealed class LibraryClient : IDisposable
         return total;
     }
 
-    /// <summary>
-    /// Đặt file tạm vào chỗ thật. Chỗ đó đang là bản app tải trước (manifest, nội dung chưa bị người dùng sửa) thì thay;
-    /// là file khác (của người dùng) thì giữ nguyên và đặt tên mới.
-    /// </summary>
     private static string Place(string tmp, string dest, DownloadRecord? mine)
     {
         if (File.Exists(dest))
@@ -435,12 +380,10 @@ public sealed class LibraryClient : IDisposable
     private static void MarkFromWeb(string path, Uri url)
     {
         if (!OperatingSystem.IsWindows() || url.IsFile) return;
-        // Như file LMS: Office mở ở Protected View, SmartScreen kiểm file chạy được.
         try { File.WriteAllText(path + ":Zone.Identifier", $"[ZoneTransfer]\r\nZoneId=3\r\nHostUrl={url.GetLeftPart(UriPartial.Path)}\r\n"); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException) { }
     }
 
-    /// <summary>Tên file an toàn: chỉ phần tên (không thư mục), bỏ ký tự Windows không cho, không bắt đầu bằng dấu chấm.</summary>
     public static string? SafeFileName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
@@ -464,21 +407,14 @@ public sealed class LibraryClient : IDisposable
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
     }
 
-    // ------------------------------------------------------------------ manifest, mục đã gỡ
-
     public IReadOnlyList<DownloadRecord> Records()
     {
         lock (_manifestGate) return ReadManifest();
     }
 
-    /// <summary>File của mục đã tải về và vẫn còn trên máy.</summary>
     public IReadOnlyList<string> DownloadedFiles(string courseId, string itemId) =>
         [.. Records().Where(r => r.Course == courseId && r.Item == itemId && File.Exists(r.Path)).Select(r => r.Path)];
 
-    /// <summary>
-    /// Bản trên máy của mục so với thư viện: có file nào sha256 khác, ngày updated mới hơn lúc tải, hay thư viện thêm file mới thì
-    /// là có bản mới. Chỉ xét file app đã tải (manifest) và còn trên máy.
-    /// </summary>
     public ItemLocal LocalState(string courseId, LibraryItem item)
     {
         var recs = Records().Where(r => r.Course == courseId && r.Item == item.Id && File.Exists(r.Path)).ToList();
@@ -503,10 +439,6 @@ public sealed class LibraryClient : IDisposable
         }
     }
 
-    /// <summary>
-    /// Mục bị gỡ trên thư viện (removed: true): xóa bản app đã tải của mục đó, chỉ khi file vẫn đúng nội dung lúc tải (người dùng
-    /// sửa rồi thì coi là file của người dùng, chỉ bỏ khỏi manifest). Trả về các file đã xóa.
-    /// </summary>
     public IReadOnlyList<string> ApplyRemovals(CourseDetail detail)
     {
         var gone = (detail.Items ?? []).Where(i => i.Removed).Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
@@ -530,7 +462,6 @@ public sealed class LibraryClient : IDisposable
                 }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                 {
-                    // File đang mở: giữ trong manifest để lần sau xóa tiếp.
                     _log?.Invoke($"Thư viện: chưa xóa được {Path.GetFileName(r.Path)}: {e.Message}");
                     keep.Add(r);
                 }

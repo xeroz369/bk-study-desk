@@ -3,17 +3,11 @@ using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using SoHocTap.Core;
-using SoHocTap.Data;
 
 namespace SoHocTap.Files;
 
-/// <summary>Tên môn chính thức lấy từ tên lớp LMS: môn, mã môn, phần phụ (Thí nghiệm, Bài tập, BTL).</summary>
 public sealed record SubjectName(string Subject, string Code, string? Part);
 
-/// <summary>
-/// Xếp tài liệu theo môn: &lt;Study&gt;/&lt;folders.subjects&gt;/&lt;Tên môn&gt;/…
-/// Không xóa file của người dùng: trùng nội dung thì chuyển vào lưu trữ trùng lặp; trùng tên mà khác nội dung thì thêm " (bản dd-MM-yyyy)".
-/// </summary>
 public static partial class Organizer
 {
     public static string SubjectsRoot => Config.Folder("subjects");
@@ -29,7 +23,6 @@ public static partial class Organizer
         name = NameMatch.Nfc(name);
         if (Directory.Exists(SubjectsRoot))
         {
-            // Thư mục trên đĩa có thể ở dạng NFD (giải nén từ zip tạo trên macOS): so theo NFC trước, rồi mới so bỏ dấu.
             var dirs = Directory.GetDirectories(SubjectsRoot).Select(d => Path.GetFileName(d)!).ToList();
             var existing = dirs.FirstOrDefault(d => NameMatch.Same(d, name)) ?? dirs.FirstOrDefault(d => NameMatch.SameFolded(d, name));
             if (existing is not null) return existing;
@@ -37,7 +30,6 @@ public static partial class Organizer
         return name;
     }
 
-    /// <summary>"Tên môn (Thí nghiệm) (AB1234)_GV (CQ_HK251) [L01]" → (Tên môn, AB1234, Thí nghiệm).</summary>
     public static SubjectName? SubjectOf(string fullname)
     {
         var m = CourseRx().Match(fullname);
@@ -57,20 +49,14 @@ public static partial class Organizer
         return new SubjectName(SafeFolderName(Canonical(baseName)), code, part);
     }
 
-    /// <summary>
-    /// Lớp kho chung của môn trên LMS ("Kỹ thuật số (EE1009)_Video"): không thuộc học kỳ nào, chứa đề cương, đề cũ, video bài giảng của
-    /// mọi lớp. Phần là "Kho chung" (lớp thí nghiệm thì "Thí nghiệm (kho chung)") để tài liệu nằm riêng một thư mục trong môn.
-    /// </summary>
     public static string? SharedPart(string fullname, string? part, string marker) =>
         marker.Length == 0 || !fullname.Contains(marker, StringComparison.OrdinalIgnoreCase) ? part
             : part is null ? SharedName : $"{part} ({SharedName.ToLowerInvariant()})";
 
     public const string SharedName = "Kho chung";
 
-    /// <summary>Phần của lớp là kho chung (SharedPart).</summary>
     public static bool IsShared(string? part) => part is not null && part.Contains(SharedName, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Tên môn lấy từ LMS dùng làm tên thư mục: bỏ ký tự Windows không cho phép, không cho "." hay "..".</summary>
     internal static string SafeFolderName(string name)
     {
         var s = new string(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray()).Trim().TrimEnd('.');
@@ -82,8 +68,6 @@ public static partial class Organizer
         var m = TermRx().Match(fullname);
         return m.Success ? "HK" + m.Groups[1].Value : "";
     }
-
-    // ------------------------------------------------------------------ hash nội dung file (có cache)
 
     private static readonly object HashGate = new();
     private static JsonObject? _hashCache;
@@ -109,7 +93,6 @@ public static partial class Organizer
         lock (HashGate) { if (_hashCache is not null) JsonStore.Write(HashCachePath, _hashCache); }
     }
 
-    /// <summary>Map hash → path cho mọi file trong một thư mục môn (bỏ file, thư mục rác: JunkFilter).</summary>
     public static Dictionary<string, string> HashesIn(string folder)
     {
         var map = new Dictionary<string, string>();
@@ -123,7 +106,6 @@ public static partial class Organizer
 
     public static void MoveFile(string src, string dest) => FileOps.MoveFile(src, dest);
 
-    /// <summary>Đưa một file vào môn; trùng nội dung thì chuyển vào lưu trữ trùng lặp. Trả về path cuối cùng, hoặc null nếu là bản trùng.</summary>
     public static string? PlaceFile(string src, string dest, Dictionary<string, string> known, string archiveRelative)
     {
         var h = Sha256(src);
@@ -138,24 +120,16 @@ public static partial class Organizer
         return final;
     }
 
-    /// <summary>Xóa folder rỗng. CHỈ dùng cho folder do chính app vừa tạo.</summary>
     public static void RemoveIfEmpty(string folder)
     {
         if (Directory.Exists(folder) && !Directory.EnumerateFileSystemEntries(folder).Any()) Directory.Delete(folder);
     }
-
-    // ------------------------------------------------------------------ giải nén (7-Zip)
 
     public static bool IsArchive(string path) =>
         Config.List("archives.extensions").Any(e => path.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
     private static string? SevenZip() => Config.List("archives.sevenZip").FirstOrDefault(File.Exists);
 
-    /// <summary>
-    /// Giải nén vào folder cùng tên nằm bên cạnh, bỏ lớp folder bọc ngoài; file trùng nội dung thì chuyển vào lưu trữ.
-    /// Nếu đã có folder cùng tên thì so nội dung (tên file trong zip có thể bị mất dấu); đủ hết rồi thì chỉ cất file nén đi.
-    /// Trả về (folder đích hoặc null, chỗ cất file nén gốc), hoặc null nếu bỏ qua.
-    /// </summary>
     public static (string? Folder, string Archived)? ExtractArchive(string path, Dictionary<string, string>? known, Action<string> log)
     {
         if (Config.List("archives.skip").Any(s => path.Contains(s, StringComparison.OrdinalIgnoreCase))) return null;
@@ -166,7 +140,6 @@ public static partial class Organizer
         var tmp = Path.Combine(Paths.Data, "tmp", "unz-" + Guid.NewGuid().ToString("N"));
         try
         {
-            // Zip bomb: xem tổng dung lượng khai trong file nén trước khi giải (archives.maxMB, mặc định 2048 MB).
             var limit = Settings.Archives.MaxMB * 1024L * 1024;
             if (ListSize(exe, path) is not { } size || size > limit)
             {
@@ -180,7 +153,6 @@ public static partial class Organizer
                 var have = HashesIn(dest).Keys.ToHashSet();
                 if (inside.Count == 0 || !inside.All(f => have.Contains(Sha256(f))))
                 {
-                    // Không giải đè lên thư mục người dùng có thể đã sửa: giữ nguyên cả hai, ghi lại để biết vì sao không thấy bản giải nén.
                     Log.Info($"Bỏ qua giải nén {Path.GetFileName(path)}: đã có thư mục {Paths.RelativeToStudy(dest)} với nội dung khác");
                     log($"  bỏ qua giải nén {Path.GetFileName(path)}: đã có thư mục cùng tên với nội dung khác");
                     return null;
@@ -207,7 +179,6 @@ public static partial class Organizer
         }
     }
 
-    /// <summary>Duyệt file sau khi giải nén: bỏ qua symlink và junction (file nén có thể chứa link trỏ ra ngoài thư mục tạm).</summary>
     private static readonly EnumerationOptions NoLinks = new()
     {
         RecurseSubdirectories = true,
@@ -215,7 +186,6 @@ public static partial class Organizer
         IgnoreInaccessible = true,
     };
 
-    /// <summary>Tổng dung lượng sau giải nén theo danh sách của 7-Zip (`7z l -slt`); null nếu không đọc được.</summary>
     private static long? ListSize(string exe, string archive)
     {
         var psi = new ProcessStartInfo(exe) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
@@ -232,7 +202,6 @@ public static partial class Organizer
     private static bool Run7z(string exe, string archive, string outDir)
     {
         var psi = new ProcessStartInfo(exe) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-        // -snz: file giải nén mang theo dấu "tải từ Internet" (Zone.Identifier) của file nén, để SmartScreen/Protected View vẫn chặn.
         foreach (var a in new[] { "x", "-y", "-snz", "-bso0", "-bsp0", "-o" + outDir, archive }) psi.ArgumentList.Add(a);
         using var p = Process.Start(psi)!;
         p.StandardOutput.ReadToEnd();
@@ -247,22 +216,15 @@ public static partial class Organizer
         return dest;
     }
 
-    // ------------------------------------------------------------------ nhận file từ thư mục Tải xuống
-
-    /// <summary>One file to move from Downloads: source path, subject folder name, destination path.</summary>
     public sealed record DownloadMove(string Source, string Subject, string Dest);
 
-    /// <summary>Result of a move: moved, duplicates (sent to the duplicates archive), failed with reason.</summary>
     public sealed record DownloadResult(int Moved, int Duplicates, IReadOnlyList<(string File, string Error)> Failed);
 
     public static string DownloadsFolder =>
         Environment.ExpandEnvironmentVariables(Config.Str("downloads.folder").Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
 
-    /// <summary>Tên môn và mã môn đã biết (lấy từ data LMS và các thư mục môn).</summary>
     private static Dictionary<string, HashSet<string>> KnownSubjects()
     {
-        // Khóa so theo NFC: tên thư mục trên đĩa (có thể NFD) và tên môn từ LMS là một môn. Thư mục trên đĩa thêm trước để giữ đúng
-        // tên trên đĩa (NTFS coi NFC và NFD là hai tên khác nhau, dùng tên LMS thì tạo thêm một thư mục trùng).
         var map = new Dictionary<string, HashSet<string>>(NameMatch.NfcIgnoreCase);
         if (Directory.Exists(SubjectsRoot))
             foreach (var d in Directory.GetDirectories(SubjectsRoot))
@@ -276,19 +238,15 @@ public static partial class Organizer
         return map;
     }
 
-    // Skip helper folders ("_Lưu trữ", ".git") and names too short to match safely.
     public static bool IsSubjectFolder(string name) => name.Length >= 4 && name[0] is not ('_' or '.');
 
-    // Tên file tải về hay mất dấu hoặc ở dạng NFD: so bỏ dấu.
     internal static string? MatchSubject(string name, Dictionary<string, HashSet<string>> subjects) =>
         subjects.Where(kv => kv.Value.Any(c => name.Contains(c, StringComparison.OrdinalIgnoreCase)) || NameMatch.ContainsFolded(name, kv.Key))
                 .Select(kv => kv.Key).OrderByDescending(s => s.Length).FirstOrDefault();
 
-    /// <summary>Danh sách file trong Tải xuống sẽ chuyển (khớp tên hoặc mã môn). Chỉ đọc, không chuyển gì.</summary>
     public static List<DownloadMove> PlanDownloads() =>
         PlanDownloads(DownloadsFolder, SubjectsRoot, Config.Str("folders.downloadsSubfolder"), Config.List("downloads.extensions"), KnownSubjects());
 
-    /// <summary>Pure planner: a matching file, or every allowed file inside a matching folder (links skipped).</summary>
     public static List<DownloadMove> PlanDownloads(string folder, string subjectsRoot, string subfolder,
         IReadOnlyCollection<string> exts, Dictionary<string, HashSet<string>> subjects)
     {
@@ -305,7 +263,6 @@ public static partial class Organizer
         return plan;
     }
 
-    /// <summary>Chuyển theo danh sách đã kiểm; lỗi từng file (đang mở, bị khóa) không dừng các file khác. Ghi log số file và lỗi.</summary>
     public static DownloadResult MoveDownloads(IReadOnlyList<DownloadMove> plan)
     {
         var folder = DownloadsFolder;
@@ -322,7 +279,6 @@ public static partial class Organizer
         return result;
     }
 
-    /// <summary>Move core: <paramref name="place"/> returns false for a duplicate. Empty matched folders in Downloads are removed.</summary>
     public static DownloadResult MoveDownloads(IReadOnlyList<DownloadMove> plan, string folder, Func<DownloadMove, bool> place)
     {
         int moved = 0, dup = 0;
@@ -334,7 +290,6 @@ public static partial class Organizer
             try { if (place(m)) moved++; else dup++; }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failed.Add((name, e.Message)); }
         }
-        // Only the top folders this plan came from, and only when empty.
         var tops = plan.Select(m => Path.GetRelativePath(folder, m.Source).Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
                        .Where(p => p.Length > 1).Select(p => Path.Combine(folder, p[0])).Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var top in tops)
@@ -343,7 +298,6 @@ public static partial class Organizer
         return new(moved, dup, failed);
     }
 
-    /// <summary>Dọn cây folder trong Tải xuống sau khi đã chuyển hết file (chỉ gọi cho folder app vừa xử lý).</summary>
     private static void RemoveEmptyTree(string root)
     {
         foreach (var d in Directory.GetDirectories(root, "*", SearchOption.AllDirectories).OrderByDescending(d => d.Length)) RemoveIfEmpty(d);

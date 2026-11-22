@@ -7,10 +7,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>
-/// Thi thử: hiện từng câu, lưới số câu, đồng hồ theo hạn chót (hết giờ tự nộp), nộp bấm hai lần, xem lại sau khi nộp.
-/// Chấm và ghi kết quả ở <see cref="ExamSession"/>; view giữ câu đang xem.
-/// </summary>
 public partial class ExamView : UserControl
 {
     private const string Letters = "ABCDEFGH";
@@ -19,10 +15,8 @@ public partial class ExamView : UserControl
 
     public event Action? BackRequested;
 
-    /// <summary>Mở tab Kết quả của trang chính.</summary>
     public event Action? HistoryRequested;
 
-    /// <summary>Đã nộp (để host ghi kết quả ngay).</summary>
     public event Action? Finished;
 
     private readonly ExamSession _session = null!;
@@ -54,7 +48,6 @@ public partial class ExamView : UserControl
         _tick.Tick += (_, _) => Tick();
         _disarm.Tick += (_, _) => Disarm();
         Columns.SizeChanged += (_, _) => Layout(Columns.Bounds.Width);
-        // Đồng hồ chỉ chạy khi màn đang hiện; rời màn (sang trang khác) vẫn tính theo hạn chót nên quay lại không lệch giờ.
         AttachedToVisualTree += (_, _) => { if (_session.Result is null) _tick.Start(); Tick(); };
         DetachedFromVisualTree += (_, _) => _tick.Stop();
         Tick();
@@ -71,7 +64,6 @@ public partial class ExamView : UserControl
         if (_session.Expired) Finish();
     }
 
-    // Hai cột khi đủ chỗ, không thì lưới số câu xuống dưới (như trang Hôm nay).
     private void Layout(double width)
     {
         var two = width >= (double)this.FindResource("MainMinWidth")! + 24 + (double)this.FindResource("SideMinWidth")!;
@@ -144,7 +136,6 @@ public partial class ExamView : UserControl
         MarkGrid();
     }
 
-    // Sau khi nộp: ghi "đáp án đúng" cạnh phương án đúng, "bạn chọn" cạnh phương án đã chọn mà sai.
     private static TextBlock? Mark(Question q, int k, Answer? picked)
     {
         var right = Grade.QType(q) == "multi" ? (q.Answers ?? []).Contains(k) : k == q.Answer;
@@ -196,7 +187,6 @@ public partial class ExamView : UserControl
 
     private void OnChoice(object? sender, RoutedEventArgs e)
     {
-        // RadioButton bỏ chọn cái cũ cũng báo đổi: chỉ ghi khi có phương án được chọn, hoặc khi bỏ tick (multi).
         if (_showing || (sender is RadioButton r && r.IsChecked != true)) return;
         Pick();
     }
@@ -213,7 +203,6 @@ public partial class ExamView : UserControl
         Show(_index);
     }
 
-    /// <summary>Chọn sẵn vài đáp án (chụp kiểm tra lưới số câu có câu đã làm).</summary>
     internal void Demo(params (int Question, int Option)[] picks)
     {
         foreach (var (q, o) in picks)
@@ -221,7 +210,6 @@ public partial class ExamView : UserControl
         Show(_index);
     }
 
-    /// <summary>Nộp luôn (chụp kiểm tra màn xem lại).</summary>
     internal void DemoFinish() => Finish();
 
     private void Disarm()

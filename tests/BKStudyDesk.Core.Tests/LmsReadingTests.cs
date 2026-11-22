@@ -2,7 +2,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>LmsReading: HTML của bài thông báo, tin nhắn LMS thành đoạn chữ và link, đọc offline.</summary>
 public class LmsReadingTests
 {
     [Fact]

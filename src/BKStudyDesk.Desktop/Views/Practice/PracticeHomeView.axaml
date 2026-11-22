@@ -1,5 +1,3 @@
-<!-- Trang chính Luyện tập (spec mục 6): đầu trang, 4 tab Hôm nay, Môn học, Quiz của bạn, Kết quả.
-     Dữ liệu: Core/Presentation/Practice/Pages/PracticeHome.cs. Khung, thẻ, dòng: design-system/bk mục 4. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
@@ -25,7 +23,6 @@
                 <ItemsControl ItemsSource="{Binding Lessons}" ItemTemplate="{StaticResource LessonRow}" />
             </StackPanel>
         </DataTemplate>
-        <!-- Thẻ một môn: Expander có sẵn của Fluent để thu gọn khi có nhiều môn; môn đã thu gọn nhớ ở practice.collapsed (OnCourseLoaded). -->
         <DataTemplate x:Key="CourseCard" x:DataType="p:PracticeCourseRow">
             <Border Classes="card">
                 <Expander Classes="flat" Tag="{Binding Id}" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0"
@@ -97,7 +94,6 @@
 
     <StackPanel x:Name="RootPanel" Spacing="16">
         <DockPanel x:Name="HeaderBar">
-            <!-- Trang tĩnh của sổ (ví dụ Lộ trình ôn), mỗi trang một nút. -->
             <ItemsControl DockPanel.Dock="Right" VerticalAlignment="Top" ItemsSource="{Binding Pages}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
@@ -110,7 +106,6 @@
             </StackPanel>
         </DockPanel>
 
-        <!-- Lỗi nạp (design-system/bk mục 6): vấn đề, cách xử lý, nút Thử lại; phần nạp được vẫn dùng bình thường. -->
         <Border x:Name="ErrorCard" Classes="card" IsVisible="False">
             <DockPanel Margin="16,12">
                 <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" Content="{l:T practice.retry}" Click="OnRetry" />
@@ -179,7 +174,6 @@
             <TabItem x:Name="CoursesTab" Header="{l:T practice.tab.courses}">
                 <StackPanel x:Name="CoursesPanel" Margin="0,16,0,0" Spacing="16">
                     <TextBlock x:Name="CoursesEmpty" Classes="empty" Text="{l:T practice.empty.courses}" />
-                    <!-- Lọc bài (PracticeHome.Filter), mở hay thu gọn mọi môn một lần -->
                     <DockPanel x:Name="CoursesBar">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0">
                             <Button Content="{l:T practice.courses.expandAll}" Click="OnExpandAll" />
@@ -208,10 +202,8 @@
                         <TextBlock x:Name="QuizzesEmpty" Classes="empty" Text="{l:T practice.empty.quizzes}" />
                     </StackPanel>
                 </Border>
-                <!-- Kho quiz LMS (port QuizArchive.svelte): quiz đã nộp trên LMS, lưu sau mỗi lần đồng bộ. -->
                 <Border Classes="card">
                     <StackPanel>
-                        <!-- How the archive works: tooltip on the header instead of a paragraph. -->
                         <Border Classes="card-head" ToolTip.Tip="{l:T practice.archive.hint}"><DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                 <ToggleSwitch x:Name="AutoSave" OnContent="{l:T practice.archive.autoSave}" OffContent="{l:T practice.archive.autoSave}" IsCheckedChanged="OnAutoSave" />
@@ -262,7 +254,6 @@
                 </StackPanel>
             </TabItem>
         </TabControl>
-        <!-- Inside a subject card: only that course, no sub-tabs (SetEmbedded moves CoursesPanel here). -->
         <ContentControl x:Name="EmbeddedSlot" IsVisible="False" />
     </StackPanel>
 </UserControl>

@@ -17,13 +17,12 @@ public class SyncStatusTests
     {
         var bar = SyncStatus.Progress([(true, P(200)), (true, P(600)), (false, null)]);
         Assert.True(bar.Visible);
-        Assert.Equal(0.4, bar.Fraction!.Value, 3);   // trung bình các nguồn đang chạy
+        Assert.Equal(0.4, bar.Fraction!.Value, 3);
     }
 
     [Fact]
     public void Bar_is_indeterminate_while_a_source_has_no_total_yet()
     {
-        // Đang mở trang MyBK, qua SSO: chưa biết tổng nên chạy vô định, không đứng yên ở 0%.
         Assert.Null(SyncStatus.Progress([(true, P(500)), (true, P(null))]).Fraction);
         Assert.Null(SyncStatus.Progress([(true, null)]).Fraction);
     }

@@ -78,7 +78,6 @@ public sealed class ContentLibraryTests : IDisposable
         Assert.Equal("Lộ trình", Assert.Single(study.Manifest.Pages!).Title);
     }
 
-    // Fingerprint tính trên HTML chưa lọc (như bản TS với content/*.js): lọc đổi "<" thành &lt; sẽ làm khác chữ băm.
     [Fact]
     public void Fingerprint_before_sanitize()
     {
@@ -88,7 +87,7 @@ public sealed class ContentLibraryTests : IDisposable
         var q = study.Lessons["ppt-02"].Questions![0];
         var raw = StudyMarkdown.Parse(File.ReadAllText(Path.Combine(Content, "ppt", "ppt-02.md")), validate: false).Pack.Units[0].Lessons[0].Questions![0];
         Assert.Equal(Fingerprint.Of("single", raw.Prompt, raw.Options, null, null), q.Fp);
-        Assert.Contains("&lt;", q.Prompt);   // hiển thị: đã lọc, "<" được escape
+        Assert.Contains("&lt;", q.Prompt);
     }
 
     [Fact]
@@ -102,7 +101,6 @@ public sealed class ContentLibraryTests : IDisposable
         Assert.Single(study.Manifest.Courses);
     }
 
-    // Nội dung riêng (content/ của người dùng): .ids.json do content-to-md.mjs ghi bằng bản TS trên file .js gốc.
     [Fact]
     public void Private_content_keeps_ids_and_fingerprints()
     {

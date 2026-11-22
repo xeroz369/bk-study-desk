@@ -5,11 +5,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Platform;
 
-/// <summary>
-/// Nhớ vị trí, cỡ, trạng thái phóng to của cửa sổ chính và trang đang xem (data/window.json, cùng file và cùng đơn vị DIP với 1.x,
-/// Shell/WindowPlacement). Mở lại thì kẹp vào vùng làm việc của màn hình đang chứa vị trí đã lưu (ScreenFit.Clamp): màn hình phụ đã rút
-/// thì cửa sổ được kéo vào màn hình còn lại, không mất ngoài vùng nhìn.
-/// </summary>
 internal sealed class WindowPlacement
 {
     public double X { get; set; } = double.NaN;
@@ -17,7 +12,6 @@ internal sealed class WindowPlacement
     public double Width { get; set; } = double.NaN;
     public double Height { get; set; } = double.NaN;
     public bool Maximized { get; set; }
-    /// <summary>Route của trang đang mở lúc đóng app ("lich", "thu-vien"...), lần sau mở lại đúng trang đó.</summary>
     public string Page { get; set; } = "";
 
     private static string FilePath => Paths.DataFile("window.json");
@@ -35,10 +29,6 @@ internal sealed class WindowPlacement
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Lưu vị trí cửa sổ: {e.Message}"); }
     }
 
-    /// <summary>
-    /// Cửa sổ phụ (Đăng nhập, Tải tài liệu, Sự kiện...) lúc vừa mở: cỡ trong XAML là cỡ mong muốn, kẹp vào vùng làm việc của màn hình
-    /// đang chứa nó (DIP, theo tỉ lệ phóng của màn hình đó) như cửa sổ chính, không để mép dưới lọt khỏi màn hình nhỏ hay phóng to.
-    /// </summary>
     public static void FitDialog(Window w)
     {
         if ((w.Screens.ScreenFromWindow(w) ?? w.Screens.Primary) is not { } screen) return;
@@ -51,12 +41,10 @@ internal sealed class WindowPlacement
         w.Position = new PixelPoint((int)Math.Round(fit.X * s), (int)Math.Round(fit.Y * s));
     }
 
-    /// <summary>Trước khi hiện cửa sổ. Lần đầu (chưa lưu) thì giữ cỡ trong XAML, căn giữa màn hình, không lớn hơn vùng làm việc.</summary>
     public void Apply(Window w)
     {
         var known = !double.IsNaN(X) && !double.IsNaN(Y) && !double.IsNaN(Width) && !double.IsNaN(Height);
         var size = known ? new Box(X, Y, Width, Height) : new Box(0, 0, w.Width, w.Height);
-        // Màn hình chứa góc trên trái đã lưu (so theo DIP của từng màn hình); không còn màn hình đó thì màn hình chính.
         var screen = (known ? w.Screens.All.FirstOrDefault(sc =>
         {
             var (b, s) = (sc.Bounds, sc.Scaling);
@@ -81,13 +69,8 @@ internal sealed class WindowPlacement
 
     private PixelPoint? _moved;
 
-    /// <summary>
-    /// Theo dõi vị trí: Window.Position của Avalonia không đổi theo khi người dùng kéo cửa sổ (đo trên Windows 11: dời tới 300,200 mà
-    /// Position vẫn 0,0), nên lấy từ PositionChanged, chỉ khi cửa sổ ở trạng thái bình thường.
-    /// </summary>
     public void Track(Window w) => w.PositionChanged += (_, e) => { if (w.WindowState == WindowState.Normal) _moved = e.Point; };
 
-    /// <summary>Lúc đóng hay thu xuống khay. Đang phóng to thì giữ cỡ, vị trí bình thường lần trước (khôi phục về đúng chỗ đó).</summary>
     public void Capture(Window w, string page)
     {
         Page = page;

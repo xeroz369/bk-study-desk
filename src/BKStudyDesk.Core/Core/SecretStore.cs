@@ -6,20 +6,10 @@ using System.Text.Json.Nodes;
 
 namespace SoHocTap.Core;
 
-/// <summary>
-/// Lưu secret (token LMS) và khóa ACL thư mục data.
-/// <list type="bullet">
-/// <item>Secret được encrypt bằng DPAPI theo user hiện tại: chép file sang máy khác hay tài khoản Windows khác thì không decrypt được.</item>
-/// <item>Thư mục data\ chỉ cho tài khoản Windows đang dùng, SYSTEM và Administrators (bỏ quyền kế thừa kiểu Everyone của ổ đĩa).</item>
-/// </list>
-/// Giới hạn: malware chạy dưới chính tài khoản này vẫn đọc được (app Windows nào cũng vậy);
-/// class này chỉ chặn user khác trên máy, bản backup, file bị chép đi. Logout trong Cài đặt sẽ xóa sạch session.
-/// </summary>
 public static class SecretStore
 {
     private static readonly byte[] Entropy = "HCMUT.StudyDesk.secret.v1"u8.ToArray();
 
-    /// <summary>Đọc secret. File cũ còn là JSON thường thì đọc xong encrypt lại luôn. Không decrypt được (máy/tài khoản khác) thì trả null.</summary>
     public static JsonObject? Read(string path)
     {
         if (!File.Exists(path)) return null;
@@ -29,7 +19,7 @@ public static class SecretStore
             if (bytes.Length > 0 && bytes[0] == (byte)'{')
             {
                 var plain = JsonNode.Parse(bytes) as JsonObject;
-                if (plain is not null && OperatingSystem.IsWindows()) Write(path, plain);   // encrypt lại file cũ
+                if (plain is not null && OperatingSystem.IsWindows()) Write(path, plain);
                 return plain;
             }
             if (!OperatingSystem.IsWindows()) return null;
@@ -48,7 +38,6 @@ public static class SecretStore
         var dir = Path.GetDirectoryName(path)!;
         Directory.CreateDirectory(dir);
         var json = Encoding.UTF8.GetBytes(value.ToJsonString());
-        // Linux/macOS (bản đa nền tảng, đang làm): tạm lưu JSON với quyền 600; sẽ chuyển sang Keychain / libsecret (PLAN-DA-NEN-TANG.md).
         var bytes = OperatingSystem.IsWindows() ? ProtectedData.Protect(json, Entropy, DataProtectionScope.CurrentUser) : json;
         var tmp = path + ".tmp";
         File.WriteAllBytes(tmp, bytes);
@@ -56,10 +45,6 @@ public static class SecretStore
         File.Move(tmp, path, overwrite: true);
     }
 
-    /// <summary>
-    /// Chỉ cho tài khoản hiện tại (+ SYSTEM, Administrators) vào thư mục; folder con và file kế thừa ACL này.
-    /// ACL đã đúng thì thôi. Ổ không hỗ trợ ACL (FAT, USB) thì bỏ qua.
-    /// </summary>
     public static void Lockdown(string dir)
     {
         try
@@ -67,7 +52,7 @@ public static class SecretStore
             Directory.CreateDirectory(dir);
             if (!OperatingSystem.IsWindows())
             {
-                File.SetUnixFileMode(dir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);   // chmod 700
+                File.SetUnixFileMode(dir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
                 return;
             }
             var info = new DirectoryInfo(dir);

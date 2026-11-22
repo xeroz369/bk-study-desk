@@ -3,10 +3,6 @@ using SoHocTap.Api;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>
-/// Đọc ghi <c>ket-qua.json</c> qua <see cref="ApiRouter"/> của 1.x (gọi thẳng, không qua HTTP): cùng file, cùng kiểm tra cỡ,
-/// cùng bản backup mỗi ngày như khung Luyện tập cũ.
-/// </summary>
 public sealed class ApiProgressStorage(ApiRouter router) : IProgressStorage
 {
     private static readonly IReadOnlyDictionary<string, string> NoQuery = new Dictionary<string, string>();

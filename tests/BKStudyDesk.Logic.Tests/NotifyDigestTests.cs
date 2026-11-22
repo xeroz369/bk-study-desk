@@ -28,10 +28,10 @@ public class NotifyDigestTests
     public void GateOpen_OncePerSlot()
     {
         int[] slots = [7 * 60, 12 * 60, 19 * 60];
-        Assert.True(NotifyDigest.GateOpen(At(6, 13), slots, lastDigest: At(6, 7, 5)));    // 12:00 đã tới, chưa gom
-        Assert.False(NotifyDigest.GateOpen(At(6, 13), slots, lastDigest: At(6, 12, 5)));  // đã gom lúc 12:05
-        Assert.True(NotifyDigest.GateOpen(At(7, 7, 1), slots, lastDigest: At(6, 19, 2))); // qua ngày: 07:00 hôm sau
-        Assert.False(NotifyDigest.GateOpen(At(7, 6), slots, lastDigest: At(6, 19, 2)));   // trước 07:00, slot gần nhất là 19:00 hôm qua đã gom
+        Assert.True(NotifyDigest.GateOpen(At(6, 13), slots, lastDigest: At(6, 7, 5)));
+        Assert.False(NotifyDigest.GateOpen(At(6, 13), slots, lastDigest: At(6, 12, 5)));
+        Assert.True(NotifyDigest.GateOpen(At(7, 7, 1), slots, lastDigest: At(6, 19, 2)));
+        Assert.False(NotifyDigest.GateOpen(At(7, 6), slots, lastDigest: At(6, 19, 2)));
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class NotifyDigestTests
     {
         Assert.Equal(At(7, 7), NotifyDigest.NextMorning(At(6, 21), 7 * 60));
         Assert.Equal(At(6, 7), NotifyDigest.NextMorning(At(6, 2), 7 * 60));
-        Assert.Equal(At(7, 7), NotifyDigest.NextMorning(At(6, 7), 7 * 60));   // đúng 7 giờ: sáng mai
+        Assert.Equal(At(7, 7), NotifyDigest.NextMorning(At(6, 7), 7 * 60));
     }
 
     [Fact]
@@ -64,6 +64,6 @@ public partial class RemindersTests
         Assert.Empty(fresh);
         Assert.Contains("lms:h1", ledger["seen"]!.AsArray().Select(x => x!.ToString()));
         (fresh, _) = Reminders.Pick([Item("h1", 20)], Stages, Now, ledger);
-        Assert.Single(fresh);   // tới giờ gom thì vẫn được nhắc, không bị coi là đã nhắc
+        Assert.Single(fresh);
     }
 }

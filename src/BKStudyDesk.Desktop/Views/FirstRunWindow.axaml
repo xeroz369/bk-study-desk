@@ -1,5 +1,3 @@
-<!-- Câu hỏi lần đầu mở app (bản 1.x: Ui/FolderSetupWindow, phần hỏi chế độ của Ui/UpdateWindow). Một cửa sổ, hai dạng: chọn nơi lưu tài liệu,
-     hay chọn chế độ cập nhật. Logic ở Presentation/FirstRun.cs; chữ ở lang/*.json. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"

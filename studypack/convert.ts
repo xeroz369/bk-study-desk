@@ -1,6 +1,3 @@
-// Convert between pack JSON and Study Markdown (.md, or .zip when there are images).
-//   node studypack/convert.ts <in.studypack.json> [out.md|out.zip]
-//   node studypack/convert.ts <in.md|in.zip> [out.studypack.json]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { strToU8, unzipSync, zipSync, strFromU8 } from 'fflate';
 import { parseMarkdown, writeMarkdown } from './lib/markdown.ts';

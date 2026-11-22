@@ -1,38 +1,26 @@
-using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation;
 
-/// <summary>Một hội thoại trong danh sách bên trái trang Tin nhắn. Preview: tin cuối, một dòng.</summary>
 public sealed record ConversationRow(long Id, string Name, string Preview, string When, int Unread, long LastTime)
 {
     public bool HasUnread => Unread > 0;
     public string UnreadText => Unread > 0 ? Unread.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
 }
 
-/// <summary>Một tin trong hội thoại. Who: tên người gửi, tin của mình thì là "Bạn".</summary>
 public sealed record MessageRow(string Who, string When, bool Mine, IReadOnlyList<string> Paragraphs, IReadOnlyList<LmsLink> Links,
     IReadOnlyList<ReadingBlock>? Blocks = null);
 
-/// <summary>Một mục trong khung hội thoại kiểu LMS: vạch ngày hay một nhóm tin liền nhau của cùng một người.</summary>
 public abstract record ThreadItem;
 
-/// <summary>Vạch ngăn ngày: "Hôm nay", "Hôm qua", "Thứ hai 26/10" (năm khác thì thêm năm).</summary>
 public sealed record ThreadDay(string Text) : ThreadItem;
 
-/// <summary>Các tin liền nhau của cùng một người trong cùng ngày, cách nhau không quá 30 phút: tên ghi một lần, mỗi tin ghi giờ.</summary>
 public sealed record ThreadGroup(string Who, bool Mine, IReadOnlyList<ThreadMessage> Messages) : ThreadItem;
 
 public sealed record ThreadMessage(long Time, string Hm, IReadOnlyList<ReadingBlock> Blocks);
 
-/// <summary>
-/// Trang Tin nhắn: tin nhắn riêng trên LMS đã lưu (data/lms-messages.json), đọc được khi LMS sập. Chỉ đọc: trả lời trên LMS.
-/// Hội thoại mới nhất lên đầu; tin trong hội thoại theo thời gian, cũ trước.
-/// </summary>
 public static class MessagesPresenter
 {
-    /// <param name="index">Chữ đã bỏ dấu của từng hội thoại (<see cref="SearchIndex"/>): dựng một lần mỗi lần đọc file, không dựng lại mỗi phím gõ.</param>
     public static IReadOnlyList<ConversationRow> Rows(LmsMessages? data, string filter = "", IReadOnlyDictionary<long, string>? index = null)
     {
         var rows = (data?.Conversations ?? [])
@@ -44,7 +32,6 @@ public static class MessagesPresenter
         return [.. rows.Where(r => index.TryGetValue(r.Id, out var text) && text.Contains(f, StringComparison.Ordinal))];
     }
 
-    /// <summary>Tên và chữ (đã bỏ thẻ HTML, bỏ dấu) của từng hội thoại, để lọc: gõ "div" không khớp mọi tin vì thẻ HTML.</summary>
     public static IReadOnlyDictionary<long, string> SearchIndex(LmsMessages? data) =>
         (data?.Conversations ?? []).GroupBy(c => c.Id).ToDictionary(g => g.Key, g => Files.NameMatch.Fold(string.Join(" ",
             g.SelectMany(c => new[] { c.Name, string.Join(" ", c.Members) }.Concat(c.Messages.SelectMany(m => LmsReading.Paragraphs(m.Text)))))));
@@ -54,13 +41,8 @@ public static class MessagesPresenter
             m.Mine == true ? L.T("messages.you") : m.FromName ?? c.Name, Format.DateTime(m.Time), m.Mine == true,
             LmsReading.Paragraphs(m.Text), [.. LmsReading.Links(m.Text).Select(LmsReading.Browsable)], LmsReading.Blocks(m.Text)))];
 
-    /// <summary>Hai tin cách nhau quá bấy nhiêu giây thì tách nhóm, dù cùng người gửi.</summary>
     public const long GroupGap = 30 * 60;
 
-    /// <summary>
-    /// Khung hội thoại như trên LMS: <paramref name="last"/> tin mới nhất (cũ trước), vạch ngăn mỗi ngày, tin liền nhau của cùng
-    /// một người gộp nhóm. Older: số tin cũ hơn chưa hiện (nút Xem tin cũ hơn).
-    /// </summary>
     public static (IReadOnlyList<ThreadItem> Items, int Older) Thread(LmsConversation c, long now, int last = int.MaxValue)
     {
         var all = c.Messages.OrderBy(m => m.Time).ToList();
@@ -92,15 +74,10 @@ public static class MessagesPresenter
         return (items, all.Count - shown.Count);
     }
 
-    /// <summary>"Hôm nay", "Hôm qua", hay thứ và ngày (năm khác năm nay thì ghi thêm năm).</summary>
     public static string DayText(DateTime day, DateTime today) =>
         day == today ? L.T("messages.today") : day == today.AddDays(-1) ? L.T("messages.yesterday")
         : Format.DateLong(day) + (day.Year != today.Year ? "/" + day.Year.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
 
-    /// <summary>
-    /// Thẻ Tin nhắn mới ở trang Hôm nay: hội thoại còn tin chưa đọc (theo LMS lúc đồng bộ) hay có tin của người khác trong
-    /// <paramref name="days"/> ngày, mới nhất trước, tối đa <paramref name="max"/> hội thoại.
-    /// </summary>
     public static IReadOnlyList<ConversationRow> Recent(LmsMessages? data, long now, int days, int max = 5)
     {
         var since = now - days * 86400L;
@@ -108,14 +85,9 @@ public static class MessagesPresenter
         return [.. Rows(data).Where(r => ids.Contains(r.Id)).Take(max)];
     }
 
-    /// <summary>
-    /// Tin của người khác mới hơn <paramref name="seen"/> (giây Unix): để báo bằng thông báo hệ điều hành. Trả kèm mốc mới để lần sau
-    /// không báo lại. Lần đầu (seen null) không báo gì, chỉ lấy mốc: không dội cả hộp thư cũ ra màn hình.
-    /// </summary>
     public static (IReadOnlyList<(string From, string Text)> Fresh, long? Seen) Fresh(LmsMessages? data, long? seen)
     {
         var all = (data?.Conversations ?? []).SelectMany(c => c.Messages.Where(m => m.Mine != true).Select(m => (c, m))).ToList();
-        // Chưa có tin nào (chưa đồng bộ được tin nhắn): giữ nguyên mốc. Lấy mốc 0 thì lần đồng bộ được sau báo cả hộp thư cũ.
         if (all.Count == 0) return ([], seen);
         var max = all.Max(x => x.m.Time);
         if (seen is not { } s) return ([], max);
@@ -124,7 +96,6 @@ public static class MessagesPresenter
         return (fresh, Math.Max(max, s));
     }
 
-    /// <summary>Số hội thoại có tin chưa đọc (theo LMS lúc đồng bộ): chấm trên thanh điều hướng, thẻ Hôm nay.</summary>
     public static int UnreadConversations(LmsMessages? data) => data?.Conversations.Count(c => c.Unread > 0) ?? 0;
 
     public static string PreviewOf(LmsConversation c) => Preview(c);

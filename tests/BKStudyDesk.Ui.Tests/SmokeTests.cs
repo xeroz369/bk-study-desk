@@ -36,7 +36,7 @@ public class SmokeTests
     {
         var v = Inbox(out var w);
         var list = ListOf(v);
-        Assert.Equal(4, list.ItemCount);   // 2 hội thoại, 1 thông báo môn, 1 thông báo LMS
+        Assert.Equal(4, list.ItemCount);
         Assert.True(Ui.HasText(v, "Nhom hoc mau"));
         Assert.True(Ui.HasText(v, "Tin mau so 130"));
         w.Close();
@@ -47,7 +47,6 @@ public class SmokeTests
     {
         var v = Inbox(out var w);
         var list = ListOf(v);
-        // InboxView nhớ dòng đang xem (static) qua các test: chọn rõ hội thoại 130 tin, không dựa vào thứ tự test.
         list.SelectedItem = list.Items.OfType<InboxRow>().First(r => r.Key == "msg:10");
         Ui.Pump(w);
         var older = v.GetVisualDescendants().OfType<Button>().First(b => b.Content is string s && s.Contains("70", StringComparison.Ordinal));
@@ -69,7 +68,7 @@ public class SmokeTests
         var v = Inbox(out var w);
         var list = ListOf(v);
         var kind = v.GetVisualDescendants().OfType<ComboBox>().First();
-        kind.SelectedIndex = 2;   // chỉ thông báo môn
+        kind.SelectedIndex = 2;
         Ui.Pump(w);
         Assert.Equal(1, list.ItemCount);
         kind.SelectedIndex = 3;
@@ -79,13 +78,12 @@ public class SmokeTests
         kind.SelectedIndex = 1;
         Ui.Pump(w);
         Assert.Equal(2, list.ItemCount);
-        // Chữ lọc: bộ lọc chạy sau khi ngừng gõ (DispatcherTimer 250 ms), nên đặt chữ rồi chờ timer.
         kind.SelectedIndex = 0;
         var box = v.GetVisualDescendants().OfType<TextBox>().First(t => !string.IsNullOrEmpty(t.PlaceholderText));
         box.Text = "bao tri";
         for (var i = 0; i < 40 && list.ItemCount != 1; i++) { await Task.Delay(50); Ui.Pump(w); }
         Assert.Equal(1, list.ItemCount);
-        v.Select("msg:10");   // bỏ lọc, chọn đúng hội thoại
+        v.Select("msg:10");
         Ui.Pump(w);
         Assert.Equal(4, list.ItemCount);
         w.Close();
@@ -96,10 +94,8 @@ public class SmokeTests
     {
         var v = Inbox(out var w);
         var list = ListOf(v);
-        // Template của danh sách phải chịu được null (Avalonia gọi với null khi dọn ô).
         var template = Assert.IsAssignableFrom<IDataTemplate>(list.ItemTemplate);
         Assert.NotNull(template.Build(null));
-        // Đổi danh sách, đổi cỡ cửa sổ, đổi template: dựng lại toàn bộ ô.
         var items = list.ItemsSource;
         list.ItemsSource = null;
         Ui.Pump(w);
@@ -142,7 +138,6 @@ public class SmokeTests
         Assert.True(Ui.HasText(host, "Thong bao nghi hoc"));
         Assert.True(Ui.HasText(host, "Lop nghi hoc tuan sau."));
         w.Close();
-        // Reading rỗng (không đoạn, không link) cũng phải dựng được.
         var host2 = new Border();
         host2.Child = ReaderWindow.Body(new Reading("Trong", "", [], [], [], null), host2);
         var w2 = Ui.Show(host2);
@@ -227,7 +222,6 @@ public class SmokeTests
         Assert.True(Ui.HasText(view, "Giai tich 1"));
         for (var i = 0; i < 6; i++) { view.SelectTab(i); Ui.Pump(w); }
         view.SelectTab(0);
-        // Dựng lại giữ môn, tab như khi đồng bộ xong.
         var again = new SubjectsView(state, view, (_, _) => { }, _ => { });
         w.Content = again;
         Ui.Pump(w);
@@ -237,7 +231,6 @@ public class SmokeTests
     [AvaloniaFact]
     public void Reader_shows_saved_lms_image_and_link_when_missing()
     {
-        // Ảnh LMS đã tải về (LmsImages): hiện thành Image; ảnh chưa tải: link mở trên LMS.
         const string saved = "https://lms.hcmut.edu.vn/pluginfile.php/1/mod_forum/post/1/lich.png";
         const string missing = "https://lms.hcmut.edu.vn/pluginfile.php/2/mod_forum/post/2/khac.png";
         var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");

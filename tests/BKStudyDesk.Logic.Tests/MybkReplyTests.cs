@@ -1,10 +1,8 @@
-using System.Text.Json.Nodes;
 using SoHocTap.Sources;
 using SoHocTap.Sources.Mybk;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Đọc một phản hồi API MyBK: dữ liệu, lý do lỗi, có nên gọi lại một lần không (lỗi chương trình đào tạo của người dùng, 09/10/2026).</summary>
 public class MybkReplyTests
 {
     private static FetchResult R(int status, string body, bool token = true) => new(status, body, token);
@@ -22,7 +20,6 @@ public class MybkReplyTests
     [Fact]
     public void Not_found_code_means_no_data_not_failure()
     {
-        // Sinh viên năm nhất: MyBK trả code 404 "Không tìm thấy thông tin CTĐT" (09/10/2026). Không phải lỗi, gọi lại cũng vậy.
         var r = MybkReply.Read(R(200, """{"code":"404","msg":"Không tìm thấy thông tin CTĐT","data":null}"""));
         Assert.Null(r.Why);
         Assert.False(r.Retry);
@@ -31,13 +28,13 @@ public class MybkReplyTests
     }
 
     [Theory]
-    [InlineData(500, "", true)]                                   // server lỗi: thoáng qua
-    [InlineData(0, "", true)]                                     // mất kết nối, fetch lỗi
-    [InlineData(200, "<html>bảo trì</html>", true)]               // không phải JSON
+    [InlineData(500, "", true)]
+    [InlineData(0, "", true)]
+    [InlineData(200, "<html>bảo trì</html>", true)]
     [InlineData(200, """{"code":"500","msg":"Lỗi hệ thống"}""", true)]
-    [InlineData(503, "", false)]                                  // server bảo nghỉ: không dồn thêm request
+    [InlineData(503, "", false)]
     [InlineData(429, "", false)]
-    [InlineData(404, "", false)]                                  // sai đường dẫn: gọi lại cũng vậy
+    [InlineData(404, "", false)]
     public void Failures_say_why_and_whether_to_retry(int status, string body, bool retry)
     {
         var r = MybkReply.Read(R(status, body));
@@ -45,7 +42,6 @@ public class MybkReplyTests
         Assert.Equal(retry, r.Retry);
     }
 
-    /// <summary>Trình duyệt giả: mỗi tên API trả lần lượt các phản hồi cho trước (hết danh sách thì lặp phản hồi cuối); đếm số lần gọi.</summary>
     private sealed class FakeRunner(Dictionary<string, FetchResult[]> replies) : IBrowserRunner
     {
         public Dictionary<string, int> Calls { get; } = [];
@@ -83,7 +79,7 @@ public class MybkReplyTests
         Assert.Null(MybkReply.Read(got["curriculum"]).Why);
         Assert.Equal(["curriculum"], retried);
         Assert.Equal(2, runner.Calls["curriculum"]);
-        Assert.Equal(1, runner.Calls["curriculumInfo"]);   // API đã đọc được thì không gọi lại
+        Assert.Equal(1, runner.Calls["curriculumInfo"]);
     }
 
     [Fact]
@@ -91,10 +87,9 @@ public class MybkReplyTests
     {
         var (got, _, runner) = await Run([Good], [Broken]);
         Assert.NotNull(MybkReply.Read(got["curriculum"]).Why);
-        Assert.Equal(2, runner.Calls["curriculum"]);   // một lần, không lặp
+        Assert.Equal(2, runner.Calls["curriculum"]);
     }
 
-    /// <summary>MyBK báo 401 giữa chừng: vào lại MyBK rồi gọi lại một lần, đọc được thì không báo hết phiên.</summary>
     [Fact]
     public async Task Expired_reply_reenters_and_retries_once()
     {
@@ -124,7 +119,6 @@ public class MybkReplyTests
     [Fact]
     public void Only_header_api_is_silent()
     {
-        // curriculumInfo chỉ là phần đầu: lỗi thì Build giữ phần đầu cũ, người dùng không bị báo "chưa đọc được chương trình đào tạo".
         Assert.True(MybkReply.Silent("curriculumInfo"));
         Assert.False(MybkReply.Silent("curriculum"));
         Assert.False(MybkReply.Silent("schedule"));
@@ -133,11 +127,10 @@ public class MybkReplyTests
     [Theory]
     [InlineData(401, true)]
     [InlineData(403, true)]
-    [InlineData(500, false)]                                      // lỗi mà trang không có token: phiên đã hết
+    [InlineData(500, false)]
     public void Session_end_throws(int status, bool token) =>
         Assert.Throws<SessionExpiredException>(() => MybkReply.Read(R(status, "", token)));
 
-    /// <summary>Một API treo quá giờ hay mất mạng giữa chừng (không có phản hồi) không phải hết phiên, dù không biết trang có token (05/11/2026).</summary>
     [Theory]
     [InlineData(-1, false)]
     [InlineData(0, false)]

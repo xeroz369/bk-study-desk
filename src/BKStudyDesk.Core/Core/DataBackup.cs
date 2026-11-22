@@ -3,25 +3,16 @@ using System.Text;
 
 namespace SoHocTap.Core;
 
-/// <summary>
-/// Sao lưu dữ liệu đã đồng bộ ra một file .zip (Cài đặt, mục Dữ liệu): điểm, lịch, CTĐT, thông báo, trang LMS, bài nộp, quiz đã lưu,
-/// kết quả luyện tập, sự kiện tự thêm, cài đặt. Chỉ lấy theo danh sách cho phép, nên file mới thêm vào thư mục data không tự lọt vào.
-/// Không kèm tin nhắn riêng (lms-messages.json, ảnh trong lms-media vì có ảnh của tin nhắn), phiên đăng nhập, token LMS (secrets),
-/// cookie (webview), log. Hàm thuần theo thư mục gốc, có test.
-/// </summary>
 public static class DataBackup
 {
-    /// <summary>File ở gốc thư mục data được sao lưu.</summary>
     public static readonly string[] Files =
     [
         "config.json", "mybk.json", "lms.json", "lms-courses.json", "lms-files.json", "lms-groups.json", "lms-pages.json",
         "lms-submissions.json", "ket-qua.json", "custom-events.json", "doc-read.json", "library-downloads.json", "notified-custom.json",
     ];
 
-    /// <summary>Thư mục con được sao lưu cả cây: nội dung lớp đã lưu, quiz đã lưu, gói luyện tập tự nhập.</summary>
     public static readonly string[] Folders = ["lms-course", "lms-quiz", "packs"];
 
-    /// <summary>Đường dẫn tương đối (dấu /) của mọi file sẽ vào bản sao lưu, theo thứ tự.</summary>
     public static IReadOnlyList<string> Entries(string root)
     {
         var list = Files.Where(f => File.Exists(Path.Combine(root, f))).ToList();
@@ -36,10 +27,6 @@ public static class DataBackup
         return list;
     }
 
-    /// <summary>
-    /// Ghi bản sao lưu ra <paramref name="dest"/> (ghi file tạm rồi đổi tên). File đang bị ghi dở hay khóa thì bỏ qua và trả về trong Skipped.
-    /// Kèm DOC-TRUOC.txt ghi phiên bản app, giờ sao lưu và phần không kèm.
-    /// </summary>
     public static (int Count, IReadOnlyList<string> Skipped) Write(string root, string dest, string version, DateTime now)
     {
         var skipped = new List<string>();

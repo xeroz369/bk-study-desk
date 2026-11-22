@@ -9,7 +9,6 @@ namespace BKStudyDesk.Math.Tests;
 
 public class MathViewTests
 {
-    // Cửa sổ có token như app: Text, MathScale, MathScaleDisplay.
     private static Window Host(Control content, IBrush? text = null)
     {
         var window = new Window { Width = 400, Height = 200, Background = Brushes.White, Content = content };
@@ -51,16 +50,13 @@ public class MathViewTests
         {
             var view = new MathView { Tex = tex };
             var window = Host(view);
-            window.CaptureRenderedFrame();   // vẽ thật: không được ném lỗi
+            window.CaptureRenderedFrame();
             var text = Assert.IsType<TextBlock>(view.Content);
             Assert.Equal($@"\({tex}\)", text.Text);
         });
         Assert.Contains(warnings, w => w.Contains(tex));
     }
 
-    // U+0378 chưa được gán trong Unicode. Upstream đo được (FormattedText) nhưng ném lỗi trong Render, làm sập cửa sổ.
-    // Windows, Linux: không font nào có ký tự này, MathView phải đổi sang chữ thường trước khi vẽ.
-    // macOS: font LastResort có glyph cho mọi mã (cả mã chưa gán), công thức vẽ được một ô thay thế; chỉ cần vẽ xong không lỗi.
     [AvaloniaFact]
     public void Glyph_missing_everywhere_falls_back_before_render()
     {
@@ -71,7 +67,6 @@ public class MathViewTests
         else Assert.IsType<TextBlock>(view.Content);
     }
 
-    // Input dị dạng hay gặp khi người dùng tự soạn: không được ném lỗi ở bất kỳ bước nào.
     [AvaloniaTheory]
     [InlineData("x^")]
     [InlineData("a_{")]
@@ -142,8 +137,6 @@ public class MathViewTests
         Assert.Equal(Brushes.White, view.Block.Foreground);
     }
 
-    // Trong dòng chữ, đường chân của công thức phải trùng đường chân của chữ: báo cho TextBlock biết qua BaselineOffset
-    // (khoảng từ đỉnh control tới đường chân), dòng chữ dành chỗ cho cả phần dưới đường chân (chỉ số, mẫu phân số).
     [AvaloniaFact]
     public void Formula_reports_baseline_to_text()
     {
@@ -152,7 +145,6 @@ public class MathViewTests
         Host(text);
         var box = Tex.Layout(@"x_n+\dfrac{1}{2}", XamlMath.TexStyle.Text);
         Assert.InRange(TextBlock.GetBaselineOffset(view), box.Height * 18 - 0.5, box.Height * 18 + 0.5);
-        // Dòng chữ cao đủ cả phần trên lẫn phần dưới đường chân.
         Assert.True(text.DesiredSize.Height >= box.TotalHeight * 18 - 0.5, $"{text.DesiredSize.Height} < {box.TotalHeight * 18}");
     }
 

@@ -3,7 +3,6 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Sao lưu dữ liệu: chỉ file trong danh sách cho phép, không bao giờ kèm tin nhắn, phiên đăng nhập, token, cookie, log.</summary>
 public sealed class DataBackupTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "bk-backup-test-" + Guid.NewGuid().ToString("N"));

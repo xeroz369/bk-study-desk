@@ -12,11 +12,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>
-/// Soạn: chọn chỗ (môn, chương, bài) rồi Tạo câu, Nhập, Xuất, Prompt cho AI (port Soan.svelte, QuestionEditor.svelte).
-/// Câu, bài tự soạn lưu vào gói tu-soan-mã môn qua <see cref="PracticeService.InstallAsync"/>; sau khi lưu, host nạp lại sổ và mở lại
-/// màn này đúng chỗ (sự kiện <see cref="Saved"/>).
-/// </summary>
 public partial class AuthorView : UserControl
 {
     private const string Letters = "ABCDEFGH";
@@ -25,7 +20,6 @@ public partial class AuthorView : UserControl
 
     public event Action? BackRequested;
 
-    /// <summary>Đã lưu gói: host nạp lại sổ rồi mở lại Soạn ở chỗ (mã môn, tên chương, tên bài), tab, kèm câu báo.</summary>
     public event Action<AuthorPlace>? Saved;
 
     private readonly PracticeService _service = null!;
@@ -79,8 +73,6 @@ public partial class AuthorView : UserControl
 
     private Transfer Tx() => _service.Transfer();
 
-    // ------------------------------------------------------------------ chỗ
-
     private void LoadCourses(AuthorPlace? place)
     {
         _loading = true;
@@ -96,7 +88,6 @@ public partial class AuthorView : UserControl
         var ui = place?.UnitTitle is { } ut ? course.Units.FindIndex(u => Text.NormText(u.Title) == Text.NormText(ut)) : -1;
         var lesson = ui >= 0 && place?.LessonTitle is { } lt ? course.Units[ui].Lessons.FirstOrDefault(e => Text.NormText(e.Title) == Text.NormText(lt)) : null;
         SetScope(new Scope(course, ui >= 0 ? ui : null, lesson?.Id));
-        // Chương, bài chưa có (ví dụ Ghi lại câu còn nhớ của quiz LMS): điền sẵn tên vào thẻ Bài mới.
         if (lesson is null && place?.LessonTitle is { } newLesson) NewLessonBox.Text = newLesson;
         if (ui < 0 && place?.UnitTitle is { } newUnit) NewUnitBox.Text = newUnit;
     }
@@ -104,7 +95,6 @@ public partial class AuthorView : UserControl
     private string CourseLabel(Course c) =>
         c.Units.Count == 0 && _service.Study.Drafts.Contains(c) ? L.F("practice.author.courseNew", c.Name, c.Code ?? "") : c.Name;
 
-    // Môn đang học kỳ này (LMS, MyBK): thêm vào cuối danh sách nếu sổ chưa có, chọn thì thành môn nháp (EnsureCourse).
     private async Task LoadSubjectsAsync()
     {
         var subjects = await _service.SubjectsAsync();
@@ -170,7 +160,6 @@ public partial class AuthorView : UserControl
         var unit = _scope is null ? null : Transfer.UnitOf(_scope);
         var lesson = _scope is null ? null : Transfer.LessonOf(_scope);
         var rights = lesson is null ? new LessonRights(true, true, true) : Tx().LessonCan(lesson.Id);
-        // Tạo câu: cần chọn bài; chưa chọn thì thẻ Bài mới.
         QuestionCard.IsVisible = lesson != null && rights.Create;
         QuestionHead.Text = lesson is null ? "" : L.F("practice.run.where", unit!.Title, lesson.Title);
         LessonCard.IsVisible = _scope != null && lesson is null;
@@ -227,8 +216,6 @@ public partial class AuthorView : UserControl
         };
     }
 
-    // ------------------------------------------------------------------ tạo câu
-
     private string Type => _types.FirstOrDefault(r => r.IsChecked == true)?.Tag as string ?? "single";
 
     private void TypeChanged()
@@ -238,7 +225,6 @@ public partial class AuthorView : UserControl
         TruthBox.IsVisible = type == "truefalse";
         NumericPanel.IsVisible = type == "numeric";
         ShortPanel.IsVisible = type == "short";
-        // Một đáp án dùng RadioButton, nhiều đáp án dùng CheckBox; giữ chữ đã gõ.
         var rows = OptionRows.Children.Cast<Grid>().Select(r => (Text: ((TextBox)r.Children[1]).Text ?? "", Right: ((ToggleButton)r.Children[0]).IsChecked == true)).ToList();
         OptionRows.Children.Clear();
         var first = true;
@@ -288,7 +274,6 @@ public partial class AuthorView : UserControl
     private void OnFormText(object? sender, TextChangedEventArgs e) => Render();
     private void OnFormCheck(object? sender, RoutedEventArgs e) => Render();
 
-    // Xem trước: vẽ đúng như màn làm câu (Markdown và TeX qua bộ lọc HTML).
     private void Render()
     {
         if (Preview is null) return;
@@ -417,12 +402,9 @@ public partial class AuthorView : UserControl
         t.IsVisible = text.Length > 0;
     }
 
-    // ------------------------------------------------------------------ nhập
-
     private void OnRawChanged(object? sender, TextChangedEventArgs e)
     {
         if (!_loading) _rawImages = [];
-        // Đọc lại gói sau khi ngừng gõ một chút: dán tệp lớn không làm giật mỗi phím.
         _importDelay.Stop();
         _importDelay.Start();
     }
@@ -467,7 +449,6 @@ public partial class AuthorView : UserControl
         {
             await using var s = await f.OpenReadAsync();
             using var ms = new MemoryStream();
-            // Đọc tối đa MaxFile + 1 byte: file lớn hơn thì ReadFile từ chối, không đọc hết vào bộ nhớ.
             var buf = new byte[81920];
             int n;
             while ((n = await s.ReadAsync(buf)) > 0 && ms.Length <= Transfer.MaxFile) ms.Write(buf, 0, n);
@@ -498,7 +479,6 @@ public partial class AuthorView : UserControl
     private async void OnImport(object? sender, RoutedEventArgs e)
     {
         if (_prepared?.Pack is not { } p || _prepared.Report?.Ok != true) return;
-        // Đã có gói cùng id: bấm lần nữa mới thay.
         if (_service.Packs.Any(x => x.Pack?.Id == p.Id) && _armed != ImportButton)
         {
             Disarm();
@@ -518,8 +498,6 @@ public partial class AuthorView : UserControl
         var lesson = _scope is null ? null : Transfer.LessonOf(_scope);
         Saved?.Invoke(new AuthorPlace(_scope?.Course.Id, unit?.Title, lesson?.Title, 1, L.F("practice.author.import.done", p.Title)));
     }
-
-    // ------------------------------------------------------------------ xuất
 
     private void UpdateExport()
     {
@@ -587,8 +565,6 @@ public partial class AuthorView : UserControl
         if (_exported != null) await SaveFileAsync($"{_exported.Id}.studypack.json", Utf8(_exported.ToJson() + "\n"), "JSON", "*.json");
     }
 
-    // ------------------------------------------------------------------ prompt cho AI
-
     private PromptMode Mode => _modes.FirstOrDefault(r => r.IsChecked == true)?.Tag is PromptMode m ? m : PromptMode.Soan;
 
     private List<Question> _scopeQuestions = [];
@@ -650,9 +626,6 @@ public partial class AuthorView : UserControl
         CopyPromptButton.Content = was;
     }
 
-    // ------------------------------------------------------------------ bố cục
-
-    // Hai cột khi đủ chỗ, không thì xem trước xuống dưới (như trang Hôm nay).
     private void Layout(double width)
     {
         var two = width >= (double)this.FindResource("MainMinWidth")! + 24 + (double)this.FindResource("SideMinWidth")!;
@@ -672,7 +645,6 @@ public partial class AuthorView : UserControl
         Grid.SetRow(PreviewCard, two ? 0 : 2);
     }
 
-    /// <summary>Điền sẵn một câu mẫu (chụp kiểm tra).</summary>
     internal void Demo(string prompt, string[] options, int right, string solution)
     {
         PromptBox.Text = prompt;
@@ -686,14 +658,11 @@ public partial class AuthorView : UserControl
         Render();
     }
 
-    /// <summary>Dán sẵn nội dung vào tab Nhập (chụp kiểm tra phần báo lỗi).</summary>
     internal void DemoRaw(string raw) => RawBox.Text = raw;
 
-    /// <summary>Bấm Lưu câu (kiểm tra luồng lưu trên thư mục demo).</summary>
     internal void DemoSave() => OnSave(this, new RoutedEventArgs());
 
     private void OnBack(object? sender, RoutedEventArgs e) => BackRequested?.Invoke();
 }
 
-/// <summary>Chỗ mở lại Soạn sau khi lưu: môn (id), chương và bài theo tên (id bài có thể đổi sau khi nạp lại), tab, câu báo.</summary>
 public sealed record AuthorPlace(string? CourseId, string? UnitTitle, string? LessonTitle, int Tab, string? Flash);

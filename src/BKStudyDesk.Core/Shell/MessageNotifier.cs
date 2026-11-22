@@ -1,16 +1,10 @@
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Presentation;
 using SoHocTap.Ui;
 
 namespace SoHocTap.Shell;
 
-/// <summary>
-/// Báo tin nhắn riêng LMS mới bằng thông báo hệ điều hành, sau mỗi lượt đồng bộ LMS. Mốc đã báo lưu ở data/notified.json
-/// (messagesSeen), chung file với nhắc hạn: tắt mở app không báo lại. Lần đầu chỉ lấy mốc, không báo cả hộp thư cũ.
-/// Đang "tạm im tới sáng mai" thì chưa báo và chưa dời mốc, sáng ra báo bù. Nhiều tin thì gộp một thông báo.
-/// </summary>
 internal sealed class MessageNotifier(Action<string, string, string> show)
 {
     private static string StateFile => Paths.DataFile("notified.json");
@@ -18,10 +12,9 @@ internal sealed class MessageNotifier(Action<string, string, string> show)
     public void Check()
     {
         try { CheckCore(); }
-        catch (Exception e) { Log.Error("Báo tin nhắn mới", e); }   // notified.json bị khóa, ổ đầy: không làm hỏng việc sau lượt đồng bộ
+        catch (Exception e) { Log.Error("Báo tin nhắn mới", e); }
     }
 
-    /// <summary>Đăng xuất: quên mốc đã báo (người đăng nhập sau có hộp thư khác).</summary>
     public static void Forget()
     {
         var ledger = JsonStore.ReadObject(StateFile);

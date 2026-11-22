@@ -3,7 +3,6 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Core
 {
-    // Test không link SettingsConfigStore.cs (nó cần Config thật), nên cung cấp phần partial này; test luôn tự gán Store.
     public static partial class Settings
     {
         private static partial ISettingsStore CreateDefaultStore() => throw new InvalidOperationException("Test phải gán Settings.Store.");
@@ -12,7 +11,6 @@ namespace SoHocTap.Core
 
 namespace SoHocTap.Tests
 {
-    /// <summary>Store trong bộ nhớ: default đọc từ DefaultConfig.json thật, phần người dùng rỗng, không đụng data của máy.</summary>
     internal sealed class MemoryStore : ISettingsStore
     {
         private readonly JsonObject _defaults = (JsonObject)JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "DefaultConfig.json")))!;
@@ -76,7 +74,7 @@ namespace SoHocTap.Tests
             s.Write("notify.hoursBefore", JsonValue.Create(-5));
             Assert.Equal(24, Settings.Notify.FirstHours);
             s.Write("notify.hoursBefore", JsonValue.Create(0));
-            Assert.Equal(0, Settings.Notify.FirstHours);   // 0 là tắt, hợp lệ
+            Assert.Equal(0, Settings.Notify.FirstHours);
         }
 
         [Fact]

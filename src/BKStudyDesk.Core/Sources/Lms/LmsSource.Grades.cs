@@ -1,23 +1,14 @@
-using System.Text.Json;
 using System.Net;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using SoHocTap.Core;
-using SoHocTap.Files;
 using static SoHocTap.Sources.Lms.LmsClient;
 
 namespace SoHocTap.Sources.Lms;
 
-// Sổ điểm LMS của từng lớp.
 public sealed partial class LmsSource
 {
-    /// <summary>
-    /// Sổ điểm LMS của từng lớp kỳ này (điểm thành phần: quiz, BTL, giữa kỳ… do giảng viên nhập). Dùng API
-    /// gradereport_user_get_grade_items của app mobile, mỗi lớp một request. Lớp nào chưa có mục điểm thì bỏ qua.
-    /// </summary>
     private static async Task<JsonArray> CollectGradesAsync(List<CourseInfo> current, long uid, CancellationToken ct)
     {
-        // Nhóm của mình (đã ghi lúc lấy mốc, ngay trước bước này). Lớp thí nghiệm có mục điểm của mọi nhóm nên chỉ giữ nhóm mình.
         var groupsJson = JsonStore.ReadObject(GroupsFile);
         var groups = groupsJson.ToDictionary(p => long.Parse(p.Key, System.Globalization.CultureInfo.InvariantCulture), p => (p.Value as JsonArray ?? []).Select(x => x!.GetValue<string>()).ToHashSet());
         var list = new JsonArray();
@@ -38,7 +29,6 @@ public sealed partial class LmsSource
                         ["percent"] = i["percentageformatted"]?.GetValue<string>(),
                         ["feedback"] = i["feedback"]?.GetValue<string>(),
                     }).ToArray();
-                // Chỉ có row tổng (giảng viên chưa tạo mục điểm nào) thì bỏ.
                 if (!items.Any(i => i!["kind"]?.GetValue<string>() is not ("course" or "category"))) continue;
                 list.Add((JsonNode)new JsonObject { ["course"] = c.Id, ["subject"] = c.Subject, ["part"] = c.Part, ["items"] = new JsonArray(items) });
             }

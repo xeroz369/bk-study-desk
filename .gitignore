@@ -2,7 +2,7 @@
 bin/
 obj/
 publish/
-# MSIX bản Store (store/package-msix.ps1).
+# Bộ cài và gói cập nhật build ra (release.yml).
 /dist/
 node_modules/
 *.user

@@ -5,7 +5,6 @@ namespace BKStudyDesk.Core.Tests;
 [CollectionDefinition("sso-gate", DisableParallelization = true)]
 public sealed class SsoGateCollection;
 
-/// <summary>One SSO pass at a time, one shared automatic fill per run, only while active.</summary>
 [Collection("sso-gate")]
 public sealed class SsoGateTests
 {
@@ -20,7 +19,7 @@ public sealed class SsoGateTests
         await Task.Delay(50);
         Assert.False(second.IsCompleted);
         first.Dispose();
-        first.Dispose();   // twice is harmless
+        first.Dispose();
         (await second.WaitAsync(TimeSpan.FromSeconds(2))).Dispose();
         Assert.False(SsoGate.Busy);
     }
@@ -29,10 +28,10 @@ public sealed class SsoGateTests
     public void One_fill_shared_by_both_paths_and_only_while_active()
     {
         Assert.False(SsoGate.TryClaimFill(active: false));
-        Assert.True(SsoGate.TryClaimFill(active: true));    // MyBK claims
-        Assert.False(SsoGate.TryClaimFill(active: true));   // LMS refresh at the same time: no second fill
+        Assert.True(SsoGate.TryClaimFill(active: true));
+        Assert.False(SsoGate.TryClaimFill(active: true));
         SsoGate.FillResult(true);
-        Assert.True(SsoGate.TryClaimFill(active: true));    // a later expiry may fill again
+        Assert.True(SsoGate.TryClaimFill(active: true));
         SsoGate.FillAborted();
         Assert.False(SsoGate.FillSpent);
     }

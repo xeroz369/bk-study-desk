@@ -13,7 +13,6 @@ public static partial class StudyMarkdown
 {
     [GeneratedRegex(@"^(đề thi thử|de thi thu|exams?)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex ExamUnit();
     [GeneratedRegex(@"^(giữ thứ tự|giu thu tu|keep order)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex KeepOrder();
-    /// <summary>"nhóm: f1" trong dòng ###: các câu cùng nhóm trong bài dùng chung đề, luôn đi cùng nhau.</summary>
     [GeneratedRegex(@"^(?:nhóm|nhom|group)\s*:\s*(.+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex Group();
     [GeneratedRegex(@"^(co|có|yes|true|1|bật|bat)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex Yes();
     [GeneratedRegex(@"^\s*([\w-]+)\s*:\s*(.*?)\s*(#.*)?$", RegexOptions.ECMAScript)] private static partial Regex MetaLine();
@@ -34,7 +33,6 @@ public static partial class StudyMarkdown
     [GeneratedRegex(@"<img src="""" alt=""([^""]*)"">")] private static partial Regex EmptyImg();
     [GeneratedRegex(@"^<p>([\s\S]*)</p>$")] private static partial Regex OnePara();
     [GeneratedRegex(@"^(units\[(\d+)\]\.lessons\[(\d+)\]|exams\[(\d+)\])\.questions\[(\d+)\]")] private static partial Regex QuestionPath();
-    // Mở rộng v1 (SPEC 2.6): "id: ..." ngay dưới ##, ###; "Câu: a, b" trong phần thông tin của đề.
     [GeneratedRegex(@"^\s*id\s*:\s*(\S+)\s*$", RegexOptions.IgnoreCase)] private static partial Regex IdLine();
     [GeneratedRegex(@"^\s*(?:câu|cau|questions?)\s*:\s*(.+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex RefsLine();
 
@@ -48,11 +46,6 @@ public static partial class StudyMarkdown
         public List<Line> Body { get; } = [];
     }
 
-    /// <summary>
-    /// Đọc một file Study Markdown thành gói. <paramref name="images"/>: đường dẫn trong zip (img/a.webp) thành data URI; thiếu ảnh
-    /// chỉ là cảnh báo. <paramref name="validate"/>: chạy thêm <see cref="PackValidator"/> như bản TS (nội dung có sẵn của app
-    /// tắt đi, vì đề tham chiếu câu ở file bài khác và id có dấu chấm).
-    /// </summary>
     public static MdResult Parse(string text, IReadOnlyDictionary<string, string>? images = null, bool validate = true)
     {
         images ??= new Dictionary<string, string>();
@@ -167,7 +160,6 @@ public static partial class StudyMarkdown
                 while (!lessonIds.Add(id)) id += "-2";
                 lesson = new PackLesson { Id = id, Title = b.Title, Questions = [] };
                 unit.Lessons.Add(lesson);
-                // Kiến thức của bài: chữ dưới ## tới ### đầu tiên, chia mục bằng ####.
                 var sections = new List<PackSection>();
                 string? secTitle = null;
                 var secLines = new List<string>();
@@ -213,7 +205,6 @@ public static partial class StudyMarkdown
         if (pack.Settings is { ShuffleQuestions: false, ShuffleOptions: false }) pack.Settings = null;
         foreach (var k in missing) warnings.Add(new MdIssue(Array.FindIndex(lines, l => l.Contains(k, StringComparison.Ordinal)) + 1, L.F("md.missingImage", k)));
 
-        // Kiểm tra sâu bằng validator chung, đổi đường dẫn lỗi về số dòng khi được.
         if (validate && pack.Course.Code.Length > 0)
         {
             var r = PackValidator.Validate(JsonNode.Parse(pack.ToJson()));
@@ -226,7 +217,6 @@ public static partial class StudyMarkdown
                 var q = owner?.ElementAtOrDefault(int.Parse(m.Groups[5].Value, CultureInfo.InvariantCulture));
                 return q != null && lineOf.TryGetValue(q, out var no) ? no : 0;
             }
-            // Bỏ những gì bộ đọc Markdown đã báo bằng lời dễ hiểu hơn (tác giả, lời giải trống).
             errors.AddRange(r.Errors.Where(e => !e.Path.StartsWith("authors", StringComparison.Ordinal) && !e.Path.EndsWith(".solution", StringComparison.Ordinal))
                 .Select(e => new MdIssue(LineFor(e.Path), e.Message)));
             warnings.AddRange(r.Warnings.Where(w => w.Path is not ("license" or "verified")).Select(w => new MdIssue(LineFor(w.Path), w.Message)));
@@ -236,7 +226,6 @@ public static partial class StudyMarkdown
 
     private static bool IsYes(string? v) => v != null && Yes().IsMatch(v.Trim());
 
-    /// <summary>Dòng "id: ..." là dòng có chữ đầu tiên của khối: lấy giá trị và bỏ dòng đó khỏi thân.</summary>
     private static string? TakeId(List<Line> body)
     {
         var i = body.FindIndex(x => x.Text.Trim().Length > 0);
@@ -262,7 +251,6 @@ public static partial class StudyMarkdown
         return i < 0 ? s : s[..i] + to + s[(i + from.Length)..];
     }
 
-    /// <summary>Một khối ###: dòng đề, rồi các dòng - [x] hay một dòng = đáp án, rồi &gt; lời giải.</summary>
     private static PackQuestion? ParseQuestion(Block b, Func<string, string> html, List<MdIssue> errors)
     {
         var parts = Regex.Split(b.Title, @"\s+·\s+").Select(s => s.Trim()).ToList();
@@ -280,7 +268,7 @@ public static partial class StudyMarkdown
             else if (AnswerLine().IsMatch(x.Text) && options.Count == 0 && solution.Count == 0) answer = new Line(AnswerLine().Replace(x.Text, "", 1).Trim(), x.No);
             else if (SolutionLine().IsMatch(x.Text)) solution.Add(SolutionLine().Replace(x.Text, "", 1));
             else if (options.Count == 0 && answer is null && solution.Count == 0) prompt.Add(x.Text);
-            else if (x.Text.Trim().Length > 0 && solution.Count == 0) prompt.Add(x.Text);   // chữ sau phương án: giữ vào đề còn hơn mất
+            else if (x.Text.Trim().Length > 0 && solution.Count == 0) prompt.Add(x.Text);
         }
         var q = new PackQuestion
         {

@@ -13,28 +13,22 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Trang Môn học: nối SubjectsPresenter vào danh sách và các tab. Tab chỉ dựng khi mở (đỡ quét thư mục); đọc đĩa chạy nền.
-/// Lọc, khớp mốc, dòng phụ, điểm: BKStudyDesk.Core/Presentation/Subjects.cs.
-/// </summary>
 public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 {
     private readonly AppState _state = null!;
-    private readonly Action<IReadOnlyCollection<long>?, bool>? _download;   // các lớp tích sẵn; null = học kỳ đang học
+    private readonly Action<IReadOnlyCollection<long>?, bool>? _download;
     private readonly Action<string>? _openLibrary;
     private IReadOnlyList<SubjectRow> _rows = [];
     private SubjectRow? _subject;
     private string _root = "", _dir = "";
-    private FolderHistory _history = new();   // nút Quay lại của tab Tài liệu; giữ qua lần dựng lại sau đồng bộ
+    private FolderHistory _history = new();
     private readonly HashSet<TabItem> _filled = [];
-    private int _gen;   // lượt đọc đĩa mới nhất; kết quả của lượt cũ (đã chọn môn khác, thư mục khác) thì bỏ
+    private int _gen;
 
     public SubjectsView() => InitializeComponent();
 
-    /// <summary>Nằm trong SubjectsHost: tên trang đã là phần chọn ở đầu trang, bỏ tiêu đề riêng (cả lề dưới của nó).</summary>
     public void HideTitle() { if (PageTitle.Parent is Control head) head.IsVisible = false; }
 
-    // Menu Thêm ở đầu thẻ môn: việc ít dùng, để đầu thẻ chỉ còn một nút chính (Mở trên LMS).
     private readonly MenuItem DownloadButton = new() { Header = L.T("subjects.download"), IsVisible = false };
     private readonly MenuItem ExamsButton = new() { Header = L.T("subjects.downloadExams"), IsVisible = false };
     private readonly MenuItem LibraryButton = new() { Header = L.T("subjects.openLibrary"), IsVisible = false };
@@ -53,13 +47,10 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             Placement = Avalonia.Controls.PlacementMode.BottomEdgeAlignedRight,
             Items = { DownloadButton, ExamsButton, LibraryButton, new Separator(), DownloadAllButton },
         };
-        // Menu rỗng thì không mở được (Avalonia): không có việc nào thì ẩn luôn nút.
         MoreButton.IsVisible = DownloadButton.IsVisible || LibraryButton.IsVisible;
     }
 
-    /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ môn, tab, thư mục người dùng đang xem.</param>
-    /// <param name="openLibrary">Mở trang Thư viện đúng môn này (nút Xem trong Thư viện); null thì ẩn nút.</param>
-    private Func<string, Control?>? _practice;   // trang Luyện tập lọc theo môn (MainWindow); null thì ẩn tab
+    private Func<string, Control?>? _practice;
 
     internal SubjectsView(AppState state, SubjectsView? previous, Action<IReadOnlyCollection<long>?, bool>? download, Action<string>? openLibrary,
         Func<string, Control?>? practice = null) : this()
@@ -77,45 +68,38 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         RowMenus.Attach(Recent, OnRecentMenu);
         RowMenus.Attach(Media, OnMediaMenu);
         RowMenus.Attach(Due, OnDueMenu);
-        // Dòng nhóm học kỳ: tắt container để không chọn, không dừng phím lên xuống ở đó.
         Subjects.ContainerPrepared += (_, e) =>
         {
             var header = Subjects.Items.Count > e.Index && Subjects.Items[e.Index] is SubjectTermHeader;
-            e.Container.IsEnabled = e.Container.Focusable = !header;   // container dùng lại cho dòng môn thì bật lại
+            e.Container.IsEnabled = e.Container.Focusable = !header;
         };
         DownloadButton.IsVisible = DownloadAllButton.IsVisible = ExamsButton.IsVisible = download is not null;
         LibraryButton.IsVisible = openLibrary is not null;
         BuildMore();
         _wanted = previous?.Selected;
-        // Kỳ đang xem: giữ của trang cũ khi dựng lại; mở mới thì theo lần trước (chỉ nhớ "tất cả" hay "kỳ đang học").
         _termKey = previous?._termKey ?? (Config.Str("ui.subjectsTerms", "current") == "all" ? SubjectsPresenter.AllTerms : null);
         Build(null);
         _ = ScanAsync();
     }
 
     private string? _wanted;
-    private string? _keepDir;   // thư mục đang xem ở trang cũ (dùng một lần khi chọn lại đúng môn đó)
+    private string? _keepDir;
 
-    /// <summary>Mở một tab theo thứ tự (tham số --tab=N khi chụp kiểm tra).</summary>
-    /// <summary>Mở tab Luyện tập của môn đang chọn (tìm nhanh một bài, thẻ Ôn tập).</summary>
     public void SelectPractice() => Tabs.SelectedItem = PracticeTab;
 
     public void SelectTab(int index) => Tabs.SelectedIndex = Math.Clamp(index, 0, Tabs.ItemCount - 1);
 
     public int Tab { get => Tabs.SelectedIndex; set => SelectTab(value); }
 
-    /// <summary>Môn đang chọn (MainWindow giữ lại khi dựng lại trang).</summary>
     public string? Selected => _subject?.Name;
 
-    /// <summary>Chọn một môn theo tên (tìm nhanh Ctrl+K); xóa chữ lọc để môn đó chắc chắn có trong danh sách.</summary>
     public void SelectSubject(string name)
     {
         _wanted = name;
         if (string.IsNullOrEmpty(Filter.Text)) ShowList();
-        else Filter.Text = "";   // OnFilter dựng lại danh sách, chọn _wanted
+        else Filter.Text = "";
     }
 
-    /// <summary>Quét thư mục môn trên máy (có cache theo mtime) rồi dựng lại danh sách có số tài liệu.</summary>
     private async Task ScanAsync()
     {
         try { Build(await Documents.ListSubjectsAsync()); }
@@ -131,7 +115,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private void OnFilter(object? sender, TextChangedEventArgs e) => ShowList();
 
-    // Ô chọn kỳ (SubjectsPresenter.TermOptions). _termKey null: lựa chọn đầu tiên (kỳ đang học, không có thì kỳ gần nhất).
     private IReadOnlyList<(string Key, string Title)> _terms = [];
     private string? _termKey;
     private bool _fillingTerms;
@@ -145,7 +128,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         TermFilter.ItemsSource = _terms.Select(t => t.Title).ToList();
         TermFilter.SelectedIndex = _terms.Count > 0 ? index : -1;
         _fillingTerms = false;
-        TermFilter.IsVisible = _terms.Count > 2;   // chỉ một kỳ (cộng Tất cả) thì không cần chọn
+        TermFilter.IsVisible = _terms.Count > 2;
     }
 
     private void OnTermFilter(object? sender, SelectionChangedEventArgs e)
@@ -159,14 +142,12 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private void ShowList()
     {
-        // Mở một môn từ chỗ khác (Ctrl+K, Thư viện) mà môn đó ở kỳ khác: chuyển ô chọn kỳ sang kỳ của môn.
         if (_wanted is { } want && _termKey != SubjectsPresenter.AllTerms && _rows.FirstOrDefault(r => NameMatch.Same(r.Name, want)) is { } target
             && SubjectsPresenter.TermOf(target) != _termKey)
             _termKey = SubjectsPresenter.TermOf(target);
         FillTerms();
         var text = Filter.Text ?? "";
         var found = SubjectsPresenter.Filter(_rows, text);
-        // Đang gõ lọc: tìm ở mọi kỳ, có dòng nhóm để biết môn thuộc kỳ nào.
         var all = text.Trim().Length > 0 || _termKey == SubjectsPresenter.AllTerms;
         var rows = all ? found : SubjectsPresenter.InTerm(found, _termKey ?? SubjectsPresenter.AllTerms);
         Subjects.ItemsSource = all ? SubjectsPresenter.Grouped(rows) : rows;
@@ -178,15 +159,13 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         DetailCard.IsVisible = Subjects.SelectedItem is not null;
     }
 
-    /// <summary>A subject with LMS courses was opened: the shell checks those courses for updates (AppHost.CheckCoursesOnOpen).</summary>
     public static Action<IReadOnlyList<long>>? CoursesOpened { get; set; }
 
     private void OnPick(object? sender, SelectionChangedEventArgs e)
     {
         if (Subjects.SelectedItem is not SubjectRow s) return;
         var changed = _subject?.Name != s.Name;
-        if (changed && s.Current && s.OnLms) CoursesOpened?.Invoke([.. s.Courses.Select(c => c.Id)]);   // current term only
-        // Bấm sang môn khác thì mở tab Tổng quan (hạn gần nhất, điểm, thông báo mới): thứ cần nhất khi vừa chọn môn.
+        if (changed && s.Current && s.OnLms) CoursesOpened?.Invoke([.. s.Courses.Select(c => c.Id)]);
         if (changed && _subject is not null) Tabs.SelectedIndex = 0;
         _subject = s;
         SubjectName.Text = s.Name;
@@ -203,10 +182,9 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private void OnTab(object? sender, SelectionChangedEventArgs e)
     {
-        if (ReferenceEquals(e.Source, Tabs)) FillTab();   // SelectionChanged của bảng bên trong cũng nổi bọt lên đây
+        if (ReferenceEquals(e.Source, Tabs)) FillTab();
     }
 
-    /// <summary>Dựng tab đang chọn nếu chưa dựng cho môn này.</summary>
     private void FillTab()
     {
         if (_subject is not { } s || Tabs.SelectedItem is not TabItem tab || !_filled.Add(tab)) return;
@@ -228,7 +206,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             Tables.Show(Grades, GradesEmpty, SubjectsPresenter.Grades(_state.Lms, s), L.T(s.OnLms ? "subjects.gradesEmpty" : "subjects.notOnLms"));
     }
 
-    /// <summary>Tab Tổng quan: ba phần, mỗi phần có tiêu đề và nút sang tab chi tiết; dòng thông báo bấm là đọc trong app.</summary>
     private void ShowOverview(SubjectRow s)
     {
         OverviewPanel.Children.Clear();
@@ -281,9 +258,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         empty.IsVisible = true;
     }
 
-    // ------------------------------------------------------------------ tab Tài liệu
-
-    /// <summary>Một tầng thư mục, đọc nền (ổ mạng, USB chậm không làm đứng giao diện); quá 150 ms thì hiện "đang đọc".</summary>
     private async Task LoadDirAsync()
     {
         var gen = ++_gen;
@@ -306,7 +280,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         ShowDir();
     }
 
-    // Tab Tài liệu: chữ tìm, nhóm loại đang chọn, hàng của thư mục đang xem (lọc lại không đọc lại đĩa).
     private FileGroup _group = FileGroup.All;
     private IReadOnlyList<FileRow> _dirRows = [];
 
@@ -315,7 +288,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private bool Filtering => (FileSearch.Text ?? "").Trim().Length > 0 || _group != FileGroup.All;
 
-    /// <summary>Gõ ô tìm: tìm trong mọi file của môn (đang xem theo thư mục thì chuyển sang Tất cả file).</summary>
     private void OnFileSearch(object? sender, TextChangedEventArgs e)
     {
         if ((FileSearch.Text ?? "").Trim().Length > 0 && RecentToggle.IsChecked != true) { SetView(all: true); return; }
@@ -323,7 +295,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         else ShowDir();
     }
 
-    /// <summary>Nút loại (Tất cả, Tài liệu, Ảnh, Khác): chỉ một nút được chọn.</summary>
     private void OnKind(object? sender, RoutedEventArgs e)
     {
         if (sender is not Avalonia.Controls.Primitives.ToggleButton b || !Enum.TryParse<FileGroup>(b.Tag as string, out var g)) return;
@@ -337,7 +308,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private void OnViewFolders(object? sender, RoutedEventArgs e) => SetView(all: false);
 
-    /// <summary>Tất cả file (mới nhất trước, có cột thư mục) hay duyệt theo thư mục.</summary>
     private void SetView(bool all)
     {
         RecentToggle.IsChecked = all;
@@ -355,7 +325,7 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         Status(Recent, FilesEmpty, L.T("subjects.scanning"));
         try
         {
-            var recent = await Documents.SubjectFilesAsync(s.Name, 1000);   // mọi file của môn để tìm, không chỉ vài file mới
+            var recent = await Documents.SubjectFilesAsync(s.Name, 1000);
             if (gen != _gen) return;
             _recent = recent;
             ShowRecent();
@@ -367,7 +337,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         }
     }
 
-    // Danh sách Mới cập nhật vừa quét: dựng lại khi đổi lọc Chỉ chưa đọc hay đánh dấu, không quét lại đĩa.
     private System.Text.Json.Nodes.JsonObject? _recent;
 
     private void ShowRecent()
@@ -386,10 +355,8 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         ShowRecent();
     }
 
-
     private void OnUp(object? sender, RoutedEventArgs e) => GoBack();
 
-    /// <summary>Về thư mục vừa xem (FolderHistory); chưa đi đâu thì lên thư mục cha, không ra ngoài thư mục môn.</summary>
     private void GoBack()
     {
         if (_history.Back(_dir) is not { } dir) return;
@@ -397,7 +364,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         _ = LoadDirAsync();
     }
 
-    /// <summary>Mở một thư mục trong môn (thư mục con, một cấp trên thanh đường dẫn), ghi vào lịch sử để Quay lại.</summary>
     private void GoTo(string dir)
     {
         _history.Went(_dir, dir);
@@ -405,7 +371,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         _ = LoadDirAsync();
     }
 
-    /// <summary>Nút lùi của chuột thì Quay lại (chuột phải chọn dòng: RowMenus).</summary>
     private void OnFilesPointer(object? sender, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(Files).Properties.IsXButton1Pressed) return;
@@ -413,7 +378,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         e.Handled = true;
     }
 
-    // Thanh đường dẫn (SubjectsPresenter.Crumbs): các cấp trên là HyperlinkButton có sẵn của Avalonia, cấp đang xem là chữ thường.
     private void ShowPath(string dir)
     {
         PathBar.Children.Clear();
@@ -446,7 +410,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         }
     }
 
-    /// <summary>Enter mở, Backspace thì Quay lại (như trình quản lý file). Alt+Trái để cho cửa sổ (quay lại trang trước), không xử lý hai lần.</summary>
     private void OnFilesKey(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Back) { GoBack(); e.Handled = true; }
@@ -460,10 +423,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         await Opener.OpenAsync(this, r.Path);
     }
 
-    /// <summary>
-    /// Menu chuột phải của tab Tài liệu. File: Mở, Mở thư mục chứa, đánh dấu đã đọc, sao chép tên và đường dẫn. Thư mục: Mở,
-    /// Mở trong trình quản lý file, sao chép. Chỗ trống: Quay lại, Mở thư mục này, Làm mới.
-    /// </summary>
     private void OnFileMenu(object? sender, EventArgs e)
     {
         if (sender is not MenuFlyout m) return;
@@ -510,7 +469,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         m.Items.Insert(0, mark);
     }
 
-    /// <summary>Menu chuột phải của một file: mở thư mục chứa, sao chép tên, sao chép đường dẫn đầy đủ.</summary>
     private void Fill(MenuFlyout menu, (string Name, string Rel)? file)
     {
         menu.Items.Clear();
@@ -531,14 +489,11 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (TopLevel.GetTopLevel(this)?.Clipboard is { } c) await c.SetTextAsync(text);
     }
 
-    // ------------------------------------------------------------------ mở trên web, tải tài liệu
-
     private async void OnDueOpen(object? sender, TappedEventArgs e)
     {
         if (Due.SelectedItem is CalendarRow { Url: { } url }) await OpenUrl(url);
     }
 
-    /// <summary>Menu chuột phải của tab Cần làm: Xem đề bài (bản lưu, đọc được khi LMS sập), Mở trên LMS.</summary>
     private void OnDueMenu(object? sender, EventArgs e)
     {
         if (sender is not MenuFlyout menu) return;
@@ -560,12 +515,9 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private async void OnNewsOpen(object? sender, TappedEventArgs e)
     {
-        // Đọc trong app (bản đã lưu, đọc được cả khi LMS sập); trong đó có nút Mở trên LMS.
         if (News.SelectedItem is SubjectNews { Read: { } read }) ReaderWindow.Open(this, read);
         else if (News.SelectedItem is SubjectNews { Url: { } url }) await OpenUrl(url);
     }
-
-    // ------------------------------------------------------------------ tab Video và liên kết
 
     private static readonly SoHocTap.Sources.Lms.MediaKind?[] MediaKinds =
         [null, SoHocTap.Sources.Lms.MediaKind.Video, SoHocTap.Sources.Lms.MediaKind.Link, SoHocTap.Sources.Lms.MediaKind.Page, SoHocTap.Sources.Lms.MediaKind.Tool];
@@ -577,7 +529,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
             MediaKindFilter.ItemsSource = MediaKinds.Select(k => L.T(k is { } kind ? "subjects.media." + kind.ToString().ToLowerInvariant() : "subjects.media.all")).ToList();
             MediaKindFilter.SelectedIndex = 0;
         }
-        // Môn không học kỳ này: app không tự đọc lớp kỳ cũ (đỡ request mỗi lần đồng bộ), cho đọc khi cần.
         ReadPastButton.IsVisible = s.OnLms && !s.Current;
         var only = MediaKinds[Math.Max(0, MediaKindFilter.SelectedIndex)];
         var rows = SubjectsPresenter.Media(s, LmsCourseStore.Read, DocReads.Marks, only);
@@ -600,7 +551,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
     {
         if (Media.SelectedItem is not MediaRow { Url.Length: > 0 } m) return;
         MarkSeen(m, true);
-        // Trang LMS đã lưu nội dung: đọc trong app (cả khi LMS sập), trong đó có nút Mở trên LMS.
         if (m.Kind == SoHocTap.Sources.Lms.MediaKind.Page && _subject is { } s && SubjectsPresenter.PageReading(m.Url, m.Name, s.Name) is { } page)
         {
             ReaderWindow.Open(this, page);
@@ -622,7 +572,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         menu.Items.Add(copy);
     }
 
-    /// <summary>Đọc lại cấu trúc các lớp LMS của một môn kỳ cũ (kể cả kho chung), chỉ đọc, không tải file; xong thì dựng lại tab.</summary>
     private async void OnReadPast(object? sender, RoutedEventArgs e)
     {
         if (_subject is not { } s) return;
@@ -651,16 +600,13 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private void OnOpenLms(object? sender, RoutedEventArgs e) => PickCourse(LmsButton, c => _ = OpenUrl(c.Url));
 
-    /// <summary>Tải tài liệu của môn đang xem: mọi lớp của môn (lý thuyết, thí nghiệm, kỳ khác) tích sẵn trong cùng cửa sổ, khỏi menu chọn lớp.</summary>
     private void OnDownload(object? sender, RoutedEventArgs e)
     {
         if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)], false);
     }
 
-    /// <summary>Tải tài liệu nhiều môn: mở cây với học kỳ đang học tích sẵn.</summary>
     private void OnDownloadAll(object? sender, RoutedEventArgs e) => _download?.Invoke(null, false);
 
-    /// <summary>Tải đề cũ của môn đang xem: cùng cửa sổ Tải, chỉ tích sẵn mục chứa đề của mọi lớp của môn (kể cả kho chung).</summary>
     private void OnDownloadExams(object? sender, RoutedEventArgs e)
     {
         if (_subject is { OnLms: true } s) _download?.Invoke([.. s.Courses.Select(c => c.Id)], true);
@@ -671,7 +617,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
         if (_subject is { } s) _openLibrary?.Invoke(s.Name);
     }
 
-    /// <summary>Môn một lớp thì làm luôn; nhiều lớp (lý thuyết, thí nghiệm, kỳ khác) thì hiện menu chọn lớp dưới nút.</summary>
     private void PickCourse(Button button, Action<LmsCourse> run)
     {
         if (_subject is not { OnLms: true } s) return;
@@ -689,9 +634,6 @@ public partial class SubjectsView : UserControl, IFillPage, ITabbedPage
 
     private Task OpenUrl(string url) => Links.OpenAsync(this, url, _subject?.Name ?? "");
 
-    // ------------------------------------------------------------------ bố cục co giãn
-
-    /// <summary>Hai cột khi đủ chỗ cho danh sách (ListMinWidth) và chi tiết (DetailMinWidth); không thì danh sách lên trên, thấp lại.</summary>
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);

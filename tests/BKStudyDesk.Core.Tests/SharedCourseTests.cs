@@ -3,7 +3,6 @@ using SoHocTap.Sources.Lms;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Lớp kho chung của môn trên LMS ("..._Video"): phần riêng trong môn, tính theo học kỳ của môn đang học.</summary>
 public class SharedCourseTests
 {
     [Theory]
@@ -24,8 +23,8 @@ public class SharedCourseTests
         var shared = C("EE1009", "Kho chung", "");
         var all = new[] { C("EE1009", null, "HK261"), shared, C("MT2013", "Kho chung", "") };
         Assert.Equal("HK261", LmsSource.SharedTerm(shared, all, "HK261").Term);
-        Assert.Equal("", LmsSource.SharedTerm(all[2], all, "HK261").Term);       // môn không học kỳ này
-        Assert.Equal("HK261", LmsSource.SharedTerm(all[0], all, "HK261").Term);   // lớp thường giữ nguyên
+        Assert.Equal("", LmsSource.SharedTerm(all[2], all, "HK261").Term);
+        Assert.Equal("HK261", LmsSource.SharedTerm(all[0], all, "HK261").Term);
         Assert.True(Organizer.IsShared("Thí nghiệm (kho chung)"));
         Assert.False(Organizer.IsShared("Thí nghiệm"));
     }

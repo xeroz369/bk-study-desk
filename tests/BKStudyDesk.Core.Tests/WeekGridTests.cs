@@ -2,7 +2,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Lưới tuần: chia làn khi trùng giờ, màu ổn định theo môn, khoảng giờ có buổi học.</summary>
 public class WeekGridTests
 {
     private static WeekBlock B(int start, int end, string key = "MT1005") => new(2, start, end, key, "", "", key);
@@ -10,9 +9,9 @@ public class WeekGridTests
     [Fact]
     public void Lanes_OverlapSplits_SeparateClustersKeepFullWidth()
     {
-        var a = B(420, 520);   // 7:00-8:40
-        var b = B(480, 600);   // chồng với a
-        var c = B(600, 700);   // sau cụm: một mình
+        var a = B(420, 520);
+        var b = B(480, 600);
+        var c = B(600, 700);
         var lanes = WeekGridPresenter.Lanes([c, b, a]);
         Assert.Equal((0, 2), lanes[a]);
         Assert.Equal((1, 2), lanes[b]);
@@ -24,7 +23,7 @@ public class WeekGridTests
     {
         var a = B(420, 480);
         var b = B(420, 600);
-        var c = B(480, 540);   // a đã xong: dùng lại làn 0, cụm vẫn 2 làn vì b còn chạy
+        var c = B(480, 540);
         var lanes = WeekGridPresenter.Lanes([a, b, c]);
         Assert.Equal(2, lanes[c].Count);
         Assert.Equal(lanes[a].Lane, lanes[c].Lane);

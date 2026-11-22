@@ -5,8 +5,6 @@ using System.Text.Json.Serialization;
 
 namespace SoHocTap.Presentation.Practice;
 
-// Kết quả luyện tập, đúng định dạng data/ket-qua.json mà bản 1.x (khung Svelte) đọc ghi: khóa camelCase, thời gian ISO.
-
 public sealed class QuestionRecord
 {
     public int? Tries { get; set; }
@@ -21,7 +19,6 @@ public sealed class QuestionRecord
     public QuestionRecord Copy() => (QuestionRecord)MemberwiseClone();
 }
 
-/// <param name="Scroll">Chỗ đang đọc, tỉ lệ 0 đến 1 của chiều dài bài (Học tiếp mở lại đúng chỗ).</param>
 public sealed record LessonVisit(string? OpenedAt, double? Scroll = null);
 
 public sealed class ExamAttempt
@@ -35,20 +32,15 @@ public sealed class ExamAttempt
     public double Blank { get; set; }
     public double Score { get; set; }
     public double Max { get; set; }
-    /// <summary>Tiêu đề giữ lại cho đề sinh ra (đề ngẫu nhiên không còn trong sổ sau khi mở lại).</summary>
     public string? Title { get; set; }
-    /// <summary>Số giây làm từng câu, theo id câu.</summary>
     public Dictionary<string, double>? Times { get; set; }
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 
-/// <summary>Lịch ôn lặp lại (Leitner) của một câu, theo fingerprint.</summary>
 public sealed class SrsRecord
 {
     public int Box { get; set; }
-    /// <summary>Ngày ôn tiếp theo, YYYY-MM-DD (giờ máy).</summary>
     public string Due { get; set; } = "";
-    /// <summary>Ngày làm gần nhất.</summary>
     public string Last { get; set; } = "";
     public int Seen { get; set; }
     public int Wrong { get; set; }
@@ -57,7 +49,6 @@ public sealed class SrsRecord
 public sealed class NoteRecord
 {
     public string? Text { get; set; }
-    /// <summary>"Nghi đáp án sai".</summary>
     public bool? Flag { get; set; }
     public string At { get; set; } = "";
 }
@@ -77,15 +68,10 @@ public sealed class ProgressState
     public List<ExamAttempt> Exams { get; set; } = [];
     public Dictionary<string, SrsRecord> Srs { get; set; } = [];
     public Dictionary<string, NoteRecord> Notes { get; set; } = [];
-    /// <summary>Số giây làm câu gần nhất, theo fingerprint.</summary>
     public Dictionary<string, double> Times { get; set; } = [];
 
     public string ToJson() => Js.Serialize(this, Json);
 
-    /// <summary>
-    /// Đọc trạng thái do bản nào ghi cũng được (như <c>normalize</c> của bản TS): thiếu nhóm thì rỗng, nhóm sai kiểu thì bỏ,
-    /// không phải object thì trạng thái rỗng. Đọc từng nhóm riêng nên một nhóm hỏng không làm mất nhóm khác.
-    /// </summary>
     public static ProgressState Normalize(JsonNode? node)
     {
         var s = new ProgressState();
@@ -102,7 +88,6 @@ public sealed class ProgressState
         return s;
     }
 
-    // Đọc từng bản ghi: bản ghi hỏng chỉ bỏ bản ghi đó, không kéo cả nhóm về rỗng (lần ghi sau sẽ xóa hết lịch sử).
     private static Dictionary<string, T> Map<T>(JsonNode? n) where T : class =>
         n is JsonObject o
             ? o.Select(kv => (kv.Key, Value: Item<T>(kv.Value))).Where(x => x.Value != null).ToDictionary(x => x.Key, x => x.Value!)
@@ -119,10 +104,6 @@ public sealed class ProgressState
 
     private static bool Before(string? a, string? b) => string.CompareOrdinal(a ?? "", b ?? "") < 0;
 
-    /// <summary>
-    /// Gộp hai bản (port <c>merge</c>): câu lấy bản mới hơn nhưng "đúng lần đầu" lấy bản cũ hơn; đề không trùng (đề, giờ bắt đầu);
-    /// lịch ôn, ghi chú lấy bản chạm gần nhất; thời gian làm câu bản b thắng.
-    /// </summary>
     public static ProgressState Merge(ProgressState a, ProgressState b)
     {
         var output = a.Clone();

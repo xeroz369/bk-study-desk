@@ -2,23 +2,14 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Web;
 
-/// <summary>
-/// Quy tắc link của trường (host nào là của trường, đổi http sang https, trang đăng nhập SSO). Chép phần thuần của Shell/WebHost
-/// bản 1.x (file đó gắn với WebView2); bản 1.x chỉ còn sửa lỗi nên hai bản không cần giữ chung.
-/// </summary>
 public static class SchoolUrls
 {
     public static bool IsSchoolHost(string url)
     {
-        // Chỉ https: cửa sổ trường dùng chung cookie đăng nhập, không để cookie đi qua http trần.
         if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme != Uri.UriSchemeHttps) return false;
         return Config.List("sso.hosts").Any(h => u.Host.Equals(h, StringComparison.OrdinalIgnoreCase));
     }
 
-    /// <summary>
-    /// https tới host trường hoặc subdomain cùng tên miền (sso.hosts "sso.hcmut.edu.vn" → mọi *.hcmut.edu.vn). Dùng cho WebView ẩn
-    /// của MyBK: trang có thể chuyển qua subdomain khác của trường lúc đăng nhập, nhưng không được ra ngoài trường.
-    /// </summary>
     public static bool IsSchoolDomain(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme != Uri.UriSchemeHttps) return false;
@@ -31,10 +22,6 @@ public static class SchoolUrls
         });
     }
 
-    /// <summary>
-    /// Trang đang ở là trang đăng nhập riêng của LMS/MyBK (phiên server đã hết)? Trả về cổng vào qua SSO tương ứng
-    /// (sources.lms.casLogin, sources.mybk.appLogin), không phải thì null.
-    /// </summary>
     public static string? SsoEntry(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return null;
@@ -47,12 +34,10 @@ public static class SchoolUrls
         return null;
     }
 
-    /// <summary>Link trường viết http:// (danh sách dịch vụ cũ) thì đổi sang https:// trước khi mở bằng phiên đăng nhập.</summary>
     public static string Secure(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttp && IsSchoolHost("https://" + u.Authority)
             ? new UriBuilder(u) { Scheme = Uri.UriSchemeHttps, Port = -1 }.Uri.AbsoluteUri : url;
 
-    /// <summary>url là http:// tới tên miền trường (xem <see cref="IsSchoolDomain"/>) thì trả bản https://, không thì null.</summary>
     public static string? HttpsOfSchoolDomain(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme != Uri.UriSchemeHttp) return null;
@@ -64,16 +49,9 @@ public static class SchoolUrls
 
     public static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : "";
 
-    /// <summary>
-    /// Đường dẫn của trang, bỏ phần ";jsessionid=..." (tham số sau dấu chấm phẩy) mà máy chủ Java như hệ thống đăng ký môn tự gắn vào.
-    /// Từ 28/10/2026 /dkmh trả dangKyMonHocForm.action;jsessionid=...: so nguyên đường dẫn thì không nhận ra đã tới trang, app mở lại
-    /// giữa chừng và lượt bị hủy bị báo thành lỗi mạng.
-    /// </summary>
     public static string PagePath(Uri u) => string.Join('/', u.AbsolutePath.Split('/').Select(s => s.IndexOf(';') is var i and >= 0 ? s[..i] : s));
 
-    /// <summary>Đang ở trang nhập mật khẩu SSO (phiên SSO đã hết hoặc chưa đăng nhập).</summary>
     public static bool IsSsoLogin(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.Equals(Host(Config.Str("sources.mybk.casLogin")), StringComparison.OrdinalIgnoreCase)
         && u.AbsolutePath.Contains("/login", StringComparison.OrdinalIgnoreCase);
-
 }

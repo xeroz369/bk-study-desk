@@ -2,14 +2,12 @@ using System.Globalization;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>Chấm một câu theo loại (port <c>grade.ts</c>). Đúng, Sai đã đổi thành single lúc nạp gói.</summary>
 public static class Grade
 {
     private const string Letters = "ABCDEFGH";
 
     public static string QType(Question q) => q.Type ?? "single";
 
-    /// <summary>"1,5" (kiểu Việt) hay "1.5" đều đọc được; "1.234,5" và "1,234.5" cũng được.</summary>
     public static double? ParseNumber(string s)
     {
         var t = Text.CollapseJs(Text.TrimJs(s), "");
@@ -47,11 +45,9 @@ public static class Grade
         }
     }
 
-    // String(a) của JS: mảng ghép bằng dấu phẩy.
     private static string AsString(Answer a) =>
         a.Text ?? (a.Indices is { } ix ? string.Join(",", ix) : a.Number is { } n ? JsNumber.Format(n) : "");
 
-    /// <summary>Đáp án đúng dạng chữ (hiện sau khi làm, ở trang kết quả).</summary>
     public static string AnswerText(Question q) => QType(q) switch
     {
         "multi" => string.Join(", ", (q.Answers ?? []).Select(i => i >= 0 && i < Letters.Length ? Letters[i].ToString() : "")),

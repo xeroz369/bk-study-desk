@@ -1,16 +1,11 @@
 using System.Text.Json.Nodes;
-using SoHocTap.Core;
 using SoHocTap.Data;
 using SoHocTap.Sources;
 using SoHocTap.Sources.Mybk;
 
 namespace BKStudyDesk.Ui.Tests;
 
-/// <summary>
-/// MyBK on demand (docs/plans/2026-11-06-on-demand-sync.md, section 4): a sync calls only the APIs of the stale sections in view,
-/// keeps everything else from the saved copy, and records a fetch time per section. Uses the test data folder, never real data.
-/// </summary>
-[Collection("offline")]   // writes mybk.json in the shared test data folder: not in parallel with other tests
+[Collection("offline")]
 public class MybkSectionsSyncTests
 {
     private sealed class FakeRunner(Func<string, FetchResult> reply) : IBrowserRunner
@@ -59,12 +54,12 @@ public class MybkSectionsSyncTests
     public async Task Only_the_stale_section_in_view_is_called_and_the_rest_is_kept()
     {
         Seed(withId: true, scheduleAt: Now - 13 * 3600, examsAt: Now);
-        MybkSource.Show(MybkSections.ForPage("lich", 0));   // schedule (stale) and exams (fresh)
+        MybkSource.Show(MybkSections.ForPage("lich", 0));
         var r = new FakeRunner(_ => Ok("[]"));
         await Sync(r);
-        Assert.Equal(["schedule"], r.Calls);   // no info, no semesters, no exams, no grades
+        Assert.Equal(["schedule"], r.Calls);
         var saved = MybkStore.Latest();
-        Assert.Single(saved["schedule"]!.AsArray());   // empty reply mid-term keeps the saved classes
+        Assert.Single(saved["schedule"]!.AsArray());
         Assert.Single(saved["exams"]!.AsArray());
         Assert.True(MybkSections.FetchedAt(saved, "schedule") >= Now - 5);
         Assert.Equal(42, saved["student"]!["id"]!.GetValue<int>());
@@ -103,13 +98,13 @@ public class MybkSectionsSyncTests
     [Fact]
     public async Task Mybk_button_reloads_the_page_in_view_only()
     {
-        Seed(withId: true, scheduleAt: Now - 60, examsAt: Now - 60);   // fetched before the button press
+        Seed(withId: true, scheduleAt: Now - 60, examsAt: Now - 60);
         MybkSource.Show([MybkSections.Exams]);
         MybkSource.RefreshButton();
         var r = new FakeRunner(_ => Ok("[]"));
         await Sync(r);
-        Assert.Equal(["exams"], r.Calls);   // schedule is not on this page: not loaded now
-        Assert.True(MybkSource.Show([MybkSections.Schedule]));   // but it counts as stale when its page opens
+        Assert.Equal(["exams"], r.Calls);
+        Assert.True(MybkSource.Show([MybkSections.Schedule]));
         MybkSource.Show([]);
     }
 
@@ -119,10 +114,10 @@ public class MybkSectionsSyncTests
         Seed(withId: true, scheduleAt: Now, examsAt: Now);
         MybkSource.Show([MybkSections.Fees]);
         MybkSource.WantVisible();
-        var r = new FakeRunner(_ => new FetchResult(401, "", false));   // session expired
+        var r = new FakeRunner(_ => new FetchResult(401, "", false));
         await Assert.ThrowsAsync<SessionExpiredException>(() => Sync(r));
-        Assert.All(r.Calls, c => Assert.Equal("fees", c));   // only fees (MybkReply may retry it once)
-        Assert.False(MybkSource.NeedsRun());   // failed just now: not restarted in a loop
+        Assert.All(r.Calls, c => Assert.Equal("fees", c));
+        Assert.False(MybkSource.NeedsRun());
         MybkSource.Show([]);
     }
 }

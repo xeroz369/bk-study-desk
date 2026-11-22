@@ -5,21 +5,13 @@ using SoHocTap.Shell;
 
 namespace BKStudyDesk.Desktop.Platform;
 
-/// <summary>
-/// Tài khoản HCMUT cho tự đăng nhập lại (sso.autoLogin, mặc định tắt), lưu trong kho mật khẩu của hệ điều hành, không trong thư mục data:
-/// Windows Credential Manager (SsoCredentials, cùng 1.x), Linux libsecret qua secret-tool (mật khẩu đi qua stdin, không lên dòng lệnh).
-/// macOS chưa có (CLI security đòi gõ ở terminal): Supported = false, Cài đặt ẩn mục này. Tắt tính năng, tắt Ghi nhớ đăng nhập hay
-/// đăng xuất thì xóa.
-/// </summary>
 internal static class Credentials
 {
     private static readonly string[] Attrs = ["app", AppInfo.Id, "target", AppInfo.InstanceKey + "/sso"];
 
-    /// <summary>Máy có kho mật khẩu dùng được. Dò một lần mỗi lần chạy app (Linux chạy secret-tool; dải báo đọc ở mỗi lần đổi trạng thái).</summary>
     public static bool Supported => _supported.Value;
     private static readonly Lazy<bool> _supported = new(() => OperatingSystem.IsWindows() || (OperatingSystem.IsLinux() && Run("secret-tool", null, ["--version"]) is not null));
 
-    /// <summary>Được tự đăng nhập không: người dùng đã bật, đang ghi nhớ đăng nhập, và có tài khoản đã lưu.</summary>
     public static (string User, string Password)? Usable() =>
         Settings.Sso.AutoLogin && Settings.Sso.RememberDays > 0 ? Read() : null;
 
@@ -30,7 +22,6 @@ internal static class Credentials
             throw new IOException("Không lưu được vào kho mật khẩu (secret-tool).");
     }
 
-    /// <summary>Lưu tài khoản rồi bật sso.autoLogin (form ở trang Cài đặt). Trả câu lỗi để hiện, null là đã bật.</summary>
     public static string? Enable(string user, string password)
     {
         if (user.Trim().Length == 0 || password.Length == 0) return SoHocTap.Ui.L.T("autologin.missing");
@@ -55,7 +46,6 @@ internal static class Credentials
         catch (JsonException) { return null; }
     }
 
-    /// <summary>Tắt tự đăng nhập và xóa tài khoản đã lưu.</summary>
     public static void Forget()
     {
         if (OperatingSystem.IsWindows()) { SsoCredentials.Forget(); return; }
@@ -63,7 +53,6 @@ internal static class Credentials
         Run("secret-tool", null, ["clear", .. Attrs]);
     }
 
-    /// <summary>Chạy lệnh, ghi <paramref name="stdin"/> nếu có; trả stdout, null khi không chạy được hay lỗi.</summary>
     private static string? Run(string exe, string? stdin, string[] args)
     {
         try

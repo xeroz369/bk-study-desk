@@ -11,24 +11,17 @@ using SoHocTap.Web;
 
 namespace BKStudyDesk.Desktop.Web;
 
-/// <summary>
-/// Một trang web nhúng (NativeWebView: WebView2 trên Windows, WKWebView trên macOS, WebKitGTK trên Linux) với những việc app cần:
-/// mở trang và chờ tới đúng trang, chạy script (kể cả chờ promise), đọc và ghi cookie. Mọi trang dùng chung profile data/webview
-/// nên dùng chung cookie đăng nhập trường. Chỉ gọi trên UI thread.
-/// </summary>
 internal sealed class WebPage
 {
-    /// <summary>macOS: WKWebView giữ dữ liệu theo mã này (cố định để cookie còn sau khi mở lại app).</summary>
     private static readonly Guid AppleStore = new("6b0d7f3e-2c1a-4f5e-9a51-0b0000000001");
 
-    private Uri? _upgrade;            // vừa hủy lượt http của trường: mở bản https này khi lượt bị hủy báo kết thúc
-    private string? _blocked;         // link ngoài trường vừa bị chặn, để báo lỗi rõ thay vì chờ hết giờ
-    private int _completions;         // số lần báo kết thúc, để biết lượt https có tiến triển không
+    private Uri? _upgrade;
+    private string? _blocked;
+    private int _completions;
     private Action<Uri, bool>? _loaded;
 
     public NativeWebView View { get; } = new();
 
-    /// <summary>Chỉ cho đi tới các trang thỏa điều kiện; null là cho mọi trang (cửa sổ đăng nhập người dùng tự xem).</summary>
     public Func<Uri, bool>? Allow { get; init; }
 
     public Uri? Source => View.Source;
@@ -45,17 +38,16 @@ internal sealed class WebPage
                 case AppleWKWebViewEnvironmentRequestedEventArgs a: a.DataStoreIdentifier = AppleStore; break;
             }
         };
-        View.NewWindowRequested += (_, e) => e.Handled = true;   // không mở cửa sổ mới
+        View.NewWindowRequested += (_, e) => e.Handled = true;
         View.NavigationStarted += (_, e) =>
         {
             if (e.Request is not { } u || Allow is null || u.Scheme == "about" || Allow(u)) return;
             e.Cancel = true;
-            // MyBK hết phiên có lúc chuyển về http://mybk.../app/login: cùng tên miền trường thì mở lại bằng https.
             if (SchoolUrls.HttpsOfSchoolDomain(u.AbsoluteUri) is { } https)
             {
                 Log.Info($"Web: đổi http sang https {Log.Where(u.AbsoluteUri)}");
                 _upgrade = new Uri(https);
-                DispatcherTimer.RunOnce(Upgrade, TimeSpan.FromSeconds(2));   // phòng khi lượt bị hủy không báo kết thúc
+                DispatcherTimer.RunOnce(Upgrade, TimeSpan.FromSeconds(2));
                 return;
             }
             _blocked = u.AbsoluteUri;
@@ -64,20 +56,12 @@ internal sealed class WebPage
         View.NavigationCompleted += (_, e) =>
         {
             _completions++;
-            // Báo kết thúc của lượt http vừa hủy: không phải trang nào cả, giờ mới mở bản https. Bản 1.2.4 trở về trước mở ngay lúc hủy,
-            // hai lượt chồng nhau mà báo kết thúc không cho biết của lượt nào (Request là trang hiện tại); 6 lần MyBK treo 45 giây đều
-            // ngay sau bước này (log 08-11/10/2026, chưa tái hiện được trên máy). Trang ngoài trường bị chặn thì vẫn báo lên (bản cũ nuốt
-            // mất nên chờ hết giờ, đã thử), NavigateUntilAsync báo lỗi rõ ngay.
             if (_upgrade is not null && !e.IsSuccess) { Upgrade(); return; }
             if (View.Source is { } u) _loaded?.Invoke(u, e.IsSuccess);
             Loaded?.Invoke(View.Source, e.IsSuccess);
         };
     }
 
-    /// <summary>
-    /// Mở bản https đang chờ (một lần). Mười giây sau mà chưa có báo kết thúc nào thì mở lại một lần, ghi log: lần treo nào cũng
-    /// biết đã đi tới bước này.
-    /// </summary>
     private void Upgrade()
     {
         if (_upgrade is not { } target) return;
@@ -92,18 +76,12 @@ internal sealed class WebPage
         }, TimeSpan.FromSeconds(10));
     }
 
-    /// <summary>Trang vừa tải xong (thành công hay không).</summary>
     public event Action<Uri?, bool>? Loaded;
 
     public void Navigate(string url) => View.Navigate(new Uri(url));
 
-    /// <summary>Chạy một biểu thức; kết quả là chuỗi (đã bỏ lớp JSON) hay null.</summary>
     public async Task<string?> EvalAsync(string js) => Decode(await View.InvokeScript(js));
 
-    /// <summary>
-    /// Chạy một biểu thức trả promise (fetch) và chờ kết quả: InvokeScript không chờ promise trên mọi nền tảng, nên script ghi kết quả
-    /// vào window.__bk[id] và app hỏi lại mỗi 50 ms. Script lỗi hay quá giờ thì null (có ghi log).
-    /// </summary>
     public async Task<string?> EvalAwaitAsync(string asyncExpression, TimeSpan timeout, CancellationToken ct = default)
     {
         var id = Guid.NewGuid().ToString("N");
@@ -136,11 +114,6 @@ internal sealed class WebPage
 
     public void SetCookie(Cookie c) => View.TryGetCookieManager()?.AddOrUpdateCookie(c);
 
-    /// <summary>
-    /// Mở url (hay chạy <paramref name="begin"/>) rồi chờ tới trang thỏa <paramref name="arrived"/>. Gặp trang <paramref name="failAt"/>
-    /// (đăng nhập) thì báo SessionExpiredException; tải lỗi, bị chặn ra ngoài trường thì HttpRequestException; quá
-    /// sources.mybk.timeoutSeconds giây thì TimeoutException. Không để người dùng chờ mà không biết vì sao.
-    /// </summary>
     public async Task NavigateUntilAsync(string? url, Func<Uri, bool> arrived, CancellationToken ct, Func<Uri, bool>? failAt = null, Func<Task>? begin = null)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -172,7 +145,6 @@ internal sealed class WebPage
         finally { _loaded = null; }
     }
 
-    /// <summary>InvokeScript trả kết quả dạng JSON: chuỗi có ngoặc kép, null là "null".</summary>
     private static string? Decode(string? raw) =>
         raw is null or "null" or "undefined" ? null : raw.StartsWith('"') ? JsonSerializer.Deserialize(raw, DesktopJson.Default.String) : raw;
 }

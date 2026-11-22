@@ -48,7 +48,6 @@ public class CommandTests
         Assert.True(Tex.Height(@"\displaystyle\sum_{i=1}^n", TexStyle.Text) > Tex.Height(@"\sum_{i=1}^n", TexStyle.Text));
         Assert.Equal(Tex.Height(@"\sum_{i=1}^n", TexStyle.Text), Tex.Height(@"\textstyle\sum_{i=1}^n", TexStyle.Display), 6);
         Assert.True(Tex.Height(@"\textstyle\sum_{i=1}^n", TexStyle.Display) < Tex.Height(@"\sum_{i=1}^n", TexStyle.Display));
-        // Chỉ tác dụng trong nhóm: phần ngoài {...} giữ style cũ.
         Assert.Equal(Tex.Height(@"{\textstyle a}\sum_{i=1}^n", TexStyle.Display), Tex.Height(@"\sum_{i=1}^n", TexStyle.Display), 6);
     }
 
@@ -69,7 +68,6 @@ public class CommandTests
 
 public class BlackboardRenderTests
 {
-    // Arial, Segoe UI không có ℝ: phải lấy font dự phòng, không ném lỗi lúc Render.
     [AvaloniaFact]
     public void Mathbb_draws_with_fallback_font()
     {

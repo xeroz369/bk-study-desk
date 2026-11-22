@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Tests;
 
-/// <summary>vi.json và en.json phải cùng bộ key và cùng placeholder {n}: thiếu key thì UI hiện tên key, lệch placeholder thì string.Format lỗi.</summary>
 public partial class LangParityTests
 {
     private static Dictionary<string, string> Read(string code) =>
@@ -21,7 +20,6 @@ public partial class LangParityTests
     [InlineData("en")]
     public void NoDuplicateKeys(string code)
     {
-        // Dictionary đọc im lặng ghi đè key trùng, nên đọc thẳng token để bắt.
         var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "lang", code + ".json"))));
         var seen = new HashSet<string>();
         var dup = new List<string>();
@@ -35,7 +33,6 @@ public partial class LangParityTests
     [InlineData("en")]
     public void NoKeysDifferOnlyInCase(string code)
     {
-        // "autoLogin.note" và "autologin.note" là hai key khác nhau với Dictionary nhưng dễ nhầm khi sửa: một bản bị bỏ quên mà không ai thấy.
         var clash = Read(code).Keys.GroupBy(k => k, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => string.Join(" / ", g)).ToList();
         Assert.Empty(clash);
     }
@@ -57,13 +54,11 @@ public partial class LangParityTests
     [Fact]
     public void FormatStringsAreValid()
     {
-        // Chuỗi có placeholder phải format được với đủ tham số (dấu { lẻ làm string.Format throw lúc chạy).
         foreach (var (code, dict) in new[] { ("vi", Vi), ("en", En) })
             foreach (var (k, v) in dict.Where(p => Placeholder().IsMatch(p.Value)))
             {
                 var matches = Placeholder().Matches(v);
                 var n = matches.Max(m => int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)) + 1;
-                // Tham số theo định dạng: "{0:dd/MM}" là ngày, "{0:0}" là số, không có định dạng thì chuỗi.
                 var args = new object[n];
                 for (var i = 0; i < n; i++) args[i] = "x";
                 foreach (System.Text.RegularExpressions.Match m in matches)

@@ -5,19 +5,15 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Presentation.Practice;
 
-// Study Pack v1 (port pack.ts): gói luyện tập dùng chung, JSON thuần, spec ở studypack/SPEC.md.
-
 public sealed record PackSource(string Title, string? Pages = null, string? Url = null);
 
 public sealed class PackQuestion
 {
     public string? Id { get; set; }
-    /// <summary>single (mặc định), multi, truefalse, numeric, short.</summary>
     public string? Type { get; set; }
     public string? Tag { get; set; }
     public string Prompt { get; set; } = "";
     public List<string>? Options { get; set; }
-    /// <summary>single: chỉ số đúng; truefalse: true, false; numeric: đáp số.</summary>
     public JsonNode? Answer { get; set; }
     public int[]? Answers { get; set; }
     public double? Tolerance { get; set; }
@@ -30,7 +26,6 @@ public sealed class PackQuestion
     public string[]? Skills { get; set; }
     public PackSource? Source { get; set; }
 
-    // JsonValue tạo từ int (bộ đọc Markdown) không đọc được bằng TryGetValue<double>: thử từng kiểu số.
     [System.Text.Json.Serialization.JsonIgnore]
     public double? AnswerNumber => Answer is not JsonValue v || v.GetValueKind() != JsonValueKind.Number ? null
         : v.TryGetValue<double>(out var d) ? d : v.TryGetValue<int>(out var i) ? i : v.TryGetValue<long>(out var l) ? l : v.TryGetValue<JsonElement>(out var e) ? e.GetDouble() : null;
@@ -80,10 +75,8 @@ public sealed partial class StudyPack
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
     };
 
-    // Đọc/ghi gói trong app dùng metadata sinh sẵn (PracticeJson), không reflection.
     private static readonly JsonSerializerOptions Json = new(NewOptions()) { TypeInfoResolver = PracticeJson.Default };
 
-    /// <summary>Cách ghi JSON của gói (camelCase, bỏ trường null) cho test, nhận cả kiểu ẩn danh nên dùng reflection; code app dùng ToJson/Parse.</summary>
     public static JsonSerializerOptions JsonOptions { get; } = NewOptions();
 
     public string Format { get; set; } = FormatId;
@@ -98,12 +91,10 @@ public sealed partial class StudyPack
     public string? CreatedWith { get; set; }
     public PackVerified? Verified { get; set; }
     public List<PackSource>? Sources { get; set; }
-    /// <summary>Xáo câu, xáo phương án mỗi lần làm (người học vẫn tắt được trong app).</summary>
     public PackSettings? Settings { get; set; }
     public List<PackUnit> Units { get; set; } = [];
     public List<PackExam>? Exams { get; set; }
 
-    /// <summary>Đọc gói từ JSON (chưa kiểm tra: gọi <see cref="PackValidator.Validate"/> trước khi nạp). Sai cú pháp thì null.</summary>
     public static StudyPack? Parse(string json)
     {
         try { return Js.Deserialize<StudyPack>(json, Json); }
@@ -112,17 +103,14 @@ public sealed partial class StudyPack
 
     public string ToJson() => Js.Serialize(this, Json);
 
-    /// <summary>Thẻ HTML được phép trong nội dung (app lọc lại lần nữa khi hiển thị).</summary>
     public static readonly HashSet<string> AllowedTags =
     [
         "p", "br", "b", "strong", "i", "em", "u", "sub", "sup", "code", "pre", "span", "div", "ul", "ol", "li",
         "table", "thead", "tbody", "tr", "th", "td", "hr", "blockquote", "small", "mark", "img",
     ];
 
-    /// <summary>Class được giữ (khớp giao diện): công thức, cảnh báo, phím bấm máy tính, mẹo, ghi chú.</summary>
     public static readonly HashSet<string> AllowedClasses = ["math", "warn", "keys", "tip", "note"];
 
-    /// <summary>Ảnh chỉ nhận dạng nhúng sẵn (data URI raster): gói tự chứa, không tải gì từ mạng, không SVG.</summary>
     [GeneratedRegex(@"^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$")]
     public static partial Regex ImgSrc();
 }

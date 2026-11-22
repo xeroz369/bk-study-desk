@@ -14,11 +14,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Trang Thư viện: mọi môn của thư viện (repo bk-study-library), không chỉ môn đang học. Danh sách, tìm, lọc: Presentation/LibraryPage.cs;
-/// dòng, bộ lọc của bảng tài liệu: Presentation/LibraryTab.cs. Đọc index, tải file chạy nền (LibraryService). Tải về thì lưu vào
-/// Môn học/&lt;thư mục môn&gt;/Thư viện/ (môn của người dùng là đúng thư mục môn đó, môn khác theo tên trên thư viện).
-/// </summary>
 public partial class LibraryView : UserControl, IFillPage
 {
     private readonly AppState _state = null!;
@@ -33,17 +28,15 @@ public partial class LibraryView : UserControl, IFillPage
 
     public LibraryView() => InitializeComponent();
 
-    /// <param name="previous">Trang cũ khi dựng lại vì dữ liệu mới: giữ chữ tìm, khoa và môn đang xem.</param>
     internal LibraryView(AppState state, LibraryService library, LibraryView? previous) : this()
     {
         RowMenus.Attach(Items, OnItemMenu);
         _state = state;
         _library = library;
-        _subjects = SubjectsPresenter.Rows(state.Lms, null);   // môn trên LMS ngay; môn chỉ có thư mục trên máy thêm sau khi quét (MineAsync)
+        _subjects = SubjectsPresenter.Rows(state.Lms, null);
         _wanted = previous?._course?.Course.Id;
         Search.Text = previous?.Search.Text ?? "";
         _keepFaculty = (previous?.FacultyFilter.SelectedItem as FilterOption)?.Value;
-        // Trang được dựng lại mỗi khi dữ liệu đổi: chỉ nghe Changed khi đang hiện, để trang cũ không bị giữ lại.
         void OnChanged() => Dispatcher.UIThread.Post(BuildList);
         AttachedToVisualTree += (_, _) => library.Changed += OnChanged;
         DetachedFromVisualTree += (_, _) => library.Changed -= OnChanged;
@@ -54,8 +47,6 @@ public partial class LibraryView : UserControl, IFillPage
 
     private string? _keepFaculty;
 
-    /// <summary>Mở đúng môn của trang Môn học (nút Xem trong Thư viện): chọn môn thư viện khớp môn đó, xóa chữ tìm đang gõ.</summary>
-    /// <summary>Nằm trong SubjectsHost: tên trang đã là phần chọn ở đầu trang, bỏ tiêu đề riêng.</summary>
     public void HideTitle() => PageTitle.IsVisible = false;
 
     public void SelectSubject(string subject)
@@ -68,7 +59,6 @@ public partial class LibraryView : UserControl, IFillPage
 
     private string? _wantedSubject;
 
-    /// <summary>Môn ở trang Môn học (cả môn chỉ có thư mục trên máy) khớp môn nào của thư viện; quét thư mục chạy nền.</summary>
     private async Task MineAsync()
     {
         System.Text.Json.Nodes.JsonArray? scan = null;
@@ -78,11 +68,8 @@ public partial class LibraryView : UserControl, IFillPage
         BuildList();
     }
 
-    // ------------------------------------------------------------------ danh sách môn
-
     private void BuildList()
     {
-        // Khớp lại mỗi lần dựng: danh mục thư viện có thể vừa tải xong sau khi danh sách môn đã có.
         _courses = LibraryPagePresenter.Courses(_library.Index, _subjects.Select(s => (s.Name, _library.Match(LibraryPresenter.Codes(s, _state.Mybk)))));
         _filterReady = false;
         var faculties = LibraryPagePresenter.Faculties(_library.Index);
@@ -131,21 +118,16 @@ public partial class LibraryView : UserControl, IFillPage
         WebButton.IsVisible = LibraryClient.CourseUrl(_library.Index, c.Course) is not null;
         ContributeButton.IsVisible = ContributeUrl() is not null;
         if (!same) Say("");
-        // Danh sách dựng lại (quét xong thư mục môn, index đổi) chọn lại đúng môn đang đọc dở: chờ lượt đang chạy, không gọi lượt mới.
-        // Lượt mới lúc đó bị LibraryClient chặn (vừa thử xong) nên trả về rỗng, và vì là lượt mới nhất nên đè mất kết quả thật.
         if (same && _loading is { IsCompleted: false }) return;
         _loading = LoadItemsAsync(c);
     }
 
     private Task? _loading;
 
-    // ------------------------------------------------------------------ tài liệu của môn
-
     private async Task LoadItemsAsync(LibraryCourseRow c)
     {
         var gen = ++_gen;
         Status(L.T("library.loading"));
-        // Bộ lọc của môn trước (hay ô trống khi chưa có gì) không hiện trong lúc chờ: FillFilters bật lại ô nào có giá trị.
         TeacherFilter.IsVisible = TermFilter.IsVisible = ExamFilter.IsVisible = false;
         IReadOnlyList<LibraryRow> rows = [];
         string? error = null;
@@ -153,8 +135,6 @@ public partial class LibraryView : UserControl, IFillPage
         try
         {
             var (r, gone) = await _library.CourseAsync(c.Course, LibraryRefresh.Tab);
-            // Rỗng mà không lỗi: một lượt khác vừa gọi môn này (LibraryClient chặn gọi trùng) và chưa có bản lưu. Đọc lại bản lưu tới khi
-            // lượt kia ghi xong, tối đa library.timeoutSeconds (lượt kia cũng hết giờ trong khoảng đó); không kết luận là môn trống.
             var until = DateTime.UtcNow.AddSeconds(Config.Int("library.timeoutSeconds", 30));
             while (r.Value is null && r.Error is null && gen == _gen && DateTime.UtcNow < until)
             {
@@ -171,7 +151,7 @@ public partial class LibraryView : UserControl, IFillPage
             Log.Warn($"Thư viện: đọc môn {c.Course.Code}: {e.Message}");
             error = e.Message;
         }
-        if (gen != _gen) return;   // đã chọn môn khác trong lúc chờ
+        if (gen != _gen) return;
         if (cleaned > 0) Say(L.F("library.cleaned", cleaned));
         var any = rows.Count > 0 || error is null;
         var note = LibraryPresenter.Note(c.ReplacementOf is null ? [] : [new CourseMatch(c.Course, c.ReplacementOf)], any ? error : null);
@@ -202,7 +182,6 @@ public partial class LibraryView : UserControl, IFillPage
 
     private bool _itemFilterReady;
 
-    /// <summary>Bộ lọc chỉ hiện khi có giá trị; giữ lựa chọn cũ nếu vẫn còn.</summary>
     private static void Fill(ComboBox box, IReadOnlyList<FilterOption> opts)
     {
         var keep = (box.SelectedItem as FilterOption)?.Value;
@@ -220,7 +199,6 @@ public partial class LibraryView : UserControl, IFillPage
     {
         static string? Pick(ComboBox b) => b.IsVisible ? (b.SelectedItem as FilterOption)?.Value : null;
         var rows = LibraryPresenter.Filter(_rows, Pick(TeacherFilter), Pick(TermFilter), Pick(ExamFilter));
-        // Cột nhãn tùy chọn: ẩn khi không mục nào của môn có giá trị. Thứ tự cột như LibraryView.axaml.
         var c = Items.Columns;
         c[1].IsVisible = _rows.Any(r => r.Term.Length > 0);
         c[2].IsVisible = _rows.Any(r => r.Teacher.Length > 0);
@@ -239,9 +217,6 @@ public partial class LibraryView : UserControl, IFillPage
         ShowRows();
     }
 
-    // ------------------------------------------------------------------ lệnh
-
-    /// <summary>Icon ở cột Trên máy: như bấm đúp dòng đó (mở file đã tải, tải về, hay mở web).</summary>
     private void OnItemButton(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if ((sender as Control)?.DataContext is not LibraryRow r) return;
@@ -277,7 +252,6 @@ public partial class LibraryView : UserControl, IFillPage
         if (web is not null) Add(L.T("library.copyLink"), () => _ = Copy(web.AbsoluteUri));
     }
 
-    /// <summary>Lệnh async từ menu, bấm đúp: lỗi không lường trước chỉ ghi log và báo trên trang, không làm sập app.</summary>
     private async void Run(Func<Task> action)
     {
         try { await action(); }
@@ -302,7 +276,6 @@ public partial class LibraryView : UserControl, IFillPage
                 if (await DownloadAsync(r) is [var file, ..]) await OpenLocal(file);
                 break;
             case LibraryAction.Download:
-                // Tải lần đầu file đọc được (PDF, Markdown) thì mở luôn; tải bản mới thì chỉ báo.
                 if (await DownloadAsync(r) is [var first, ..] && r.State == ItemLocal.None && LibraryActions.OpensAfterDownload(r.Item)) await OpenLocal(first);
                 break;
             case LibraryAction.Install:
@@ -311,7 +284,6 @@ public partial class LibraryView : UserControl, IFillPage
         }
     }
 
-    /// <summary>Tải các file của mục vào Môn học/&lt;thư mục môn&gt;/Thư viện/. Trả về đường dẫn, null nếu lỗi (đã báo trên trang).</summary>
     private async Task<IReadOnlyList<string>?> DownloadAsync(LibraryRow r)
     {
         if (_course is not { } c) return null;
@@ -333,10 +305,6 @@ public partial class LibraryView : UserControl, IFillPage
         return null;
     }
 
-    /// <summary>
-    /// Gói quiz: tải (nếu chưa có bản mới nhất) rồi đi đúng đường Nhập gói của Luyện tập: gói .json mới thì cài thẳng (PackImport);
-    /// .md, .zip hay cập nhật gói đã cài thì chép đường dẫn, mở thư mục chứa để người dùng chọn Nhập gói trong Luyện tập.
-    /// </summary>
     private async Task InstallAsync(LibraryRow r)
     {
         var files = r.State == ItemLocal.Downloaded ? _library.DownloadedFiles(r.Course, r.Item) : await DownloadAsync(r);
@@ -391,16 +359,12 @@ public partial class LibraryView : UserControl, IFillPage
         if (TopLevel.GetTopLevel(this)?.Clipboard is { } c) await c.SetTextAsync(text);
     }
 
-    /// <summary>Một dòng báo trên trang (đang tải, đã tải, lỗi); thay bằng dòng mới ở lần sau.</summary>
     private void Say(string text)
     {
         StatusLine.Text = text;
         StatusLine.IsVisible = text.Length > 0;
     }
 
-    // ------------------------------------------------------------------ bố cục co giãn
-
-    /// <summary>Hai cột khi đủ chỗ (như trang Môn học); không thì danh sách lên trên, thấp lại.</summary>
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);

@@ -31,11 +31,12 @@ jobs:
           node test-roundtrip.ts
       - name: Logic tests
         run: dotnet test --project tests/BKStudyDesk.Logic.Tests
+      - name: No comments in code
+        run: dotnet run tools/comments.cs -- src/BKStudyDesk.Core src/BKStudyDesk.Desktop src/BKStudyDesk.Setup tests
       - name: Check code style (dotnet format)
         run: |
           dotnet format src/BKStudyDesk.Core/BKStudyDesk.Core.csproj --verify-no-changes --severity warn
           dotnet format src/BKStudyDesk.Desktop/BKStudyDesk.Desktop.csproj --verify-no-changes --severity warn
-      # Bản Windows: không được có cảnh báo.
       - name: Build (Windows target)
         run: dotnet build src/BKStudyDesk.Desktop -c Release -f net10.0-windows10.0.19041.0 -warnaserror
 

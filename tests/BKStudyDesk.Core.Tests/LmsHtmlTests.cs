@@ -3,7 +3,6 @@ using SoHocTap.Sources.Lms;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>LmsHtml.Slim: bỏ style, span, ghi chú Office của bài dán từ Word mà vẫn giữ chữ, đoạn và link.</summary>
 public class LmsHtmlTests
 {
     [Fact]

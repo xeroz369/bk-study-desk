@@ -4,7 +4,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Bảng Lịch (CalendarPresenter): mọi mốc chưa xong từ hôm nay trở đi và quá hạn trong cửa sổ 7 ngày; không cắt; buổi học không vào bảng này.</summary>
 public class CalendarTests
 {
     private static readonly long Now = Format.Now;

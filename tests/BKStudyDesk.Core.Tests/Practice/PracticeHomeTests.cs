@@ -31,7 +31,7 @@ public class PracticeHomeTests
     public void Today_counts_due_review_and_next_lesson()
     {
         var (study, p) = Make();
-        p.RecordAnswer("b1.q1", Answer.Index(1), false);   // sai lần đầu: cần ôn, tới hạn mai
+        p.RecordAnswer("b1.q1", Answer.Index(1), false);
         foreach (var i in Enumerable.Range(1, 4)) p.RecordAnswer($"b1.q{i}", Answer.Index(0), true);
         var m = PracticeHome.Build(study, p, [], []);
         Assert.Equal(1, m.Today.Review);
@@ -92,7 +92,6 @@ public class PracticeHomeTests
     public void Archive_groups_by_subject_newest_first_with_status()
     {
         var (study, p) = Make();
-        // 01/10/2026 và 05/10/2026 giờ Việt Nam.
         long d1 = new DateTimeOffset(2026, 10, 1, 3, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(), d5 = d1 + 4 * 86400;
         List<QuizInfo> infos =
         [
@@ -123,8 +122,8 @@ public class PracticeHomeTests
         var q1 = study.Question("b1.q1")!;
         p.SetNote(q1.Fp, flag: true);
         p.SetNote(study.Question("b2.q2")!.Fp, text: "nhớ đổi dấu");
-        p.SetNote(study.Question("b3.q1")!.Fp, text: " ");   // ghi chú đã xóa: không tính
-        p.SetNote("khong-co-cau", flag: true);                // câu không còn trong sổ: không tính
+        p.SetNote(study.Question("b3.q1")!.Fp, text: " ");
+        p.SetNote("khong-co-cau", flag: true);
         Assert.Equal(2, PracticeHome.Build(study, p, [], []).Flagged);
     }
 
@@ -149,9 +148,9 @@ public class PracticeHomeTests
         var q1 = study.Question("b1.q1")!;
         var q2 = study.Question("b1.q2")!;
         Assert.Equal(0, fresh(q1));
-        p.RecordAnswer(q2.Id, Answer.Index(0), true);   // đúng: hẹn ôn 3 ngày sau
+        p.RecordAnswer(q2.Id, Answer.Index(0), true);
         Assert.Equal(1, fresh(q2));
-        p.RecordAnswer(q1.Id, Answer.Index(1), false);  // sai: mai ôn
+        p.RecordAnswer(q1.Id, Answer.Index(1), false);
         Assert.Equal(1, fresh(q1));
     }
 
@@ -172,7 +171,7 @@ public class PracticeHomeTests
         var units = PracticeHome.Build(study, p, [], []).Courses[0].Units;
         Assert.Equal(LessonStatus.Done, p.Status("b1"));
         Assert.Equal("C1, 1/2 bài xong", units[0].Header);
-        Assert.Equal("C2, 0/2 bài xong", units[1].Header);   // như dòng phụ của môn: đếm cả bài chưa soạn
+        Assert.Equal("C2, 0/2 bài xong", units[1].Header);
     }
 
     [Fact]
@@ -181,11 +180,11 @@ public class PracticeHomeTests
         var (study, p) = Make();
         var courses = PracticeHome.Build(study, p, [], []).Courses;
         Assert.Same(courses, PracticeHome.Filter(courses, "  "));
-        var byLesson = PracticeHome.Filter(courses, "bai 3");   // không dấu, không phân biệt hoa thường
+        var byLesson = PracticeHome.Filter(courses, "bai 3");
         Assert.Equal(["Bài 3"], byLesson.Single().Units.SelectMany(u => u.Lessons).Select(l => l.Title));
-        Assert.Single(byLesson.Single().Units);                   // chương không còn bài nào thì bỏ
-        Assert.Equal(4, PracticeHome.Filter(courses, "phuong phap").Single().Units.Sum(u => u.Lessons.Count));   // khớp tên môn: giữ cả môn
-        Assert.Equal(4, PracticeHome.Filter(courses, "mt1009").Single().Units.Sum(u => u.Lessons.Count));       // khớp mã môn
+        Assert.Single(byLesson.Single().Units);
+        Assert.Equal(4, PracticeHome.Filter(courses, "phuong phap").Single().Units.Sum(u => u.Lessons.Count));
+        Assert.Equal(4, PracticeHome.Filter(courses, "mt1009").Single().Units.Sum(u => u.Lessons.Count));
         Assert.Empty(PracticeHome.Filter(courses, "không có"));
     }
 }

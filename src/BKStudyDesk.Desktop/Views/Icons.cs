@@ -5,10 +5,6 @@ using Avalonia.Media;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Nút chỉ có icon (Styles/Icons.axaml): luôn kèm tooltip và tên cho trình đọc màn hình, để icon không thay mất chữ với người cần chữ.
-/// Key là tên tài nguyên không có tiền tố Icon: "Back", "Download", "Check", "Folder", "OpenNew", "Close", "Bell", "Settings", "Search".
-/// </summary>
 internal static class Icons
 {
     public static PathIcon Of(string key) => new()

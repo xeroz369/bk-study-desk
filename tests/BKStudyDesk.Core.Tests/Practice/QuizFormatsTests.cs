@@ -4,7 +4,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Port formats.test.ts. Kỳ vọng sinh bằng formats.ts (Node, jsdom cho Moodle XML, 07/10/2026): fmt-expected/.
 public class QuizFormatsTests
 {
     private static string Dir => Path.Combine(AppContext.BaseDirectory, "Practice", "fmt-expected");

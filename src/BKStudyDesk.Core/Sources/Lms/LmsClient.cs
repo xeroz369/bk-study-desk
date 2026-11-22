@@ -8,10 +8,6 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Sources.Lms;
 
-/// <summary>
-/// Gọi web service của Moodle mobile app (BK-LMS) bằng token đã lưu.
-/// Flow login: launch.php → &lt;scheme&gt;://token=base64(md5(site+passport):::token:::privatetoken).
-/// </summary>
 public static partial class LmsClient
 {
     private static readonly HttpClient Http = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All })
@@ -25,10 +21,6 @@ public static partial class LmsClient
     public static string Site => Config.Str("sources.lms.site").TrimEnd('/');
     public static string Scheme => Config.Str("sources.lms.scheme");
 
-    /// <summary>
-    /// Token LMS, lưu trong data\secrets và đã encrypt bằng DPAPI (xem <see cref="SecretStore"/>). Giữ bản đã giải mã trong RAM,
-    /// khóa theo mtime của file: Status() được hỏi ở mỗi bước đồng bộ, không giải mã DPAPI lại mỗi lần.
-    /// </summary>
     public static string? Token
     {
         get
@@ -44,7 +36,6 @@ public static partial class LmsClient
         }
     }
 
-    /// <summary>Đã có token LMS (không gửi request, không giải mã lại nếu file không đổi).</summary>
     public static bool HasToken => Token is not null;
 
     private static readonly object TokenGate = new();
@@ -57,17 +48,8 @@ public static partial class LmsClient
         lock (TokenGate) { _tokenRead = false; _token = null; }
     }
 
-    // ------------------------------------------------------------------ mở LMS bằng trình duyệt, vẫn đăng nhập
-
     private static long _autoLoginAt;
 
-    /// <summary>
-    /// Địa chỉ mở <paramref name="url"/> trên LMS bằng trình duyệt mà trình duyệt tự đăng nhập luôn, đúng cách ứng dụng Moodle trên điện
-    /// thoại làm: xin khóa dùng một lần (tool_mobile_get_autologin_key, cần privatetoken lúc lấy token) rồi mở
-    /// /admin/tool/mobile/autologin.php?userid=...&amp;key=...&amp;urltogo=... Khóa sống khoảng một phút và LMS chỉ cấp mỗi
-    /// sources.lms.autoLoginMinutes phút một lần (mặc định Moodle 6 phút): trong khoảng đó trình duyệt đã đăng nhập từ lần trước nên mở
-    /// thẳng. Chưa có privatetoken (token lấy từ bản cũ), LMS từ chối, mất mạng: null, mở địa chỉ thường.
-    /// </summary>
     public static async Task<string?> AutoLoginUrlAsync(string url, CancellationToken ct)
     {
         if (!IsLmsUrl(url) || SecretStore.Read(TokenFile)?["private"]?.GetValue<string>() is not { Length: > 0 } privateToken) return null;
@@ -91,9 +73,6 @@ public static partial class LmsClient
         }
     }
 
-    // ------------------------------------------------------------------ login
-
-    /// <summary>Tạo một lượt login mới, trả về URL launch.php.</summary>
     public static string NewLaunchUrl()
     {
         var passport = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16));
@@ -104,7 +83,6 @@ public static partial class LmsClient
 
     [GeneratedRegex(@"token=([A-Za-z0-9+/=_-]+)")] private static partial Regex TokenRx();
 
-    /// <summary>Kiểm tra chữ ký của callback URL rồi lưu token. Trả về tên người dùng.</summary>
     public static async Task<string> FinishLoginAsync(string callbackUrl, CancellationToken ct)
     {
         var passport = SecretStore.Read(PendingFile)?["passport"]?.GetValue<string>()
@@ -114,11 +92,10 @@ public static partial class LmsClient
         var raw = m.Groups[1].Value;
         raw += new string('=', (4 - raw.Length % 4) % 4);
         var parts = Encoding.UTF8.GetString(Convert.FromBase64String(raw)).Split(":::");
-#pragma warning disable CA5351   // Moodle mobile launch: chữ ký là md5(site + passport) do server đặt, app không chọn thuật toán
+#pragma warning disable CA5351
         var expected = Convert.ToHexStringLower(MD5.HashData(Encoding.UTF8.GetBytes(Site + passport)));
 #pragma warning restore CA5351
         if (parts.Length < 2 || parts[0] != expected) throw new LmsException("Chữ ký không khớp, bỏ qua token này.");
-        // parts[2] là privatetoken của ứng dụng Moodle: chỉ dùng để xin khóa tự đăng nhập khi mở LMS bằng trình duyệt (AutoLoginUrlAsync).
         SecretStore.Write(TokenFile, new JsonObject { ["token"] = parts[1], ["private"] = parts.Length > 2 ? parts[2] : null, ["at"] = Now() });
         ForgetToken();
         File.Delete(PendingFile);
@@ -126,7 +103,6 @@ public static partial class LmsClient
         return info["fullname"]?.GetValue<string>() ?? "";
     }
 
-    /// <summary>Token LMS còn dùng được không (thử một request đọc nhẹ). Lỗi mạng thì coi như còn, để khỏi bắt login lại vô ích.</summary>
     public static async Task<bool> TokenValidAsync()
     {
         if (Token is null) return false;
@@ -150,24 +126,15 @@ public static partial class LmsClient
         ForgetToken();
     }
 
-    // ------------------------------------------------------------------ call API
-
     private static int _calls;
 
-    /// <summary>Số request API LMS từ lúc mở app (ghi vào log mỗi lần sync để theo dõi lượng request).</summary>
     public static int Calls => Volatile.Read(ref _calls);
 
-    // Giãn cách request tới LMS, dùng chung mọi luồng: API cách nhau sources.lms.gapMs, mỗi file tài liệu cách nhau sources.lms.fileGapMs.
     private static readonly Pace ApiPace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.lms.gapMs", 100)));
     private static readonly Pace FilePace = new(() => TimeSpan.FromMilliseconds(Config.Int("sources.lms.fileGapMs", 1000)));
 
-    /// <summary>
-    /// LMS vẫn báo quá tải sau 3 lần thử một API: nghỉ hẳn bấy lâu. Trong lúc nghỉ, API khác báo lỗi ngay mà không gửi gì: trước đây
-    /// mỗi phần phụ (quiz, diễn đàn, sổ điểm...) lại thử 3 lần, một lượt gửi vài chục request vào LMS đang sập (25/10/2026).
-    /// </summary>
     private static readonly TimeSpan GiveUpPause = TimeSpan.FromMinutes(2);
 
-    /// <summary>Một request API chờ tối đa bấy nhiêu giây; quá thì báo lỗi rõ thay vì để người dùng chờ mãi.</summary>
     private static TimeSpan CallTimeout => TimeSpan.FromSeconds(Config.Int("sources.lms.timeoutSeconds", 45));
 
     public static async Task<JsonNode> CallAsync(string function, IEnumerable<KeyValuePair<string, string>> args, CancellationToken ct)
@@ -180,7 +147,6 @@ public static partial class LmsClient
         form.AddRange(args);
         if (ApiPace.PausedFor > TimeSpan.FromSeconds(30))
             throw new HttpRequestException("LMS đang quá tải, app tạm dừng gọi LMS. Lần đồng bộ sau sẽ thử lại.", null, HttpStatusCode.ServiceUnavailable);
-        // Server báo 429/503 thì nghỉ theo Retry-After (hoặc full jitter) rồi thử lại, tối đa 3 lần; vẫn bị thì dừng và báo lỗi.
         for (var attempt = 0; ; attempt++)
         {
             await ApiPace.WaitAsync(ct);
@@ -221,7 +187,6 @@ public static partial class LmsClient
             try { node = JsonNode.Parse(body); }
             catch (System.Text.Json.JsonException)
             {
-                // Trang HTML (bảo trì, lỗi proxy...) thay vì JSON.
                 Log.Warn($"LMS {function}: HTTP {status}, trả về không phải JSON");
                 throw new HttpRequestException($"LMS trả về trang lỗi (HTTP {status}), có thể đang bảo trì. Thử lại sau.", null, (HttpStatusCode)status);
             }
@@ -230,8 +195,6 @@ public static partial class LmsClient
             {
                 var code = o["errorcode"]?.GetValue<string>();
                 Log.Debug($"LMS {function}: lỗi {code}, {sw.ElapsedMilliseconds} ms");
-                // Token hết hạn là lỗi của cả lượt đồng bộ (cần đăng nhập lại), không phải lỗi một phần: ném kiểu riêng để
-                // các bước "đọc được phần nào hay phần đó" không nuốt nó thành cảnh báo.
                 if (code is "invalidtoken" or "accessexception") throw new SessionExpiredException("Phiên LMS hết hạn, cần đăng nhập lại.");
                 throw new LmsException($"{function}: {o["message"]}", code);
             }
@@ -240,18 +203,15 @@ public static partial class LmsClient
         }
     }
 
-    /// <summary>Param dạng mảng của Moodle: name[0]=a&amp;name[1]=b.</summary>
     public static IEnumerable<KeyValuePair<string, string>> Arr(string name, IEnumerable<object> values) =>
         values.Select((v, i) => new KeyValuePair<string, string>($"{name}[{i}]", v.ToString()!));
 
     public static KeyValuePair<string, string> Arg(string name, object value) => new(name, value.ToString()!);
 
-    /// <summary>Chỉ URL https trên đúng host LMS mới được gắn token (link lạ trong nội dung LMS không được lấy token đi).</summary>
     public static bool IsLmsUrl(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps
         && Uri.TryCreate(Site, UriKind.Absolute, out var site) && u.Host.Equals(site.Host, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Tải file LMS về <paramref name="dest"/>. Đếm byte khi tải: quá <paramref name="maxBytes"/> thì dừng (server trả sai kích thước).</summary>
     public static async Task DownloadAsync(string fileUrl, string dest, CancellationToken ct, long maxBytes = 4L << 30)
     {
         if (!IsLmsUrl(fileUrl)) throw new HttpRequestException("Link không thuộc LMS, không tải.");
@@ -280,11 +240,6 @@ public static partial class LmsClient
         File.Move(part, dest, overwrite: true);
     }
 
-
-    /// <summary>
-    /// Small LMS image (pluginfile) as a data URI, or null if it is not an image / too large / fails.
-    /// Plain pluginfile.php needs a browser session, so it is switched to webservice/pluginfile.php + token.
-    /// </summary>
     public static async Task<string?> DataUriAsync(string fileUrl, CancellationToken ct, int maxBytes = 1_500_000)
     {
         if (!IsLmsUrl(fileUrl)) return null;
@@ -306,7 +261,6 @@ public static partial class LmsClient
         catch (HttpRequestException) { return null; }
     }
 
-    /// <summary>Chép tối đa <paramref name="max"/> byte; false nếu nguồn còn dài hơn (không tin Content-Length).</summary>
     private static async Task<bool> CopyLimitedAsync(Stream src, Stream dst, long max, CancellationToken ct)
     {
         var buf = new byte[81920];

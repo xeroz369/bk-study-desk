@@ -23,7 +23,6 @@ public class TextTests
     [Fact]
     public void NormText_composes_vietnamese_marks() => Assert.Equal("tiếp", Text.NormText("tiếp"));
 
-    // String(number) của JS: ghép vào fingerprint câu numeric và chữ đáp án, phải giống hệt bản TS.
     [Theory]
     [InlineData(2, "2")]
     [InlineData(0.1, "0.1")]

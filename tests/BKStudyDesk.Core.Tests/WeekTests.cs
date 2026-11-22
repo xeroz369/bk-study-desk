@@ -4,10 +4,9 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Thời khóa biểu tuần, lịch thi, xuất .ics.</summary>
 public class WeekTests
 {
-    private static readonly DateTime Monday = new(2026, 10, 12);   // tuần ISO 42
+    private static readonly DateTime Monday = new(2026, 10, 12);
 
     private static MybkData Data(params MybkClass[] schedule) =>
         new(0, new MybkStudent("SV", "2310000", null), new MybkTerm("20261", "HK261"), [.. schedule], [], [], [], null, null, null, null, null, null, null);
@@ -31,7 +30,7 @@ public class WeekTests
         Assert.False(rows.Single(r => r.Name == "Giải tích 2").InWeek);
         var c = Assert.Single(rows, r => r.CustomId is not null);
         Assert.Equal("c1", c.CustomId);
-        Assert.Equal(4, c.Order);   // Thứ tư
+        Assert.Equal(4, c.Order);
     }
 
     [Fact]
@@ -64,8 +63,6 @@ public class WeekTests
         Assert.Equal(["near", "far", "recent", "old"], rows.Select(r => r.Subject));
     }
 
-    // ------------------------------------------------------------------ timetable note (bug 06/11/2026)
-
     private static readonly MybkData Classes = Data(Class("Giải tích 2", 2, "7:00", "9:00", 42));
     private static readonly MybkData NoClasses = Data();
 
@@ -79,7 +76,6 @@ public class WeekTests
     [Fact]
     public void Note_TermHasClasses_NoneThisWeek_SaysWeekEmpty_KeepsGrid()
     {
-        // Saved classes still show when sync is off or signed out: only the week is empty.
         foreach (var (on, signedIn) in new[] { (true, true), (false, true), (true, false) })
         {
             var n = WeekPresenter.Note(Classes, on, signedIn, null, shown: 0);

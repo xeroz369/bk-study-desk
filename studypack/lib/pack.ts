@@ -1,6 +1,3 @@
-// Study Pack v1: định dạng gói luyện tập dùng chung (JSON thuần, không chứa code).
-// Ai (người hay AI) cũng soạn được theo spec ở studypack/SPEC.md; app và CLI (studypack/validate.ts) dùng chung validator này.
-// File chỉ dùng cú pháp TS "xóa được" (không enum, không namespace) để Node 24 chạy thẳng bằng type stripping.
 
 export const PACK_FORMAT = 'studypack/1';
 
@@ -9,30 +6,21 @@ export interface PackSource {
 	pages?: string;
 	url?: string;
 }
-/** Loại câu, tương ứng quiz Moodle: multichoice (single/multi), truefalse, numerical, shortanswer. */
 export const QUESTION_TYPES = ['single', 'multi', 'truefalse', 'numeric', 'short'] as const;
 export type PackQuestionType = (typeof QUESTION_TYPES)[number];
 
 export interface PackQuestion {
 	id?: string;
-	/** mặc định "single" */
 	type?: PackQuestionType;
 	tag?: string;
 	prompt: string;
-	/** single, multi: các phương án (HTML, có thể có ảnh) */
 	options?: string[];
-	/** single: chỉ số đúng (từ 0) · truefalse: true/false · numeric: đáp số */
 	answer?: number | boolean;
-	/** multi: các chỉ số đúng */
 	answers?: number[];
-	/** numeric: sai số tuyệt đối cho phép (mặc định 0), đơn vị hiển thị */
 	tolerance?: number;
 	unit?: string;
-	/** short: các đáp án chữ được chấp nhận (không phân biệt hoa thường, khoảng trắng) */
 	accept?: string[];
-	/** không xáo phương án của câu này (vd. có "Cả A và B đều đúng") */
 	keepOrder?: boolean;
-	/** các câu cùng nhóm trong một bài (dùng chung đề, số liệu) luôn được rút cùng nhau và đứng liền nhau */
 	group?: string;
 	solution: string;
 	difficulty?: 1 | 2 | 3;
@@ -67,7 +55,6 @@ export interface StudyPack {
 	createdWith?: string;
 	verified?: { method: string; by?: string; at?: string };
 	sources?: PackSource[];
-	/** xáo câu / xáo phương án mỗi lần làm (người học vẫn tắt được trong app) */
 	settings?: { shuffleQuestions?: boolean; shuffleOptions?: boolean };
 	units: { title: string; lessons: PackLesson[] }[];
 	exams?: PackExam[];
@@ -86,7 +73,6 @@ export interface PackReport {
 
 const ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
 const VERSION = /^\d+\.\d+\.\d+$/;
-// Thẻ HTML được phép trong nội dung (app lọc lại lần nữa khi hiển thị, xem sanitize.ts).
 export const ALLOWED_TAGS = new Set([
 	'p',
 	'br',
@@ -116,15 +102,11 @@ export const ALLOWED_TAGS = new Set([
 	'mark',
 	'img',
 ]);
-/** Ảnh chỉ nhận dạng nhúng sẵn (data URI raster): gói tự chứa, không tải gì từ mạng, không SVG (có thể chứa script). */
 export const IMG_SRC = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$/;
-// class được giữ lại (khớp CSS của app): công thức, cảnh báo, phím bấm máy tính, mẹo.
 export const ALLOWED_CLASSES = new Set(['math', 'warn', 'keys', 'tip', 'note']);
-// Gói có ảnh nhúng (base64) nên cho rộng; mỗi ảnh nên dưới ~1 MB (app tự nén khi chèn ảnh lúc soạn).
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_IMAGE_CHARS = 1.5 * 1024 * 1024;
 
-/** Kiểm tra một gói (đã parse JSON). Lỗi = app không nạp; cảnh báo = vẫn nạp nhưng nên sửa. */
 export function validatePack(input: unknown, rawSize = 0): PackReport {
 	const errors: PackIssue[] = [];
 	const warnings: PackIssue[] = [];
@@ -276,7 +258,6 @@ export function validatePack(input: unknown, rawSize = 0): PackReport {
 	return { ok: errors.length === 0, errors, warnings, stats };
 }
 
-/** Kiểm tra một đoạn nội dung: HTML lạ, script, lỗi escape TeX trong JSON. */
 function checkText(s: string, path: string, err: (p: string, m: string) => void, warn: (p: string, m: string) => void) {
 	if (/<\s*(script|style|iframe|object|embed|form|input|link|meta|svg|math|base)\b/i.test(s))
 		err(path, 'không được có thẻ script/style/iframe/svg... (chỉ chữ, công thức TeX, HTML định dạng đơn giản, ảnh data URI)');
@@ -289,18 +270,15 @@ function checkText(s: string, path: string, err: (p: string, m: string) => void,
 		if (src.length > MAX_IMAGE_CHARS) warn(path, `ảnh lớn (${Math.round(src.length / 1024)} KB): nên thu nhỏ còn dưới 1 MB`);
 	}
 	if (/\son\w+\s*=/i.test(s) || /javascript:/i.test(s)) err(path, 'không được có thuộc tính sự kiện (onclick...) hay javascript:');
-	// JSON hiểu "\f", "\b", "\t", "\v" là ký tự điều khiển: dấu hiệu quên viết "\\frac", "\\beta", "\\times"…
 	const ctl = s.match(/[\f\b\t\v\x00-\x08\x0e-\x1f]/);
 	if (ctl)
 		err(
 			path,
 			`có ký tự điều khiển (mã ${ctl[0].charCodeAt(0)}): trong JSON phải viết "\\\\frac", "\\\\beta", "\\\\times"... (hai dấu \\)`,
 		);
-	// "\right", "\rho" → CR + "ight"; "\neq", "\nabla", "\nu" → xuống dòng + "eq": cũng là quên escape.
 	if (/\r[a-z]/.test(s)) err(path, 'có "\\r" dính chữ (vd. "\\right", "\\rho" chưa escape): viết "\\\\right"');
 	if (/\n(eq|abla|u\b|ot\b|ewline|exists|leq|geq|i\b|cong|parallel|mid\b)/.test(s))
 		warn(path, 'có xuống dòng dính chữ (vd. "\\neq", "\\nabla" chưa escape?): kiểm tra lại "\\\\neq"');
-	// Chỉ tính là thẻ khi sau "<" là chữ cái: "f(0)<0", "x<10" là toán, không phải thẻ.
 	for (const m of s.matchAll(/<\/?([a-z][a-z0-9]*)\b/gi)) {
 		if (!ALLOWED_TAGS.has(m[1].toLowerCase())) {
 			warn(path, `thẻ <${m[1]}> không được hỗ trợ, app sẽ bỏ thẻ (giữ chữ)`);
@@ -315,7 +293,6 @@ function checkText(s: string, path: string, err: (p: string, m: string) => void,
 	if (dOpen !== dClose) warn(path, `số "\\[" và "\\]" lệch nhau`);
 }
 
-/** Tổng số câu hỏi trong gói (dùng cho danh sách gói). */
 export function countQuestions(p: StudyPack) {
 	return (
 		p.units.reduce((n, u) => n + u.lessons.reduce((m, l) => m + (l.questions?.length ?? 0), 0), 0) +

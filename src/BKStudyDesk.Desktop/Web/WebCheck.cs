@@ -2,10 +2,6 @@ using SoHocTap.Core;
 
 namespace BKStudyDesk.Desktop.Web;
 
-/// <summary>
-/// --webcheck: tự kiểm trình duyệt nhúng trên máy đang chạy (Windows, macOS, Linux) bằng một trang tĩnh, không gọi web trường:
-/// chạy script, chờ promise, đọc cookie. Kết quả ghi vào log (dòng "Webcheck") rồi app thoát.
-/// </summary>
 internal static class WebCheck
 {
     public static async Task<bool> RunAsync()

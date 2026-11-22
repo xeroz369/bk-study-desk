@@ -7,11 +7,6 @@ using SoHocTap.Presentation.Practice.Pages;
 
 namespace BKStudyDesk.Desktop.Practice;
 
-/// <summary>
-/// Dữ liệu của trang Luyện tập native: nạp nội dung có sẵn (content/manifest.json và .md), gói đã cài (content/packs hay data/packs),
-/// quiz LMS đã lưu (qua ApiRouter của 1.x) vào một StudyRegistry, và kết quả luyện tập (ket-qua.json) vào PracticeProgress.
-/// Lỗi từng file chỉ thành cảnh báo, không làm hỏng phần còn lại.
-/// </summary>
 public sealed class PracticeService(ApiRouter router)
 {
     private static readonly IReadOnlyDictionary<string, string> NoQuery = new Dictionary<string, string>();
@@ -34,7 +29,7 @@ public sealed class PracticeService(ApiRouter router)
         var old = Progress;
         Progress = new PracticeProgress(Study, new ApiProgressStorage(router));
         await Progress.LoadAsync(ct);
-        if (old != null) Progress.Absorb(old);   // câu làm lúc ket-qua.json đọc lỗi
+        if (old != null) Progress.Absorb(old);
         Progress.SeedSchedule();
         Loaded = true;
     }
@@ -80,13 +75,10 @@ public sealed class PracticeService(ApiRouter router)
 
     public PracticeHomeModel Home() => PracticeHome.Build(Study, Progress, Packs, Quizzes);
 
-    /// <summary>Tạo, nhập, xuất gói trên sổ đang nạp.</summary>
     public Transfer Transfer() => new(Study, Packs, Quizzes, SoHocTap.Shell.AppInfo.Name);
 
-    /// <summary>Cảnh báo nạp nội dung và lỗi đọc ket-qua.json, để hiện ở khung lỗi đầu trang.</summary>
     public List<string> Problems() => [.. Warnings, .. Progress.SaveError is { Length: > 0 } s ? [s] : Array.Empty<string>()];
 
-    /// <summary>Gỡ một gói đã cài (file trong content/packs). Trả lỗi để hiện, null khi xong.</summary>
     public async Task<string?> RemovePackAsync(string file, CancellationToken ct = default)
     {
         var id = file.EndsWith(PackSuffix, StringComparison.OrdinalIgnoreCase) ? file[..^PackSuffix.Length] : file;
@@ -94,17 +86,12 @@ public sealed class PracticeService(ApiRouter router)
         return r.Status == 200 ? null : ErrorOf(r);
     }
 
-    /// <summary>Mở tài liệu nguồn của bài đúng trang (như nút Mở slide của bản Svelte). False khi không thấy file.</summary>
     public async Task<bool> OpenSourceAsync(string subject, string file, int page, CancellationToken ct = default)
     {
         var q = new Dictionary<string, string> { ["subject"] = subject, ["file"] = file, ["page"] = page.ToString(System.Globalization.CultureInfo.InvariantCulture) };
         return (await router.HandleAsync(new ApiRequest("POST", "/api/source", q, null), ct)).Status == 200;
     }
 
-    /// <summary>
-    /// Cài một gói (tạo câu, nhập, cập nhật gói đã có): chuyển kết quả theo fingerprint trước khi id câu đổi, ghi gói qua
-    /// POST /api/packs, ghi kết quả. Trả lỗi để hiện, null khi xong. Người gọi nạp lại sổ sau đó.
-    /// </summary>
     public async Task<string?> InstallAsync(StudyPack p, CancellationToken ct = default)
     {
         var (moves, gone) = Transfer().Migration(p);
@@ -115,7 +102,6 @@ public sealed class PracticeService(ApiRouter router)
         return null;
     }
 
-    /// <summary>Môn đang học kỳ này (LMS, MyBK đã sync): chọn môn khi soạn. Lỗi hay chưa sync thì danh sách rỗng.</summary>
     public async Task<List<(string Code, string Name)>> SubjectsAsync(CancellationToken ct = default)
     {
         var r = await router.HandleAsync(new ApiRequest("GET", "/api/subjects", NoQuery, null), ct);
@@ -129,7 +115,6 @@ public sealed class PracticeService(ApiRouter router)
         catch (System.Text.Json.JsonException) { return []; }
     }
 
-    /// <summary>Công tắc tự lưu quiz LMS (cùng giá trị với ô trong Cài đặt). Null khi không đọc được.</summary>
     public async Task<bool?> SaveQuizzesAsync(bool? set = null, CancellationToken ct = default)
     {
         var r = set is { } on
@@ -140,11 +125,9 @@ public sealed class PracticeService(ApiRouter router)
         catch (Exception e) when (e is System.Text.Json.JsonException or InvalidOperationException) { return null; }
     }
 
-    /// <summary>Đồng bộ LMS ngay (lưu quiz vừa nộp). False khi app đang hay vừa đồng bộ, hoặc chưa đăng nhập.</summary>
     public async Task<bool> SyncLmsAsync(CancellationToken ct = default) =>
         (await router.HandleAsync(new ApiRequest("POST", "/api/lms/sync", NoQuery, null), ct)).Status == 200;
 
-    /// <summary>Tên tác giả ghi vào gói, nhớ trên máy này.</summary>
     public static string Author
     {
         get => Config.Str("practice.author");
@@ -153,7 +136,6 @@ public sealed class PracticeService(ApiRouter router)
 
     private const string PackSuffix = ".studypack.json";
 
-    /// <summary>Chữ <c>error</c> của response lỗi; không đọc được thì dùng mã HTTP.</summary>
     internal static string ErrorOf(ApiResponse r)
     {
         try { return JsonNode.Parse(r.Body)?["error"]?.GetValue<string>() ?? $"HTTP {r.Status}"; }

@@ -3,11 +3,6 @@ using System.Text.Json.Nodes;
 
 namespace SoHocTap.Core;
 
-/// <summary>
-/// Config của app: data/config.json. Default chỉ nằm ở một chỗ là Core/DefaultConfig.json (nhúng vào exe).
-/// Lúc load thì merge default với file của người dùng (file người dùng được ưu tiên). File chỉ lưu những gì khác default
-/// (kèm configVersion), nên đổi default ở bản sau thì người dùng cũ cũng nhận được, trừ chỗ họ đã tự chỉnh.
-/// </summary>
 public static class Config
 {
     private static readonly object Gate = new();
@@ -43,16 +38,12 @@ public static class Config
     private static void Write(JsonObject merged)
     {
         var diff = Diff(Defaults(), merged);
-        diff["configVersion"] = Version;   // luôn ghi: lần sau biết file đã qua bước nâng cấp nào
+        diff["configVersion"] = Version;
         JsonStore.Write(FilePath, diff);
     }
 
     private const int Version = 2;
 
-    /// <summary>
-    /// Nâng cấp file config cũ. Bản 1.0.6 trở về trước ghi cả default ra file, nên không biết chỗ nào người dùng tự chọn:
-    /// v2 bỏ tự tải tài liệu (giờ tải theo mục người dùng chọn) và chỉ đọc lớp học kỳ hiện tại.
-    /// </summary>
     internal static void Migrate(JsonObject user)
     {
         var v = user["configVersion"] is JsonValue jv && jv.TryGetValue<int>(out var n) ? n : 1;
@@ -63,7 +54,6 @@ public static class Config
         }
     }
 
-    /// <summary>Phần của <paramref name="current"/> khác <paramref name="defaults"/> (đệ quy theo object; mảng so cả mảng).</summary>
     internal static JsonObject Diff(JsonObject defaults, JsonObject current)
     {
         var o = new JsonObject();
@@ -80,10 +70,9 @@ public static class Config
         return o;
     }
 
-    /// <summary>Đổi một giá trị (path dạng chấm) rồi lưu ngay, cho các công tắc lưu liền không cần bấm Lưu.</summary>
     public static void Set(string dotted, JsonNode? value)
     {
-        lock (Gate)   // clone + sửa + lưu trong một khóa: hai lần Set cùng lúc không làm mất thay đổi của nhau
+        lock (Gate)
         {
             var c = (JsonObject)Current.DeepClone();
             var parts = dotted.Split('.');
@@ -94,7 +83,6 @@ public static class Config
         }
     }
 
-    /// <summary>Lấy value theo path dạng chấm, ví dụ "sources.lms.site".</summary>
     public static JsonNode? Node(string dotted)
     {
         JsonNode? cur = Current;
@@ -115,11 +103,9 @@ public static class Config
     public static IReadOnlyDictionary<string, string> Map(string dotted) =>
         Node(dotted) is JsonObject o ? o.ToDictionary(kv => kv.Key, kv => kv.Value?.GetValue<string>() ?? "") : new Dictionary<string, string>();
 
-    /// <summary>Path tuyệt đối của một folder trong mục "folders" (trong config ghi tương đối so với thư mục Study).</summary>
     public static string Folder(string key) =>
         Path.Combine(Paths.StudyRoot, Str("folders." + key).Replace('/', Path.DirectorySeparatorChar));
 
-    /// <summary>Giá trị default (chưa tính phần người dùng chỉnh) theo path dạng chấm.</summary>
     internal static JsonNode? DefaultNode(string dotted)
     {
         JsonNode? cur = DefaultsCache.Value;

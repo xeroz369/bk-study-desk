@@ -3,7 +3,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Tab Thư viện (LibraryPresenter): tên hiện, sách, bộ lọc.</summary>
 public class LibraryTabTests
 {
     private static LibraryItem Item(string id, string type = "exam", string? title = null, bool example = false, string? term = null, string? teacher = null, BookRef? book = null) =>
@@ -44,6 +43,6 @@ public class LibraryTabTests
         ]);
         Assert.Equal(["1"], LibraryPresenter.Filter(rows, "Cô A", "HK241", null).Select(r => r.Item.Id));
         Assert.Equal(3, LibraryPresenter.Filter(rows, null, null, null).Count);
-        Assert.Equal("1", rows[0].Item.Id);   // học kỳ mới trước
+        Assert.Equal("1", rows[0].Item.Id);
     }
 }

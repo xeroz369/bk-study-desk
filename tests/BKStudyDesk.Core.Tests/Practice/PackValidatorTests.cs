@@ -3,7 +3,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Port từ khung Svelte của bản 1.x, src/ui/src/lib/study/pack.test.ts. Bản private có gói đề thật; repo public không có, nên dùng gói mẫu dựng ở đây.
 public class PackValidatorTests
 {
     private const string Minimal = """
@@ -128,7 +127,6 @@ public class PackValidatorTests
         Assert.Equal(["exams[0].questionRefs[0]"], Paths(p));
     }
 
-    // JSON hiểu "\f", "\t" là ký tự điều khiển: dấu hiệu quên viết "\\frac", "\\times".
     [Fact]
     public void Control_chars_mean_unescaped_tex()
     {

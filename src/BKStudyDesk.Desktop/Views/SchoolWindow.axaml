@@ -1,5 +1,3 @@
-<!-- Trang của trường trong cửa sổ app (bản 1.x: Ui/SchoolWindow): dùng chung phiên đăng nhập của app. Thanh trên như trình duyệt: lùi, tiến,
-     tải lại, thanh địa chỉ (Enter để đi), mở bằng trình duyệt của máy; tải chậm hay lỗi thì báo bên phải kèm Thử lại. Chữ: lang/*.json. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"

@@ -30,7 +30,7 @@ public class PaceTests
     public void RetryAfter_HttpDate_UsesServerClock()
     {
         var server = new DateTimeOffset(2026, 10, 2, 12, 0, 0, TimeSpan.Zero);
-        var local = server.AddMinutes(10);   // đồng hồ máy chạy nhanh 10 phút
+        var local = server.AddMinutes(10);
         var h = new System.Net.Http.Headers.RetryConditionHeaderValue(server.AddSeconds(90));
         Assert.Equal(TimeSpan.FromSeconds(90), Pace.RetryAfter(h, server, local));
     }
@@ -64,7 +64,7 @@ public class PaceTests
     {
         using var pace = new Pace(() => TimeSpan.FromMilliseconds(120));
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        await pace.WaitAsync(default);   // lần đầu không phải chờ
+        await pace.WaitAsync(default);
         Assert.True(sw.ElapsedMilliseconds < 100);
         await pace.WaitAsync(default);
         await pace.WaitAsync(default);
@@ -78,7 +78,7 @@ public class PaceTests
         using var pace = new Pace(() => TimeSpan.Zero, () => now);
         pace.PauseFor(TimeSpan.FromSeconds(60));
         Assert.Equal(now.AddSeconds(60), pace.NextAt);
-        pace.PauseFor(TimeSpan.FromSeconds(10));   // lệnh dừng ngắn hơn không rút ngắn lệnh dừng đang có
+        pace.PauseFor(TimeSpan.FromSeconds(10));
         Assert.Equal(now.AddSeconds(60), pace.NextAt);
     }
 

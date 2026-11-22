@@ -5,7 +5,6 @@ namespace BKStudyDesk.Logic.Tests;
 [CollectionDefinition("activity", DisableParallelization = true)]
 public sealed class ActivityCollection;
 
-/// <summary>Background work runs only while someone is at the computer (docs/plans/2026-11-06-on-demand-sync.md, section 3).</summary>
 [Collection("activity")]
 public sealed class UserActivityTests : IDisposable
 {
@@ -29,7 +28,7 @@ public sealed class UserActivityTests : IDisposable
         UserActivity.SystemIdle = () => TimeSpan.FromMinutes(3);
         Assert.True(UserActivity.Active);
         UserActivity.SystemIdle = () => TimeSpan.FromMinutes(11);
-        UserActivity.SetFocused(true);   // focus does not override a real system reading
+        UserActivity.SetFocused(true);
         Assert.False(UserActivity.Active);
     }
 
@@ -42,7 +41,7 @@ public sealed class UserActivityTests : IDisposable
         Assert.True(UserActivity.Active);
         _now += TimeSpan.FromMinutes(30);
         UserActivity.SetFocused(true);
-        Assert.True(UserActivity.Active);   // window in front: present
+        Assert.True(UserActivity.Active);
         UserActivity.SetFocused(false);
         _now += TimeSpan.FromMinutes(10);
         Assert.False(UserActivity.Active);

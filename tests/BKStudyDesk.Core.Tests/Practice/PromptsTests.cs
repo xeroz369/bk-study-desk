@@ -3,7 +3,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Chuỗi kỳ vọng sinh bằng chính buildPrompt của prompts.ts (Node, 07/10/2026): prompts-expected/<ca>.txt, đầu vào ở cases.json.
 public class PromptsTests
 {
     private static string Dir => Path.Combine(AppContext.BaseDirectory, "Practice", "prompts-expected");

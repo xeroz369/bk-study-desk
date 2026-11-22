@@ -8,12 +8,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>
-/// Vẽ HTML đã lọc (<see cref="Html.Sanitize"/>) của bài học, câu hỏi bằng control có sẵn: đoạn văn là TextBlock với Inlines
-/// (công thức trong dòng là InlineUIContainer chứa <see cref="MathView"/>), khối công thức là MathView, khối ghi chú là Border,
-/// bảng là Grid, ảnh data URI là Image. Màu, cỡ, khoảng cách theo class (style ở Styles/Tokens.axaml), không viết số ở đây.
-/// Thẻ chưa vẽ riêng thì hiện chữ bên trong, không mất nội dung.
-/// </summary>
 public static partial class ContentRenderer
 {
     private static readonly HashSet<string> Blocks = ["p", "div", "ul", "ol", "table", "pre", "blockquote", "hr", "h2", "h3"];
@@ -29,7 +23,6 @@ public static partial class ContentRenderer
         return panel;
     }
 
-    // Gom các node trong dòng liền nhau thành một đoạn; thẻ khối thì thành control riêng.
     private static void AddBlocks(Avalonia.Controls.Controls output, IEnumerable<HtmlNode> nodes)
     {
         var inline = new List<HtmlNode>();
@@ -83,7 +76,7 @@ public static partial class ContentRenderer
                 }
             case "hr":
                 return new Separator();
-            default:   // p, h2, h3
+            default:
                 {
                     var t = Paragraph(e.Children);
                     if (e.Tag != "p") t.Classes.Add(e.Tag);
@@ -92,7 +85,6 @@ public static partial class ContentRenderer
         }
     }
 
-    /// <summary>Khối công thức: \[ \], $$ $$ là Display; khối chỉ có \( \) (phương án một công thức) giữ cỡ trong dòng.</summary>
     private static MathView? MathBlock(string tex)
     {
         if (tex.StartsWith(@"\[", StringComparison.Ordinal) && tex.EndsWith(@"\]", StringComparison.Ordinal)) return new MathView { Tex = tex[2..^2], Display = true };
@@ -130,7 +122,6 @@ public static partial class ContentRenderer
         static int Span(HtmlElement cell, string attr) => int.TryParse(cell.Attr(attr), out var v) && v > 0 ? v : 1;
         var rows = Rows(table).ToList();
         var grid = new Grid { Classes = { "table" }, HorizontalAlignment = HorizontalAlignment.Left };
-        // Ô bị rowspan của hàng trên chiếm: đánh dấu để ô sau dời sang phải, như bảng HTML.
         var taken = new HashSet<(int, int)>();
         var columns = 0;
         for (var r = 0; r < rows.Count; r++)
@@ -166,7 +157,6 @@ public static partial class ContentRenderer
         var t = new TextBlock { Classes = { "content" } };
         var inlines = new InlineCollection();
         AddInlines(inlines, nodes);
-        // Khoảng trắng đầu, cuối đoạn không hiện (như HTML).
         if (inlines.FirstOrDefault() is Run first) first.Text = first.Text?.TrimStart();
         if (inlines.LastOrDefault() is Run last) last.Text = last.Text?.TrimEnd();
         t.Inlines = inlines;
@@ -192,7 +182,7 @@ public static partial class ContentRenderer
                 "sub" => new Span { Classes = { "sub" }, BaselineAlignment = BaselineAlignment.Subscript },
                 "sup" => new Span { Classes = { "sup" }, BaselineAlignment = BaselineAlignment.Superscript },
                 "br" or "img" => null,
-                _ => new Span(),   // span, small, mark... chưa có kiểu riêng: giữ chữ
+                _ => new Span(),
             };
             if (e.Tag == "br") output.Add(new LineBreak());
             else if (e.Tag == "img") { if (Image(e) is { } img) output.Add(new InlineUIContainer { Child = img }); }
@@ -204,7 +194,6 @@ public static partial class ContentRenderer
         }
     }
 
-    // Chữ trong dòng: gộp khoảng trắng như HTML; \( \) thành công thức trong dòng, \[ \] và $$ $$ thành công thức đứng riêng.
     private static void AddText(InlineCollection output, string text)
     {
         var at = 0;
@@ -223,7 +212,6 @@ public static partial class ContentRenderer
         if (at < text.Length) output.Add(new Run(Spaces().Replace(text[at..], " ")));
     }
 
-    /// <summary>Ảnh nhúng data URI (bộ lọc đã chỉ giữ PNG, JPEG, GIF, WebP). Hỏng thì bỏ qua.</summary>
     private static Image? Image(HtmlElement e)
     {
         var src = e.Attr("src") ?? "";

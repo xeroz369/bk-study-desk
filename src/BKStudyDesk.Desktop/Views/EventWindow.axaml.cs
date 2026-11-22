@@ -7,15 +7,11 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Thêm, sửa một sự kiện tự thêm (cùng logic với 1.x, Ui/EventWindow): ô nhập nhanh đọc bằng QuickEntry.Parse và điền các ô; bấm Lưu thì
-/// kiểm bằng QuickEntry.Validate, từ đó kiểm lại mỗi khi sửa ô. Kết quả của ShowDialog: sự kiện đã điền (giữ Id, CreatedAt khi sửa), null là Hủy.
-/// </summary>
 public partial class EventWindow : Window
 {
     private readonly CustomEvent? _editing;
-    private bool _filling;   // đang điền từ ô nhập nhanh: không kiểm từng ô
-    private bool _tried;     // đã bấm Lưu một lần
+    private bool _filling;
+    private bool _tried;
 
     public EventWindow() => InitializeComponent();
 
@@ -81,7 +77,6 @@ public partial class EventWindow : Window
         return errors;
     }
 
-    /// <summary>Lỗi là khóa ngôn ngữ (events.err.*) hay câu đã dịch sẵn; null thì ẩn.</summary>
     private static void ShowError(TextBlock target, string? keyOrText)
     {
         target.Text = keyOrText is null ? "" : keyOrText.StartsWith("events.err.", StringComparison.Ordinal) ? L.T(keyOrText) : keyOrText;

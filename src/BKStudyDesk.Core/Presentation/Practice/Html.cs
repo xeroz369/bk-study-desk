@@ -6,12 +6,10 @@ namespace SoHocTap.Presentation.Practice;
 
 public abstract record HtmlNode;
 
-/// <summary>Chữ (đã giải entity).</summary>
 public sealed record HtmlText(string Text) : HtmlNode;
 
 public sealed record HtmlElement(string Tag) : HtmlNode
 {
-    /// <summary>Thuộc tính theo thứ tự trong nguồn, tên chữ thường.</summary>
     public List<KeyValuePair<string, string>> Attributes { get; } = [];
     public List<HtmlNode> Children { get; } = [];
 
@@ -20,18 +18,12 @@ public sealed record HtmlElement(string Tag) : HtmlNode
     public string[] Classes => (Attr("class") ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 }
 
-/// <summary>
-/// Bộ đọc HTML nhỏ, tự viết (spec mục 4b): đủ cho HTML của bài học, gói và trang xem lại quiz Moodle. Đọc như trình duyệt ở
-/// những chỗ hay gặp: "&lt;" không theo sau bởi chữ cái là chữ thường (công thức <c>\(f(0)&lt;0\)</c>), thẻ không đóng thì tự đóng,
-/// li, tr, td tự đóng nhau, khối mới đóng p đang mở. Không ném lỗi với HTML hỏng.
-/// </summary>
 public static partial class Html
 {
     private static readonly HashSet<string> Void = ["br", "img", "hr", "input", "meta", "link", "area", "base", "col", "embed", "source", "track", "wbr"];
     private static readonly HashSet<string> RawText = ["script", "style"];
     private static readonly HashSet<string> ClosesP = ["p", "div", "ul", "ol", "table", "pre", "blockquote", "hr", "h1", "h2", "h3", "h4", "h5", "h6"];
 
-    // Thẻ bị bỏ cả nội dung khi lọc (như sanitize.ts).
     private static readonly HashSet<string> DropWithContent =
     [
         "script", "style", "iframe", "object", "embed", "template", "noscript", "svg", "math", "video", "audio",
@@ -182,7 +174,6 @@ public static partial class Html
         return (el, s.Length, false);
     }
 
-    /// <summary>Giải entity có tên thường gặp và entity số; entity lạ giữ nguyên.</summary>
     public static string Decode(string text)
     {
         if (!text.Contains('&')) return text;
@@ -217,7 +208,6 @@ public static partial class Html
         return sb.ToString();
     }
 
-    /// <summary>Escape chữ như innerHTML của trình duyệt: &amp;, &lt;, &gt; và dấu cách cứng.</summary>
     public static string Escape(string text) =>
         text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace(Nbsp.ToString(), "&nbsp;");
 
@@ -246,10 +236,8 @@ public static partial class Html
         sb.Append("</").Append(e.Tag).Append('>');
     }
 
-    /// <summary>Chữ thuần của các node (đã giải entity).</summary>
     public static string TextOf(IEnumerable<HtmlNode> nodes) => string.Concat(nodes.Select(TextOf));
 
-    /// <summary>Mọi phần tử con cháu theo thứ tự trong tài liệu (như querySelectorAll('*')).</summary>
     public static IEnumerable<HtmlElement> Elements(IEnumerable<HtmlNode> nodes)
     {
         foreach (var n in nodes)
@@ -260,10 +248,8 @@ public static partial class Html
             }
     }
 
-    /// <summary>Phần tử đầu tiên có class này (như querySelector('.x')).</summary>
     public static HtmlElement? FirstByClass(IEnumerable<HtmlNode> nodes, string cls) => Elements(nodes).FirstOrDefault(e => e.Classes.Contains(cls));
 
-    /// <summary>innerHTML của phần tử.</summary>
     public static string InnerHtml(HtmlElement e) => Serialize(e.Children);
 
     public static string TextOf(HtmlNode n) => n switch
@@ -273,12 +259,6 @@ public static partial class Html
         _ => "",
     };
 
-    /// <summary>
-    /// Lọc HTML của gói trước khi hiển thị (port <c>sanitize.ts</c>): gói có thể đến từ người khác nên không tin nội dung.
-    /// Giữ thẻ trong <see cref="StudyPack.AllowedTags"/>, bỏ mọi thuộc tính trừ class (lọc theo <see cref="StudyPack.AllowedClasses"/>),
-    /// colspan, rowspan; thẻ lạ bỏ thẻ giữ chữ; script, iframe... bỏ cả nội dung; ảnh chỉ nhận data URI raster.
-    /// </summary>
-    /// <param name="headings">Trang tĩnh (lộ trình): giữ thêm h2, h3.</param>
     public static string Sanitize(string html, bool headings = false) => Serialize(Clean(Parse(html), headings, code: false));
 
     private static List<HtmlNode> Clean(List<HtmlNode> nodes, bool headings, bool code)
@@ -318,17 +298,13 @@ public static partial class Html
         return output;
     }
 
-    /// <summary>
-    /// Gói do AI soạn hay để sót **chữ** của Markdown trong HTML (ô ghi chú, mục danh sách): vẽ thành chữ đậm thay vì hiện hai dấu sao.
-    /// Chỉ ngoài công thức (\( \), \[ \], $$ $$), dấu sao sát chữ ở cả hai đầu (2 ** 3 không phải chữ đậm); trong code, pre thì giữ nguyên.
-    /// </summary>
     private static IEnumerable<HtmlNode> StrayBold(string text)
     {
         if (!text.Contains("**", StringComparison.Ordinal)) { yield return new HtmlText(text); yield break; }
         var at = 0;
         foreach (Match m in BoldOrMath().Matches(text))
         {
-            if (!m.Groups["bold"].Success) continue;   // công thức: để nguyên trong chữ thường
+            if (!m.Groups["bold"].Success) continue;
             if (m.Index > at) yield return new HtmlText(text[at..m.Index]);
             var strong = new HtmlElement("strong");
             strong.Children.Add(new HtmlText(m.Groups["bold"].Value));

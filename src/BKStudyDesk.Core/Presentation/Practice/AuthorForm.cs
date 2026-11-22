@@ -4,13 +4,8 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>Một dòng phương án của biểu mẫu: chữ (Markdown, TeX) và có phải đáp án đúng không.</summary>
 public sealed record AuthorOption(string Text, bool Right);
 
-/// <summary>
-/// Biểu mẫu Tạo câu (port phần dựng câu của <c>QuestionEditor.svelte</c>): 5 loại như quiz LMS, chữ Markdown và TeX,
-/// dựng thành câu của gói (HTML đã lọc). Lỗi trả về một câu nói thiếu gì.
-/// </summary>
 public sealed partial class AuthorForm
 {
     public static readonly string[] Types = ["single", "multi", "truefalse", "numeric", "short"];
@@ -21,15 +16,12 @@ public sealed partial class AuthorForm
     public string Tag { get; set; } = "";
     public bool KeepOrder { get; set; }
     public List<AuthorOption> Options { get; set; } = [];
-    /// <summary>truefalse: mệnh đề đúng hay sai.</summary>
     public bool Truth { get; set; } = true;
     public string Value { get; set; } = "";
     public string Tolerance { get; set; } = "";
     public string Unit { get; set; } = "";
-    /// <summary>short: các đáp án chữ, cách nhau bằng dấu |.</summary>
     public string Accept { get; set; } = "";
 
-    /// <summary>Markdown và TeX thành HTML đã lọc (như lúc hiển thị).</summary>
     public static string Render(string md) => Html.Sanitize(StudyMarkdown.MdToHtml(md));
 
     [GeneratedRegex(@"^<p>([\s\S]*)</p>$")] private static partial Regex OnePara();

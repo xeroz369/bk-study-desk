@@ -50,6 +50,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="SoHocTap.Data" />
     <!-- File logic thuần tự được lấy theo thư mục: file mới trong Core, Data, Sources, Library có test ngay, không cần sửa csproj.
          Chỉ loại file không biên dịch được trong project test (danh sách và lý do ở LogicExclude). -->
     <Compile Include="$(Src)Core\**\*.cs;$(Src)Data\**\*.cs;$(Src)Sources\**\*.cs;$(Src)Library\**\*.cs" Exclude="$(LogicExclude)" Link="Linked\%(RecursiveDir)%(Filename)%(Extension)" />

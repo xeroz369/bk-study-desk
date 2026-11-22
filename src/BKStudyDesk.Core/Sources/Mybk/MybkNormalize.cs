@@ -7,26 +7,18 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Sources.Mybk;
 
-/// <summary>
-/// Đổi JSON thô của API MyBK (tên field tiếng Việt không dấu, lúc số lúc chữ) thành dữ liệu gọn mà app lưu ở mybk.json.
-/// Toàn hàm thuần: không đọc Config, không ghi Log, nên test được bằng fixture viết tay (tests/BKStudyDesk.Logic.Tests/Fixtures).
-/// Giá trị lạ (chữ ở chỗ số, null, sai kiểu) không được throw: một dòng lạ không làm hỏng cả lần đồng bộ.
-/// </summary>
 public static partial class MybkNormalize
 {
     [GeneratedRegex("<[^>]+>")] private static partial Regex TagRx();
 
-    /// <summary>Bỏ thẻ HTML, giải mã entity, cắt khoảng trắng.</summary>
     public static string Clean(JsonNode? n) => WebUtility.HtmlDecode(TagRx().Replace(Str(n) ?? "", "")).Trim();
 
     private static JsonNode? V(JsonNode? n) => n?.DeepClone();
 
-    /// <summary>Chuỗi của một node: chữ thì lấy nguyên, số/bool thì đổi ra chữ, object/mảng thì null.</summary>
     public static string? Str(JsonNode? n) => n is JsonValue v
         ? v.TryGetValue<string>(out var s) ? s : v.ToJsonString().Trim('"')
         : null;
 
-    /// <summary>Số nguyên của một node: nhận cả số dạng chữ ("3"), số thực thì làm tròn; không đọc được thì null.</summary>
     public static long? Long(JsonNode? n)
     {
         if (n is not JsonValue v) return null;
@@ -38,12 +30,6 @@ public static partial class MybkNormalize
 
     private static int? Int(JsonNode? n) => Long(n) is { } l && l >= int.MinValue && l <= int.MaxValue ? (int)l : null;
 
-    // ------------------------------------------------------------------ thời khóa biểu, lịch thi
-
-    /// <summary>
-    /// Fresh schedule is empty while the saved one for the same term has classes: treat as a bad MyBK reply (seen 05/11/2026,
-    /// same run had other APIs failing with 500) and keep the saved schedule. A new term always takes the fresh one.
-    /// </summary>
     public static bool KeepOldSchedule(JsonArray fresh, JsonNode? old, bool sameTerm) =>
         sameTerm && fresh.Count == 0 && old is JsonArray { Count: > 0 };
 
@@ -70,7 +56,6 @@ public static partial class MybkNormalize
         };
     }).OrderBy(x => Int(x["day"]) ?? 9).ThenBy(x => Str(x["start"]), StringComparer.Ordinal).ToArray());
 
-    /// <summary>Lịch thi: API trả mảng, hoặc object có mảng "data" (tùy bản MyBK).</summary>
     public static JsonArray Exams(JsonNode? d)
     {
         var rows = d is JsonObject o ? o["data"] as JsonArray : d as JsonArray;
@@ -88,8 +73,6 @@ public static partial class MybkNormalize
         }).OrderBy(x => x["date"]?.ToString(), StringComparer.Ordinal).ThenBy(x => x["time"]?.ToString(), StringComparer.Ordinal).ToArray());
     }
 
-    // ------------------------------------------------------------------ điểm
-
     public static JsonArray GradeTerms(JsonArray? rows) => new((rows ?? []).OfType<JsonObject>()
         .OrderByDescending(r => r["maNamHocHocKy"]?.ToString(), StringComparer.Ordinal)
         .Select(r => (JsonNode)new JsonObject
@@ -103,13 +86,8 @@ public static partial class MybkNormalize
             ["updated"] = V(r["capNhatCuoi"]),
         }).ToArray());
 
-    /// <summary>diemDat / diemdat của MyBK: 1 đạt, 0 chưa đạt, -1 không tính (chứng chỉ, môn chuyển điểm).</summary>
     public static int Result(JsonNode? n) => Int(n) ?? 0;
 
-    /// <summary>
-    /// Điểm số > 10 là mã đặc biệt (MT miễn thi, VT vắng thi, RT rút môn, DT đạt chứng chỉ…), bảng mã ở sources.mybk.specialScores
-    /// (truyền vào <paramref name="codes"/>). Mã chưa rõ nghĩa (vd. 11) thì để nguyên mã, không đoán.
-    /// </summary>
     public static string? Special(JsonNode? score, IReadOnlyDictionary<string, string> codes)
     {
         if (!double.TryParse(score?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) || v <= 10) return null;
@@ -133,13 +111,9 @@ public static partial class MybkNormalize
             ["group"] = V(r["nhomTo"]),
             ["note"] = Clean(r["ghiChu"]),
             ["termId"] = V(r["namHocHocKyId"]),
-            ["courseId"] = V(r["monHocId"]),   // để ghép điểm thành phần
+            ["courseId"] = V(r["monHocId"]),
         }).ToArray());
 
-    /// <summary>
-    /// Điểm thành phần chính thức: mỗi môn mỗi kỳ, các cột điểm kèm tỉ lệ (JSON lồng trong chuỗi diemThanhPhanJson).
-    /// Bỏ cột tổng kết (tket, tkethp) vì điểm tổng đã có trong bảng điểm.
-    /// </summary>
     public static JsonArray Components(JsonArray? rows, IReadOnlyDictionary<string, string> special) => new((rows ?? []).OfType<JsonObject>().Select(r =>
     {
         JsonArray cols = [];
@@ -161,9 +135,6 @@ public static partial class MybkNormalize
         };
     }).ToArray());
 
-    // ------------------------------------------------------------------ học vụ, CTXH, phí, đăng ký
-
-    /// <summary>Quyết định học vụ (vào/ra, cảnh cáo, thôi học…): chỉ loại, kỳ, lý do, tình trạng, ngày.</summary>
     public static JsonArray Decisions(JsonArray? rows) => new((rows ?? []).OfType<JsonObject>().Select(r => (JsonNode)new JsonObject
     {
         ["type"] = V(r["type"]),
@@ -173,7 +144,6 @@ public static partial class MybkNormalize
         ["date"] = V(r["decisionDate"]),
     }).ToArray());
 
-    /// <summary>Ngày công tác xã hội: tổng đã quy đổi và từng hoạt động (tên, ngày, số ngày).</summary>
     public static JsonObject SocialWork(JsonObject? o) => new()
     {
         ["days"] = V(o?["numOfSocialWorkDays"]),
@@ -187,10 +157,6 @@ public static partial class MybkNormalize
         }).ToArray()),
     };
 
-    /// <summary>
-    /// Kết quả đăng ký môn của kỳ hiện tại. API trả về row của mọi đợt (HK261_D1, _D2, _KQ…) nên chỉ lấy đợt có mã bắt đầu bằng
-    /// "HK" + 3 số cuối của mã kỳ (20261 → HK261), mỗi môn giữ row của đợt mới nhất (semesterId lớn nhất).
-    /// </summary>
     public static JsonArray Registered(JsonArray? rows, string sem)
     {
         if (sem.Length < 3) return [];
@@ -213,9 +179,7 @@ public static partial class MybkNormalize
             }).ToArray());
     }
 
-    /// <summary>Khoản phí: chỉ giữ khoản còn phải đóng (chưa hủy, còn nợ), gồm nội dung, số tiền, hạn.</summary>
     public static JsonArray Fees(JsonArray? rows) => new((rows ?? []).OfType<JsonObject>()
-        // Mọi khoản chưa hủy, cả khoản đã đóng (trang học phí BKPay2 của MyBK cũng liệt kê hết); còn nợ hay không do trang MyBK của app ghi.
         .Where(r => (Long(r["isCancelled"]) ?? 0) == 0)
         .Select(r => (JsonNode)new JsonObject
         {
@@ -225,18 +189,6 @@ public static partial class MybkNormalize
             ["due"] = V(r["expectedExpirationDate"]),
         }).ToArray());
 
-    // ------------------------------------------------------------------ chương trình đào tạo
-
-    /// <summary>
-    /// Chương trình đào tạo. Mỗi row API là một môn nhưng kèm luôn số liệu của KHỐI (tcyeucau, tcdat, mhdat, hoanthanh),
-    /// nên tách ra blocks[] và courses[]. Tiến độ khối tính theo tín chỉ (mhyeucau luôn là 0). Trạng thái môn do UI tự suy
-    /// từ result/attempted, ghép với bảng điểm (CTĐT có thể cũ hơn) và thời khóa biểu (môn đang học).
-    /// <paramref name="info"/> null (API phần đầu lỗi hay trả rỗng): phần đầu lấy của <paramref name="previous"/> (bản đã lưu), danh sách vẫn mới.
-    /// </summary>
-    /// <summary>
-    /// Danh sách môn CTĐT dùng được không: như trang MyBK, cần ít nhất một dòng và dòng đầu có msg "done" (thiếu msg thì nhận).
-    /// MyBK đang tính lại tiến độ thì trả dòng khác "done": giữ bản đã lưu, đọc lại ở lần đồng bộ sau.
-    /// </summary>
     public static bool CurriculumReady(JsonArray? rows) =>
         rows is [JsonObject first, ..] && (first["msg"] is not JsonValue m || m.ToString() == "done");
 
@@ -290,7 +242,6 @@ public static partial class MybkNormalize
         };
     }
 
-    /// <summary>"50/132" → (50, 132).</summary>
     public static (int? Done, int? Need) Fraction(JsonNode? n)
     {
         var parts = (n?.ToString() ?? "").Split('/');
@@ -298,17 +249,13 @@ public static partial class MybkNormalize
             int.TryParse(parts.ElementAtOrDefault(1), NumberStyles.Integer, CultureInfo.InvariantCulture, out var b) ? b : null);
     }
 
-    /// <summary>"4.11/10" → 4.11; "--" → null.</summary>
     public static double? Number(JsonNode? n) =>
         double.TryParse((n?.ToString() ?? "").Split('/')[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : null;
-
-    // ------------------------------------------------------------------ trang đăng ký môn (HTML)
 
     [GeneratedRegex(@"<tr[^>]*>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase)] private static partial Regex RowRx();
     [GeneratedRegex(@"<td[^>]*>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase)] private static partial Regex CellRx();
     [GeneratedRegex(@"^\d{2}/\d{2}/\d{4} \d{2}:\d{2}$")] private static partial Regex TimeRx();
 
-    /// <summary>Bảng các đợt đăng ký: STT, mã đợt, tên, bắt đầu, kết thúc (giờ VN).</summary>
     public static JsonArray ParseRegistration(string? html)
     {
         var list = new JsonArray();
@@ -318,23 +265,16 @@ public static partial class MybkNormalize
             var times = cells.Where(c => TimeRx().IsMatch(c)).ToList();
             if (cells.Count < 4 || times.Count < 2) continue;
             var text = cells.Where(c => !times.Contains(c) && !c.All(char.IsDigit)).ToList();
-            // Giờ trên trang là giờ VN: đổi bằng offset cố định, không theo múi giờ của máy. Ngày sai (31/02) thì bỏ dòng, không throw.
             if (VnTime.ParseDateTime(times[0]) is not { } start || VnTime.ParseDateTime(times[1]) is not { } end) continue;
             list.Add((JsonNode)new JsonObject { ["code"] = text.ElementAtOrDefault(0) ?? "", ["name"] = text.ElementAtOrDefault(1) ?? "", ["start"] = start, ["end"] = end });
         }
         return list;
     }
 
-    // ------------------------------------------------------------------ báo lỗi
-
     [GeneratedRegex(@"<title[^>]*>(.*?)</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase)] private static partial Regex TitleRx();
 
     private static readonly string[] ErrorFields = ["code", "status", "error", "message", "msg", "title"];
 
-    /// <summary>
-    /// Tóm tắt body của một response lỗi để ghi log mà không chép dữ liệu cá nhân: JSON thì chỉ lấy các field báo lỗi
-    /// (code, status, error, message, msg, title), HTML thì lấy &lt;title&gt;, còn lại chỉ ghi độ dài.
-    /// </summary>
     public static string ErrorSummary(string? body)
     {
         var b = (body ?? "").Trim();

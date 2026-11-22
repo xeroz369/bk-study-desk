@@ -15,7 +15,7 @@ public class QuizKeysTests
     }
 
     [Theory]
-    [InlineData("D5", 4)]      // câu chỉ có 4 đáp án
+    [InlineData("D5", 4)]
     [InlineData("D0", 4)]
     [InlineData("A", 4)]
     [InlineData("Delete", 4)]

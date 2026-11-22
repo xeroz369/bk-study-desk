@@ -4,7 +4,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Trang MyBK (MybkPresenter): bảng điểm theo kỳ, giảng viên.</summary>
 public class MybkTests
 {
     private static MybkData Data(List<MybkGrade>? grades = null, List<MybkClass>? schedule = null, List<MybkRegistered>? registered = null) =>
@@ -21,10 +20,9 @@ public class MybkTests
     [InlineData("TOAN", "Toán", "Toán")]
     public void Block_titles_follow_mybk(string group, string name, string expected)
     {
-        // Như trang Tiến độ CTĐT của MyBK (tien-do-hoan-thanh-ctdt.js): khối NGOAICTDT là môn ngoài CTĐT, TUCHON_TUDO đổi tên.
         var title = new SoHocTap.Ui.BlockView(new MybkBlock("1", name, group, false, 0, 0, false, 1), []).Title;
         Assert.StartsWith(expected, title);
-        if (group == "NGOAICTDT") Assert.Equal(expected, title);   // không ghi "tự chọn", không tín chỉ
+        if (group == "NGOAICTDT") Assert.Equal(expected, title);
     }
 
     [Fact]
@@ -50,7 +48,7 @@ public class MybkTests
     {
         var rows = MybkPresenter.Grades(Data([Grade("20252", "MT1005", 8, 1), Grade("20261", "PH1003", 3, 0)]));
         Assert.Equal(["PH1003"], MybkPresenter.SearchGrades(rows, "ph10").Select(r => r.Code));
-        Assert.Equal(["MT1005"], MybkPresenter.SearchGrades(rows, "mon mt").Select(r => r.Code));   // tên "Môn MT1005", gõ không dấu
+        Assert.Equal(["MT1005"], MybkPresenter.SearchGrades(rows, "mon mt").Select(r => r.Code));
         Assert.Same(rows, MybkPresenter.SearchGrades(rows, "  "));
     }
 

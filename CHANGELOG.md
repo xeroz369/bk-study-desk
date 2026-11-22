@@ -6,9 +6,18 @@ Ghi các thay đổi đáng chú ý của BK Study Desk. Định dạng theo [Ke
 
 ## [Chưa phát hành]
 
+## [1.3.1] - 2026-11-22
+
+### Sửa
+
+- Cửa sổ Tải tài liệu dọn hết tài nguyên khi đóng.
+- Mẫu báo lỗi trên GitHub: lựa chọn cài từ Microsoft Store không còn bị tách làm hai.
+
 ### Thay đổi
 
-- Chỉ phát hành trên GitHub: bản trên Microsoft Store thôi cập nhật. Đã cài từ Store thì gỡ rồi cài bộ cài trên GitHub.
+- Chỉ phát hành trên GitHub, bản Microsoft Store đã gỡ khỏi Store. Đã cài từ Store thì xuất quiz tự soạn ra file, gỡ bản đó rồi cài bộ cài trên GitHub.
+- Nâng WebView lên 12.1.1 và ProtectedData lên 10.0.14.
+- Mã gọn hơn: bỏ comment và đoạn mã không dùng; build tự kiểm để giữ như vậy.
 
 ## [1.3.0] - 2026-11-06
 
@@ -480,7 +489,8 @@ Bản thử nghiệm: sắp xếp lại phần lớn mã nguồn để dễ thê
 
 Các bản trước: xem [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.0...HEAD
+[Chưa phát hành]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...v1.3.0
 [1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7

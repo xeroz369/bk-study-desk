@@ -6,7 +6,6 @@ using Avalonia.Media.Imaging;
 
 namespace BKStudyDesk.Math.Tests;
 
-// Vẽ control trong cửa sổ headless nền trắng rồi đọc pixel.
 internal static class Frames
 {
     public static WriteableBitmap Render(Control control, int width = 400, int height = 200)
@@ -15,7 +14,6 @@ internal static class Frames
         window.Show();
         var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("không chụp được frame");
         window.Close();
-        // Giữ đúng định dạng của frame (Skia headless là Rgba8888): CopyPixels chép byte thô, không đổi kênh.
         var bmp = new WriteableBitmap(frame.PixelSize, frame.Dpi, frame.Format ?? Avalonia.Platform.PixelFormat.Bgra8888, frame.AlphaFormat ?? Avalonia.Platform.AlphaFormat.Premul);
         using (var fb = bmp.Lock())
             frame.CopyPixels(new PixelRect(frame.PixelSize), fb.Address, fb.RowBytes * fb.Size.Height, fb.RowBytes);
@@ -41,7 +39,6 @@ internal static class Frames
         return px;
     }
 
-    // Hàng đầu và hàng cuối có pixel tối (vùng mực của công thức).
     public static (int Top, int Bottom) InkRows((byte B, byte G, byte R)[,] px)
     {
         var rows = Enumerable.Range(0, px.GetLength(0)).Where(y => Enumerable.Range(0, px.GetLength(1)).Any(x => px[y, x].R < 128)).ToList();

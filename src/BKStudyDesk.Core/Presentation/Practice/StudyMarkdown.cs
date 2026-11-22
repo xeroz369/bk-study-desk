@@ -3,13 +3,8 @@ using System.Text.RegularExpressions;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>
-/// Study Markdown (port <c>markdown.ts</c>, spec <c>studypack/SPEC.md</c> mục 2): định dạng nội dung duy nhất của app,
-/// cho bài học, gói chia sẻ, đề thi thử. # chương, ## bài, ### câu, - [x] phương án, = đáp án, &gt; lời giải.
-/// </summary>
 public static partial class StudyMarkdown
 {
-    // Dấu giữ chỗ cho công thức, mã trong dòng: ký tự 0 không bao giờ có trong nội dung thật.
     private static readonly string Mark = ((char)0).ToString();
 
     [GeneratedRegex(@"\\\[[\s\S]*?\\\]|\$\$[\s\S]*?\$\$|\\\([\s\S]*?\\\)|`[^`\n]+`")] private static partial Regex Protected();
@@ -29,11 +24,6 @@ public static partial class StudyMarkdown
     private static Regex HeldOnly { get; } = new("^\\s*" + Mark + "\\d+" + Mark + "\\s*$");
     private static Regex Held { get; } = new(Mark + "(\\d+)" + Mark);
 
-    /// <summary>
-    /// Vẽ tập con Markdown của gói ra HTML. TeX (\( \), \[ \], $$ $$) và HTML thô giữ nguyên; ảnh đổi đường dẫn qua
-    /// <paramref name="img"/>. Kết quả vẫn phải lọc (<see cref="Html.Sanitize"/>) trước khi hiển thị.
-    /// <paramref name="headings"/>: trang tĩnh cho phép ## và ### thành tiêu đề (bài học và gói thì không, # là cấu trúc).
-    /// </summary>
     public static string MdToHtml(string md, Func<string, string>? img = null, bool headings = false)
     {
         img ??= s => s;
@@ -44,7 +34,6 @@ public static partial class StudyMarkdown
             return Mark + (keep.Count - 1) + Mark;
         }
         var t = md.Replace("\r", "");
-        // Giữ công thức và mã trong dòng trước, để * _ | bên trong không bị đụng tới.
         t = Protected().Replace(t, m => Hold(m.Value.StartsWith('`') ? $"<code>{EscapeHtml(m.Value[1..^1])}</code>" : m.Value));
         string Inline(string s)
         {
@@ -85,7 +74,6 @@ public static partial class StudyMarkdown
                 output.Append('<').Append(tag).Append('>').Append(string.Concat(items.Select(x => $"<li>{x}</li>"))).Append("</").Append(tag).Append('>');
                 continue;
             }
-            // Khối HTML thô hay công thức riêng dòng là một khối riêng.
             if (HtmlBlock().IsMatch(line) || HeldOnly.IsMatch(line))
             {
                 var block = new List<string>();
@@ -113,7 +101,6 @@ public static partial class StudyMarkdown
     private static string EscapeHtml(string s) => s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
     private static string EscapeAttr(string s) => EscapeHtml(s).Replace("\"", "&quot;");
 
-    /// <summary>Id từ tên: bỏ dấu, đ thành d, chữ thường, ký tự khác thành gạch ngang, tối đa 48 ký tự.</summary>
     public static string Slug(string s, string fallback)
     {
         var d = new StringBuilder();

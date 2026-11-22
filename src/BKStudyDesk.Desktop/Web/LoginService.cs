@@ -5,49 +5,35 @@ using SoHocTap.Shell;
 
 namespace BKStudyDesk.Desktop.Web;
 
-/// <summary>
-/// Một chỗ đăng nhập HCMUT cho LMS và MyBK (như Shell/LoginService bản 1.x): thử ngầm trước bằng trang ẩn, phiên SSO còn thì trường tự
-/// cấp vé mới, xong luôn, không hiện gì. Cần mật khẩu (hay thử ngầm lỗi, quá 25 giây) thì đưa LoginView cho <paramref name="present"/>
-/// hiện ngay trong cửa sổ chính; xong hay hủy thì present(null). Không mở cửa sổ riêng.
-/// Các bước báo ra: check, password, mybk, lms, done, cancel, error; lượt làm mới ngầm (Refresh) chỉ báo "refresh" khi xong.
-/// </summary>
 internal sealed class LoginService(Action<LoginView?> present, Action<string, string> progress)
 {
     private readonly HiddenWeb _hidden = new();
     private LoginView? _view;
     private bool _busy;
 
-    /// <summary>Người dùng bấm Đăng nhập: thử ngầm, cần mật khẩu thì hiện trang đăng nhập.</summary>
     public void Start()
     {
-        if (_view is not null) { _view.Retry(); return; }   // đang hiện trang đăng nhập: bấm Đăng nhập lại là tải lại trang
+        if (_view is not null) { _view.Retry(); return; }
         Run(silent: false);
     }
 
-    /// <summary>
-    /// Làm mới ngầm (token LMS hết hạn): đi lại lượt đăng nhập trên trang ẩn. Phiên SSO còn thì lấy token mới, người dùng không thấy gì.
-    /// SSO đòi mật khẩu: người dùng đã bật Tự đăng nhập lại (Credentials.Usable) thì điền tài khoản một lần, không thì thôi (dải báo
-    /// đăng nhập lại hiện như thường). Không bao giờ hiện trang đăng nhập.
-    /// </summary>
     public void Refresh()
     {
         if (_view is null) Run(silent: true);
     }
 
-    private IDisposable? _lane;   // SsoGate lane held while this sign-in runs
-    private bool _filled;         // this run used the shared automatic fill (SsoGate claim)
+    private IDisposable? _lane;
+    private bool _filled;
 
     private async void Run(bool silent)
     {
         if (_busy) return;
         _busy = true;
-        // One SSO pass at a time with MyBK (SsoGate): wait for a MyBK sign-in in progress, then its fresh session usually needs no password.
         try { _lane = await SsoGate.EnterAsync(CancellationToken.None); }
         catch (Exception e) when (e is not OutOfMemoryException) { _busy = false; Log.Warn($"Đăng nhập: {e.Message}"); return; }
         if (!silent) progress("check", "");
         _filled = false;
         var page = _hidden.Open(allow: null);
-        // Silent refresh only happens for an expired LMS token: LMS only. User sign-in includes MyBK unless it is turned off.
         var flow = new LoginFlow(page, (stage, message) =>
         {
             if (stage == "error" && _busy) { Fallback(silent, message); return; }
@@ -55,15 +41,12 @@ internal sealed class LoginService(Action<LoginView?> present, Action<string, st
             if (!silent) progress(stage, message);
             else if (stage == "done") progress("refresh", "");
         }, mybk: !silent && Settings.Sync.MybkEnabled);
-        page.Loaded += (_, ok) => { if (!ok && _busy) Dispatcher.UIThread.Post(() => Fallback(silent, "không mở được trang trường")); };   // khỏi chờ 25 giây
+        page.Loaded += (_, ok) => { if (!ok && _busy) Dispatcher.UIThread.Post(() => Fallback(silent, "không mở được trang trường")); };
         flow.NeedPassword += async () =>
         {
             if (!silent) { Show(); return; }
-            // Shared with MyBK: one automatic fill per run, only while the user is at the computer. A wrong password or captcha
-            // brings the password page back: then stop, never fill again by itself (the school locks accounts).
             if (_filled || Platform.Credentials.Usable() is not { } c || !SsoGate.TryClaimFill(UserActivity.Active)) { Fallback(silent, "cần mật khẩu"); return; }
             _filled = true;
-            // Handler của event (async void): lỗi script phải bắt ở đây, không thì lọt ra UI thread.
             try { if (await page.EvalAsync(SsoForm.FillScript(c.User, c.Password)) != "true") Fallback(silent, "trang đăng nhập không có form như mong đợi"); }
             catch (Exception e) when (e is not OutOfMemoryException) { Fallback(silent, e.Message); }
         };
@@ -72,7 +55,6 @@ internal sealed class LoginService(Action<LoginView?> present, Action<string, st
         DispatcherTimer.RunOnce(() => { if (!flow.IsDone && _busy) Fallback(silent, "quá 25 giây"); }, TimeSpan.FromSeconds(25));
     }
 
-    /// <summary>Thử ngầm không xong: lượt người dùng bấm thì hiện trang đăng nhập; lượt làm mới ngầm thì dừng, ghi log.</summary>
     private void Fallback(bool silent, string why)
     {
         if (_filled) { SsoGate.FillResult(false); _filled = false; }

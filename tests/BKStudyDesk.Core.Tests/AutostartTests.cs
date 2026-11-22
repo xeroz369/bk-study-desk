@@ -2,7 +2,6 @@ using SoHocTap.Web;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Nội dung mục mở cùng hệ điều hành: đường dẫn có dấu cách, dấu tiếng Việt, ký tự đặc biệt vẫn đúng.</summary>
 public class AutostartTests
 {
     [Fact]

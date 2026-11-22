@@ -7,21 +7,14 @@ using XamlMath;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>
-/// Một công thức TeX của trang Luyện tập (bộ dựng: src/ThirdParty/XamlMath). Màu chữ theo token Text, cỡ theo MathScale
-/// (trong dòng) hay MathScaleDisplay (đứng riêng), chữ trong \text theo phông của app. Công thức lỗi thì hiện TeX gốc
-/// dạng chữ và ghi log một lần, không bao giờ ném lỗi ra ngoài.
-/// </summary>
 public sealed class MathView : ContentControl
 {
     public static readonly StyledProperty<string> TexProperty = AvaloniaProperty.Register<MathView, string>(nameof(Tex), "");
 
     public static readonly StyledProperty<bool> DisplayProperty = AvaloniaProperty.Register<MathView, bool>(nameof(Display));
 
-    /// <summary>Ghi cảnh báo (app gán Log.Warn lúc mở). Mặc định bỏ qua, để test và công cụ dev không ghi vào data của người dùng.</summary>
     public static Action<string> Warn { get; set; } = _ => { };
 
-    // Mỗi công thức lỗi chỉ ghi log một lần mỗi phiên: một trang có thể vẽ lại cùng công thức nhiều lần.
     private static readonly HashSet<string> Logged = [];
 
     private IDisposable? _scaleBinding;
@@ -46,7 +39,6 @@ public sealed class MathView : ContentControl
         set => SetValue(TexProperty, value);
     }
 
-    /// <summary>Công thức đứng riêng (\[ \]): style Display, cỡ MathScaleDisplay.</summary>
     public bool Display
     {
         get => GetValue(DisplayProperty);
@@ -68,7 +60,6 @@ public sealed class MathView : ContentControl
         }
     }
 
-    // Nằm trong dòng chữ (InlineUIContainer): báo đường chân cho TextBlock, để dòng thẳng hàng và đủ cao cho phần dưới đường chân.
     protected override Size MeasureOverride(Size availableSize)
     {
         var size = base.MeasureOverride(availableSize);
@@ -83,7 +74,6 @@ public sealed class MathView : ContentControl
         _scaleBinding = Block.Bind(FormulaBlock.ScaleProperty, Block.GetResourceObservable(Display ? "MathScaleDisplay" : "MathScale"));
     }
 
-    // Phông của app: ContentControlThemeFontFamily khi người dùng chọn phông, không có thì phông mặc định của hệ điều hành.
     private static object? FontName(object? resource) =>
         resource is FontFamily family ? family.Name : FontManager.Current.DefaultFontFamily.Name;
 

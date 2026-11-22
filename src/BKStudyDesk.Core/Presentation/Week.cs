@@ -1,32 +1,19 @@
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation;
 
-/// <summary>
-/// Một buổi trong thời khóa biểu tuần. Group là ngày ("Thứ hai 13/10"), Order để nhóm theo thứ tự ngày; InWeek false: môn có trong kỳ
-/// mà tuần này không học (View làm nhạt); CustomId khác null: sự kiện tự thêm (bấm đúp để sửa).
-/// </summary>
 public sealed record WeekRow(int Order, string Group, string Time, int StartMin, string Name, string Code, string Room, string Lessons, string Teacher,
     bool InWeek, string? CustomId = null);
 
-/// <summary>Một buổi thi (MyBK) trong tab Lịch thi; Past: đã thi (View làm nhạt).</summary>
 public sealed record ExamRow(string Subject, string When, long Time, string Label, string Left, bool Past);
 
-/// <summary>Why the timetable tab shows nothing, or less than a normal week.</summary>
 public enum TimetableGap { None, SyncOff, SignedOut, NoData, TermEmpty, WeekEmpty }
 
-/// <summary>Line shown above the timetable (null: none) and whether the week grid is worth drawing.</summary>
 public sealed record TimetableNote(TimetableGap Gap, string? Text, bool ShowGrid);
 
-/// <summary>
-/// Tab Thời khóa biểu và Lịch thi của trang Lịch (cùng quy tắc với bản 1.x, Ui/Pages/CalendarPage, dạng danh sách): mọi môn có giờ
-/// cố định của kỳ, nhóm theo ngày trong tuần, sắp theo phút bắt đầu; sự kiện tự thêm của tuần xen vào; môn không có giờ cố định ghi riêng.
-/// </summary>
 public static class WeekPresenter
 {
-    /// <summary>"Tuần 42 (13/10 - 19/10)".</summary>
     public static string Title(DateTime monday) => L.F("calendar.week", Format.IsoWeek(monday), monday, monday.AddDays(6));
 
     public static IReadOnlyList<WeekRow> Rows(MybkData? mybk, IEnumerable<CustomEvent> custom, DateTime monday)
@@ -43,16 +30,9 @@ public static class WeekPresenter
             rows.Add(new WeekRow(day, Day(day), AppState.CustomTime(e), e.StartMin ?? 0, e.Title, L.T(e.IsMakeup ? "kind.makeup" : "kind.custom"),
                 e.Location, "", e.Note, true, e.Id));
         }
-        // Sắp theo phút bắt đầu (số), không theo chữ: "10:00" không được đứng trước "7:00".
         return [.. rows.OrderBy(r => r.Order).ThenBy(r => r.StartMin)];
     }
 
-    /// <summary>
-    /// Truthful line for the timetable tab. The term has classes: only say so when this week has none. The term has none: give the
-    /// real cause, MyBK sync turned off, not signed in, no data yet (<paramref name="noData"/>, from AppState.NoDataReason), or MyBK
-    /// itself has no timetable for the term. <paramref name="shown"/> counts items on screen (classes and own events): an empty
-    /// term with nothing of the user's own this week draws no grid.
-    /// </summary>
     public static TimetableNote Note(MybkData? mybk, bool syncOn, bool signedIn, string? noData, int shown)
     {
         if (mybk?.Schedule.Count > 0)
@@ -65,19 +45,13 @@ public static class WeekPresenter
         return new(gap, text, shown > 0);
     }
 
-    /// <summary>Môn không đặt được lên tuần (MyBK ghi thứ ngoài 2 tới 8 hay giờ đọc không ra): ghi tên riêng, không bỏ im lặng.</summary>
     public static IReadOnlyList<string> NoSlot(MybkData? mybk) =>
         [.. (mybk?.Schedule ?? []).Where(c => c.Day is < 2 or > 8 || VnTime.ParseClock(c.Start) is null || VnTime.ParseClock(c.End) is null)
             .Select(c => c.Name).Distinct()];
 
-    /// <summary>Kỳ thi sắp tới trước (gần nhất trước), đã qua xuống cuối (mới qua nhất trước).</summary>
     public static IReadOnlyList<ExamRow> Exams(IReadOnlyList<TimelineItem> timeline, long now) =>
         [.. timeline.Where(e => e.Kind == "exam").OrderBy(e => e.Time < now).ThenBy(e => e.Time < now ? -e.Time : e.Time).Select(e => new ExamRow(e.Subject, e.When, e.Time, e.Label, e.Left, e.Time < now))];
 
-    /// <summary>
-    /// Sự kiện để xuất .ics: thời khóa biểu cả kỳ (mỗi buổi một sự kiện), lịch thi, sự kiện tự thêm. Mục không đặt được lên lịch (giờ, ngày
-    /// đọc không ra) thì không xuất, trả tên ở Skipped để báo người dùng.
-    /// </summary>
     public static (List<IcsEvent> Events, List<string> Skipped) Ics(MybkData? m, IEnumerable<CustomEvent> custom, DateTime today)
     {
         var events = custom.Select(x => CustomEvents.ToIcs(x, L.T("kind.makeup"))).OfType<IcsEvent>().ToList();
