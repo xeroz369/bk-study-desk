@@ -15,7 +15,7 @@ Bản mới có ở đây ngay khi phát hành, và app tự báo khi có bản 
 
 ## Microsoft Store
 
-Bản trên Microsoft Store không còn được cập nhật. Nếu đã cài từ Store, hãy gỡ bản đó rồi cài bộ cài trên GitHub.
+Bản trên Microsoft Store không còn được cập nhật. Nếu đã cài từ Store, hãy gỡ bản đó rồi cài bộ cài trên GitHub. Hai bản lưu dữ liệu riêng: bản GitHub không đọc dữ liệu của bản Store, và gỡ bản Store xóa luôn dữ liệu đó. Muốn giữ quiz tự soạn, hãy xuất chúng ra file trước khi gỡ rồi nhập lại ở bản mới. Tài liệu đã tải nằm trong thư mục bạn chọn nên không mất.
 
 ## Lần mở đầu
 

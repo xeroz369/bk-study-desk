@@ -42,7 +42,6 @@ Nguyên tắc: dùng công cụ có sẵn, được duy trì (không tự viết
 | Semgrep (bộ luật cộng đồng) | mẫu mã nguy hiểm C#, TS/JS, bí mật trong mã | có | có | `security.yml` (semgrep) |
 | BinSkim (Microsoft) | file .exe/.dll đã build: ASLR, DEP, CFG, cờ biên dịch an toàn | có | có | `security.yml` (binskim) |
 | OpenSSF Scorecard | thực hành an toàn của repo (bảo vệ nhánh, ghim action, quyền token...) | khi vào `main` | có | `scorecard.yml` |
-| Dependabot | mở PR nâng thư viện có lỗ hổng hoặc bản mới | | có | `.github/dependabot.yml` |
 | Quét dấu vết cá nhân | tên, MSSV, email, đường dẫn máy trong mã và bản build trước khi xuất ra repo công khai | trước mỗi lần xuất | | `tools-dev/leak-scan.ps1` |
 
 Chạy lại bằng tay: tab **Actions** > **security** > **Run workflow**.
@@ -63,7 +62,7 @@ Chạy lại bằng tay: tab **Actions** > **security** > **Run workflow**.
 ## 5. Kiểm tra tay trước mỗi bản phát hành
 
 - [ ] Các workflow `build`, `codeql`, `security` xanh trên commit phát hành.
-- [ ] Không còn cảnh báo Cao/Nghiêm trọng mở trên Code scanning và Dependabot.
+- [ ] Không còn cảnh báo Cao/Nghiêm trọng mở trên Code scanning.
 - [ ] Đổi ở khung Luyện tập, `ApiRouter`, `WebUi`, `MybkRunner`, `Paths`, cập nhật: đọc lại bảng mục 2, ghi lý do trong PR.
 - [ ] Thao tác mới với LMS/MyBK: đã đọc mã JS của nút, xác nhận chỉ xem, không gửi dữ liệu.
 - [ ] Quét dấu vết cá nhân sạch khi xuất ra repo công khai.

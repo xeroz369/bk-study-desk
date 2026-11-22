@@ -17,7 +17,7 @@ New versions appear here as soon as they're released, and the app tells you when
 
 ## Microsoft Store
 
-The Microsoft Store version is no longer updated. If you installed it from the Store, uninstall it and use the GitHub installer.
+The Microsoft Store version is no longer updated. If you installed it from the Store, uninstall it and use the GitHub installer. The two keep separate data: the GitHub version does not read the Store version's data, and uninstalling the Store version deletes it. To keep quizzes you wrote, export them to a file before uninstalling and import them in the new version. Downloaded documents stay in the folder you chose.
 
 ## First launch
 

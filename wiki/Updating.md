@@ -2,7 +2,7 @@
 
 > Translated from Cập-nhật (Vietnamese) for BK Study Desk 1.1.10.
 
-**Installed from the Microsoft Store:** the Store version is no longer updated. Uninstall it and use the GitHub installer to get new versions.
+**Installed from the Microsoft Store:** the Store version is no longer updated. Uninstall it and use the GitHub installer to get new versions; see [Installation](Installation) to keep your own quizzes before uninstalling.
 
 On first launch the app asks what to do when a new version is out. **Until you choose, the app doesn't check online.**
 
