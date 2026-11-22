@@ -1,6 +1,6 @@
 **Tiếng Việt** | [English](Updating)
 
-**Cài từ Microsoft Store:** bản Store không còn được cập nhật. Gỡ bản đó rồi cài bộ cài trên GitHub để nhận bản mới.
+**Cài từ Microsoft Store:** bản Store không còn được cập nhật. Gỡ bản đó rồi cài bộ cài trên GitHub để nhận bản mới; xem [[Cài đặt]] để giữ quiz tự soạn trước khi gỡ.
 
 Lần mở đầu, app hỏi bạn muốn làm gì khi có bản mới. **Chưa chọn thì app không gọi mạng để kiểm tra.**
 

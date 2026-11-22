@@ -35,7 +35,7 @@ Giao diện mặc định tiếng Việt, có thêm tiếng Anh.
 2. Mở file, chọn thư mục cài, chọn **Cài đặt**. Không cần quyền admin. Bộ cài chưa có chữ ký số nên Windows hiện cảnh báo SmartScreen: chọn **Thông tin thêm** > **Vẫn chạy** (chỉ một lần).
 3. Lần mở đầu, chọn cách cập nhật và thư mục lưu tài liệu, rồi **Đăng nhập HCMUT**.
 
-Bản trên Microsoft Store không còn được cập nhật. Nếu đã cài từ Store, hãy gỡ bản đó rồi cài bộ cài trên GitHub.
+Bản trên Microsoft Store không còn được cập nhật. Nếu đã cài từ Store, hãy gỡ bản đó rồi cài bộ cài trên GitHub. Hai bản lưu dữ liệu riêng: bản GitHub không đọc dữ liệu của bản Store, và gỡ bản Store xóa luôn dữ liệu đó. Muốn giữ quiz tự soạn, hãy xuất chúng ra file trước khi gỡ rồi nhập lại ở bản mới. Tài liệu đã tải nằm trong thư mục bạn chọn nên không mất.
 
 ![Bộ cài](docs/bo-cai.png)
 

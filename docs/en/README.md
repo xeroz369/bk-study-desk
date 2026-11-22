@@ -27,7 +27,7 @@ The interface is Vietnamese by default; English is available in **Settings**. Th
 2. Run it, choose an install folder and click **Install**. No admin rights needed. The installer is not code-signed yet, so Windows SmartScreen shows a warning once: click **More info** > **Run anyway**.
 3. On first launch, choose how updates are handled and where documents are saved, then **Sign in to HCMUT**.
 
-The Microsoft Store version is no longer updated. If you installed it from the Store, uninstall it and use the GitHub installer.
+The Microsoft Store version is no longer updated. If you installed it from the Store, uninstall it and use the GitHub installer. The two keep separate data: the GitHub version does not read the Store version's data, and uninstalling the Store version deletes it. To keep quizzes you wrote, export them to a file before uninstalling and import them in the new version. Downloaded documents stay in the folder you chose.
 
 ### After installing
 
