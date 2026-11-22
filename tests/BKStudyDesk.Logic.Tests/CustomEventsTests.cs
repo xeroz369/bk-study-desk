@@ -1,9 +1,7 @@
 using System.Text.Json.Nodes;
-using SoHocTap.Data;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Lưu sự kiện tự thêm (data/custom-events.json): round-trip qua file tạm, đọc chịu lỗi, tìm môn trong tiêu đề.</summary>
 public sealed class CustomEventsTests : IDisposable
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "bk-custom-events-" + Guid.NewGuid().ToString("N"));
@@ -24,13 +22,13 @@ public sealed class CustomEventsTests : IDisposable
     public void Save_AssignsIdAndCreatedAt_AndRoundTrips()
     {
         var store = NewStore();
-        Assert.Empty(store.All());                               // chưa có file: rỗng, không lỗi
+        Assert.Empty(store.All());
         Assert.Null(store.Problem);
         var saved = store.Save(Sample());
         Assert.Equal(32, saved.Id.Length);
         Assert.True(saved.CreatedAt > 0);
 
-        var again = NewStore().All();                            // store mới: đọc từ đĩa
+        var again = NewStore().All();
         var e = Assert.Single(again);
         Assert.Equal(saved, e);
         Assert.True(e.IsMakeup);
@@ -55,11 +53,11 @@ public sealed class CustomEventsTests : IDisposable
         var store = NewStore();
         var a = store.Save(Sample("A"));
         var b = store.Save(Sample("B") with { Date = "2026-10-05" });
-        Assert.Equal(["B", "A"], store.All().Select(x => x.Title).ToArray());   // sắp theo ngày
+        Assert.Equal(["B", "A"], store.All().Select(x => x.Title).ToArray());
         store.Save(a with { Title = "A2" });
         Assert.Equal(2, store.All().Count);
         Assert.Equal("A2", store.Find(a.Id)!.Title);
-        Assert.Equal(a.CreatedAt, store.Find(a.Id)!.CreatedAt);              // sửa không đổi giờ tạo
+        Assert.Equal(a.CreatedAt, store.Find(a.Id)!.CreatedAt);
         Assert.True(store.Remove(b.Id));
         Assert.False(store.Remove(b.Id));
         Assert.Equal("A2", Assert.Single(store.All()).Title);
@@ -80,11 +78,11 @@ public sealed class CustomEventsTests : IDisposable
         Assert.Equal(2, list.Count);
         var x1 = list.Single(e => e.Id == "x1");
         Assert.Equal("Họp", x1.Title);
-        Assert.Equal(CustomEvents.KindEvent, x1.Kind);   // kind lạ: coi là sự kiện thường
+        Assert.Equal(CustomEvents.KindEvent, x1.Kind);
         Assert.Equal(1760000000, x1.CreatedAt);
-        Assert.Equal(20 * 60, x1.EndMin);                // không có giờ kết thúc: dài một tiếng
+        Assert.Equal(20 * 60, x1.EndMin);
         var x2 = list.Single(e => e.Id == "x2");
-        Assert.Null(x2.Day);                             // ngày sai: giữ lại nhưng không đặt lên lịch
+        Assert.Null(x2.Day);
         Assert.Equal("", x2.Location);
         Assert.Equal("", x2.End);
     }
@@ -110,7 +108,7 @@ public sealed class CustomEventsTests : IDisposable
         Assert.Equal(new DateTime(2026, 10, 12, 8, 50, 0), ics.End);
         var text = SoHocTap.Core.Ics.Build("BK Study Desk", [ics], new DateTime(2026, 10, 3, 0, 0, 0, DateTimeKind.Utc));
         Assert.Contains("UID:ce-abc@bkstudydesk\r\n", text, StringComparison.Ordinal);
-        Assert.Contains("DTSTART:20261012T000000Z\r\n", text, StringComparison.Ordinal);    // 07:00 giờ VN = 00:00 UTC
+        Assert.Contains("DTSTART:20261012T000000Z\r\n", text, StringComparison.Ordinal);
         Assert.Contains("DTEND:20261012T015000Z\r\n", text, StringComparison.Ordinal);
         Assert.Contains("SUMMARY:Học bù GT2\\, chương 3\r\n", text, StringComparison.Ordinal);
         Assert.Contains("LOCATION:H1-201\\; tầng 2\r\n", text, StringComparison.Ordinal);
@@ -133,12 +131,12 @@ public sealed class CustomEventsTests : IDisposable
         var ev = Sample() with { Id = "x" };
         var start = CustomEvents.StartTime(ev)!.Value;
         Assert.Equal(new DateTimeOffset(2026, 10, 12, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(), start);
-        Assert.Empty(CustomEvents.DueSoon([ev], start - 3601, 3600, _ => false));          // còn hơn 1 giờ
+        Assert.Empty(CustomEvents.DueSoon([ev], start - 3601, 3600, _ => false));
         var due = Assert.Single(CustomEvents.DueSoon([ev], start - 3000, 3600, _ => false));
         Assert.Equal("ce-x@2026-10-12T07:00", due.Key);
-        Assert.Empty(CustomEvents.DueSoon([ev], start - 3000, 3600, k => k == due.Key));    // đã nhắc
-        Assert.Empty(CustomEvents.DueSoon([ev], start, 3600, _ => false));                  // đã bắt đầu
-        var moved = ev with { Start = "07:30" };                                               // sửa giờ: nhắc lại
+        Assert.Empty(CustomEvents.DueSoon([ev], start - 3000, 3600, k => k == due.Key));
+        Assert.Empty(CustomEvents.DueSoon([ev], start, 3600, _ => false));
+        var moved = ev with { Start = "07:30" };
         Assert.Single(CustomEvents.DueSoon([moved], start, 3600, k => k == due.Key));
     }
 
@@ -149,6 +147,6 @@ public sealed class CustomEventsTests : IDisposable
         Assert.Equal(("MT1005", "Giải tích 2"), CustomEvents.MatchCourse("Học bù giải tích 2 - cô Như", courses));
         Assert.Equal(("CO1023", "Hệ thống số"), CustomEvents.MatchCourse("Học bù co1023", courses));
         Assert.Null(CustomEvents.MatchCourse("Học bù Vật lý", courses));
-        Assert.Null(CustomEvents.MatchCourse("MT", courses));   // mã quá ngắn không tính
+        Assert.Null(CustomEvents.MatchCourse("MT", courses));
     }
 }

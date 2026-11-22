@@ -8,9 +8,18 @@ Notable changes to BK Study Desk. The format follows [Keep a Changelog 1.1.0](ht
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-22
+
+### Fixed
+
+- The Download files window releases everything it holds when it closes.
+- GitHub bug report form: the Microsoft Store install option is no longer split in two.
+
 ### Changed
 
-- Releases are on GitHub only: the Microsoft Store version is no longer updated. If you installed from the Store, uninstall it and use the GitHub installer.
+- Releases are on GitHub only and the app has been removed from the Microsoft Store. If you installed from the Store, export the quizzes you wrote, uninstall it and use the GitHub installer.
+- WebView updated to 12.1.1 and ProtectedData to 10.0.14.
+- Leaner code: comments and unused code removed; the build now checks that it stays that way.
 
 ## [1.3.0] - 2026-11-06
 
@@ -483,7 +492,8 @@ Withdrawn. All changes moved to 1.1.3.
 
 Earlier versions: see [Releases](https://github.com/xeroz369/bk-study-desk/releases).
 
-[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/xeroz369/bk-study-desk/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.8...v1.3.0
 [1.2.8]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/xeroz369/bk-study-desk/compare/v1.2.6...v1.2.7

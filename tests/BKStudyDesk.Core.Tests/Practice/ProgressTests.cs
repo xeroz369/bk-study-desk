@@ -3,7 +3,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-/// <summary>Chỗ lưu trong bộ nhớ: không đụng data của người dùng.</summary>
 internal sealed class MemoryStorage(string? json = null) : IProgressStorage
 {
     public string? Json { get; set; } = json;
@@ -27,7 +26,6 @@ public class ProgressTests
 {
     private static readonly TimeZoneInfo Hcm = TimeZoneInfo.CreateCustomTimeZone("utc+7", TimeSpan.FromHours(7), "UTC+7", "UTC+7");
 
-    // 07/10/2026 10:00 giờ Việt Nam.
     private static FixedClock Clock() => new(new DateTimeOffset(2026, 10, 7, 3, 0, 0, TimeSpan.Zero), Hcm);
 
     private static (StudyRegistry Study, PracticeProgress P, MemoryStorage Store, FixedClock Clock) Make(string? json = null, int questions = 3)
@@ -57,7 +55,6 @@ public class ProgressTests
     [Fact]
     public async Task Reads_state_written_by_1x()
     {
-        // Bản 1.x cũ: chưa có srs, notes, times; exams sai kiểu; khóa lạ; record thiếu trường.
         const string old = """
             { "version": 1, "updatedAt": "2026-09-30T08:00:00", "questions": { "b1.q1": { "tries": 2, "firstTry": false, "correct": true,
               "lastCorrect": true, "reviewedOk": false, "chosen": 1, "at": "2026-09-30T08:00:00.000Z" }, "b1.q2": { "chosen": [0, 1] } },
@@ -80,12 +77,10 @@ public class ProgressTests
         Assert.Equal(2, written["questions"]!["b1.q2"]!["chosen"]!.AsArray().Count);
         Assert.IsType<JsonArray>(written["exams"]);
         Assert.IsType<JsonObject>(written["srs"]);
-        // Khóa camelCase như bản TS, đọc lại được.
         Assert.True(written["questions"]!["b1.q1"]!.AsObject().ContainsKey("firstTry"));
         Assert.Equal(p.State.Questions.Count, ProgressState.Normalize(written).Questions.Count);
     }
 
-    // Một bản ghi hỏng chỉ mất bản ghi đó: không được kéo cả nhóm về rỗng (lần ghi sau sẽ xóa hết lịch sử).
     [Fact]
     public void One_bad_record_does_not_drop_the_rest()
     {
@@ -147,9 +142,9 @@ public class ProgressTests
         var fp = study.Question("b1.q1")!.Fp!;
         p.SrsAnswer(fp, true);
         Assert.Equal((2, "2026-10-10", 1, 0), (p.State.Srs[fp].Box, p.State.Srs[fp].Due, p.State.Srs[fp].Seen, p.State.Srs[fp].Wrong));
-        p.SrsAnswer(fp, true);   // cùng ngày: không lên hộp
+        p.SrsAnswer(fp, true);
         Assert.Equal(2, p.State.Srs[fp].Box);
-        p.SrsAnswer(fp, false);  // sai trong ngày: về hộp 1, mai ôn
+        p.SrsAnswer(fp, false);
         Assert.Equal((1, "2026-10-08"), (p.State.Srs[fp].Box, p.State.Srs[fp].Due));
         int[] boxes = [2, 3, 4, 5, 5];
         string[] due = ["2026-10-11", "2026-10-16", "2026-10-24", "2026-11-10", "2026-11-11"];
@@ -168,8 +163,8 @@ public class ProgressTests
         var (study, p, _, clock) = Make();
         var q1 = study.Question("b1.q1")!;
         var q2 = study.Question("b1.q2")!;
-        p.SrsAnswer(q1.Fp!, true);   // hộp 2, 3 ngày sau
-        p.SrsAnswer(q2.Fp!, false);  // hộp 1, mai
+        p.SrsAnswer(q1.Fp!, true);
+        p.SrsAnswer(q2.Fp!, false);
         Assert.Empty(p.DueQuestions());
         clock.Now = clock.Now.AddDays(3);
         Assert.Equal(["b1.q2", "b1.q1"], p.DueQuestions().Select(q => q.Id));
@@ -270,7 +265,6 @@ public class ProgressTests
         p.SetScroll("b2", 7);
         Assert.Equal(1, p.Scroll("b2"));
         Assert.Null(p.Scroll("b1"));
-        // Bài mở gần nhất đã xong thì quay về thứ tự ưu tiên môn.
         p.RecordAnswer("b2.q1", Answer.Index(0), true);
         p.RecordAnswer("b2.q2", Answer.Index(0), true);
         Assert.Equal("b1", p.NextLesson()!.Id);
@@ -301,12 +295,11 @@ public class ProgressReadFailureTests
         await p.LoadAsync();
         Assert.True(p.ReadFailed);
         Assert.NotEqual("", p.SaveError);
-        p.RecordAnswer("b1.q1", Answer.Index(1), true);   // vẫn làm câu được, giữ trong app
+        p.RecordAnswer("b1.q1", Answer.Index(1), true);
         await p.FlushAsync();
         Assert.Equal(0, store.Writes);
         Assert.True(p.Pending);
         Assert.NotEqual("", p.SaveError);
-        // Đọc lại được (người dùng sửa file, bấm Thử lại): ghi bình thường.
         store.FailReads = false;
         store.Json = "{\"questions\":{}}";
         await p.LoadAsync();
@@ -328,7 +321,6 @@ public class ProgressAbsorbTests
         var old = new PracticeProgress(study, store);
         await old.LoadAsync();
         old.RecordAnswer("b1.q1", Answer.Index(1), true);
-        // Nạp lại cả sổ (Thử lại) tạo PracticeProgress mới: phải mang câu vừa làm sang.
         store.FailReads = false;
         store.Json = "{\"questions\":{}}";
         var fresh = new PracticeProgress(study, store);

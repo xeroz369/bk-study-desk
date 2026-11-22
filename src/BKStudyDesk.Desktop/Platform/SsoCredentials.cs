@@ -4,17 +4,11 @@ using SoHocTap.Core;
 
 namespace SoHocTap.Shell;
 
-/// <summary>
-/// Tài khoản HCMUT cho tự đăng nhập lại (sso.autoLogin), lưu trong Windows Credential Manager của tài khoản Windows đang dùng,
-/// không nằm trong thư mục data (không bị chép theo khi sao lưu hay chuyển dữ liệu). Tắt tính năng hay đăng xuất thì xóa.
-/// </summary>
 internal static class SsoCredentials
 {
-    // Mỗi thư mục app một mục riêng (như khóa chống mở hai lần): bản demo, bản zip không đọc hay xóa tài khoản của bản cài.
     private static string Target => AppInfo.InstanceKey + "/sso";
     private const int Generic = 1, LocalMachine = 2, NotFound = 1168;
 
-    /// <summary>Được tự đăng nhập không: người dùng đã bật, đang ghi nhớ đăng nhập, và có tài khoản đã lưu.</summary>
     public static (string User, string Password)? Usable() =>
         Settings.Sso.AutoLogin && Settings.Sso.RememberDays > 0 ? Read() : null;
 
@@ -40,7 +34,6 @@ internal static class SsoCredentials
         finally { CredFree(p); }
     }
 
-    /// <summary>Tắt tự đăng nhập và xóa tài khoản đã lưu (người dùng tắt, tắt Ghi nhớ đăng nhập, hay đăng xuất).</summary>
     public static void Forget()
     {
         Settings.Sso.AutoLogin = false;

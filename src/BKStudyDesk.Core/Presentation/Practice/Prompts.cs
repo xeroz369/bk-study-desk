@@ -4,19 +4,9 @@ namespace SoHocTap.Presentation.Practice;
 
 public enum PromptMode { Soan, TuongTu, Soat, GiaiThich }
 
-/// <param name="Course">"MT1009 Phương pháp tính".</param>
-/// <param name="Unit">Tên chương (giữ kết quả đúng chỗ).</param>
-/// <param name="Units">Tên các chương đang có (khi soạn cho cả môn).</param>
-/// <param name="Question">Một câu dạng Study Markdown (câu tương tự, giải thích).</param>
-/// <param name="Pack">Cả gói dạng Study Markdown (soát).</param>
 public sealed record PromptInput(string Course, int Count, string Extra, string? Unit = null, string? Lesson = null,
     IReadOnlyList<string>? Units = null, string? Question = null, string? Pack = null);
 
-/// <summary>
-/// Prompt cho AI bất kỳ (ChatGPT, Claude, Gemini...), port <c>prompts.ts</c>. Mọi prompt có cùng các mục cố định để model nhỏ
-/// cũng làm theo. Đầu ra luôn là Study Markdown (studypack/SPEC.md). Đây là nội dung gửi cho AI theo định dạng gói tiếng Việt,
-/// không phải chữ giao diện, nên không qua lang. Khung dài (định dạng, luật, tự kiểm, ví dụ) nằm ở Prompts/*.md.
-/// </summary>
 public static class Prompts
 {
     private static string Resource(string name)
@@ -24,7 +14,6 @@ public static class Prompts
         using var s = Assembly.GetExecutingAssembly().GetManifestResourceStream($"Practice.Prompts.{name}.md")
             ?? throw new InvalidOperationException($"thiếu Prompts/{name}.md");
         using var r = new StreamReader(s);
-        // Git trên Windows có thể đổi sang CRLF lúc checkout: prompt luôn dùng LF.
         return r.ReadToEnd().ReplaceLineEndings("\n");
     }
 
@@ -33,7 +22,6 @@ public static class Prompts
     private static readonly string Check = Resource("check");
     private static readonly string Example = Resource("example");
 
-    /// <summary>Tên chế độ như trong route của bản Svelte (soan, tuong-tu, soat, giai-thich).</summary>
     public static PromptMode ParseMode(string s) => s switch
     {
         "tuong-tu" => PromptMode.TuongTu,

@@ -4,7 +4,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>Ô tìm nhanh: nhận danh sách mục (MainWindow dựng mỗi lần mở), báo mục được chọn qua Picked.</summary>
 public partial class QuickSearchPanel : UserControl
 {
     private IReadOnlyList<QuickItem> _all = [];
@@ -18,7 +17,6 @@ public partial class QuickSearchPanel : UserControl
         _all = all;
         Query.Text = "";
         Show();
-        // Flyout vừa mở chưa nhận focus ngay: đặt focus sau lượt layout.
         Avalonia.Threading.Dispatcher.UIThread.Post(() => Query.Focus(), Avalonia.Threading.DispatcherPriority.Background);
     }
 
@@ -32,7 +30,6 @@ public partial class QuickSearchPanel : UserControl
 
     private void OnQuery(object? sender, TextChangedEventArgs e) => Show();
 
-    // Focus ở ô gõ suốt: lên xuống đổi mục chọn trong danh sách, Enter mở mục đang chọn.
     private void OnQueryKey(object? sender, KeyEventArgs e)
     {
         var n = Results.ItemCount;

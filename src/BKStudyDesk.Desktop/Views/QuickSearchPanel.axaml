@@ -1,6 +1,3 @@
-<!-- Tìm nhanh (Ctrl+K): ô gõ và danh sách kết quả trong một Flyout dưới thanh trên cùng. Rộng 400: FlyoutPresenter của Fluent
-     tối đa 456 kể cả lề, rộng hơn thì mép phải bị cắt (ảnh người dùng 11/10/2026). Lên xuống chọn, Enter hay bấm để mở, Esc đóng.
-     Xếp hạng: Presentation/QuickSearch. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"

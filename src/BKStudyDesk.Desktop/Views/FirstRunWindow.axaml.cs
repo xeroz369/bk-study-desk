@@ -8,17 +8,12 @@ using SoHocTap.Updates;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Câu hỏi lần đầu mở app. Thư mục: đóng bằng X cũng lưu thư mục gợi ý để không hỏi lại (như 1.x). Chế độ cập nhật: đóng bằng X thì vẫn
-/// là chưa chọn, app không gọi mạng để kiểm tra, lần mở sau hỏi lại.
-/// </summary>
 public partial class FirstRunWindow : Window
 {
     private bool _saved;
 
     public FirstRunWindow() => InitializeComponent();
 
-    /// <summary>Câu cần hỏi lúc này (thư mục trước); null khi không cần hỏi gì.</summary>
     internal static FirstRunWindow? Next()
     {
         if (FirstRun.NeedsFolder) return new FirstRunWindow().AskFolder();
@@ -26,7 +21,6 @@ public partial class FirstRunWindow : Window
         return null;
     }
 
-    /// <summary>Hai dạng của cửa sổ, cho cờ --setup khi chụp kiểm tra.</summary>
     internal static (FirstRunWindow Folder, FirstRunWindow Update) Both() => (new FirstRunWindow().AskFolder(), new FirstRunWindow().AskUpdateMode());
 
     private FirstRunWindow AskFolder()
@@ -42,7 +36,7 @@ public partial class FirstRunWindow : Window
     {
         Title = L.T("update.title");
         UpdatePanel.IsVisible = true;
-        ModeAuto.IsVisible = UpdateService.CanSelfUpdate;   // bản zip không tự cài được: chỉ có báo hay không kiểm tra
+        ModeAuto.IsVisible = UpdateService.CanSelfUpdate;
         return this;
     }
 

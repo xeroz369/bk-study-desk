@@ -1,6 +1,5 @@
 namespace SoHocTap.Data;
 
-/// <summary>Trường nào của một buổi học đã đổi.</summary>
 [Flags]
 public enum ClassFields
 {
@@ -11,7 +10,6 @@ public enum ClassFields
     Weeks = 8,
 }
 
-/// <summary>Trường nào của một lịch thi đã đổi.</summary>
 [Flags]
 public enum ExamFields
 {
@@ -21,23 +19,14 @@ public enum ExamFields
     Room = 4,
 }
 
-/// <summary>Một buổi học thêm (Before null), bỏ (After null) hay đổi phòng/giờ/thứ/tuần.</summary>
 public sealed record ScheduleChange(string Code, string Name, MybkClass? Before, MybkClass? After, ClassFields Fields);
 
-/// <summary>Một lịch thi mới (Before null), bị gỡ (After null) hay đổi ngày/giờ/phòng.</summary>
 public sealed record ExamChange(string Code, string Name, string Type, MybkExam? Before, MybkExam? After, ExamFields Fields);
 
-/// <summary>Mục điểm LMS vừa có điểm hoặc đổi điểm; Before là điểm cũ (null = trước đó chưa có).</summary>
 public sealed record LmsGradeChange(long Course, string Subject, LmsGradeItem Item, double? Before);
 
-/// <summary>Môn vừa có điểm trên MyBK hoặc đổi điểm; Before là dòng cũ (null = trước đó chưa có điểm).</summary>
 public sealed record MybkGradeChange(MybkGrade Grade, MybkGrade? Before);
 
-/// <summary>
-/// Khác gì giữa dữ liệu trước và sau một lần đồng bộ: sự kiện mới/bị gỡ, đổi lịch học, đổi lịch thi, điểm mới.
-/// Lần đầu (chưa có bản trước) thì không có thay đổi nào: mọi thứ đều "mới", báo hết là spam.
-/// Hub tính sau mỗi lần sync thành công có dữ liệu đổi; tới 1.1.8 vẫn chưa tính năng nào dùng (chỉ ghi log số lượng).
-/// </summary>
 public sealed record ChangeSet(
     IReadOnlyList<LmsEvent> NewEvents,
     IReadOnlyList<LmsEvent> RemovedEvents,
@@ -50,7 +39,6 @@ public sealed record ChangeSet(
 
     public bool IsEmpty => NewEvents.Count + RemovedEvents.Count + Schedule.Count + Exams.Count + LmsGrades.Count + MybkGrades.Count == 0;
 
-    /// <summary>Số lượng từng loại, cho dòng log.</summary>
     public string Counts =>
         $"sự kiện +{NewEvents.Count}/-{RemovedEvents.Count}, lịch học {Schedule.Count}, lịch thi {Exams.Count}, điểm LMS {LmsGrades.Count}, điểm MyBK {MybkGrades.Count}";
 
@@ -72,9 +60,6 @@ public sealed record ChangeSet(
         };
     }
 
-    // ------------------------------------------------------------------ LMS
-
-    /// <summary>Sự kiện khớp theo Id. Mục đã xong (bài đã nộp) không tính là mới.</summary>
     internal static (List<LmsEvent> Added, List<LmsEvent> Removed) CompareEvents(IEnumerable<LmsEvent> before, IEnumerable<LmsEvent> after)
     {
         var old = before.Where(e => e?.Id is not null).GroupBy(e => e.Id).ToDictionary(g => g.Key, g => g.First());
@@ -84,7 +69,6 @@ public sealed record ChangeSet(
         return (added, removed);
     }
 
-    /// <summary>Mục điểm khớp theo lớp + tên mục. Mới = trước chưa có điểm (hoặc chưa có mục), nay có; hoặc điểm đổi.</summary>
     internal static List<LmsGradeChange> CompareLmsGrades(IEnumerable<LmsGradeBook> before, IEnumerable<LmsGradeBook> after)
     {
         var old = new Dictionary<(long, string), double?>();
@@ -103,12 +87,6 @@ public sealed record ChangeSet(
         static string Key(LmsGradeItem i) => $"{i.Kind}|{i.Name}";
     }
 
-    // ------------------------------------------------------------------ MyBK
-
-    /// <summary>
-    /// Buổi học khớp theo mã môn + nhóm: buổi giống hệt thì bỏ qua, buổi còn lại ghép theo thứ tự (thứ, giờ), thừa ra là thêm/bỏ.
-    /// Một môn có thể có nhiều buổi một tuần (lý thuyết, bài tập) cùng mã cùng nhóm nên không khớp theo mã được.
-    /// </summary>
     internal static List<ScheduleChange> CompareSchedule(IEnumerable<MybkClass> before, IEnumerable<MybkClass> after)
     {
         var list = new List<ScheduleChange>();
@@ -118,7 +96,6 @@ public sealed record ChangeSet(
         {
             var olds = Order(oldGroups.GetValueOrDefault(key) ?? []);
             var news = Order(newGroups.GetValueOrDefault(key) ?? []);
-            // Bỏ cặp giống hệt trước, để một buổi đổi giờ không làm lệch cặp của các buổi khác.
             foreach (var n in news.ToList())
                 if (olds.FindIndex(o => Diff(o, n) == ClassFields.None) is var i and >= 0) { olds.RemoveAt(i); news.Remove(n); }
             for (var i = 0; i < Math.Max(olds.Count, news.Count); i++)
@@ -145,7 +122,6 @@ public sealed record ChangeSet(
         return f;
     }
 
-    /// <summary>Lịch thi khớp theo mã môn + loại thi (GK, CK).</summary>
     internal static List<ExamChange> CompareExams(IEnumerable<MybkExam> before, IEnumerable<MybkExam> after)
     {
         var old = before.Where(e => e is not null).GroupBy(e => (e.Code, e.Type)).ToDictionary(g => g.Key, g => g.First());
@@ -165,7 +141,6 @@ public sealed record ChangeSet(
         return list;
     }
 
-    /// <summary>Điểm môn khớp theo học kỳ + mã môn. Mới = trước chưa có điểm (số, chữ hay mã đặc biệt), nay có; hoặc đổi điểm.</summary>
     internal static List<MybkGradeChange> CompareMybkGrades(IEnumerable<MybkGrade> before, IEnumerable<MybkGrade> after)
     {
         var old = before.Where(g => g is not null).GroupBy(g => (g.Term, g.Code)).ToDictionary(g => g.Key, g => g.First());
@@ -181,6 +156,5 @@ public sealed record ChangeSet(
         static bool HasGrade(MybkGrade g) => g.Score is not null || !string.IsNullOrWhiteSpace(g.Letter) || !string.IsNullOrWhiteSpace(g.Special);
     }
 
-    /// <summary>So chuỗi bỏ khoảng trắng hai đầu, null coi như rỗng (MyBK lúc trả null lúc trả "").</summary>
     private static bool Same(string? a, string? b) => string.Equals((a ?? "").Trim(), (b ?? "").Trim(), StringComparison.Ordinal);
 }

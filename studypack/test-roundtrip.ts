@@ -1,5 +1,3 @@
-// Round-trip test on every example: (.md/.zip ->) pack -> Markdown -> pack must keep every question.
-// Run: node studypack/test-roundtrip.ts
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +11,6 @@ const key = (q: PackQuestion) => JSON.stringify([q.type ?? 'single', q.answer, q
 const all = (p: StudyPack) => {
 	const lessonQs = p.units.flatMap((u) => u.lessons.flatMap((l) => (l.questions ?? []).map((q, i) => [`${l.id}.${q.id ?? 'q' + (i + 1)}`, q] as const)));
 	const byRef = new Map(lessonQs);
-	// Exams may reference lesson questions (JSON) or carry copies (Markdown): count both the same way.
 	return [...lessonQs.map(([, q]) => q), ...(p.exams ?? []).flatMap((x) => [...(x.questionRefs ?? []).map((r) => byRef.get(r)!).filter(Boolean), ...(x.questions ?? [])])];
 };
 

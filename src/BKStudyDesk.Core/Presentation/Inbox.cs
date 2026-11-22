@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Files;
 using SoHocTap.Ui;
 
@@ -8,17 +7,11 @@ namespace SoHocTap.Presentation;
 
 public enum InboxKind { Message, News, System }
 
-/// <summary>Một dòng của Hộp thư: hội thoại tin nhắn, bài thông báo của môn, hay thông báo hệ thống của LMS. Key: "msg:id" hay "news:id".</summary>
 public sealed record InboxRow(string Key, InboxKind Kind, string Title, string Sub, string Preview, string When, long Time, bool Unread, bool Quiet = false)
 {
-    // Quiet: thông báo tự động của LMS (vd. biên nhận nộp bài): vẫn ở Hộp thư, nhưng không tính chưa đọc, không vào thẻ Hôm nay.
     public string KindText => L.T(Kind switch { InboxKind.Message => "inbox.kind.message", InboxKind.News => "inbox.kind.news", _ => "inbox.kind.system" });
 }
 
-/// <summary>
-/// Đã đọc trong app (data/inbox-read.json, key: mốc giờ của tin mới nhất lúc mở). Chỉ trên máy này, không đánh dấu gì trên LMS.
-/// Mở lại sau khi có tin mới thì lại thành chưa đọc.
-/// </summary>
 public sealed class InboxReads(JsonObject saved)
 {
     public static string FilePath => Paths.DataFile("inbox-read.json");
@@ -27,7 +20,6 @@ public sealed class InboxReads(JsonObject saved)
 
     public long? ReadAt(string key) => saved[key] is JsonValue v && v.TryGetValue<long>(out var t) ? t : null;
 
-    /// <summary>Đánh dấu đã đọc tới mốc <paramref name="time"/>; true nếu có đổi (để ghi file).</summary>
     public bool Mark(string key, long time)
     {
         if (ReadAt(key) is { } t && t >= time) return false;
@@ -40,11 +32,6 @@ public sealed class InboxReads(JsonObject saved)
     public void Save() => JsonStore.Write(FilePath, saved);
 }
 
-/// <summary>
-/// Hộp thư: gộp tin nhắn riêng (LmsMessages), thông báo của các môn và thông báo hệ thống (LmsData.Announcements). Mới nhất trước.
-/// Chưa đọc: tin nhắn có tin của người khác mới hơn lần mở trong app (chưa mở trong app thì theo số chưa đọc của LMS);
-/// thông báo trong <paramref name="days"/> ngày mà chưa mở trong app.
-/// </summary>
 public static class Inbox
 {
     public static IReadOnlyList<InboxRow> Rows(LmsMessages? messages, IReadOnlyList<LmsAnnouncement> news, InboxReads reads, long now, int days)
@@ -72,7 +59,6 @@ public static class Inbox
         return [.. rows.OrderByDescending(r => r.Time)];
     }
 
-    /// <summary>Lọc theo loại (null là tất cả) và chữ (bỏ dấu, trên tên, người gửi, nội dung đã bỏ thẻ).</summary>
     public static IReadOnlyList<InboxRow> Filter(IReadOnlyList<InboxRow> rows, InboxKind? kind, string query, IReadOnlyDictionary<string, string> index)
     {
         var f = NameMatch.Fold(query.Trim());
@@ -80,7 +66,6 @@ public static class Inbox
             && (f.Length == 0 || (index.TryGetValue(r.Key, out var text) ? text : NameMatch.Fold(r.Title)).Contains(f, StringComparison.Ordinal)))];
     }
 
-    /// <summary>Chữ để lọc của từng dòng, dựng một lần mỗi lần đọc dữ liệu.</summary>
     public static IReadOnlyDictionary<string, string> SearchIndex(LmsMessages? messages, IReadOnlyList<LmsAnnouncement> news)
     {
         var index = new Dictionary<string, string>();
@@ -90,7 +75,6 @@ public static class Inbox
         return index;
     }
 
-    /// <summary>Thẻ "Mới trong hộp thư" ở Hôm nay: dòng chưa đọc, hay mới trong <paramref name="days"/> ngày; tối đa <paramref name="max"/>.</summary>
     public static IReadOnlyList<InboxRow> Recent(IReadOnlyList<InboxRow> rows, long now, int days, int max = 6) =>
         [.. rows.Where(r => !r.Quiet && (r.Unread || r.Time > now - days * 86400L)).Take(max)];
 

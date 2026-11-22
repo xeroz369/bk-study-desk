@@ -10,23 +10,16 @@ using Microsoft.Win32;
 
 namespace BKStudyDesk.Setup;
 
-/// <summary>
-/// Bộ gỡ cài đặt tiếng Việt (Uninstall.exe trong thư mục cài, đăng ký thay trình gỡ mặc định của Velopack).
-/// Hỏi có xóa dữ liệu app không (mặc định giữ), đóng app nếu đang chạy, gọi Update.exe --uninstall --silent của Velopack
-/// (xóa app, lối tắt, mục tự chạy), rồi dọn phần còn sót: thư mục cài, khóa gỡ cài đặt, log. Không bao giờ xóa tài liệu môn học.
-/// Dòng lệnh: Uninstall.exe --uninstall [--silent] [--delete-data].
-/// </summary>
 internal static class Uninstaller
 {
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\";
     public const string FileName = "Uninstall.exe";
 
-    /// <summary>Chép Uninstall.exe (nhúng trong bộ cài) vào thư mục cài và đăng ký nó trong Cài đặt → Ứng dụng.</summary>
     public static void Register(string root, string packId)
     {
         using (var res = typeof(Uninstaller).Assembly.GetManifestResourceStream("uninstall.exe"))
         {
-            if (res is null) return;   // bộ cài build không kèm bộ gỡ: giữ trình gỡ của Velopack
+            if (res is null) return;
             using var f = File.Create(Path.Combine(root, FileName));
             res.CopyTo(f);
         }
@@ -37,11 +30,6 @@ internal static class Uninstaller
         k.SetValue("QuietUninstallString", $"\"{exe}\" --uninstall --silent");
     }
 
-    /// <summary>
-    /// Chạy từ thư mục cài thì chép mình sang thư mục tạm, chạy lại từ đó rồi thoát ngay: exe không tự xóa được chính nó,
-    /// và Update.exe của Velopack đóng mọi tiến trình còn chạy trong thư mục cài. Bản trong thư mục tạm làm việc gỡ;
-    /// chạy --silent thì lỗi (nếu có) ghi vào %TEMP%\BKStudyDesk-uninstall.log. Trả mã thoát.
-    /// </summary>
     public static int Run(string[] args)
     {
         var silent = args.Contains("--silent", StringComparer.OrdinalIgnoreCase);
@@ -68,7 +56,6 @@ internal static class Uninstaller
         if (silent)
         {
             var error = job.RunAsync(args.Contains("--delete-data", StringComparer.OrdinalIgnoreCase)).GetAwaiter().GetResult();
-            // Chạy im lặng thì không có cửa sổ: ghi lý do lỗi ra %TEMP%\BKStudyDesk-uninstall.log để tra.
             if (error is not null) try { File.AppendAllText(Path.Combine(Path.GetTempPath(), "BKStudyDesk-uninstall.log"), $"{DateTime.Now:s} {error}{Environment.NewLine}"); } catch (IOException) { }
             return error is null ? 0 : 1;
         }
@@ -78,7 +65,6 @@ internal static class Uninstaller
         return 0;
     }
 
-    /// <summary>Bản chạy trong thư mục tạm: nhờ cmd xóa thư mục tạm của mình sau khi thoát.</summary>
     private static void DeleteSelfLater()
     {
         var dir = Path.GetDirectoryName(Application.ExecutablePath)!;
@@ -88,13 +74,11 @@ internal static class Uninstaller
     }
 }
 
-/// <summary>Các bước gỡ, dùng chung cho giao diện và dòng lệnh.</summary>
 internal sealed class UninstallJob(string root, string packId)
 {
     public string Root { get; } = root;
     public string DataRoot { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), packId + ".Data");
 
-    /// <summary>Thư mục tài liệu môn học người dùng đã chọn (folders.root trong config), để chỉ ra chứ không xóa.</summary>
     public string? DocumentsFolder
     {
         get
@@ -113,7 +97,6 @@ internal sealed class UninstallJob(string root, string packId)
 
     public bool Installed => File.Exists(Path.Combine(Root, "Update.exe"));
 
-    /// <summary>Phiên bản đang cài (thẻ &lt;version&gt; trong current\sq.version; bộ gỡ không đổi theo bản cập nhật nên phải đọc ở đây).</summary>
     public string InstalledVersion
     {
         get
@@ -128,14 +111,12 @@ internal sealed class UninstallJob(string root, string packId)
         }
     }
 
-    /// <summary>Tiến trình BK Study Desk đang chạy từ thư mục cài này.</summary>
     public Process[] RunningApps() => Process.GetProcessesByName("BKStudyDesk").Where(p =>
     {
         try { return p.MainModule?.FileName.StartsWith(Root, StringComparison.OrdinalIgnoreCase) == true; }
         catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception) { return false; }
     }).ToArray();
 
-    /// <summary>Gỡ. Trả null nếu xong, không thì lý do lỗi.</summary>
     public async Task<string?> RunAsync(bool deleteData)
     {
         if (!Installed) return $"Không tìm thấy bản cài ở {Root}.";
@@ -146,15 +127,12 @@ internal sealed class UninstallJob(string root, string packId)
             if (!p.HasExited) return "Gỡ quá lâu không xong, hãy thử lại.";
         }
         if (deleteData) await DeleteDirAsync(DataRoot);
-        // Phần Velopack để lại: chính Update.exe, khóa gỡ cài đặt (khi gỡ lỗi giữa chừng), log.
         await DeleteDirAsync(Root);
         try { Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + Installer.PackId, throwOnMissingSubKey: false); }
         catch (UnauthorizedAccessException) { }
         try { File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "velopack", $"velopack_{Installer.PackId}.log")); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         if (!Directory.Exists(Root)) return null;
-        // Còn lại chỉ là Uninstall.exe gốc đang chờ (chạy --silent, nó đợi bản chạy từ thư mục tạm này): nhờ cmd xóa thư mục
-        // sau vài giây, khi cả hai đã thoát.
         if (Directory.EnumerateFileSystemEntries(Root).All(f => Path.GetFileName(f).Equals(Uninstaller.FileName, StringComparison.OrdinalIgnoreCase)))
         {
             Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), $"/c timeout /t 3 /nobreak >nul & rmdir /s /q \"{Root}\"")
@@ -164,7 +142,6 @@ internal sealed class UninstallJob(string root, string packId)
         return $"Đã gỡ app nhưng còn sót thư mục {Root}, bạn có thể tự xóa.";
     }
 
-    /// <summary>Xóa thư mục, thử lại vài lần (Update.exe có thể còn giữ file thêm vài giây sau khi thoát).</summary>
     private static async Task DeleteDirAsync(string dir)
     {
         for (var i = 0; i < 20 && Directory.Exists(dir); i++)
@@ -175,7 +152,6 @@ internal sealed class UninstallJob(string root, string packId)
     }
 }
 
-/// <summary>Cửa sổ gỡ cài đặt: hỏi có xóa dữ liệu không, gỡ, báo kết quả.</summary>
 internal sealed class UninstallForm : Form
 {
     private readonly UninstallJob _job;
@@ -196,7 +172,7 @@ internal sealed class UninstallForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        AutoScaleDimensions = new SizeF(96f, 96f);   // kích thước trong code tính theo 96 DPI, WinForms tự nhân theo màn hình
+        AutoScaleDimensions = new SizeF(96f, 96f);
         AutoScaleMode = AutoScaleMode.Dpi;
         Padding = new Padding(20);
         AcceptButton = _ok;
@@ -231,17 +207,13 @@ internal sealed class UninstallForm : Form
         var buttons = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.RightToLeft, Dock = DockStyle.Fill, Margin = new Padding(0, 16, 0, 0) };
         buttons.Controls.AddRange([_cancel, _ok]);
         var layout = new TableLayoutPanel { AutoSize = true, ColumnCount = 1 };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Px(500)));   // cột cố định: chữ xuống dòng theo 500px, không bóp hẹp
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Px(500)));
         foreach (Control c in new Control[] { title, where, _deleteData, dataHint, keep, open, _bar, _status, buttons }) layout.Controls.Add(c);
         Controls.Add(layout);
         _ok.Click += async (_, _) => await OnOkAsync();
         if (!job.Installed) { _status.Text = $"Không tìm thấy bản cài ở {job.Root}."; _ok.Enabled = false; }
     }
 
-    /// <summary>
-    /// Kích thước 96 DPI → pixel thật của màn hình. WinForms trên .NET Framework không tự nhân các số đặt trong code, và
-    /// DeviceDpi luôn báo 96 khi thiếu cấu hình trong app.config, nên đọc DPI thật qua Graphics.
-    /// </summary>
     private int Px(int v) => Dpi.Px(this, v);
 
     private async Task OnOkAsync()

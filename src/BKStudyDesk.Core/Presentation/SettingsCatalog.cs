@@ -6,48 +6,32 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation;
 
-/// <summary>Một mục của trang Cài đặt. View vẽ theo kiểu (công tắc, ô số, ô chữ, ô chọn, nút) bằng control có sẵn; mỗi mục lưu ngay khi đổi.</summary>
 public abstract record SettingItem(string Label, string? Note);
 
 public sealed record ToggleItem(string Label, string? Note, Func<bool> Get, Action<bool> Set) : SettingItem(Label, Note);
 
-/// <summary>Ô số nguyên, nhỏ nhất <paramref name="Min"/>. Sai thì báo lỗi và giữ giá trị cũ (Parse trả null).</summary>
 public sealed record NumberItem(string Label, string? Note, int Min, Func<int> Get, Action<int> Set) : SettingItem(Label, Note)
 {
     public int? Parse(string text) => int.TryParse(text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var v) && v >= Min ? v : null;
     public string Error => L.F("settings.numberError", Min);
 }
 
-/// <summary>Ô chữ; Normalize trả bản chuẩn để lưu, null khi sai (giữ giá trị cũ, hiện Error).</summary>
 public sealed record TextItem(string Label, string? Note, Func<string> Get, Func<string, string?> Normalize, Action<string> Set, string Error) : SettingItem(Label, Note);
 
 public sealed record ChoiceItem(string Label, string? Note, IReadOnlyList<(string Value, string Text)> Options, Func<string> Get, Action<string> Set) : SettingItem(Label, Note);
 
-/// <summary>Nút làm một việc (đăng nhập, mở file log, xóa bộ nhớ đệm); Run trả câu báo kết quả (null là không báo).</summary>
 public sealed record ActionItem(string Label, string? Note, string Button, Func<Task<string?>> Run) : SettingItem(Label, Note);
 
-/// <summary>
-/// Two-step action: Check reads only and returns a message; when it finds work it also returns the label of a second button
-/// and the action behind it (shown only then). Nothing to do means no second button.
-/// </summary>
 public sealed record CheckItem(string Label, string? Note, string Button, Func<Task<CheckStep>> Check) : SettingItem(Label, Note);
 
-/// <summary>Result of a check: message to show, and the confirm button (label, action returning message and error flag) if any.</summary>
 public sealed record CheckStep(string Message, string? Confirm = null, Func<Task<(string Message, bool Error)>>? Apply = null);
 
-/// <summary>Dòng chỉ đọc: tên bên trái, giá trị bên phải (bảng phím tắt).</summary>
 public sealed record InfoItem(string Label, string Value) : SettingItem(Label, null);
 
-/// <summary>
-/// Tài khoản cho tự đăng nhập lại: đang tắt thì nút Bật mở ô tên đăng nhập, mật khẩu ngay dưới dòng (không mở cửa sổ riêng).
-/// Save trả lỗi để hiện, null là đã bật; Off tắt và xóa tài khoản đã lưu, trả câu báo.
-/// </summary>
 public sealed record CredentialItem(string Label, string? Note, Func<bool> IsOn, Func<string, string, string?> Save, Func<string> Off) : SettingItem(Label, Note);
 
-/// <summary>Một thẻ của trang Cài đặt. Advanced: nằm trong phần Nâng cao (đóng sẵn).</summary>
 public sealed record SettingGroup(string Title, string? Note, IReadOnlyList<SettingItem> Items, bool Advanced = false);
 
-/// <summary>Việc của trang Cài đặt cần tới giao diện, hệ điều hành hay phần chạy nền (cửa sổ chính truyền vào).</summary>
 public sealed record SettingsActions(
     Func<string> AccountText, Action Login, Func<Task> Logout, Action SyncNow,
     Action<string> ApplyTheme, Action<string> ApplyAccent,
@@ -59,11 +43,6 @@ public sealed record SettingsActions(
     int PageCount = 0, Action? Refresh = null, Action? Restart = null,
     Func<IReadOnlyList<string>>? Fonts = null, Action<string, double>? ApplyFont = null, Func<Task<string?>>? Backup = null);
 
-/// <summary>
-/// Danh sách mục của trang Cài đặt (cùng khóa cài đặt với 1.x, Ui/Settings/*): Thường dùng (tài khoản, giao diện, nhắc hạn, cập nhật,
-/// khi mở và đóng app, giới thiệu) rồi Nâng cao (đồng bộ, mở tài liệu, sắp xếp file, thư viện, nhật ký). Chữ ở lang/*.json, giá trị
-/// mặc định và giới hạn ở DefaultConfig.json. Thêm mục = thêm một dòng ở đây; View không cần sửa.
-/// </summary>
 public static class SettingsCatalog
 {
     public static IReadOnlyList<(string Value, string Text)> Themes =>
@@ -71,7 +50,6 @@ public static class SettingsCatalog
 
     private static Task<string?> Done(string? message) => Task.FromResult(message);
 
-    /// <summary>Downloads check: list what would move (name and subject); the move runs on exactly this list.</summary>
     public static CheckStep OrganizeCheck()
     {
         var plan = Organizer.PlanDownloads();
@@ -95,7 +73,6 @@ public static class SettingsCatalog
         return (string.Join(" ", parts), r.Failed.Count > 0);
     }
 
-    /// <summary>Phông (mặc định của hệ điều hành rồi mọi phông trên máy), cỡ chữ, nút về mặc định. Đổi là áp ngay và lưu.</summary>
     private static SettingItem[] FontItems(IReadOnlyList<string> fonts, Action<string, double> apply, Action? refresh)
     {
         var installed = fonts.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -110,10 +87,6 @@ public static class SettingsCatalog
         ];
     }
 
-    /// <summary>
-    /// Ô tìm của trang Cài đặt: mục khớp khi tên, ghi chú của nó hay tên nhóm chứa chữ gõ (bỏ dấu, không phân biệt hoa thường).
-    /// Ô trống: mọi mục.
-    /// </summary>
     public static bool Matches(SettingGroup g, SettingItem i, string query)
     {
         if (string.IsNullOrWhiteSpace(query)) return true;
@@ -130,7 +103,7 @@ public static class SettingsCatalog
                 on =>
                 {
                     Settings.Sso.RememberDays = on ? Settings.Sso.DefaultRememberDays : 0;
-                    if (!on) a.ForgetCredentials?.Invoke();   // không ghi nhớ đăng nhập thì cũng không giữ mật khẩu để tự đăng nhập
+                    if (!on) a.ForgetCredentials?.Invoke();
                 }),
             .. a.AutoLoginSupported && a.AutoLoginSave is { } save
                 ? new SettingItem[] { new CredentialItem(L.T("set.autoLogin"), L.T(Settings.Sso.AutoLogin ? "set.autoLoginOn" : "set.autoLoginOff"),
@@ -146,7 +119,6 @@ public static class SettingsCatalog
             new ChoiceItem(L.T("set.theme"), null, Themes, () => Settings.App.Theme, v => { Settings.App.Theme = v; a.ApplyTheme(v); }),
             new ChoiceItem(L.T("set.accent"), L.T("set.accentNote"), [.. AccentColors.Choices().Select(c => (c.Value, c.Name))],
                 () => Settings.App.Accent, v => { Settings.App.Accent = v; a.ApplyAccent(v); }),
-            // Ngôn ngữ đổi sau khi mở lại app (chữ đã dựng không đổi theo): chọn xong thì hiện dòng Khởi động lại.
             new ChoiceItem(L.T("settings.language"), null, [.. L.Available().Select(x => (x.Code, x.Name))],
                 () => Settings.App.Language is { Length: > 0 } code ? code : L.Code, v => { Settings.App.Language = v; a.Refresh?.Invoke(); }),
             .. Settings.App.Language is { Length: > 0 } chosen && chosen != L.Code && a.Restart is { } restart
@@ -177,7 +149,6 @@ public static class SettingsCatalog
             new ToggleItem(L.T("set.autostart"), L.T("set.autostartNote"), a.AutostartGet, on => a.AutostartSet(on)),
             new ToggleItem(L.T("settings.closeToTray"), L.T("set.closeToTrayNote"), () => Settings.App.CloseToTray, v => Settings.App.CloseToTray = v),
         ]),
-        // Sao lưu ra .zip (DataBackup): không kèm tin nhắn riêng, phiên đăng nhập, tài khoản.
         .. a.Backup is { } backup ? new SettingGroup[]
         {
             new(L.T("settings.data"), null,
@@ -185,7 +156,6 @@ public static class SettingsCatalog
                 new ActionItem(L.T("settings.backup"), L.T("settings.backupNote"), L.T("settings.backupButton"), backup),
             ]),
         } : [],
-        // Chỉ ghi phím app thật sự có (MainWindow, bảng DataGrid, danh sách tài liệu ở trang Môn học).
         new(L.T("settings.keys"), null,
         [
             .. a.PageCount > 0 ? new SettingItem[] { new InfoItem(L.T("settings.keys.pages"), L.F("settings.keys.range", "Ctrl+1", $"Ctrl+{a.PageCount}")) } : [],
@@ -204,8 +174,6 @@ public static class SettingsCatalog
         new(L.T("settings.sync"), null,
         [
             new NumberItem(L.T("settings.lmsHours"), L.T("settings.lmsHoursNote"), 1, () => Settings.Sync.LmsHours, v => Settings.Sync.LmsHours = v),
-            // No MyBK period: MyBK loads each section when its page is opened (on-demand sync, 06/11/2026).
-            // Reminders keep fresh data even while the user is away: at least every N days (KeepFresh).
             new NumberItem(L.T("settings.minFreshDays"), L.T("settings.minFreshDaysNote"), 1, () => Settings.Sync.MinFreshDays, v => Settings.Sync.MinFreshDays = v),
             new NumberItem(L.T("settings.maxMb"), null, 1, () => Settings.Sync.MaxFileMB, v => Settings.Sync.MaxFileMB = v),
             new ToggleItem(L.T("settings.autoDownload"), null, () => Settings.Sync.AutoDownload, v => Settings.Sync.AutoDownload = v),

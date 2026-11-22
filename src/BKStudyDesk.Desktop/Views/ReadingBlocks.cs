@@ -11,10 +11,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Vẽ nội dung đọc (ReadingBlock): đoạn chữ chọn và sao chép được; ảnh LMS đã tải về (LmsImages) hiện thẳng, xem được khi LMS sập.
-/// Ảnh chưa tải thì là link "[ảnh]" mở bản trên LMS (cần mạng). Ảnh lớn thu lại vừa khung, giữ tỉ lệ.
-/// </summary>
 internal static class ReadingBlocks
 {
     public static void Add(Panel panel, IEnumerable<ReadingBlock> blocks, Control owner)
@@ -30,7 +26,6 @@ internal static class ReadingBlocks
             {
                 try
                 {
-                    // Ảnh chụp màn hình, ảnh điện thoại thường rất lớn: giải mã thu nhỏ còn 1200 điểm ảnh ngang cho đỡ tốn RAM.
                     var bitmap = new Bitmap(file);
                     if (bitmap.PixelSize.Width > 1200)
                     {
@@ -51,10 +46,6 @@ internal static class ReadingBlocks
         }
     }
 
-    /// <summary>
-    /// Đoạn chữ có link như trên LMS: chữ thường là Run, link là nút link nằm trong dòng (bấm mở bằng trình duyệt theo Cài đặt, rê chuột
-    /// thấy địa chỉ). Đoạn này không chọn chữ được như đoạn thường (SelectableTextBlock không nhận control trong dòng).
-    /// </summary>
     private static TextBlock WithLinks(IReadOnlyList<ReadingSpan> spans, Control owner)
     {
         var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
@@ -64,7 +55,7 @@ internal static class ReadingBlocks
             var web = LmsReading.Browsable(new SoHocTap.Data.LmsLink(s.Text, url)).Url!;
             var link = new HyperlinkButton
             {
-                Content = new TextBlock { Text = s.Text, TextWrapping = TextWrapping.Wrap, MaxWidth = 340 },   // vừa ngăn Hộp thư
+                Content = new TextBlock { Text = s.Text, TextWrapping = TextWrapping.Wrap, MaxWidth = 340 },
                 Padding = new Thickness(0), Margin = new Thickness(0), VerticalAlignment = VerticalAlignment.Bottom,
             };
             ToolTip.SetTip(link, web);

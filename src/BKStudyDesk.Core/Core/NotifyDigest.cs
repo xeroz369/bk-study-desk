@@ -2,14 +2,8 @@ using System.Globalization;
 
 namespace SoHocTap.Core;
 
-/// <summary>
-/// Gom nhắc hạn vào vài giờ cố định trong ngày (notify.digestTimes, giờ VN) thay vì báo rời từng bài: nhận thông báo theo lịch
-/// 3 lần mỗi ngày giúp đỡ căng thẳng, tập trung hơn; gom theo từng giờ thì gần như không có lợi (Fitz và cộng sự 2019).
-/// Bài sắp tới hạn (dưới <c>immediateHours</c>) không chờ giờ gom. Hàm thuần, không đọc cấu hình.
-/// </summary>
 public static class NotifyDigest
 {
-    /// <summary>"07:00, 12:00, 19:00" thành phút trong ngày, đã sắp và bỏ trùng. Chuỗi rỗng là tắt gom (mảng rỗng); sai dạng thì null.</summary>
     public static int[]? Parse(string text)
     {
         var parts = text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -24,10 +18,6 @@ public static class NotifyDigest
 
     public static string Format(int[] slots) => string.Join(", ", slots.Select(m => $"{m / 60:00}:{m % 60:00}"));
 
-    /// <summary>
-    /// Tới lượt gom chưa: giờ gom gần nhất đã qua (hôm nay hoặc hôm qua) muộn hơn lần gom trước. Không có giờ gom thì luôn mở.
-    /// Tắt app qua giờ gom thì lần kiểm tra đầu tiên sau đó gom bù.
-    /// </summary>
     public static bool GateOpen(long now, int[] slots, long lastDigest)
     {
         if (slots.Length == 0) return true;
@@ -36,16 +26,11 @@ public static class NotifyDigest
         return latest > lastDigest;
     }
 
-    /// <summary>
-    /// "Tạm im tới sáng mai": mốc giờ VN <paramref name="morning"/> (phút trong ngày) kế tiếp sau <paramref name="now"/>.
-    /// Bấm lúc 2 giờ sáng thì im tới sáng nay, bấm buổi tối thì tới sáng hôm sau.
-    /// </summary>
     public static long NextMorning(long now, int morning)
     {
         var at = VnTime.FromWall(VnTime.ToWall(now).Date.AddMinutes(morning));
         return at > now ? at : VnTime.FromWall(VnTime.ToWall(now).Date.AddDays(1).AddMinutes(morning));
     }
 
-    /// <summary>Bài này chờ giờ gom (còn từ <paramref name="immediateHours"/> giờ trở lên), hay báo ngay.</summary>
     public static bool Hold(long due, long now, int immediateHours) => due - now >= immediateHours * 3600L;
 }

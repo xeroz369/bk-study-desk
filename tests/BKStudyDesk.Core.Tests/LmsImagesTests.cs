@@ -3,7 +3,6 @@ using SoHocTap.Sources.Lms;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Ảnh trong bài, tin nhắn LMS: tách khối ảnh (LmsReading.Blocks) và địa chỉ chuẩn để lưu trên máy (LmsImages).</summary>
 public class LmsImagesTests
 {
     private const string Img = "https://lms.hcmut.edu.vn/webservice/pluginfile.php/12/mod_forum/post/3/lich%20thi.png?token=abc";

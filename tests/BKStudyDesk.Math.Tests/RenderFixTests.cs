@@ -7,7 +7,6 @@ namespace BKStudyDesk.Math.Tests;
 
 public class RenderFixTests
 {
-    // Cỡ chữ công thức trong app (token MathScale).
     private const double AppScale = 18;
 
     private static FormulaBlock Block(string tex, IBrush foreground) => new() { Formula = tex, Foreground = foreground, Scale = AppScale };
@@ -23,7 +22,6 @@ public class RenderFixTests
         Assert.Equal(")", fenced.RightDelimeter?.Name);
     }
 
-    // Mọi pixel có mực phải nằm trên đoạn trắng-đỏ: G bằng B. Viền xanh, tím là khử răng cưa subpixel.
     [AvaloniaFact]
     public void Glyphs_use_foreground_only()
     {
@@ -40,7 +38,6 @@ public class RenderFixTests
         Assert.True(tinted == 0, $"{tinted}/{ink} pixel bị tô màu khác");
     }
 
-    // Vạch của \bar phải đủ đậm ở cỡ chữ của app: có một hàng pixel tối dài ít nhất 60% bề ngang chữ x.
     [AvaloniaFact]
     public void Bar_is_visible()
     {
@@ -50,7 +47,6 @@ public class RenderFixTests
 
         var barred = Frames.Pixels(Block(@"\bar{x}", Brushes.Black));
         var (top, _) = Frames.InkRows(barred);
-        // Cụm hàng có mực đầu tiên (từ trên xuống) là vạch, tách khỏi chữ x bằng ít nhất một hàng trắng.
         var y0 = top;
         var best = 0;
         while (y0 < barred.GetLength(0))

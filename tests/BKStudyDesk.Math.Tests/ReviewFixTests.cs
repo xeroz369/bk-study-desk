@@ -3,11 +3,8 @@ using XamlMath;
 
 namespace BKStudyDesk.Math.Tests;
 
-// Lỗi thấy khi xem tờ công thức thật (self-review cuối đợt 1).
 public class ReviewFixTests
 {
-    // Chữ vẽ bằng font hệ thống (\text, \mathbb) phải có chiều cao, độ sâu như chữ thật, không phải cả chiều cao dòng:
-    // nếu không, số mũ đặt quá cao và chữ lệch khỏi đường chân của công thức.
     [AvaloniaFact]
     public void System_font_letters_have_glyph_height()
     {
@@ -18,7 +15,6 @@ public class ReviewFixTests
         Assert.True(Tex.Layout(@"\text{g}").Depth > 0.1 * Tex.Em, "chữ g phải có phần dưới đường chân");
     }
 
-    // \lim trong dòng (Text style) đặt cận bên cạnh như TeX, chỉ Display mới đặt cận ở dưới.
     [AvaloniaTheory]
     [InlineData(@"\lim_{(x,y)\to(0,0)} f")]
     [InlineData(@"\max_{x\in[0,1]} f")]
@@ -34,7 +30,6 @@ public class ReviewFixTests
         Assert.True(inline.TotalWidth > display.TotalWidth);
     }
 
-    // array: mỗi cột cách 5pt mỗi bên như \arraycolsep của LaTeX, tức 1 em giữa hai cột.
     [AvaloniaFact]
     public void Array_columns_have_arraycolsep()
     {

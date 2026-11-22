@@ -52,7 +52,6 @@ public class HtmlTests
     [Fact]
     public void Serialize_round_trips_tex_and_escapes()
     {
-        // "a<b" thì trình duyệt cũng đọc thành thẻ <b> (vì vậy SPEC dặn viết \lt); "<" trước số, dấu cách là chữ.
         const string s = @"<p class=""warn"">\(a<1\) &amp; x</p>";
         var output = Html.Serialize(Html.Parse(s));
         Assert.Equal(@"<p class=""warn"">\(a&lt;1\) &amp; x</p>", output);
@@ -79,15 +78,14 @@ public class HtmlTests
     [Fact]
     public void Stray_markdown_bold_inside_html_becomes_strong()
     {
-        // Gói do AI soạn: HTML mà trong ô ghi chú, mục danh sách vẫn còn **chữ** (hcmut-mt1005-giua-ky, ảnh người dùng 11/10/2026).
         Assert.Equal("<div class=\"warn\">là <strong>ellipse</strong>. x</div>", Html.Sanitize("<div class=\"warn\">là **ellipse**. x</div>"));
         Assert.Equal("<ul><li>các <strong>đường thẳng song song</strong>, hệ số</li></ul>", Html.Sanitize("<ul><li>các **đường thẳng song song**, hệ số</li></ul>"));
     }
 
     [Theory]
-    [InlineData("<code>a**b**c</code>")]             // mã: giữ nguyên
-    [InlineData(@"\(a**b**c\) và \[x**2**\] và $$y**3**$$")]   // trong công thức: giữ nguyên
-    [InlineData("2 ** 3 ** 4")]                       // dấu sao đứng cạnh khoảng trắng: không phải chữ đậm
+    [InlineData("<code>a**b**c</code>")]
+    [InlineData(@"\(a**b**c\) và \[x**2**\] và $$y**3**$$")]
+    [InlineData("2 ** 3 ** 4")]
     [InlineData("**chưa đóng")]
     public void Bold_markers_are_left_alone_where_they_are_not_emphasis(string html) => Assert.DoesNotContain("<strong>", Html.Sanitize(html));
 }

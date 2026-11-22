@@ -2,7 +2,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Nút Quay lại của tab Tài liệu (FolderHistory): về thư mục vừa xem, chưa đi đâu thì lên thư mục cha, không ra ngoài môn.</summary>
 public class FolderHistoryTests
 {
     private const string Root = "Môn học/Kỹ thuật số";
@@ -19,9 +18,9 @@ public class FolderHistoryTests
     {
         var h = At();
         h.Went(Root, Root + "/prelab");
-        h.Went(Root + "/prelab", Root);           // bấm cấp trên cùng của thanh đường dẫn
+        h.Went(Root + "/prelab", Root);
         Assert.Equal(Root + "/prelab", h.Back(Root));
-        Assert.Equal(Root, h.Back(Root + "/prelab"));   // hết lịch sử: lên thư mục cha
+        Assert.Equal(Root, h.Back(Root + "/prelab"));
     }
 
     [Fact]

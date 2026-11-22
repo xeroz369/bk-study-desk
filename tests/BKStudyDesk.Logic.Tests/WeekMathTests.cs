@@ -2,15 +2,13 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Vạch "bây giờ" trên lưới tuần (issue #22): cột, tọa độ y, ẩn khi ngoài tuần hay ngoài khung giờ.</summary>
 public class WeekMathTests
 {
-    private static readonly DateTime Monday = new(2026, 9, 28);   // Thứ hai
+    private static readonly DateTime Monday = new(2026, 9, 28);
 
     [Fact]
     public void Position_ExactMinute()
     {
-        // Thứ bảy 03/10 9:41, lưới 7:00-17:00, 1 px/phút, lề 10.
         var at = WeekMath.NowLine(Monday, new DateTime(2026, 10, 3, 9, 41, 59), 7 * 60, 17 * 60, 1.0, 10);
         Assert.NotNull(at);
         Assert.Equal((5, 10 + 161.0), (at.Value.Column, at.Value.Y));
@@ -26,8 +24,8 @@ public class WeekMathTests
     }
 
     [Theory]
-    [InlineData(2026, 9, 27, 10, 0)]    // Chủ nhật tuần trước
-    [InlineData(2026, 10, 5, 10, 0)]    // Thứ hai tuần sau
+    [InlineData(2026, 9, 27, 10, 0)]
+    [InlineData(2026, 10, 5, 10, 0)]
     public void OutsideWeek_Null(int y, int m, int d, int h, int min) =>
         Assert.Null(WeekMath.NowLine(Monday, new DateTime(y, m, d, h, min, 0), 7 * 60, 17 * 60, 1, 10));
 
@@ -37,8 +35,8 @@ public class WeekMathTests
 
     [Theory]
     [InlineData(6, 59, false)]
-    [InlineData(7, 0, true)]     // đúng mép trên
-    [InlineData(17, 0, true)]    // đúng mép dưới
+    [InlineData(7, 0, true)]
+    [InlineData(17, 0, true)]
     [InlineData(17, 1, false)]
     [InlineData(23, 30, false)]
     public void OutsideHours_Null(int h, int min, bool shown) =>
@@ -58,7 +56,6 @@ public class WeekMathTests
     [Fact]
     public void FullDay_EveningLineShows()
     {
-        // Issue #25: thứ bảy 03/10 lúc 19:38. Lưới đủ 0:00 tới 24:00 nên luôn có vạch, không phụ thuộc giờ học.
         var at = WeekMath.NowLine(Monday, new DateTime(2026, 10, 3, 19, 38, 0), 0, 24 * 60, 1, 10);
         Assert.Equal((5, 10 + 19 * 60 + 38.0), at);
     }
@@ -69,7 +66,6 @@ public class WeekMathTests
 
     [Fact]
     public void Scroll_ToNowWhenOutsideView() =>
-        // 19:38, buổi sớm nhất 7:00, khung nhìn 4 giờ: cuộn tới 18:00 để vạch nằm trong khung.
         Assert.Equal(18 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 3, 19, 38, 0), 7 * 60, 240));
 
     [Fact]
@@ -86,11 +82,9 @@ public class WeekMathTests
 
     [Fact]
     public void ScrollAnchor_StaysOnClasses_WhenEveningHasNothingLeft() =>
-        // 19:38, buổi muộn nhất kết thúc 17:50: giữ ở buổi sớm nhất, không cuộn xuống vùng tối trống.
         Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 3, 19, 38, 0), 7 * 60, 240, 17 * 60 + 50));
 
     [Fact]
     public void ScrollAnchor_StaysOnFirstClass_BeforeItStarts() =>
-        // 04:10 on a class day, first class 7:00: show 7:00, not the empty hours from 3:00.
         Assert.Equal(7 * 60, WeekMath.ScrollAnchor(Monday, new DateTime(2026, 10, 2, 4, 10, 0), 7 * 60, 600, 17 * 60));
 }

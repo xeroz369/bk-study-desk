@@ -3,7 +3,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Dải báo dưới thanh trên cùng: cùng quy tắc với InfoBar bản 1.x.</summary>
 public class InfoBarTests
 {
     private static InfoInput In(string stage = "", AccountNeed need = AccountNeed.None, bool mybkNeeded = false, bool firstRun = false,
@@ -43,7 +42,6 @@ public class InfoBarTests
         Assert.Equal(InfoSeverity.Error, InfoBar.Decide(In(need: AccountNeed.Lms))!.Severity);
     }
 
-    // MyBK hết phiên mà lúc này không cần MyBK: không bật dải (thanh trạng thái vẫn báo); cần MyBK thì mời đăng nhập lại.
     [Fact]
     public void Quiet_mybk_only_when_not_needed()
     {
@@ -58,7 +56,6 @@ public class InfoBarTests
         Assert.Equal(InfoAction.AutoLoginOn, InfoBar.Decide(In(offer: true))!.Primary);
     }
 
-    // Đóng dải thì dải cùng Key không hiện lại; việc khác (Key khác) vẫn hiện.
     [Fact]
     public void Closed_key_stays_hidden_other_key_shows()
     {

@@ -7,7 +7,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Trang Môn học (SubjectsPresenter): môn nào hiện, khớp mốc, điểm, tài liệu.</summary>
 public class SubjectsTests
 {
     private static LmsCourse Course(long id, string subject, string term = "HK261") =>
@@ -109,7 +108,7 @@ public class SubjectsTests
         Assert.Equal(["Giải tích 2", "Tài liệu LMS", "Chương 1"], c.Select(x => x.Name));
         Assert.Equal("Môn học/Giải tích 2/Tài liệu LMS", c[1].Path);
         Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 2"));
-        Assert.Equal("Giải tích 22", Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 22")).Name);   // không nhận nhầm tiền tố
+        Assert.Equal("Giải tích 22", Assert.Single(SubjectsPresenter.Crumbs("Môn học/Giải tích 2", "Môn học/Giải tích 22")).Name);
     }
 
     [Fact]

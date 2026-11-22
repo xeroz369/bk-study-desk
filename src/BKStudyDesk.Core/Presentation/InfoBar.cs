@@ -3,38 +3,19 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation;
 
-/// <summary>Mức độ theo hướng dẫn InfoBar của Microsoft: Error sự cố đã xảy ra, Warning cần làm gì đó, Success việc nền xong, Info đang làm.</summary>
 public enum InfoSeverity { Info, Success, Warning, Error }
 
-/// <summary>Việc của một nút trên dải báo; View đổi thành hành động thật (đăng nhập, đồng bộ...).</summary>
 public enum InfoAction { None, Login, Retry, OpenSource, AutoLoginOn, AutoLoginNo }
 
-/// <summary>
-/// Một dải báo dưới thanh trên cùng. Key: người dùng bấm Đóng thì dải cùng Key không hiện lại (lỗi khác, lượt khác thì hiện).
-/// AutoHide: báo xong việc, tự ẩn sau khi đủ lâu để đọc. Source: nguồn của nút OpenSource.
-/// </summary>
 public sealed record InfoBarState(string Key, InfoSeverity Severity, string Text, string? Detail,
     InfoAction Primary, string? PrimaryText, InfoAction Secondary = InfoAction.None, string? SecondaryText = null,
     string? Source = null, bool AutoHide = false);
 
-/// <summary>
-/// Đầu vào của InfoBar.Decide (InfoBar.Input đọc từ AppState). Closed: Key của dải người dùng vừa đóng.
-/// </summary>
 public sealed record InfoInput(string LoginStage, string LoginMessage, AccountNeed Need, bool MybkNeeded, bool FirstRun,
     bool OfferAutoLogin, string? Closed);
 
-/// <summary>
-/// Dải báo của app: chỉ hiện khi người dùng cần làm gì đó. Thứ tự ưu tiên: lượt đăng nhập đang chạy, cần đăng nhập, mời bật tự đăng nhập
-/// lại. Lỗi đồng bộ (mất mạng, trường chậm, LMS sập) không bật dải: nút trạng thái ở thanh trên cùng báo, bảng Thông báo ghi chi tiết
-/// và lúc của bản lưu (05/11/2026: dải đỏ trên mọi trang lặp lại đúng điều nút trạng thái đã báo). MyBK hết phiên mà lúc này không cần
-/// MyBK (MybkLoginPrompt) thì không bật dải. Hàm thuần, có test.
-/// </summary>
 public static class InfoBar
 {
-    /// <summary>
-    /// Đọc đầu vào từ AppState. mybkNeeded: MybkLoginPrompt.Needed (View biết trang đang mở). Mời tự đăng nhập lại một lần, sau khi đã có
-    /// dữ liệu MyBK và đang Ghi nhớ đăng nhập (như 1.x OfferAutoLogin); autoLoginSupported: máy có kho mật khẩu.
-    /// </summary>
     public static InfoInput Input(AppState s, string stage, string message, bool mybkNeeded, bool autoLoginSupported, string? closed)
     {
         return new(stage, message, s.Account, mybkNeeded, s.Lms is null && s.Mybk is null,
@@ -59,14 +40,13 @@ public static class InfoBar
         return new("need:" + need, InfoSeverity.Error, L.F("info.needLogin", what), null, InfoAction.Login, L.T("common.loginHcmut"));
     }
 
-    /// <summary>Lượt đăng nhập: đang làm (Info), xong, đăng xuất (Success, tự ẩn), hủy (Warning), lỗi (Error, nút đăng nhập lại).</summary>
     private static InfoBarState? Login(string stage, string message) => stage switch
     {
         "check" or "password" or "mybk" => new("login", InfoSeverity.Info, L.T("info." + stage), null, InfoAction.None, null),
         "lms" => new("login", InfoSeverity.Info, message.Length > 0 ? L.F("info.lmsFor", message) : L.T("info.lms"), null, InfoAction.None, null),
         "done" or "logout" => new("login:" + stage, InfoSeverity.Success, L.T("info." + stage), null, InfoAction.None, null, AutoHide: true),
         "cancel" => new("login:cancel", InfoSeverity.Warning, L.T("info.cancel"), null, InfoAction.Login, L.T("common.loginHcmut")),
-        "error" => new("login:error:" + message, InfoSeverity.Error, L.F("info.error", message), null, InfoAction.Login, L.T("web.retry")),   // chữ lỗi bảo "chọn Thử lại"
+        "error" => new("login:error:" + message, InfoSeverity.Error, L.F("info.error", message), null, InfoAction.Login, L.T("web.retry")),
         _ => null,
     };
 }

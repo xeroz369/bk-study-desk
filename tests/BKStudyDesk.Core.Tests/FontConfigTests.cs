@@ -2,7 +2,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Ô chọn cỡ chữ: mặc định đứng đầu, giá trị là số theo InvariantCulture (máy để dấu phẩy thập phân vẫn đọc lại được).</summary>
 public class FontConfigTests
 {
     [Fact]

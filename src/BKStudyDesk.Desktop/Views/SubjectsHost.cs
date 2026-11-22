@@ -5,11 +5,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Trang Môn học gồm hai phần chọn ở đầu trang: Môn của bạn (SubjectsView) và Thư viện (LibraryView, tài liệu chung của mọi môn).
-/// Thư viện thôi là một trang riêng trên thanh trên cùng (người dùng chốt 05/11/2026). Phần nào đang xem thì MainWindow giữ qua lần dựng
-/// lại; tab bên trong thẻ môn (ITabbedPage) vẫn là tab của SubjectsView.
-/// </summary>
 internal sealed class SubjectsHost : UserControl, IFillPage, ITabbedPage
 {
     private readonly TabStrip _switch = new() { Margin = new Thickness(0, 0, 0, 16) };
@@ -58,7 +53,6 @@ internal sealed class SubjectsHost : UserControl, IFillPage, ITabbedPage
         }
     }
 
-    /// <summary>Tab của thẻ môn (MainWindow nhớ theo ui.tab.mon); đang xem Thư viện thì không có tab.</summary>
     public int Tab
     {
         get => _shownSubjects?.Tab ?? 0;

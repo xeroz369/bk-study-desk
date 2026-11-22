@@ -1,9 +1,7 @@
 using System.Text.Json.Nodes;
-using SoHocTap.Data;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Đọc lms.json, mybk.json chịu lỗi (DataJson) và cache theo mtime (CachedFile). Toàn dữ liệu mẫu, file tạm.</summary>
 public class DataStoreTests
 {
     [Fact]
@@ -26,23 +24,22 @@ public class DataStoreTests
         Assert.Equal(1760000000, d.SyncedAt);
         Assert.Equal("123", d.User);
         Assert.Equal(42, d.Courses[0].Id);
-        Assert.Equal(2, d.Events.Count);                     // phần tử null bị bỏ
-        Assert.Equal(0, d.Events[0].Time);                   // null ở chỗ số không làm hỏng cả file
+        Assert.Equal(2, d.Events.Count);
+        Assert.Equal(0, d.Events[0].Time);
         Assert.True(d.Events[0].Done);
-        Assert.Equal(1760000001, d.Events[1].Time);          // số thực làm tròn
+        Assert.Equal(1760000001, d.Events[1].Time);
         Assert.True(d.Events[1].Done);
         Assert.Null(d.Quizzes[0].Open);
         Assert.Equal(1760000000, d.Quizzes[0].Close);
-        Assert.Empty(d.Quizzes[0].Attempts);                 // null thành danh sách rỗng
-        Assert.Null(d.Grades![0].Items[0].Grade);            // "8,5" không phải số kiểu invariant: null, không throw
+        Assert.Empty(d.Quizzes[0].Attempts);
+        Assert.Null(d.Grades![0].Items[0].Grade);
         Assert.Equal(10, d.Grades[0].Items[0].Max);
-        Assert.Null(d.Grades[0].Items[1].Grade);             // object ở chỗ số: bỏ qua
+        Assert.Null(d.Grades[0].Items[1].Grade);
     }
 
     [Fact]
     public void Curriculum_missing_reason_round_trips()
     {
-        // MybkSource ghi "missing" khi MyBK báo chưa có CTĐT; trang MyBK đọc lại để nói rõ lý do.
         var d = DataJson.Parse<MybkData>("""{ "syncedAt": 1, "curriculum": { "blocks": [], "courses": [], "missing": "Không tìm thấy thông tin CTĐT" } }""")!.Normalize();
         Assert.Equal("Không tìm thấy thông tin CTĐT", d.Curriculum!.Missing);
         Assert.Null(DataJson.Parse<MybkData>("""{ "syncedAt": 1, "curriculum": { "blocks": [], "courses": [] } }""")!.Normalize().Curriculum!.Missing);
@@ -76,11 +73,11 @@ public class DataStoreTests
         var cache = new CachedFile<JsonObject>(() => path, t => { parses++; return JsonNode.Parse(t) as JsonObject; });
         try
         {
-            Assert.Null(cache.Get());                          // chưa có file
+            Assert.Null(cache.Get());
             File.WriteAllText(path, """{ "a": 1 }""");
             Assert.Equal(1, cache.Get()!["a"]!.GetValue<int>());
             Assert.Equal(1, cache.Get()!["a"]!.GetValue<int>());
-            Assert.Equal(1, parses);                            // lần hai lấy từ cache
+            Assert.Equal(1, parses);
 
             File.WriteAllText(path, """{ "a": 22 }""");
             File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(5));

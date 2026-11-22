@@ -11,15 +11,11 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Trang Lịch: nối CalendarPresenter (Sắp tới) và WeekPresenter (Thời khóa biểu, Lịch thi, xuất .ics) vào ba bảng. Sự kiện tự thêm:
-/// thêm, sửa (bấm đúp), xóa (menu chuột phải, xác nhận ở menu con) qua CustomEventsData.Store của 1.x. Báo kết quả ở dòng Note.
-/// </summary>
 public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 {
     private readonly AppState _state = null!;
-    private static bool _showClasses, _showDone;   // nhớ trong lần chạy app (trang dựng lại khi có dữ liệu mới)
-    private static int _offset;                     // tuần đang xem so với tuần này
+    private static bool _showClasses, _showDone;
+    private static int _offset;
 
     public CalendarView() => InitializeComponent();
 
@@ -40,18 +36,12 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
         Tables.Show(Exams, ExamsEmpty, exams, state.NoDataReason(SourceIds.Mybk, "MyBK") ?? L.T("calendar.examsEmpty"));
     }
 
-    /// <summary>Mở một tab theo thứ tự (tham số --tab=N khi chụp kiểm tra).</summary>
     public void SelectTab(int index) => Tabs.SelectedIndex = Math.Clamp(index, 0, Tabs.ItemCount - 1);
 
     public int Tab { get => Tabs.SelectedIndex; set => SelectTab(value); }
 
-    /// <summary>
-    /// Xuất qua BKalendar (bkalendar.github.io): chép thời khóa biểu theo đúng bảng của MyBK vào bộ nhớ tạm rồi mở trang bằng trình
-    /// duyệt; người dùng dán vào, BKalendar đưa vào Google Calendar. App không đăng nhập Google, không gửi gì đi.
-    /// </summary>
     private async void OnBkalendar(object? sender, RoutedEventArgs e)
     {
-        // Nothing to export: give the same cause as the timetable tab, not always "sign in".
         if (BkalendarExport.Text(_state.Mybk) is not { } text)
         {
             Say((_state.Mybk?.Schedule.Count > 0 ? null : NoteFor(0).Text) ?? L.T("calendar.bkalendarNoData"));
@@ -68,8 +58,6 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
         Note.Text = text;
         Note.IsVisible = text.Length > 0;
     }
-
-    // ------------------------------------------------------------------ Sắp tới
 
     private void ShowUpcoming()
     {
@@ -93,8 +81,6 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 
     private void OnUpcomingMenu(object? sender, EventArgs e) => FillMenu(sender as MenuFlyout, (Upcoming.SelectedItem as CalendarRow)?.CustomId);
 
-    // ------------------------------------------------------------------ Thời khóa biểu
-
     private static DateTime Monday => VnTime.Monday(VnTime.Today).AddDays(_offset * 7.0);
 
     private void ShowWeek()
@@ -105,25 +91,23 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
         NoSlot.Text = noSlot.Count == 0 ? "" : L.F("calendar.noSlot", string.Join(", ", noSlot));
         NoSlot.IsVisible = noSlot.Count > 0;
         var grid = ViewBox.SelectedIndex != 1;
-        DimNote.IsVisible = !grid;   // ghi chú "môn làm nhạt là tuần này không học" chỉ đúng với danh sách
+        DimNote.IsVisible = !grid;
         if (grid)
         {
             Week.IsVisible = false;
             var blocks = WeekGridPresenter.Blocks(_state.Mybk, CustomEventsData.Store.All(), monday, _state.Courses());
             var note = NoteFor(blocks.Count);
             WeekGrid.Show(monday, blocks);
-            WeekGrid.IsVisible = note.ShowGrid;   // empty term, nothing of the user's own: no empty 0:00 to 24:00 grid
+            WeekGrid.IsVisible = note.ShowGrid;
             ShowWeekNote(note.Text);
             return;
         }
         WeekGrid.IsVisible = false;
         var rows = WeekPresenter.Rows(_state.Mybk, CustomEventsData.Store.All(), monday);
-        // The list holds every class of the term, so only an empty term has a line to say.
         Tables.Show(Week, WeekEmpty, Tables.Grouped(rows, nameof(WeekRow.Group)), "");
         ShowWeekNote(NoteFor(rows.Count).Text);
     }
 
-    /// <summary>Why the timetable is empty: sync off, signed out, no data yet, MyBK has none for the term, or no class this week.</summary>
     private TimetableNote NoteFor(int shown) => WeekPresenter.Note(_state.Mybk, Settings.Sync.MybkEnabled,
         MybkSource.SignedIn && _state.Account is not (AccountNeed.Mybk or AccountNeed.Both), _state.NoDataReason(SourceIds.Mybk, "MyBK"), shown);
 
@@ -135,14 +119,13 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 
     private void OnView(object? sender, SelectionChangedEventArgs e)
     {
-        if (_state is null || ViewBox.SelectedIndex < 0) return;   // lúc dựng XAML, chưa có dữ liệu
+        if (_state is null || ViewBox.SelectedIndex < 0) return;
         Config.Set("app.calendarView", ViewBox.SelectedIndex == 1 ? "list" : "grid");
         ShowWeek();
     }
 
     private void OnPrevWeek(object? sender, RoutedEventArgs e) { _offset--; ShowWeek(); }
     private void OnNextWeek(object? sender, RoutedEventArgs e) { _offset++; ShowWeek(); }
-    // Hôm nay: về tuần này và cuộn lưới về giờ hiện tại (như nút Today của lịch Outlook, Google), bấm được cả khi đang ở tuần này.
     private void OnThisWeek(object? sender, RoutedEventArgs e)
     {
         _offset = 0;
@@ -157,9 +140,6 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 
     private void OnWeekMenu(object? sender, EventArgs e) => FillMenu(sender as MenuFlyout, (Week.SelectedItem as WeekRow)?.CustomId);
 
-    // ------------------------------------------------------------------ sự kiện tự thêm
-
-    /// <summary>Menu của dòng sự kiện tự thêm: Sửa, Xóa (xác nhận ở menu con), Sao chép dạng nhập nhanh. Dòng khác: không có menu.</summary>
     private void FillMenu(MenuFlyout? menu, string? id)
     {
         if (menu is null) return;
@@ -178,7 +158,6 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
 
     private async void OnAddEvent(object? sender, RoutedEventArgs e)
     {
-        // Ngày gợi ý: hôm nay nếu đang xem tuần này, không thì Thứ hai của tuần đang xem (như 1.x).
         var today = VnTime.Today;
         Save(await Ask(null, today >= Monday && today < Monday.AddDays(7) ? today : Monday));
     }
@@ -201,7 +180,7 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
             Say(L.F("events.saveFailed", x.Message));
             return;
         }
-        _state.CustomEventsChanged();   // trang dựng lại với sự kiện mới
+        _state.CustomEventsChanged();
     }
 
     private void Delete(string id)
@@ -216,12 +195,6 @@ public partial class CalendarView : UserControl, IFillPage, ITabbedPage
         _state.CustomEventsChanged();
     }
 
-    // ------------------------------------------------------------------ xuất .ics
-
-    /// <summary>
-    /// Xuất thời khóa biểu cả kỳ, lịch thi, sự kiện tự thêm ra file .ics (Google Calendar, Outlook, Lịch của hệ điều hành). Chỉ ghi file
-    /// trên máy, không gửi đi đâu. Mục không đặt được lên lịch thì báo tên, không bỏ im lặng.
-    /// </summary>
     private async void OnExport(object? sender, RoutedEventArgs e)
     {
         var m = _state.Mybk;

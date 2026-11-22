@@ -1,5 +1,3 @@
-<!-- Trang Hôm nay (design-system/bk mục 4): đầu trang; hai cột 2:1 cách 24 khi đủ chỗ, không thì một cột.
-     Trái: Cần làm, Thông báo mới. Phải: Sắp tới, Đăng ký môn. Mục nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Home.cs. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
@@ -7,11 +5,9 @@
              x:Class="BKStudyDesk.Desktop.Views.HomeView"
              x:DataType="p:HomeModel">
     <UserControl.Resources>
-        <!-- Dòng 64, lưới 48,12,*,12,112: ô ngày | tên và dòng phụ | còn bao lâu và trạng thái -->
         <DataTemplate x:Key="TodoRow" x:DataType="p:TodoItem">
             <Border Classes="row" Classes.indent="{Binding Indent}" Tapped="OnRowTapped" Cursor="Hand">
                 <Grid ColumnDefinitions="52,12,*,12,112">
-                    <!-- Nhãn ngày: đỏ khi gấp, vàng khi sắp tới, xám khi còn xa. -->
                     <Border Classes="chip" Classes.danger="{Binding ChipDanger}" Classes.soon="{Binding ChipSoon}" VerticalAlignment="Center" HorizontalAlignment="Left">
                         <TextBlock Text="{Binding Day, StringFormat='{}{0:dd/MM}'}" />
                     </Border>
@@ -26,7 +22,6 @@
                 </Grid>
             </Border>
         </DataTemplate>
-        <!-- Ô giờ thay ô ngày: giờ bắt đầu (màu Link), giờ kết thúc -->
         <DataTemplate x:Key="AgendaRow" x:DataType="p:AgendaItem">
             <Border Classes="row">
                 <Grid ColumnDefinitions="44,12,*,8,Auto">
@@ -72,7 +67,6 @@
             <TextBlock x:Name="DateText" Classes="meta" VerticalAlignment="Bottom" Margin="0,0,0,4" />
         </StackPanel>
 
-        <!-- Chưa có dữ liệu nào: một khối giới thiệu thay cho bốn thẻ trống -->
         <Border x:Name="Intro" Classes="card" Padding="24" IsVisible="False">
             <StackPanel Spacing="12">
                 <TextBlock Classes="card-title" Text="{l:T home.noData}" />
@@ -82,7 +76,6 @@
         </Border>
 
         <Grid x:Name="Columns" RowDefinitions="Auto,Auto">
-            <!-- Trái 2 phần, phải 1 phần (320 tới 400); HomeView đổi sang một cột khi không đủ chỗ cho cả hai mức tối thiểu. -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" MinWidth="{StaticResource MainMinWidth}" />
                 <ColumnDefinition Width="16" />
@@ -99,7 +92,6 @@
                         <TextBlock x:Name="TodoEmpty" Classes="empty" />
                     </StackPanel>
                 </Border>
-                <!-- Hộp thư: tin nhắn, thông báo môn, thông báo LMS chưa đọc hay mới trong NewsDays ngày. Bấm mở đúng dòng ở trang Hộp thư. -->
                 <Border Classes="card">
                     <StackPanel>
                         <Border Classes="card-head"><DockPanel>
@@ -129,10 +121,8 @@
                 </Border>
             </StackPanel>
             <StackPanel x:Name="Side" Grid.Column="2" Spacing="16">
-                <!-- Ôn tập: câu tới hạn ôn và câu làm sai (Luyện tập, tab Hôm nay). Luyện tập theo môn nằm trong thẻ môn. -->
                 <Border Classes="card">
                     <StackPanel>
-                        <!-- Explanation lives in the tooltip: the card stays one line. -->
                         <Border Classes="card-head" ToolTip.Tip="{l:T home.reviewNote}"><DockPanel>
                             <Button DockPanel.Dock="Right" Content="{l:T home.reviewStart}" Click="OnReview" />
                             <TextBlock Classes="card-title" Text="{l:T home.review}" VerticalAlignment="Center" />

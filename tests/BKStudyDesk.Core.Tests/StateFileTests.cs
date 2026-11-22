@@ -4,7 +4,6 @@ using SoHocTap.Api;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Đọc ghi ket-qua.json qua /api/state, trên thư mục tạm (không đụng data của người dùng).</summary>
 public sealed class StateFileTests : IDisposable
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "bk-state-" + Guid.NewGuid().ToString("N"));

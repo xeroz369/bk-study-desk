@@ -4,16 +4,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
 using BKStudyDesk.Desktop.Files;
-using SoHocTap.Core;
 using SoHocTap.Presentation;
 using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Đọc một nội dung LMS đã lưu trên máy (bài thông báo, trang, đề bài): đọc được khi LMS sập hay mất mạng.
-/// Chữ chọn và sao chép được; link và file đính kèm mở bằng trình duyệt trong app (cần mạng). Nút Mở trên LMS mở bản gốc.
-/// </summary>
 internal sealed class ReaderWindow : Window
 {
     private ReaderWindow(Reading r)
@@ -36,7 +31,6 @@ internal sealed class ReaderWindow : Window
         else w.Show();
     }
 
-    /// <summary>Nội dung đọc: tiêu đề, dòng phụ, các đoạn, link, đính kèm, nút Mở trên LMS. Trang Tin nhắn dùng lại phần đoạn chữ.</summary>
     public static Control Body(Reading r, Control owner)
     {
         var panel = new StackPanel { Spacing = 12 };
@@ -44,7 +38,7 @@ internal sealed class ReaderWindow : Window
         if (r.Meta.Length > 0) panel.Children.Add(new TextBlock { Text = r.Meta, Classes = { "meta" } });
         if (r.Paragraphs.Count == 0) panel.Children.Add(new TextBlock { Text = L.T("reader.empty"), Classes = { "meta" } });
         ReadingBlocks.Add(panel, r.Blocks ?? [.. r.Paragraphs.Select(p => new ReadingBlock(p))], owner);
-        if (r.Blocks is null) AddLinks(panel, L.T("reader.links"), r.Links, owner);   // có Blocks thì link đã nằm trong chữ
+        if (r.Blocks is null) AddLinks(panel, L.T("reader.links"), r.Links, owner);
         AddLinks(panel, L.T("reader.attachments"), r.Attachments, owner);
         if (r.WebUrl is { Length: > 0 } url)
         {
@@ -64,7 +58,6 @@ internal sealed class ReaderWindow : Window
         {
             var link = new HyperlinkButton { Content = new TextBlock { Text = l.Name ?? l.Url, TextWrapping = TextWrapping.Wrap }, Padding = new Thickness(0) };
             ToolTip.SetTip(link, l.Url);
-            // File đã tải về máy (đính kèm thông báo): mở bản trên máy, không cần mạng.
             link.Click += async (_, _) =>
             {
                 if (l.Path is { Length: > 0 } local && await Opener.OpenAsync(owner, local)) return;

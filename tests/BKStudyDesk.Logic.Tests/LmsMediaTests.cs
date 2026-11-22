@@ -28,10 +28,10 @@ public class LmsMediaTests
             Mod("lti", "Quiz ôn tập", "https://lms/mod/lti/view.php?id=6"),
             Mod("label", "", "", links: ["https://www.youtube.com/embed/xyz"], text: "Bài giảng chương 2")));
         Assert.Equal([MediaKind.Video, MediaKind.Video, MediaKind.Link, MediaKind.Page, MediaKind.Tool, MediaKind.Video], items.Select(i => i.Kind));
-        Assert.Equal("https://youtu.be/abc", items[1].Url);           // link ngoài thay cho trang chuyển hướng của LMS
+        Assert.Equal("https://youtu.be/abc", items[1].Url);
         Assert.Equal("Bài giảng chương 2", items[5].Name);
         Assert.All(items, i => Assert.Equal("Kho chung", i.Part));
-        Assert.DoesNotContain(items, i => i.Name == "Đề cương");      // PDF là tài liệu, không phải video
+        Assert.DoesNotContain(items, i => i.Name == "Đề cương");
     }
 
     [Fact]

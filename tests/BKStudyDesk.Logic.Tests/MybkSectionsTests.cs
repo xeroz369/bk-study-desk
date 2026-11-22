@@ -3,7 +3,6 @@ using SoHocTap.Sources.Mybk;
 
 namespace BKStudyDesk.Logic.Tests;
 
-/// <summary>Which MyBK sections a page needs and when a saved section is stale (on-demand sync, 06/11/2026).</summary>
 public class MybkSectionsTests
 {
     private const long Now = 1_793_900_000;
@@ -21,7 +20,7 @@ public class MybkSectionsTests
     {
         Assert.Equal([MybkSections.Schedule, MybkSections.Exams], MybkSections.ForPage("lich", 0));
         Assert.Equal([MybkSections.Fees], MybkSections.ForPage("mybk", 4));
-        Assert.Empty(MybkSections.ForPage("mybk", 7));   // services: links only
+        Assert.Empty(MybkSections.ForPage("mybk", 7));
         Assert.Empty(MybkSections.ForPage("luyen-tap", 0));
         Assert.All(new[] { "hom-nay", "lich", "mon" }.SelectMany(r => MybkSections.ForPage(r, 0)), s => Assert.True(MybkSections.All.ContainsKey(s)));
         Assert.All(Enumerable.Range(0, 9).SelectMany(t => MybkSections.ForPage("mybk", t)), s => Assert.True(MybkSections.All.ContainsKey(s)));
@@ -31,9 +30,9 @@ public class MybkSectionsTests
     public void Stale_by_section_age()
     {
         var saved = Saved((MybkSections.Schedule, 11 * 3600), (MybkSections.Exams, 7 * 3600));
-        Assert.False(MybkSections.Stale(saved, MybkSections.Schedule, Now));   // 12 h tier
-        Assert.True(MybkSections.Stale(saved, MybkSections.Exams, Now));       // 6 h tier
-        Assert.True(MybkSections.Stale(saved, MybkSections.Fees, Now));        // never fetched
+        Assert.False(MybkSections.Stale(saved, MybkSections.Schedule, Now));
+        Assert.True(MybkSections.Stale(saved, MybkSections.Exams, Now));
+        Assert.True(MybkSections.Stale(saved, MybkSections.Fees, Now));
     }
 
     [Fact]

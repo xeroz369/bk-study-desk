@@ -6,7 +6,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Trang Hôm nay (HomePresenter): mục nào hiện, thứ tự, không cắt. Giờ là giờ thật (TimelineItem đọc Format.Now).</summary>
 public class HomeTests
 {
     private static readonly long Now = Format.Now;
@@ -34,7 +33,6 @@ public class HomeTests
     public void Todo_OverdueFirst_DoneLastWithTag_ExcludesFar()
     {
         var m = Build([Assign("soon", Now + 3 * H), Assign("late", Now - 2 * D), Assign("done", Now + H, done: true), Assign("far", Now + 20 * D)]);
-        // Việc đã nộp vẫn hiện (giữ hạn), xếp cuối, có nhãn, không màu gấp (người dùng nhờ 05/11/2026).
         Assert.Equal(["late", "soon", "done"], m.Todo.Select(t => t.Id));
         Assert.True(m.Todo[2].Done);
         Assert.False(m.Todo[2].ChipDanger || m.Todo[2].ChipSoon);

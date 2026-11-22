@@ -10,9 +10,9 @@ public class ReadMarksTests
         var m = new ReadMarks();
         Assert.False(m.IsRead("Môn học/GT2/a.pdf", 100));
         Assert.True(m.Set("Môn học/GT2/a.pdf", 100, read: true));
-        Assert.False(m.Set("Môn học/GT2/a.pdf", 100, read: true));   // không đổi: không cần ghi
-        Assert.True(m.IsRead("môn học\\gt2\\A.pdf", 100));             // hoa thường, gạch chéo ngược
-        Assert.False(m.IsRead("Môn học/GT2/a.pdf", 200));              // bản mới trên LMS: chưa đọc
+        Assert.False(m.Set("Môn học/GT2/a.pdf", 100, read: true));
+        Assert.True(m.IsRead("môn học\\gt2\\A.pdf", 100));
+        Assert.False(m.IsRead("Môn học/GT2/a.pdf", 200));
     }
 
     [Fact]

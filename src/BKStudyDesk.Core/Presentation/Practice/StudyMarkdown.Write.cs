@@ -16,12 +16,11 @@ public static partial class StudyMarkdown
     [GeneratedRegex(@"\s*\n\s*")] private static partial Regex AnyBreak();
     [GeneratedRegex(@"^data:image/(png|jpeg|gif|webp)")] private static partial Regex DataMime();
 
-    /// <summary>HTML của app thành Markdown dễ đọc: thẻ đơn giản thành Markdown, phần còn lại giữ HTML trong dòng.</summary>
     private static string HtmlToMd(string h, Func<string, string> take)
     {
         h = DataImg().Replace(h, m => $"![{m.Groups[2].Value}]({take(m.Groups[1].Value)})");
-        h = MathDiv().Replace(h, "\n\n$1\n\n");     // công thức riêng dòng
-        h = Callout().Replace(h, "\n\n$1\n\n");     // khối ghi chú giữ dạng HTML
+        h = MathDiv().Replace(h, "\n\n$1\n\n");
+        h = Callout().Replace(h, "\n\n$1\n\n");
         h = Para().Replace(h, "\n\n$1\n\n");
         h = BoldTag().Replace(h, "**");
         h = ItalicTag().Replace(h, "*");
@@ -31,10 +30,6 @@ public static partial class StudyMarkdown
         return Text.TrimJs(h);
     }
 
-    /// <summary>
-    /// Gói thành file .md và ảnh (đường dẫn img/1.webp... thành data URI), port <c>writeMarkdown</c>. Mở rộng: ghi dòng id khi id
-    /// khác id tự đặt, và dòng "Câu:" cho câu đề lấy từ bài (bản TS chép câu vào đề).
-    /// </summary>
     public static (string Md, Dictionary<string, string> Images) Write(StudyPack p)
     {
         var images = new Dictionary<string, string>();
@@ -50,7 +45,7 @@ public static partial class StudyMarkdown
             return path;
         }
         string Md(string h) => HtmlToMd(h, Take);
-        string One(string h) => AnyBreak().Replace(Md(h), " ");   // phương án phải trên một dòng
+        string One(string h) => AnyBreak().Replace(Md(h), " ");
         var output = new List<string>
         {
             "---",
@@ -101,7 +96,6 @@ public static partial class StudyMarkdown
             foreach (var l in u.Lessons)
             {
                 output.Add($"## {l.Title}");
-                // Id bài bộ đọc sẽ tự đặt: slug của tên, trùng thì thêm "-2". Khác thì ghi dòng id.
                 var auto = Slug(l.Title, "bai");
                 while (lessonIds.Contains(auto)) auto += "-2";
                 if (l.Id != auto) output.Add($"id: {l.Id}");
@@ -137,6 +131,5 @@ public static partial class StudyMarkdown
         return (ManyBreaks().Replace(string.Join("\n", output), "\n\n"), images);
     }
 
-    // +x.toFixed(4) của JS: làm tròn 4 chữ số rồi bỏ số 0 thừa.
     private static string Fixed4(double v) => JsNumber.Format(Math.Round(v, 4, MidpointRounding.AwayFromZero));
 }

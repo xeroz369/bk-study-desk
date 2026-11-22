@@ -1,4 +1,3 @@
-<!-- Khung (design-system/bk mục 4): thanh cao tối thiểu 48 nền Bar; vùng nội dung lề 24; trang chữ rộng tối đa ContentMaxWidth và cuộn cả vùng, trang bảng (IFillPage) lấp đầy và tự cuộn. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
@@ -6,16 +5,12 @@
         Title="BK Study Desk" Width="1280" Height="820" MinWidth="480" MinHeight="480"
         Background="{DynamicResource PageBg}" Icon="avares://BKStudyDesk/Assets/app.ico">
     <DockPanel>
-        <!-- Thanh trên cùng (design-system/bk mục 4): mục trang bên trái; phải là trạng thái đồng bộ (bấm ra bảng từng nguồn và các thông
-             báo), nút gạt Offline, icon Hộp thư (số tin chưa đọc, tin mới thì hiện lên), icon Cài đặt. Hẹp thì các mục trang cuối gom vào
-             nút Thêm (MainWindow.FitBar). -->
         <Border x:Name="Bar" DockPanel.Dock="Top" Background="{DynamicResource Bar}" MinHeight="{StaticResource BarHeight}">
           <Grid>
             <DockPanel Margin="16,0">
                 <Button x:Name="SettingsButton" DockPanel.Dock="Right" Classes="bar icon" Margin="16,0,0,0" ToolTip.Tip="{l:T nav.settings}">
                     <PathIcon Data="{StaticResource IconSettings}" Classes="bar-text" />
                 </Button>
-                <!-- Hộp thư: chuông, số tin chưa đọc ở góc; bấm thì mở ngăn bên phải (Drawer). -->
                 <Button x:Name="InboxButton" DockPanel.Dock="Right" Classes="bar icon" Margin="16,0,0,0" ToolTip.Tip="{l:T nav.inbox}">
                     <Panel>
                         <PathIcon Data="{StaticResource IconMail}" Classes="bar-text" />
@@ -32,8 +27,6 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-                <!-- Trạng thái: chấm màu (xanh đã đồng bộ, vàng đang đồng bộ hay Offline, đỏ cần làm gì đó), chữ ngắn chỉ khi cần để ý.
-                     Bấm ra bảng từng nguồn, nút gạt Offline, các thông báo (MainWindow.StatusPanelContent). -->
                 <Button x:Name="StatusButton" DockPanel.Dock="Right" Classes="bar" Margin="20,0,0,0">
                     <Border Classes="status-pill">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -46,7 +39,6 @@
                 <StackPanel x:Name="Nav" DockPanel.Dock="Left" Orientation="Horizontal" Spacing="16" />
                 <Panel />
             </DockPanel>
-            <!-- Ô Tìm đúng giữa thanh (lớp riêng, không bị hai bên đẩy lệch): bấm (hay Ctrl+K) ra tìm nhanh. -->
             <Button x:Name="SearchButton" Classes="search" HorizontalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <PathIcon Data="{StaticResource IconSearch}" Width="16" Height="16" Classes="bar-text" />
@@ -55,10 +47,7 @@
             </Button>
           </Grid>
         </Border>
-        <!-- Thanh tiến độ đồng bộ (SyncStatus.Progress): % thật khi biết tổng, vô định khi đang mở trang trường; ẩn khi không đồng bộ. -->
         <ProgressBar x:Name="SyncBar" DockPanel.Dock="Top" Height="3" MinHeight="3" Minimum="0" Maximum="1" CornerRadius="0" IsVisible="False" />
-        <!-- Dải báo (Presentation/InfoBar quyết định hiện gì): đăng nhập, hết phiên, lỗi đồng bộ, mời tự đăng nhập lại. Viền trái theo
-             mức độ (Border.info.error...), chữ trái, nút phải, Đóng cuối. Ẩn khi không có gì để báo. -->
         <Border x:Name="Info" DockPanel.Dock="Top" Classes="info" IsVisible="False">
             <DockPanel>
                 <Button x:Name="InfoClose" DockPanel.Dock="Right" Content="{l:T common.close}" Margin="8,0,0,0" VerticalAlignment="Center" />
@@ -69,15 +58,12 @@
                 <TextBlock x:Name="InfoText" TextWrapping="Wrap" VerticalAlignment="Center" />
             </DockPanel>
         </Border>
-        <!-- Trang đăng nhập (Views/LoginView) phủ lên vùng nội dung khi cần mật khẩu, không mở cửa sổ riêng. -->
         <Panel>
-            <!-- Cỡ chữ cả vùng nội dung (Ctrl+cộng, Ctrl+trừ, Ctrl+0, Ctrl+lăn chuột): MainWindow.SetZoom, config app.zoom. -->
             <ScrollViewer x:Name="Scroller">
                 <LayoutTransformControl x:Name="Zoom">
                     <Border x:Name="Page" Margin="16,16,16,20" />
                 </LayoutTransformControl>
             </ScrollViewer>
-            <!-- Ngăn Hộp thư bên phải (InboxView): nền mờ phía sau, bấm ra ngoài thì đóng. -->
             <Border x:Name="DrawerScrim" Background="#33000000" IsVisible="False" />
             <Border x:Name="Drawer" HorizontalAlignment="Right" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}"
                     BorderThickness="1,0,0,0" IsVisible="False" />

@@ -9,14 +9,8 @@ public sealed record PackIssue(string Path, string Message);
 
 public sealed record PackStats(int Lessons, int Questions, int Exams);
 
-/// <summary>Kết quả kiểm tra gói: lỗi thì app không nạp, cảnh báo thì vẫn nạp nhưng nên sửa.</summary>
 public sealed record PackReport(bool Ok, IReadOnlyList<PackIssue> Errors, IReadOnlyList<PackIssue> Warnings, PackStats Stats);
 
-/// <summary>
-/// Kiểm tra một gói Study Pack v1 đã parse (port <c>validatePack</c> của <c>pack.ts</c>, cùng đường dẫn lỗi).
-/// Đầu vào là JsonNode chứ không phải kiểu đã đọc, vì gói đến từ người khác: phải bắt được cả kiểu sai, thiếu khóa.
-/// Câu thông báo ở lang (nhóm <c>pack.*</c>).
-/// </summary>
 public static partial class PackValidator
 {
     private const long MaxBytes = 20 * 1024 * 1024;
@@ -30,7 +24,6 @@ public static partial class PackValidator
     [GeneratedRegex(@"\ssrc\s*=\s*""([^""]*)""", RegexOptions.IgnoreCase | RegexOptions.ECMAScript)] private static partial Regex Src();
     [GeneratedRegex(@"\son\w+\s*=", RegexOptions.IgnoreCase | RegexOptions.ECMAScript)] private static partial Regex EventAttr();
     [GeneratedRegex("javascript:", RegexOptions.IgnoreCase)] private static partial Regex JsUrl();
-    // [\f\b\t\v\x00-\x08\x0e-\x1f] của JS: trong lớp ký tự, \b là backspace (0x08).
     [GeneratedRegex(@"[\x00-\x09\x0b\x0c\x0e-\x1f]")] private static partial Regex Control();
     [GeneratedRegex(@"\r[a-z]")] private static partial Regex CrLetter();
     [GeneratedRegex(@"\n(eq|abla|u\b|ot\b|ewline|exists|leq|geq|i\b|cong|parallel|mid\b)", RegexOptions.ECMAScript)] private static partial Regex LfLetter();
@@ -46,7 +39,6 @@ public static partial class PackValidator
         return new PackReport(v.Errors.Count == 0, v.Errors, v.Warnings, new PackStats(v.Lessons, v.Questions, v.Exams));
     }
 
-    /// <summary>Tổng số câu hỏi trong gói (danh sách gói đã cài).</summary>
     public static int CountQuestions(StudyPack p) =>
         p.Units.Sum(u => u.Lessons.Sum(l => l.Questions?.Count ?? 0)) + (p.Exams ?? []).Sum(x => x.Questions?.Count ?? 0);
 
@@ -61,7 +53,6 @@ public static partial class PackValidator
         public void Err(string path, string message) => Errors.Add(new PackIssue(path, message));
         private void Warn(string path, string message) => Warnings.Add(new PackIssue(path, message));
 
-        // undefined của JS là khóa không có; null của JSON là có khóa (TS coi là "đã ghi").
         private static bool Has(JsonObject o, string key) => o.ContainsKey(key);
 
         private static bool IsString(JsonNode? n, out string s)
@@ -302,7 +293,6 @@ public static partial class PackValidator
             if (Has(q, "source")) SourceList(new JsonArray(q["source"]?.DeepClone()), $"{path}.source");
         }
 
-        /// <summary>Một đoạn nội dung: HTML lạ, script, lỗi escape TeX trong JSON.</summary>
         private void CheckText(string s, string path)
         {
             if (Forbidden().IsMatch(s)) Err(path, L.T("pack.text.forbiddenTag"));
@@ -317,12 +307,9 @@ public static partial class PackValidator
                 if (src.Length > MaxImageChars) Warn(path, L.F("pack.text.bigImage", Math.Round(src.Length / 1024.0)));
             }
             if (EventAttr().IsMatch(s) || JsUrl().IsMatch(s)) Err(path, L.T("pack.text.events"));
-            // JSON hiểu "\f", "\b", "\t", "\v" là ký tự điều khiển: dấu hiệu quên viết "\\frac", "\\beta", "\\times".
             if (Control().Match(s) is { Success: true } ctl) Err(path, L.F("pack.text.control", (int)ctl.Value[0]));
-            // "\right", "\rho" thành CR + "ight"; "\neq", "\nabla" thành xuống dòng + "eq": cũng là quên escape.
             if (CrLetter().IsMatch(s)) Err(path, L.T("pack.text.cr"));
             if (LfLetter().IsMatch(s)) Warn(path, L.T("pack.text.lf"));
-            // Chỉ tính là thẻ khi sau "<" là chữ cái: "f(0)<0", "x<10" là toán, không phải thẻ.
             foreach (Match m in AnyTag().Matches(s))
                 if (!StudyPack.AllowedTags.Contains(m.Groups[1].Value.ToLowerInvariant()))
                 {

@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using SoHocTap.Sources.Lms;
-using Xunit;
 
 namespace SoHocTap.Tests;
 

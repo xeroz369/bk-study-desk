@@ -6,19 +6,12 @@ using SoHocTap.Web;
 
 namespace BKStudyDesk.Desktop.Web;
 
-/// <summary>
-/// Một lượt đăng nhập HCMUT cho cả MyBK và LMS trên một WebPage (ẩn hay trong cửa sổ). Trang nào làm gì: LoginSteps (thuần, có test).
-/// Token LMS: lấy cookie LMS của trang rồi gọi launch.php (LmsTokenGrab), vì trình duyệt nhúng không cho bắt link scheme lạ.
-/// Gặp trang mật khẩu SSO thì báo NeedPassword; app không đọc mật khẩu. Các bước báo ra: mybk, lms, done, error.
-/// </summary>
-/// <param name="mybk">false: skip MyBK and go straight to the LMS CAS entry (LMS token refresh, or MyBK sync turned off),
-/// so an LMS refresh is not counted as a MyBK sign-in.</param>
 internal sealed class LoginFlow(WebPage page, Action<string, string> progress, bool mybk = true)
 {
     private readonly LoginHosts _hosts = LoginHosts.FromConfig();
     private LoginStage _stage = mybk ? LoginStage.Sso : LoginStage.LmsCas;
-    private bool _sawPassword;   // lượt này đã gặp trang mật khẩu: xong là một lần đăng nhập đầy đủ (đo thời gian sống của phiên SSO)
-    private bool _busy;          // đang làm một bước async (lấy token), bỏ qua các lần tải trang chen vào
+    private bool _sawPassword;
+    private bool _busy;
 
     public event Action? NeedPassword;
     public event Action? Finished;

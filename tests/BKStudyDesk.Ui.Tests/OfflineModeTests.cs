@@ -4,11 +4,9 @@ using SoHocTap.Sources;
 
 namespace BKStudyDesk.Ui.Tests;
 
-/// <summary>Bật Offline là cài đặt chung: không chạy song song với test khác.</summary>
 [CollectionDefinition("offline", DisableParallelization = true)]
 public sealed class OfflineCollection;
 
-/// <summary>Chế độ Offline: scheduler thôi tự đồng bộ, bấm tay Đồng bộ ngay vẫn chạy (thư mục data riêng của bộ test).</summary>
 [Collection("offline")]
 public class OfflineModeTests
 {
@@ -62,7 +60,6 @@ public class OfflineModeTests
         Assert.Equal(SoHocTap.Data.SyncErrorKind.SessionExpired, hub.ErrorKind("expired"));
         hub.ForgetSessionExpired();
         Assert.False(hub.Failed("expired"));
-        // The sync started by the new sign-in runs even within 30 seconds of the failed one.
         Assert.True(hub.Start("expired", force: true));
     }
 
@@ -77,7 +74,6 @@ public class OfflineModeTests
         Assert.False(hub.Start("expired", force: true));
     }
 
-    // "done" fires after the run is fully over (Running cleared), unlike Failed() which is true a moment earlier.
     private static Task Finished(SourceHub hub)
     {
         var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -91,7 +87,7 @@ public class OfflineModeTests
         using var hub = new SourceHub([new CountingSource()]) { Online = () => true };
         var next = hub.NextAutoAt("fake");
         Assert.NotNull(next);
-        Assert.True(next <= DateTimeOffset.UtcNow.AddMinutes(1));   // chưa đồng bộ lần nào: tới hạn ngay
+        Assert.True(next <= DateTimeOffset.UtcNow.AddMinutes(1));
         try
         {
             OfflineMode.Set(true);

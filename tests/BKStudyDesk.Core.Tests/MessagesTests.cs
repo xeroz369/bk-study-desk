@@ -3,7 +3,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Trang Tin nhắn, thẻ Tin nhắn mới ở Hôm nay và thông báo tin mới (MessagesPresenter).</summary>
 public class MessagesTests
 {
     private const long Now = 1_793_400_000, Day = 86_400;
@@ -35,10 +34,10 @@ public class MessagesTests
     public void Recent_keeps_unread_or_new_from_others()
     {
         var data = new LmsMessages(Now, [
-            Conv(1, 0, Msg(1, Now - 30 * Day)),                 // cũ, đã đọc: không hiện
-            Conv(2, 2, Msg(2, Now - 30 * Day)),                 // cũ nhưng chưa đọc: hiện
-            Conv(3, 0, Msg(3, Now - Day)),                      // mới từ người khác: hiện
-            Conv(4, 0, Msg(4, Now - Day, mine: true)),          // chỉ có tin mình gửi: không hiện
+            Conv(1, 0, Msg(1, Now - 30 * Day)),
+            Conv(2, 2, Msg(2, Now - 30 * Day)),
+            Conv(3, 0, Msg(3, Now - Day)),
+            Conv(4, 0, Msg(4, Now - Day, mine: true)),
         ]);
         Assert.Equal([3L, 2L], MessagesPresenter.Recent(data, Now, 7).Select(r => r.Id));
     }
@@ -64,10 +63,10 @@ public class MessagesTests
         var c = new LmsConversation(1, "Nhóm GT2", true, ["Cô Như"], 0, day2, null,
         [
             new(1, 7, "Cô Như", null, "a", day1),
-            new(2, 7, "Cô Như", null, "b", day1 + 300),          // cùng người, 5 phút sau: cùng nhóm
-            new(3, 9, "Bạn", true, "c", day1 + 600),             // mình
-            new(4, 7, "Cô Như", null, "d", day1 + 600 + 3 * 3600), // người khác, sau 3 giờ: nhóm mới
-            new(5, 7, "Cô Như", null, "e", day2),               // ngày khác: vạch ngày mới
+            new(2, 7, "Cô Như", null, "b", day1 + 300),
+            new(3, 9, "Bạn", true, "c", day1 + 600),
+            new(4, 7, "Cô Như", null, "d", day1 + 600 + 3 * 3600),
+            new(5, 7, "Cô Như", null, "e", day2),
         ]);
         var (items, older) = MessagesPresenter.Thread(c, day2 + 60);
         Assert.Equal(0, older);

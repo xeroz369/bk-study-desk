@@ -3,17 +3,12 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation.Practice.Pages;
 
-/// <summary>Một gói trong content/packs: nạp được (Pack) hoặc lỗi (Error).</summary>
 public sealed record InstalledPack(string File, StudyPack? Pack, string? Error, int Questions);
 
-/// <param name="Due">Câu tới hạn ôn hôm nay (lịch ôn lặp lại).</param>
-/// <param name="Review">Câu sai lần đầu, chưa làm lại đúng.</param>
-/// <param name="Next">Bài kế tiếp theo thứ tự ưu tiên môn.</param>
 public sealed record PracticeToday(int Due, int Review, Entry? Next);
 
 public sealed record PracticeLessonRow(string Id, string Title, string Sub, LessonStatus Status, string StatusText);
 
-/// <summary>Một chương: Done/Total đếm trên mọi bài của chương (kể cả bài chưa soạn, như dòng phụ của môn), giữ nguyên khi lọc bài.</summary>
 public sealed record PracticeUnitRow(string Title, List<PracticeLessonRow> Lessons, int Done, int Total)
 {
     public string Header => L.F("practice.unit.header", Title, Done, Total);
@@ -23,32 +18,21 @@ public sealed record PracticeCourseRow(string Id, string Name, string? Code, int
     string ExamText,
     List<PracticeUnitRow> Units);
 
-/// <param name="LessonId">Bài trong sổ để mở (quiz LMS), rỗng với gói.</param>
 public sealed record PracticeQuizRow(string Title, string Sub, bool Broken, string LessonId, string? File);
 
 public sealed record PracticeResultRow(string ExamId, string Title, string When, string Score, string Sub);
 
-/// <param name="Tone">Màu chữ trạng thái: ok, soon (cảnh báo) hay rỗng.</param>
-/// <param name="LessonId">Bài để Ôn lại; rỗng thì chỉ Ghi lại câu còn nhớ.</param>
 public sealed record PracticeArchiveRow(string Title, string Sub, string Status, string Tone, string LessonId, string? Code, string Quiz);
 
-/// <summary>Kho quiz LMS: mỗi môn một nhóm, quiz mới trước.</summary>
 public sealed record PracticeArchiveGroup(string Subject, string Meta, List<PracticeArchiveRow> Rows);
 
-/// <summary>Một dòng của thẻ Tiến độ từng môn (tab Kết quả), chữ đã định dạng.</summary>
 public sealed record PracticeCourseProgress(string Id, string Name, string Done, string Answered, string FirstOk);
 
-/// <param name="Flagged">Số câu có ghi chú hay cờ nghi sai (dòng Đánh dấu).</param>
 public sealed record PracticeHomeModel(PracticeToday Today, List<PracticeCourseRow> Courses, List<PracticeQuizRow> Quizzes, List<PracticeResultRow> Results,
     int Flagged, List<PracticeCourseProgress> Progress, List<PageEntry> Pages, List<PracticeArchiveGroup> Archive);
 
-/// <summary>Trang chính Luyện tập: tab Hôm nay, Môn học, Quiz của bạn, Kết quả. Chỉ dựng dữ liệu để hiện, không đụng control.</summary>
 public static class PracticeHome
 {
-    /// <summary>
-    /// Ô lọc tab Môn học (bỏ dấu, không phân biệt hoa thường): tên hay mã môn khớp thì giữ cả môn; không thì chỉ giữ bài có tên khớp,
-    /// bỏ chương, môn không còn bài nào. Ô trống thì trả nguyên danh sách.
-    /// </summary>
     public static IReadOnlyList<PracticeCourseRow> Filter(IReadOnlyList<PracticeCourseRow> courses, string query)
     {
         if (string.IsNullOrWhiteSpace(query)) return courses;
@@ -59,7 +43,6 @@ public static class PracticeHome
             .Where(c => c.Units.Count > 0)];
     }
 
-    /// <summary>Subject card tab: the course whose name or code matches, never other courses' lessons that mention it.</summary>
     public static IReadOnlyList<PracticeCourseRow> OnlyCourse(IReadOnlyList<PracticeCourseRow> courses, string subject)
     {
         var q = subject.Trim();
@@ -116,7 +99,6 @@ public static class PracticeHome
             [.. (study.Manifest.Pages ?? []).Where(p => study.Pages.ContainsKey(p.Id))], Archive(quizzes, progress.Zone));
     }
 
-    /// <summary>Kho quiz LMS (port QuizArchive.svelte): nhóm theo môn, quiz làm gần nhất trước; trạng thái đáp án, ngày, điểm, khi nào chia sẻ được.</summary>
     private static List<PracticeArchiveGroup> Archive(IReadOnlyList<QuizInfo> quizzes, TimeZoneInfo zone)
     {
         string Day(long? t) => t is { } s

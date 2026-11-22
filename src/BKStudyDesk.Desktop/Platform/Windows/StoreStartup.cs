@@ -4,16 +4,10 @@ using Windows.ApplicationModel;
 
 namespace BKStudyDesk.Desktop.Platform.Windows;
 
-/// <summary>
-/// Mở cùng Windows cho bản Microsoft Store (MSIX, AppPackage.IsPackaged), như Shell/Startup bản 1.x: registry Run trong package bị
-/// ảo hóa nên không có tác dụng, dùng StartupTask (TaskId BKStudyDeskStartup) của manifest bản Store cũ, đã bỏ khỏi repo. Người dùng tắt
-/// trong Task Manager thì app không tự bật lại được (Set trả trạng thái thật).
-/// </summary>
 internal static class StoreStartup
 {
     private const string TaskId = "BKStudyDeskStartup";
 
-    /// <summary>Windows mở app lúc đăng nhập qua StartupTask: chạy ở khay như --tray.</summary>
     public static bool LaunchedAtLogin
     {
         get

@@ -5,15 +5,14 @@ using System.Text.Unicode;
 
 namespace SoHocTap.Core;
 
-/// <summary>Đọc/ghi JSON. Luôn ghi ra file .tmp rồi mới thay file thật, nên không bao giờ bị file ghi dở.</summary>
 public static class JsonStore
 {
     public static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
-        Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),   // giữ nguyên tiếng Việt trong file
+        Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        TypeInfoResolver = CoreJson.Default,   // metadata sinh sẵn, không reflection (publish cắt)
+        TypeInfoResolver = CoreJson.Default,
     };
 
     private static readonly JsonSerializerOptions Compact = new(Options) { WriteIndented = false };
@@ -23,7 +22,6 @@ public static class JsonStore
         try
         {
             if (!File.Exists(path)) return null;
-            // Cho phép file bị thay (Write) ngay lúc đang đọc: giao diện đọc lms.json trong khi đồng bộ ghi lại file đó.
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var reader = new StreamReader(fs);
             return JsonNode.Parse(reader.ReadToEnd());
@@ -33,11 +31,9 @@ public static class JsonStore
 
     public static JsonObject ReadObject(string path) => Read(path) as JsonObject ?? new JsonObject();
 
-    /// <summary>Ghi JSON (file tạm rồi thay). Nội dung y như file đang có thì không ghi; trả true nếu đã ghi.</summary>
     public static bool Write(string path, JsonNode? node)
     {
         var text = node?.ToJsonString(Options) ?? "null";
-        // Ghi file tạm và thay file thật đều có thể gặp file đang bận (antivirus, OneDrive, trình soạn thảo đang mở): thử lại vài lần.
         return AtomicFile.WriteIfChanged(path, text, a => Retry(path, a));
     }
 

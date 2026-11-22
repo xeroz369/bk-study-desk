@@ -1,22 +1,14 @@
-using System.Text.Json;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Files;
 using static SoHocTap.Sources.Lms.LmsClient;
 
 namespace SoHocTap.Sources.Lms;
 
-// Tài liệu: tải file, chống trùng, giữ bản cũ, đề bài tập, cấu trúc khóa.
 public sealed partial class LmsSource
 {
-    /// <summary>
-    /// Bài tập (assignment): lưu đề (Đề bài.html) và file đính kèm vào Tài liệu LMS\Bài tập\&lt;tên bài&gt;, để xem được khi LMS lag.
-    /// Dữ liệu lấy từ mod_assign_get_assignments đã gọi sẵn; file nào đã có (cùng url, cùng timemodified) thì không tải lại.
-    /// Chỉ đọc: không mở trang nộp bài, không gọi API ghi.
-    /// </summary>
     private static async Task SaveAssignmentsAsync(List<CourseInfo> courses, JsonArray events, JsonObject index,
         Dictionary<string, Dictionary<string, string>> hashes, Action<string> log, CancellationToken ct)
     {
@@ -32,8 +24,6 @@ public sealed partial class LmsSource
                 var dir = Path.Combine(m.LmsFolder, "Bài tập", SafeName(name));
                 var file = Path.Combine(dir, "Đề bài.html");
                 var due = DateTimeOffset.FromUnixTimeSeconds(e["time"]?.GetValue<long>() ?? 0).LocalDateTime;
-                // CSP: mở file trên máy thì không chạy script / event handler, không gửi form, không tải ảnh ngoài (theo dõi người mở).
-                // Bỏ thẻ <meta> trong nội dung LMS để không tự chuyển trang (refresh) hay đổi CSP.
                 var html = $"<!doctype html><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'\">" +
                            $"<title>{WebUtility.HtmlEncode(name)}</title>" +
                            $"<h1>{WebUtility.HtmlEncode(name)}</h1><p>Hạn nộp: {due:dd/MM/yyyy HH:mm}</p>" +
@@ -59,12 +49,11 @@ public sealed partial class LmsSource
     [GeneratedRegex(@"<meta\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex MetaRx();
 
-    /// <summary>Các file tải được của một khóa: file trong module "resource" và "folder", bỏ folder nằm trong skipFolders và file lớn hơn maxFileMB.</summary>
     private static IEnumerable<(JsonObject Sec, JsonObject Mod, JsonObject File)> Downloadable(JsonArray contents)
     {
         var skip = Config.List("sources.lms.skipFolders");
         var max = Config.Int("sources.lms.maxFileMB", 200) * 1024L * 1024;
-        var maxVideo = Config.Int("sources.lms.maxVideoMB", 2048) * 1024L * 1024;   // video chỉ tải khi người dùng tích chọn
+        var maxVideo = Config.Int("sources.lms.maxVideoMB", 2048) * 1024L * 1024;
         foreach (var sec in contents.OfType<JsonObject>())
             foreach (var mod in (sec["modules"] as JsonArray ?? []).OfType<JsonObject>())
             {
@@ -79,10 +68,8 @@ public sealed partial class LmsSource
 
     private static FileKind KindOf(string? fileName) => FileKinds.Of(fileName);
 
-    /// <summary>Một file tải được trong mục: loại, dung lượng, đã có trên máy chưa.</summary>
     public sealed record FileStat(FileKind Kind, long Bytes, bool Have);
 
-    /// <summary>Một mục (section) của khóa trên LMS và các file tải được trong đó.</summary>
     public sealed record SectionInfo(int Index, string Name, IReadOnlyList<FileStat> Items)
     {
         public IEnumerable<FileStat> Of(IReadOnlySet<FileKind> kinds) => Items.Where(f => kinds.Contains(f.Kind));
@@ -92,7 +79,6 @@ public sealed partial class LmsSource
         LmsStore.Read()?.Courses.Where(c => c.Id == courseId && c.Subject is not null)
             .Select(c => new CourseInfo(c.Id, c.Name ?? "", c.Subject, c.Code ?? "", c.Part, c.Term ?? "", c.Teacher ?? "", c.Url ?? "")).FirstOrDefault();
 
-    /// <summary>Các mục của khóa (đọc thẳng từ LMS) để người dùng chọn tải.</summary>
     public static async Task<List<SectionInfo>> SectionsAsync(long courseId, CancellationToken ct)
     {
         var contents = (JsonArray)await CallAsync("core_course_get_contents", [Arg("courseid", courseId)], ct);
@@ -111,10 +97,6 @@ public sealed partial class LmsSource
         return list;
     }
 
-    /// <summary>
-    /// Đọc lại cấu trúc các lớp (mục, file, link) và lưu như lúc đồng bộ, không tải file: dùng cho môn kỳ cũ mà đồng bộ thường không đọc
-    /// (tab Video và liên kết). Một request mỗi lớp, giãn cách như mọi lời gọi LMS. Trả số lớp đọc được; lớp lỗi bỏ qua, ghi log.
-    /// </summary>
     public static async Task<int> ReadStructuresAsync(IReadOnlyCollection<long> courseIds, CancellationToken ct)
     {
         await Gate.WaitAsync(ct);
@@ -138,23 +120,13 @@ public sealed partial class LmsSource
         finally { Gate.Release(); }
     }
 
-    /// <summary>
-    /// File đã có trên máy đúng bản trên LMS (cùng timemodified): cửa sổ Tải tài liệu không đếm, lúc tải bỏ qua. Một điều kiện cho cả hai
-    /// chỗ để số "file mới" trên cửa sổ khớp số file thực tải (thanh tiến độ). File nén đã giải nén thì thư mục giải nén cũng tính là có.
-    /// </summary>
     private static bool UpToDate(JsonObject index, JsonObject f) =>
         index[f["fileurl"]?.GetValue<string>() ?? ""] is JsonObject e
         && e["timemodified"]?.GetValue<long>() == f["timemodified"]?.GetValue<long>()
         && (File.Exists(LocalCopy(e)) || Directory.Exists(e["extractedTo"]?.GetValue<string>() ?? ""));
 
-    /// <summary>Kết quả một lượt tải theo mục: số file mới hay cập nhật, số file lỗi (đã ghi vào nhật ký).</summary>
     public readonly record struct DownloadResult(int Got, int Failed);
 
-    /// <summary>
-    /// Tải các mục đã chọn của một khóa vào thư mục môn (giống lúc sync: chống trùng, giữ bản cũ). extract = true thì tự giải nén file zip.
-    /// <paramref name="kinds"/>: chỉ tải các loại file này (null = mọi loại). <paramref name="step"/>: gọi với tên file ngay trước khi tải
-    /// từng file chưa có (file đã có không gọi), để cửa sổ báo tiến độ.
-    /// </summary>
     public static async Task<DownloadResult> DownloadSectionsAsync(long courseId, IReadOnlyCollection<int> sections, bool extract, Action<string> log,
         CancellationToken ct, IReadOnlySet<FileKind>? kinds = null, Action<string>? step = null)
     {
@@ -176,10 +148,8 @@ public sealed partial class LmsSource
                 try
                 {
                     if (await SyncFileAsync(m, sec, mod, f, index, hashes, log, ct, extract) is not null) n++;
-                    // null mà vẫn chưa có trên máy (trùng nội dung thì chỉ mục đã ghi dedupOf, tính là có): tải hỏng, SyncFileAsync đã ghi log.
                     else if (!UpToDate(index, f)) { failed++; log($"  lỗi: {f["filename"]}: không tải được"); }
                 }
-                // Một file lỗi (đang mở ở chương trình khác, ổ đầy) thì báo và tải tiếp file khác, không dừng cả lượt tải.
                 catch (Exception e) when (Recoverable(e, ct))
                 {
                     failed++;
@@ -218,12 +188,11 @@ public sealed partial class LmsSource
         var h = Organizer.Sha256(tmp);
         var knownPath = known?["path"]?.GetValue<string>();
         var lmsSub = Config.Str("folders.lmsSubfolder");
-        // Chỉ file trong cây Tài liệu LMS là của app; file trùng nội dung của người dùng (BKeL\, OnGK\...) không bao giờ bị chuyển hay thay.
         var place = LmsPlacement.Decide(knownPath, hashes.GetValueOrDefault(h), dest, Organizer.SubjectsRoot, lmsSub, File.Exists);
         var final = LmsPlacement.Apply(tmp, place, old => Path.Combine(Config.Folder("archiveOldVersions"), Paths.RelativeToStudy(old)));
         var (path, dedupOf) = LmsPlacement.IndexFields(place, knownPath, final, Organizer.SubjectsRoot, lmsSub);
         index[url] = IndexEntry(path, dedupOf, modified, m.Id, h);
-        if (final is null) return null;                             // nội dung này môn đã có rồi
+        if (final is null) return null;
         if (knownPath is not null && place.Kind == PlacementKind.New && File.Exists(knownPath))
             Log.Info($"LMS: bản mới của {f["filename"]} đặt vào Tài liệu LMS, không thay file ngoài cây của app");
         dest = final;
@@ -249,10 +218,6 @@ public sealed partial class LmsSource
         };
     }
 
-    /// <summary>
-    /// Một dòng của lms-files.json. <c>path</c>: file app tải cho url này (trong Tài liệu LMS); <c>dedupOf</c>: file khác (thường của người
-    /// dùng) có cùng nội dung, nên không tải bản riêng. Chỉ path mới có thể bị thay khi LMS có bản mới.
-    /// </summary>
     private static JsonObject IndexEntry(string? path, string? dedupOf, long? modified, long course, string sha)
     {
         var o = new JsonObject();
@@ -264,18 +229,14 @@ public sealed partial class LmsSource
         return o;
     }
 
-    /// <summary>Bản trên máy của một dòng chỉ mục: file của app, không có thì file trùng nội dung.</summary>
     private static string? LocalCopy(JsonNode? entry) => entry?["path"]?.GetValue<string>() ?? entry?["dedupOf"]?.GetValue<string>();
 
-    /// <summary>Đánh dấu file tải từ mạng (Zone.Identifier), để Office mở ở Protected View và SmartScreen kiểm file chạy được. URL không kèm token.</summary>
     private static void MarkFromInternet(string path, string url)
     {
         if (!OperatingSystem.IsWindows()) return;
         try { File.WriteAllText(path + ":Zone.Identifier", $"[ZoneTransfer]\r\nZoneId=3\r\nHostUrl={url.Split('?')[0]}\r\n"); }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException) { }   // ổ không phải NTFS
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException) { }
     }
-
-    // ------------------------------------------------------------------ cấu trúc khóa (trang Khóa học)
 
     [GeneratedRegex("<[^>]+>")] private static partial Regex TagRx();
 
@@ -311,7 +272,6 @@ public sealed partial class LmsSource
                     ["url"] = mod["url"]?.GetValue<string>(),
                     ["files"] = files,
                     ["text"] = text.Length > 300 ? text[..300] : text,
-                    // Nhãn hay nhúng video (iframe YouTube) hoặc link ngoài: giữ link để tab Video và liên kết hiện được.
                     ["links"] = type == "label" ? new JsonArray([.. LmsMedia.LinksIn(html).Select(l => (JsonNode)l)]) : null,
                 });
             }

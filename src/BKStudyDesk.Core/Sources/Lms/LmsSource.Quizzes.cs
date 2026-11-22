@@ -1,17 +1,13 @@
-using System.Text.Json;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using SoHocTap.Core;
-using SoHocTap.Files;
 using static SoHocTap.Sources.Lms.LmsClient;
 
 namespace SoHocTap.Sources.Lms;
 
-// Quiz: lượt làm, lưu bản xem lại.
 public sealed partial class LmsSource
 {
-    /// <summary>Chỉ gọi lại attempt của quiz đang mở hoặc vừa đóng; quiz khác thì dùng lại data cũ.</summary>
     private static async Task<JsonArray> CollectQuizzesAsync(List<CourseInfo> courses, JsonArray? previous, long lastSync, Action<string> log, CancellationToken ct)
     {
         var subj = courses.ToDictionary(c => c.Id, c => c.Subject);
@@ -41,10 +37,8 @@ public sealed partial class LmsSource
             };
             bool opened = open is null || open <= t;
             bool active = opened && (close is null || close >= lastSync - 86400);
-            // Quiz cũ đã đóng: dùng lại data, trừ khi còn lượt đã nộp chưa lưu (vừa bật tự lưu, hoặc file bị xóa).
             if (old.TryGetValue(id, out var prev) && !active && !Unsaved(id, prev)) { item["attempts"] = prev["attempts"]?.DeepClone(); list.Add((JsonNode)item); continue; }
             if (!opened) { list.Add((JsonNode)item); continue; }
-            // Quiz không có hạn đóng thì không biết bao giờ hết làm được: hỏi lượt làm tối đa ngày một lần, không hỏi ở mọi lần đồng bộ.
             if (close is null && old.TryGetValue(id, out var last) && (last["checked"]?.GetValue<long>() ?? 0) > t - 86400 && !Unsaved(id, last))
             {
                 item["attempts"] = last["attempts"]?.DeepClone();
@@ -61,7 +55,6 @@ public sealed partial class LmsSource
                 var aid = a["id"]!.GetValue<long>();
                 item["attempts"]!.AsArray().Add((JsonNode)new JsonObject { ["id"] = aid, ["finished"] = a["timefinish"]?.GetValue<long>(), ["grade"] = a["sumgrades"]?.DeepClone() });
                 if (!SaveQuizzes) continue;
-                // Only finished attempts, read-only review API. Never touch an attempt that is in progress.
                 var path = Path.Combine(QuizDir, $"{id}-{aid}.json");
                 if (JsonStore.Read(path) is JsonObject saved && !NeedsRefetch(saved, close, t)) continue;
                 var head = new JsonObject
@@ -89,7 +82,6 @@ public sealed partial class LmsSource
                             ["status"] = x["status"]?.DeepClone(),
                         });
                     head["grade"] = rev["grade"]?.DeepClone();
-                    // LMS may hide the right answers until the quiz closes: remember it so we fetch again after close.
                     head["answers"] = questions.Any(q => q?["html"]?.GetValue<string>().Contains("rightanswer", StringComparison.Ordinal) == true);
                     head["questions"] = questions;
                     JsonStore.Write(path, head);
@@ -97,7 +89,6 @@ public sealed partial class LmsSource
                 }
                 catch (LmsException e) when (e.Code is "noreview" or "noreviewattempt" or "noreviewavailable")
                 {
-                    // Quiz does not allow review: keep a stub (name, grade) so the app can offer "ghi nhanh câu còn nhớ".
                     head["grade"] = a["sumgrades"]?.DeepClone();
                     head["noReview"] = true;
                     head["reason"] = e.Message;
@@ -106,7 +97,6 @@ public sealed partial class LmsSource
                 }
                 catch (Exception e) when (Recoverable(e, ct))
                 {
-                    // Lỗi thoáng qua (mạng, server chậm…): không ghi file, lần đồng bộ sau thử lại (một request).
                     Warn($"lưu quiz {item["name"]}", e);
                 }
             }
@@ -115,18 +105,15 @@ public sealed partial class LmsSource
         return list;
     }
 
-    /// <summary>Tự lưu bản xem lại quiz đã nộp (sources.lms.saveQuizzes, chỉnh trong Cài đặt hoặc Kho quiz).</summary>
     private static bool SaveQuizzes => Config.Bool("sources.lms.saveQuizzes", true);
 
-    /// <summary>Quiz có lượt đã nộp mà chưa có file lưu, hoặc file kiểu cũ (chưa lọc sesskey, thiếu savedAt).</summary>
     private static bool Unsaved(long quizId, JsonObject prev) =>
         SaveQuizzes && (prev["attempts"] as JsonArray ?? []).OfType<JsonObject>()
             .Any(a => JsonStore.Read(Path.Combine(QuizDir, $"{quizId}-{a["id"]}.json")) is not JsonObject f || f["savedAt"] is null);
 
-    /// <summary>Saved without answers (or without review) and the quiz has closed since: try once more.</summary>
     private static bool NeedsRefetch(JsonObject saved, long? close, long now)
     {
-        if (saved["savedAt"] is null) return true;   // file kiểu cũ: lưu lại bằng bản đã lọc
+        if (saved["savedAt"] is null) return true;
         var incomplete = saved["noReview"]?.GetValue<bool>() == true || saved["answers"]?.GetValue<bool>() == false;
         var savedAt = saved["savedAt"]?.GetValue<long>() ?? 0;
         return incomplete && close is { } c && c <= now && savedAt < c;
@@ -137,10 +124,6 @@ public sealed partial class LmsSource
     [GeneratedRegex(@"src=""(https?://[^""]+/pluginfile\.php/[^""]+)""", RegexOptions.IgnoreCase)]
     private static partial Regex PluginFileRx();
 
-    /// <summary>
-    /// Review HTML from LMS: drop scripts and hidden inputs (they carry the session key), embed question images
-    /// (pluginfile URLs need the token) as data URIs so the saved quiz works offline and can be shared.
-    /// </summary>
     private static async Task<string> CleanReviewAsync(string html, CancellationToken ct)
     {
         html = ReviewNoiseRx().Replace(html, "");

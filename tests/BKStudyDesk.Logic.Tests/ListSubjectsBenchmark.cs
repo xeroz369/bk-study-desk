@@ -4,11 +4,6 @@ using SoHocTap.Files;
 
 namespace SoHocTap.Tests;
 
-/// <summary>
-/// Đo ListSubjects trên cây giả (thư mục tạm): cách cũ (1.1.7: EnumerateFiles cả cây, tạo FileInfo cho mọi file, chạy trên UI thread
-/// mỗi lần mở trang), cách mới lần đầu (JunkFilter, không vào .git/db), và lần mở lại trang khi không đổi gì (chỉ đi qua thư mục).
-/// In số đo ra output của test; chỉ kiểm tra thứ tự lớn bé, không kiểm số tuyệt đối (máy CI chậm nhanh khác nhau).
-/// </summary>
 public class ListSubjectsBenchmark(ITestOutputHelper output)
 {
     private static JsonArray OldListSubjects(string root)
@@ -30,7 +25,7 @@ public class ListSubjectsBenchmark(ITestOutputHelper output)
 
     private static double Ms(Action a, int runs = 5)
     {
-        a();   // làm nóng (cache hệ thống file, JIT)
+        a();
         var sw = Stopwatch.StartNew();
         for (var i = 0; i < runs; i++) a();
         return sw.Elapsed.TotalMilliseconds / runs;
@@ -40,7 +35,6 @@ public class ListSubjectsBenchmark(ITestOutputHelper output)
     public void MeasureListSubjects()
     {
         using var t = new TempStudy();
-        // 12 môn, mỗi môn 6 thư mục x 40 tệp, cộng một dự án KiCad có .history\.git với 400 tệp rác.
         for (var s = 0; s < 12; s++)
         {
             for (var d = 0; d < 6; d++)
@@ -57,7 +51,6 @@ public class ListSubjectsBenchmark(ITestOutputHelper output)
         output.WriteLine($"ListSubjects 12 môn, 2880 tệp + 4800 tệp rác: cũ {old:0.0} ms, mới {cold:0.0} ms, mở lại (cache) {cached:0.0} ms");
         Assert.True(hit);
         Assert.True(cached < old, $"cache {cached:0.0} ms phải nhanh hơn quét cũ {old:0.0} ms");
-        // Kết quả mới không đếm tệp rác.
         Assert.All(DocumentScan.ListSubjects(t.Subjects).OfType<JsonObject>(), s => Assert.Equal(240, s["files"]!.GetValue<int>()));
     }
 }

@@ -6,7 +6,6 @@ public class ExamSessionTests
 {
     private static readonly TimeZoneInfo Hcm = TimeZoneInfo.CreateCustomTimeZone("utc+7", TimeSpan.FromHours(7), "UTC+7", "UTC+7");
 
-    // Đề KTS mẫu tự dựng: 5 câu, 10 phút, đúng +0,4, sai -0,2.
     private static (StudyRegistry Study, PracticeProgress P, FixedClock Clock, Exam Exam) Make()
     {
         var clock = new FixedClock(new DateTimeOffset(2026, 10, 7, 3, 0, 0, TimeSpan.Zero), Hcm);

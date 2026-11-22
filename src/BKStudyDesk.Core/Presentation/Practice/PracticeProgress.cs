@@ -18,51 +18,34 @@ public static class LessonStatusText
     });
 }
 
-/// <summary>Số liệu của một môn: số bài, bài đã soạn, bài xong, câu đã làm, câu đúng ngay lần đầu.</summary>
 public sealed record CourseStats(int Total, int Written, int Done, int Answered, int FirstOk);
 
-/// <summary>Chỗ đọc ghi <c>ket-qua.json</c>. App dùng <see cref="ApiProgressStorage"/>; test dùng bản trong bộ nhớ.</summary>
 public interface IProgressStorage
 {
-    /// <summary>Nội dung JSON; null khi chưa có. Ném lỗi khi không đọc được.</summary>
     Task<string?> ReadAsync(CancellationToken ct);
 
     Task<bool> WriteAsync(string json, CancellationToken ct);
 }
 
-/// <summary>
-/// Kết quả luyện tập và lịch ôn (port <c>progress.svelte.ts</c>). Ghi qua <see cref="IProgressStorage"/>:
-/// <see cref="Save"/> chỉ đánh dấu còn thay đổi, view gọi <see cref="FlushAsync"/> (gom ghi là việc của view).
-/// </summary>
 public sealed class PracticeProgress(StudyRegistry study, IProgressStorage storage, TimeProvider? clock = null)
 {
-    /// <summary>Hộp Leitner: số ngày tới lần ôn sau. Sai về hộp 1 (mai ôn), đúng lên hộp kế.</summary>
     private static readonly int[] Interval = [0, 1, 3, 7, 14, 30];
 
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
 
-    /// <summary>Múi giờ của máy (hiện ngày giờ của kết quả).</summary>
     public TimeZoneInfo Zone => _clock.LocalTimeZone;
 
     public ProgressState State { get; private set; } = new();
 
-    /// <summary>Lỗi đọc, ghi gần nhất (rỗng khi ổn).</summary>
     public string SaveError { get; private set; } = "";
 
-    /// <summary>Còn thay đổi chưa ghi.</summary>
     public bool Pending { get; private set; }
 
-    /// <summary>Ngày theo giờ máy, YYYY-MM-DD.</summary>
     public string Today(int offsetDays = 0) =>
         TimeZoneInfo.ConvertTime(_clock.GetUtcNow().AddDays(offsetDays), _clock.LocalTimeZone).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-    // new Date().toISOString() của JS.
     private string Now() => _clock.GetUtcNow().UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
 
-    /// <summary>
-    /// Lần đọc gần nhất lỗi (file hỏng, bị khóa): không ghi gì cho tới khi đọc lại được, để không đè mất kết quả cũ.
-    /// Câu làm trong lúc đó vẫn giữ trong app và được gộp vào khi đọc lại thành công.
-    /// </summary>
     public bool ReadFailed { get; private set; }
 
     public async Task LoadAsync(CancellationToken ct = default)
@@ -71,7 +54,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         {
             var json = await storage.ReadAsync(ct);
             var loaded = ProgressState.Normalize(json is null ? null : JsonNode.Parse(json));
-            // Đọc lại sau một lần lỗi: gộp phần đã làm trong app vào, rồi ghi như thường.
             State = ReadFailed && Pending ? ProgressState.Merge(loaded, State) : loaded;
             ReadFailed = false;
             SaveError = "";
@@ -86,9 +68,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
 
     public void Save() => Pending = true;
 
-    /// <summary>
-    /// Nạp lại cả sổ tạo bản mới: mang theo câu đã làm ở bản cũ mà chưa ghi được vì file không đọc được (ReadFailed).
-    /// </summary>
     public void Absorb(PracticeProgress old)
     {
         if (!old.ReadFailed || !old.Pending) return;
@@ -96,7 +75,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         Save();
     }
 
-    /// <summary>Ghi ngay. Ghi lỗi thì vẫn còn Pending để lần sau ghi lại.</summary>
     public async Task FlushAsync(CancellationToken ct = default)
     {
         if (ReadFailed)
@@ -112,7 +90,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         SaveError = ok ? "" : L.T("practice.saveError.write");
     }
 
-    /// <summary>Sau khi nạp nội dung (cần fingerprint): lần đầu có lịch ôn thì dựng lịch từ các câu đã làm.</summary>
     public void SeedSchedule()
     {
         if (State.Srs.Count > 0) return;
@@ -146,7 +123,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         Save();
     }
 
-    /// <summary>Chỉ câu trả lời đầu tiên trong ngày mới đổi hộp (làm lại khi luyện thì không); sai sau đó về hộp 1.</summary>
     public void SrsAnswer(string fp, bool correct)
     {
         var day = Today();
@@ -165,11 +141,9 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         Save();
     }
 
-    /// <summary>Câu tới hạn ôn hôm nay (mỗi fingerprint một câu), khó trước. Lọc theo môn nếu có.</summary>
     public List<Question> DueQuestions(string? courseId = null, int limit = 40)
     {
         var day = Today();
-        // Câu trong bài trước (câu vừa có trong bài vừa có trong đề thì hiện kèm bài), rồi câu chỉ có trong đề.
         var exams = study.Exams.Values.Where(x => courseId is null || x.CourseId == courseId);
         var lessonQs = courseId is null
             ? study.LessonQuestions()
@@ -189,17 +163,15 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
     public void RecordTime(string? fp, double seconds)
     {
         if (fp is null || seconds <= 0 || seconds > 3600) return;
-        State.Times[fp] = Math.Floor(seconds + 0.5);   // Math.round của JS
+        State.Times[fp] = Math.Floor(seconds + 0.5);
         Save();
     }
 
-    /// <summary>Ghi chú còn nội dung (chữ hoặc cờ); ghi chú đã xóa chỉ giữ làm mốc khi gộp.</summary>
     public List<KeyValuePair<string, NoteRecord>> ActiveNotes() =>
         State.Notes.Where(kv => !string.IsNullOrWhiteSpace(kv.Value.Text) || kv.Value.Flag == true).ToList();
 
     public NoteRecord? Note(string? fp) => fp is null ? null : State.Notes.GetValueOrDefault(fp);
 
-    /// <summary>Sửa ghi chú (null là giữ nguyên). Ghi chú xóa vẫn để lại bản rỗng có giờ mới, để gộp với bản cũ không làm nó hiện lại.</summary>
     public void SetNote(string? fp, string? text = null, bool? flag = null)
     {
         if (fp is null) return;
@@ -208,10 +180,8 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         Save();
     }
 
-    /// <summary>Gói cập nhật làm đổi id câu: chuyển kết quả từ id cũ sang id mới. oldIds là mọi id gói từng có.</summary>
     public int MigrateIds(IReadOnlyDictionary<string, string> map, IEnumerable<string>? oldIds = null)
     {
-        // Chuyển từ bản chụp: id có thể đổi chéo (q1 cũ thành q2 trong khi câu mới nhận q1).
         var snap = new Dictionary<string, QuestionRecord>(State.Questions);
         var targets = map.Values.ToHashSet();
         var moved = 0;
@@ -222,7 +192,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
             if (!targets.Contains(from)) State.Questions.Remove(from);
             moved++;
         }
-        // Id cũ không câu nào giữ (đã xóa, hoặc id nay thuộc câu khác): bỏ kết quả.
         foreach (var id in oldIds ?? [])
             if (!targets.Contains(id) && snap.TryGetValue(id, out var s) && State.Questions.TryGetValue(id, out var now) && ReferenceEquals(now, s))
             {
@@ -241,7 +210,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
 
     public double? Scroll(string id) => State.Lessons.GetValueOrDefault(id)?.Scroll;
 
-    /// <summary>Ghi chỗ đang đọc của bài đã mở; chỉ đánh dấu chờ ghi khi đổi đáng kể, cuộn liên tục không làm ghi file liên tục.</summary>
     public void SetScroll(string id, double fraction)
     {
         if (State.Lessons.GetValueOrDefault(id) is not { } v) return;
@@ -257,7 +225,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
         Save();
     }
 
-    /// <summary>Câu cần ôn: sai ở lần đầu và chưa làm lại đúng trong mục Ôn câu sai.</summary>
     public bool NeedsReview(string id) => Q(id) is { FirstTry: false, ReviewedOk: false };
 
     public void MarkReviewed(string id, bool ok)
@@ -288,7 +255,6 @@ public sealed class PracticeProgress(StudyRegistry study, IProgressStorage stora
             recs.Count, recs.Count(r => r.FirstTry));
     }
 
-    /// <summary>Bài kế tiếp: bài mở gần nhất còn dở; không có thì theo thứ tự ưu tiên môn, bài đầu tiên đã soạn mà chưa xong.</summary>
     public Entry? NextLesson()
     {
         var last = State.Lessons.Where(kv => kv.Value.OpenedAt != null).OrderByDescending(kv => kv.Value.OpenedAt, StringComparer.Ordinal)

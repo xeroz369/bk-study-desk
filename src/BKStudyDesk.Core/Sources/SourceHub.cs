@@ -1,14 +1,9 @@
 using System.Net.NetworkInformation;
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
-using SoHocTap.Data;
 
 namespace SoHocTap.Sources;
 
-/// <summary>
-/// Quản lý các nguồn: trạng thái sync, chạy sync (mỗi nguồn chỉ một lượt cùng lúc), scheduler, bắn event cho UI.
-/// Scheduler thức dậy theo app.schedulerMinutes; chỉ gửi request khi nguồn đã kết nối, máy có mạng và đã quá chu kỳ.
-/// </summary>
 public sealed class SourceHub : IDisposable
 {
     private sealed class State
@@ -17,46 +12,35 @@ public sealed class SourceHub : IDisposable
         public DateTimeOffset FailedAt;
         public DateTimeOffset StartedAt;
         public string? Error;
-        public SyncErrorKind? Kind;          // loại lỗi; null = lỗi ghi bởi bản cũ (chỉ có message)
-        public int NetFails;                 // số lần lỗi mạng liên tiếp, để retry sớm 10, 30, 60 phút
+        public SyncErrorKind? Kind;
+        public int NetFails;
         public List<string> Log = [];
-        public SyncProgress? Progress;       // tiến độ gần nhất nguồn báo (SyncPlan)
+        public SyncProgress? Progress;
         public DateTimeOffset StepShownAt;
-        public List<string> Warnings = [];   // phần không đọc được ở lần đồng bộ gần nhất
-        public object? Seen;                 // dữ liệu (bản trong cache của store) UI đã được báo gần nhất
-        public bool DataChanged;             // lượt này đã có dữ liệu mới (đã bắn "data" hoặc bản cuối khác lúc đầu)
-        public bool Quiet;                   // lượt gần nhất xong mà không có gì mới: UI chỉ cập nhật thanh trạng thái
+        public List<string> Warnings = [];
+        public object? Seen;
+        public bool DataChanged;
+        public bool Quiet;
     }
 
     private readonly Dictionary<string, ISource> _sources;
     private readonly Dictionary<string, State> _state;
     private readonly CancellationTokenSource _stop = new();
 
-    /// <summary>Lỗi sync gần nhất của từng nguồn (data/sync-state.json): restart app vẫn nhớ, không retry ngay.</summary>
     private static string StateFile => Paths.DataFile("sync-state.json");
 
-    /// <summary>Vừa sync thành công mà bấm Đồng bộ tiếp thì bỏ qua, tránh spam request lên server trường.</summary>
     private static readonly TimeSpan MinGap = TimeSpan.FromMinutes(2);
 
-    /// <summary>Khoảng tối thiểu giữa hai lần bắt đầu sync, kể cả khi lần trước lỗi hay bấm "Đồng bộ lại": bấm liên tục không bắn request liên tục.</summary>
     private static readonly TimeSpan MinRestart = TimeSpan.FromSeconds(30);
 
-    /// <summary>Lỗi mạng thì retry sớm theo nấc này (phút) thay vì đợi hết một chu kỳ; quá nấc cuối thì giữ nấc cuối.</summary>
     private static readonly int[] NetRetryMinutes = [10, 30, 60];
 
-    /// <summary>(nguồn, "start" | "progress" | "data" | "done"), Shell chuyển thành event cho UI.</summary>
     public event Action<string, string>? Changed;
 
-    /// <summary>
-    /// Sau mỗi lượt sync thành công: dữ liệu khác gì lần trước (nguồn, thay đổi). Bắn trên thread chạy sync.
-    /// Lượt không có gì mới (Quiet) thì không bắn. Chưa có tính năng nào nghe (1.1.8), mới ghi log Debug số lượng.
-    /// </summary>
     public event Action<string, ChangeSet>? ChangeSetReady;
 
-    /// <summary>Đang bật Tiết kiệm pin (Shell cài, Core không biết API của Windows): scheduler giãn chu kỳ gấp đôi.</summary>
     public Func<bool>? BatterySaver { get; set; }
 
-    /// <summary>Máy đang có mạng; mặc định hỏi NetworkInterface, test thì thay được.</summary>
     public Func<bool> Online { get; set; } = NetworkInterface.GetIsNetworkAvailable;
 
     public SourceHub(IEnumerable<ISource> sources)
@@ -77,8 +61,6 @@ public sealed class SourceHub : IDisposable
             }
     }
 
-    // LMS và MyBK sync song song, cùng ghi một file sync-state.json: khóa cả lúc dựng lẫn lúc ghi để bản ghi sau không đè
-    // mất phần của nguồn kia, và hai lần ghi không giẫm lên nhau.
     private static readonly object StateGate = new();
 
     private void SaveState()
@@ -106,24 +88,12 @@ public sealed class SourceHub : IDisposable
 
     public ISource? Get(string name) => _sources.GetValueOrDefault(name);
 
-    /// <summary>Lượt sync gần nhất của nguồn bị lỗi (chưa có lượt nào thành công sau đó).</summary>
     public bool Failed(string name) => _state.TryGetValue(name, out var st) && st.Error is not null;
 
-    /// <summary>
-    /// Lượt sync gần nhất xong mà không có gì mới (dữ liệu y như cũ, không lỗi, không cảnh báo): UI chỉ cập nhật thanh trạng thái,
-    /// không đọc lại, không vẽ lại trang, không thông báo.
-    /// </summary>
     public bool Quiet(string name) => _state.TryGetValue(name, out var st) && st.Quiet && st.Error is null;
 
-    /// <summary>Loại lỗi của lượt sync gần nhất; null nếu không lỗi hay lỗi của bản cũ.</summary>
     public SyncErrorKind? ErrorKind(string name) => _state.TryGetValue(name, out var st) && st.Error is not null ? st.Kind : null;
 
-    /// <summary>
-    /// Just signed in: "session expired" errors belong to the old session, clear them so the status bar stops asking to sign in
-    /// while the next sync runs. A real expiry on that sync sets it again. Other errors (network, server) stay.
-    /// The restart gap (MinRestart) is cleared too: a run that just failed for lack of a session must not block the sync the new
-    /// session starts (06/11/2026: MyBK failed at 01:08:26, sign-in done at 01:08:31, the MyBK sync after it never ran).
-    /// </summary>
     public void ForgetSessionExpired()
     {
         var changed = false;
@@ -169,7 +139,6 @@ public sealed class SourceHub : IDisposable
         return o;
     }
 
-    /// <summary>Chạy sync dưới nền. Trả false nếu nguồn đang chạy, chưa kết nối, hoặc vừa sync xong (dưới 2 phút, trừ khi force).</summary>
     public bool Start(string name, bool force = false, bool soon = false)
     {
         if (!_sources.TryGetValue(name, out var src)) return false;
@@ -179,8 +148,6 @@ public sealed class SourceHub : IDisposable
         var st = _state[name];
         lock (st)
         {
-            // soon: a page asked for one stale section (MyBK on demand). Each section is fresh for hours after it loads and a failed one
-            // waits 10 minutes, so the 30 second restart guard against repeated button presses is not needed there.
             if (st.Running || (!soon && DateTimeOffset.UtcNow - st.StartedAt < MinRestart)) return false;
             st.Running = true; st.Error = null; st.Kind = null; st.Log = []; st.StartedAt = DateTimeOffset.UtcNow;
             st.Progress = null; st.Warnings = []; st.DataChanged = false; st.Quiet = false;
@@ -197,7 +164,6 @@ public sealed class SourceHub : IDisposable
                 await src.SyncAsync(line => OnLine(name, st, line), force, _stop.Token);
                 lock (st) st.NetFails = 0;
                 SaveState();
-                // Store không ghi khi dữ liệu y như cũ, nên bản trong cache vẫn là đúng object lúc đầu: so tham chiếu là đủ.
                 var after = Snapshot(name);
                 bool quiet;
                 lock (st)
@@ -208,8 +174,6 @@ public sealed class SourceHub : IDisposable
                 Log.Debug($"Sync {name}: xong sau {sw.Elapsed.TotalSeconds:0.0} giây{(quiet ? ", không có gì mới" : "")}");
                 if (!quiet) ReportChanges(name, before);
             }
-            // Chỉ nuốt OperationCanceled khi app đang dừng. HttpClient hết Timeout cũng ném TaskCanceledException: đó là lỗi
-            // Timeout thật, phải báo và ghi lại, không được coi như "đã hủy".
             catch (OperationCanceledException) when (_stop.IsCancellationRequested) { Log.Debug($"Sync {name}: dừng vì app thoát"); }
             catch (Exception e)
             {
@@ -235,7 +199,6 @@ public sealed class SourceHub : IDisposable
     {
         if (line == SyncSignal.DataReady)
         {
-            // Phần chính đã lưu mà y như cũ (store không ghi): không bắt UI đọc lại, vẽ lại.
             var now = Snapshot(name);
             bool fresh;
             lock (st)
@@ -266,16 +229,10 @@ public sealed class SourceHub : IDisposable
         lock (st) st.Log.Add(line);
     }
 
-    /// <summary>
-    /// Báo lên UI ngay khi đổi câu, đổi từ vô định sang có số, hay xong hẳn; cùng câu chỉ tăng số thì tối đa 4 lần/giây (đỡ vẽ lại liên tục).
-    /// </summary>
     internal static bool ShowProgress(SyncProgress? last, SyncProgress now, TimeSpan sinceShown) =>
         last is not { } l || l.Key != now.Key || (l.Permille is null) != (now.Permille is null) || now.Permille == 1000
         || sinceShown > TimeSpan.FromMilliseconds(250);
 
-    // ------------------------------------------------------------------ ChangeSet
-
-    /// <summary>Dữ liệu đã lưu trước lượt sync (store có cache, không đọc lại file nếu không đổi).</summary>
     private static object? Snapshot(string name) => name switch
     {
         SourceIds.Lms => LmsStore.Read(),
@@ -296,19 +253,12 @@ public sealed class SourceHub : IDisposable
             Log.Debug($"ChangeSet {name}: {changes.Counts}");
             ChangeSetReady?.Invoke(name, changes);
         }
-        // So sánh lỗi không được làm hỏng lượt sync vừa xong.
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Error($"ChangeSet {name}", e); }
     }
 
-    // ------------------------------------------------------------------ scheduler
-
-    /// <summary>
-    /// Lúc scheduler sẽ tự đồng bộ nguồn này (cùng quy tắc với RunDue: hết chu kỳ, hay tới lúc thử lại sau lỗi); null khi đang Offline,
-    /// chưa đăng nhập hay đang chạy. Scheduler xem mỗi app.schedulerMinutes phút nên thực tế có thể trễ hơn một chút.
-    /// </summary>
     public DateTimeOffset? NextAutoAt(string name)
     {
-        if (OfflineMode.On || !UserActivity.Active || !_sources.TryGetValue(name, out var src) || !src.Scheduled) return null;   // away or on demand: nothing runs on its own
+        if (OfflineMode.On || !UserActivity.Active || !_sources.TryGetValue(name, out var src) || !src.Scheduled) return null;
         var s = src.Status();
         if (!s.Connected) return null;
         var interval = IntervalOf(src);
@@ -329,7 +279,6 @@ public sealed class SourceHub : IDisposable
         return next > DateTimeOffset.UtcNow ? next : DateTimeOffset.UtcNow;
     }
 
-    /// <summary>Chu kỳ thực tế của nguồn: gấp đôi khi bật Tiết kiệm pin.</summary>
     private TimeSpan IntervalOf(ISource src) => BatterySaverOn() ? src.Interval * 2 : src.Interval;
 
     private bool BatterySaverOn()
@@ -338,10 +287,6 @@ public sealed class SourceHub : IDisposable
         catch (Exception e) when (e is not OutOfMemoryException) { Log.Debug($"Không đọc được trạng thái pin: {e.Message}"); return false; }
     }
 
-    /// <summary>
-    /// Lần trước lỗi thì bao lâu sau mới tự retry: lỗi mạng/timeout thì sớm (10, 30, 60 phút, không quá một chu kỳ), lỗi khác
-    /// (thường do session hết hạn, server giới hạn) thì đợi hết một chu kỳ, đỡ tốn pin và đỡ spam request.
-    /// </summary>
     internal static TimeSpan RetryAfter(SyncErrorKind? kind, int netFails, TimeSpan interval)
     {
         if (kind is not (SyncErrorKind.Network or SyncErrorKind.Timeout) || netFails <= 0) return interval;
@@ -350,15 +295,10 @@ public sealed class SourceHub : IDisposable
         return retry < interval ? retry : interval;
     }
 
-    /// <summary>
-    /// Một lượt của scheduler: nguồn nào tới hạn thì chạy. Không có mạng thì bỏ lượt, không ghi lỗi (lỗi "mất mạng" lúc máy
-    /// đang offline chỉ làm người dùng lo). Login lại hoặc bấm Đồng bộ thì vẫn chạy ngay (không qua đây).
-    /// </summary>
     public void RunDue()
     {
         if (_stop.IsCancellationRequested) return;
-        if (OfflineMode.On) return;   // người dùng bật Offline: không tự đồng bộ, chỉ chạy khi bấm tay (Start force)
-        // Nobody at the computer: no scheduled sync. The shell runs RunDueSoon when the user comes back (UserActivity.Changed).
+        if (OfflineMode.On) return;
         if (!UserActivity.Active) { Log.Debug("Scheduler: user away, skip"); return; }
         if (!Online())
         {
@@ -367,7 +307,7 @@ public sealed class SourceHub : IDisposable
         }
         foreach (var src in _sources.Values)
         {
-            if (!src.Scheduled) continue;   // on-demand source (MyBK): pages ask for it
+            if (!src.Scheduled) continue;
             var s = src.Status();
             if (!s.Connected) continue;
             var interval = IntervalOf(src);
@@ -377,16 +317,11 @@ public sealed class SourceHub : IDisposable
             lock (st) { wait = st.Error is null ? TimeSpan.Zero : RetryAfter(st.Kind, st.NetFails, interval); failedAt = st.FailedAt; }
             if (wait > TimeSpan.Zero && DateTimeOffset.UtcNow - failedAt < wait) continue;
             var last = s.SyncedAt is { } t ? DateTimeOffset.FromUnixTimeSeconds(t) : DateTimeOffset.MinValue;
-            // Lần trước lỗi mạng và đã tới lúc retry thì chạy luôn, dù chưa hết chu kỳ tính từ lần thành công.
             var retryDue = wait > TimeSpan.Zero && wait < interval;
             if (retryDue || DateTimeOffset.UtcNow - last > interval) Start(src.Name);
         }
     }
 
-    /// <summary>
-    /// Có mạng lại, máy vừa thức dậy: chờ một chút (mạng vừa lên thường chưa có DNS) rồi chạy một lượt scheduler.
-    /// Gọi nhiều lần liền nhau thì chỉ chạy một lượt.
-    /// </summary>
     public void RunDueSoon(TimeSpan delay)
     {
         if (_stop.IsCancellationRequested || Interlocked.Exchange(ref _dueSoon, 1) == 1) return;
@@ -398,7 +333,6 @@ public sealed class SourceHub : IDisposable
                 Interlocked.Exchange(ref _dueSoon, 0);
                 RunDue();
             }
-            // App đang thoát (_stop đã hủy hoặc đã Dispose): bỏ lượt.
             catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException) { }
             catch (Exception e) when (e is not OutOfMemoryException) { Log.Error("Scheduler (sau khi có mạng lại)", e); }
             finally { Interlocked.Exchange(ref _dueSoon, 0); }
@@ -428,7 +362,6 @@ public sealed class SourceHub : IDisposable
 
     public void Dispose()
     {
-        // Lượt không có gì mới chỉ giữ "lần kiểm tra cuối" trong RAM: ghi ra trước khi thoát.
         foreach (var src in _sources.Values)
             try { src.Flush(); }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log.Warn($"Ghi trạng thái {src.Name} khi thoát: {e.Message}"); }

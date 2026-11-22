@@ -5,7 +5,6 @@ using Kind = SoHocTap.Sources.Lms.FileKind;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Cửa sổ Tải tài liệu nhiều môn (discussion #42): cây học kỳ, môn, mục; chỉ đếm file chưa có; cảnh báo khi lớn.</summary>
 public class DownloadTests
 {
     [Theory]
@@ -13,9 +12,9 @@ public class DownloadTests
     [InlineData("Đề thi cuối kỳ", true)]
     [InlineData("ĐỀ CŨ", true)]
     [InlineData("Final exam", true)]
-    [InlineData("Nội dung kiểm tra giữa kỳ", false)]   // phạm vi thi, không phải đề
+    [InlineData("Nội dung kiểm tra giữa kỳ", false)]
     [InlineData("Chương 1", false)]
-    [InlineData("Đề thiết kế bài tập lớn", false)]   // "đề thi" chỉ là tiền tố
+    [InlineData("Đề thiết kế bài tập lớn", false)]
     [InlineData("Examples", false)]
     [InlineData("Đề cương môn học", false)]
     [InlineData("Midterm exams", true)]
@@ -53,7 +52,7 @@ public class DownloadTests
     {
         var row = Ready(C(1, "PPT", "261"), wanted: true, S(0, (Kind.Pdf, 10, true)), S(1, (Kind.Pdf, 20, false)));
         Assert.Equal([false, true], row.Sections.Select(s => s.Selected));
-        Assert.Null(row.Checked);   // một phần
+        Assert.Null(row.Checked);
         Assert.Equal(20, row.Pending.Sum(f => f.Bytes));
     }
 
@@ -90,7 +89,7 @@ public class DownloadTests
         Assert.Equal(LoadState.Unread, row.State);
         row.Checked = true;
         Assert.True(row.Checked);
-        Assert.Empty(row.Pending);   // chưa đọc thì chưa có gì để tải
+        Assert.Empty(row.Pending);
     }
 
     [Fact]

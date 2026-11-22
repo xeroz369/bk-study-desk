@@ -11,9 +11,9 @@ public class MybkLoginPromptTests
         Assert.False(MybkLoginPrompt.Needed(false, Now, Now - D, [(Now + 10 * D, Now + 12 * D), (Now - 9 * D, Now - 8 * D)]));
 
     [Theory]
-    [InlineData(true, 1L, false)]      // đang ở trang MyBK
-    [InlineData(false, 4L, false)]     // dữ liệu MyBK cũ hơn 3 ngày
-    [InlineData(false, 1L, true)]      // sắp tới đợt đăng ký
+    [InlineData(true, 1L, false)]
+    [InlineData(false, 4L, false)]
+    [InlineData(false, 1L, true)]
     public void Prompts_WhenMybkIsNeeded(bool onPage, long daysOld, bool registrationSoon) =>
         Assert.True(MybkLoginPrompt.Needed(onPage, Now, Now - daysOld * D, registrationSoon ? [(Now + 2 * D, Now + 4 * D)] : []));
 

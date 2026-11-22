@@ -11,16 +11,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Thời khóa biểu dạng lưới tuần (như 1.x, Ui/WeekGrid; giống Google Calendar, Outlook): cột là ngày, trục dọc là giờ, mỗi buổi một khối
-/// màu theo môn. Chỉ ghép control có sẵn (Grid, Canvas, Border, TextBlock), không template riêng. Bố cục:
-/// - luôn đủ 7 cột Thứ hai tới Chủ nhật và đủ 0:00 tới 24:00 (lớp buổi tối, sự kiện khuya); mở tuần thì cuộn tới buổi sớm nhất, hay tới
-///   giờ hiện tại nếu giờ đó không lọt khung nhìn (WeekMath.ScrollAnchor);
-/// - tỉ lệ dọc giãn để khoảng có buổi học vừa khung nhìn, trong khoảng WeekMinPxPerMin tới WeekMaxPxPerMin (Tokens.axaml);
-/// - buổi trùng giờ chia bề ngang (WeekGridPresenter.Lanes); sự kiện tự thêm viền nét đứt và có nhãn;
-/// - vạch "bây giờ" màu nhấn ở cột hôm nay, dời mỗi phút bằng DispatcherTimer chỉ chạy khi lưới đang hiện (đỡ tốn pin).
-/// Giờ là giờ VN (giờ trường, như MyBK).
-/// </summary>
 public sealed class WeekGridView : UserControl
 {
     private readonly Grid _header = new();
@@ -30,15 +20,13 @@ public sealed class WeekGridView : UserControl
     private readonly DispatcherTimer _clock = new(DispatcherPriority.Background);
     private IReadOnlyList<WeekBlock> _blocks = [];
     private DateTime _monday;
-    private DateTime? _scrolledFor;   // tuần đã tự cuộn; dựng lại sau đồng bộ không kéo người dùng về
+    private DateTime? _scrolledFor;
     private DateTime _shownToday;
     private double _px;
     private const int From = 0, To = 24 * 60;
 
-    /// <summary>Bấm đúp một khối (sự kiện tự thêm: mở cửa sổ sửa).</summary>
     public Action<WeekBlock>? Open { get; set; }
 
-    /// <summary>Dựng menu chuột phải của khối sự kiện tự thêm mỗi lần mở (buổi học của MyBK không có menu).</summary>
     public Action<MenuFlyout, WeekBlock>? FillMenu { get; set; }
 
     private static DateTime WallNow => DateTime.UtcNow + SoHocTap.Core.VnTime.Offset;
@@ -59,20 +47,16 @@ public sealed class WeekGridView : UserControl
         _now.Children.Add(dot);
         _scroll.SizeChanged += (_, e) => { if (Math.Abs(e.PreviousSize.Height - e.NewSize.Height) > 1) Layout(); };
         _clock.Tick += (_, _) => OnClock();
-        // Đồng hồ chỉ chạy khi lưới đang hiện: chuyển trang, đổi sang Danh sách, xuống khay thì dừng.
         AttachedToVisualTree += (_, _) => OnClock();
         DetachedFromVisualTree += (_, _) => _clock.Stop();
         PropertyChanged += (_, e) => { if (e.Property == IsVisibleProperty) { if (IsVisible) OnClock(); else _clock.Stop(); } };
     }
 
-    // Token lấy từ Application: lưới được dựng trước khi gắn vào cửa sổ, lúc đó FindResource trên control chưa thấy Tokens.axaml.
     private static object? Token(string key) => Application.Current!.TryFindResource(key, out var v) ? v : null;
     private static double Res(string key) => Token(key) is double d ? d : throw new InvalidOperationException($"Thiếu token {key} trong Tokens.axaml");
 
-    /// <summary>Lần Show sau cuộn lại về giờ hiện tại (nút Hôm nay), kể cả khi đang ở đúng tuần đó.</summary>
     public void ScrollToNowNext() => _scrolledFor = default;
 
-    /// <summary>Hiện các buổi của tuần bắt đầu từ <paramref name="monday"/>.</summary>
     public void Show(DateTime monday, IReadOnlyList<WeekBlock> blocks)
     {
         _monday = monday;
@@ -110,7 +94,6 @@ public sealed class WeekGridView : UserControl
             Grid.SetColumn(cell, i + 1);
             _header.Children.Add(cell);
         }
-        // Thanh cuộn dọc nổi đè lên nội dung: đầu cột lùi bằng bề rộng thanh cuộn để thẳng hàng với thân lưới.
         _header.Margin = new Thickness(0, 0, _scroll.Bounds.Width - _scroll.Viewport.Width, 0);
     }
 
@@ -127,7 +110,7 @@ public sealed class WeekGridView : UserControl
         _body.ColumnDefinitions.Add(new ColumnDefinition(Res("WeekGutter"), GridUnitType.Pixel));
         for (var i = 0; i < 7; i++) _body.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
 
-        for (var m = From; m <= To; m += 60)   // đường kẻ giờ và nhãn giờ
+        for (var m = From; m <= To; m += 60)
         {
             var y = pad + (m - From) * px;
             _body.Children.Add(new TextBlock { Text = $"{m / 60}:00", Classes = { "sub" }, Margin = new Thickness(0, y - 7, 8, 0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top });
@@ -186,7 +169,6 @@ public sealed class WeekGridView : UserControl
         _now.IsVisible = true;
     }
 
-    /// <summary>Một khối: buổi học là nền màu môn nhạt có viền trái đậm; sự kiện tự thêm thì viền nét đứt quanh khối.</summary>
     private Control Block(WeekBlock b, double px)
     {
         var colors = 0;
@@ -194,7 +176,6 @@ public sealed class WeekGridView : UserControl
         var color = Token("Course" + WeekGridPresenter.ColorIndex(b.Key, colors)) is Color c ? c : Colors.Gray;
         var fill = new SolidColorBrush(Color.FromArgb(Token("WeekFillAlpha") is byte a ? a : throw new InvalidOperationException("Thiếu token WeekFillAlpha trong Tokens.axaml"), color.R, color.G, color.B));
         var panel = new StackPanel { Margin = new Thickness(6, 3, 4, 3) };
-        // Xuống dòng ở khoảng trắng, không cắt giữa chữ khi cột hẹp (chữ dài hơn cột thì khối tự cắt, rê chuột xem đủ).
         panel.Children.Add(new TextBlock { Text = b.Title, Classes = { "name" }, TextWrapping = TextWrapping.WrapWithOverflow });
         panel.Children.Add(new TextBlock { Text = b.Tag is { } tag ? $"{tag}, {b.Detail}" : b.Detail, Classes = { "sub" } });
         var height = Math.Max(18, (b.EndMin - b.StartMin) * px - 2);
@@ -204,7 +185,6 @@ public sealed class WeekGridView : UserControl
             {
                 Children =
                 {
-                    // Border không có nét đứt: viền sự kiện tự thêm vẽ bằng Rectangle có sẵn.
                     new Rectangle { RadiusX = 4, RadiusY = 4, Fill = fill, Stroke = new SolidColorBrush(color), StrokeThickness = 1.5, StrokeDashArray = new AvaloniaList<double> { 4, 2 } },
                     panel,
                 },

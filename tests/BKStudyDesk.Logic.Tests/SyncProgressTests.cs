@@ -1,12 +1,9 @@
 using SoHocTap.Sources;
-using SoHocTap.Ui;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Tiến độ đồng bộ theo trọng số (SyncPlan).</summary>
 public class SyncProgressTests
 {
-    /// <summary>Kế hoạch giống LMS khi không tự tải tài liệu: kiểm tra (chưa biết số khóa), nhóm, lịch 2, quiz 2, thông báo, điểm.</summary>
     private static SyncPlan Lms(bool autoDownload = false)
     {
         var plan = new SyncPlan()
@@ -37,14 +34,13 @@ public class SyncProgressTests
         plan.SetWeight("sync.lms.check", 4);
         plan.SetWeight("sync.lms.news", 4);
         plan.SetWeight("sync.lms.grades", 4);
-        // Tổng = 4 + 1 + 2 + 2 + 4 + 4 = 17.
         var p = plan.Advance(2, 3, 4);
         Assert.Equal("sync.lms.check", p.Key);
         Assert.Equal((3, 4), (p.Count, p.Of));
-        Assert.Equal(117, p.Permille);                         // 2/17
-        Assert.Equal(235, plan.Enter("sync.lms.groups").Permille);   // xong kiểm tra: 4/17
-        Assert.Equal(294, plan.Enter("sync.lms.events").Permille);   // 5/17
-        Assert.Equal(764, plan.Enter("sync.lms.grades").Permille);   // 13/17
+        Assert.Equal(117, p.Permille);
+        Assert.Equal(235, plan.Enter("sync.lms.groups").Permille);
+        Assert.Equal(294, plan.Enter("sync.lms.events").Permille);
+        Assert.Equal(764, plan.Enter("sync.lms.grades").Permille);
         Assert.Equal(1000, plan.Finish().Permille);
     }
 
@@ -52,7 +48,7 @@ public class SyncProgressTests
     public void CappedAt33PercentUntilCourseCheckFinishes()
     {
         var plan = Lms();
-        plan.SetWeight("sync.lms.check", 40);   // nhiều lớp mới: kiểm tra chiếm phần lớn tổng
+        plan.SetWeight("sync.lms.check", 40);
         plan.SetWeight("sync.lms.news", 1);
         plan.SetWeight("sync.lms.grades", 1);
         plan.Enter("sync.lms.check");
@@ -72,7 +68,7 @@ public class SyncProgressTests
         plan.SetWeight("sync.lms.grades", 2);
         for (var i = 0; i < 3; i++) Take(plan.Advance(i, i + 1, 3));
         foreach (var k in new[] { "sync.lms.groups", "sync.lms.events", "sync.lms.quizzes", "sync.lms.news", "sync.lms.grades" }) Take(plan.Enter(k));
-        plan.SetWeight("sync.lms.files", 0);   // không có tệp: phần giữ chỗ bỏ đi, thanh nhảy lên
+        plan.SetWeight("sync.lms.files", 0);
         Take(plan.Enter("sync.lms.assign"));
         Take(plan.Advance(0.5));
         Assert.Equal(seen.OrderBy(x => x), seen);
@@ -87,13 +83,12 @@ public class SyncProgressTests
         plan.SetWeight("sync.lms.check", 2);
         plan.SetWeight("sync.lms.news", 1);
         plan.SetWeight("sync.lms.grades", 1);
-        // Hết các bước không phải tệp (trừ bước lưu đề cuối cùng): chưa quá nửa thanh.
         var beforeFiles = plan.Enter("sync.lms.files").Permille!.Value;
         Assert.InRange(beforeFiles, 400, 500);
-        plan.SetWeight("sync.lms.files", 1000);   // 1000 byte
+        plan.SetWeight("sync.lms.files", 1000);
         var p = plan.Advance(100, 2, 2, "Giải tích 2");
         Assert.Equal("Giải tích 2", p.Detail);
-        Assert.InRange(p.Permille!.Value, 500, 560);   // nửa đầu + 10% của nửa sau
+        Assert.InRange(p.Permille!.Value, 500, 560);
         Assert.InRange(plan.Enter("sync.lms.assign").Permille!.Value, 950, 990);
     }
 
@@ -104,7 +99,7 @@ public class SyncProgressTests
         plan.Enter("a");
         plan.SetWeight("sync.lms.files", 100 + 900);
         plan.Enter("sync.lms.files", count: 1, of: 2);
-        Assert.Equal(550, plan.Advance(100, 2, 2).Permille);    // tệp nhỏ xong: chỉ 10% của phần tệp
+        Assert.Equal(550, plan.Advance(100, 2, 2).Permille);
     }
 
     [Fact]
@@ -113,12 +108,12 @@ public class SyncProgressTests
         var plan = new SyncPlan().Add("sync.mybk.open", weight: null);
         for (var i = 0; i < 13; i++) plan.Add("mybk:" + i);
         plan.Add("sync.mybk.registration", 2);
-        Assert.Null(plan.Enter("sync.mybk.open").Permille);     // đang mở MyBK, có thể qua SSO: chưa biết bao lâu
+        Assert.Null(plan.Enter("sync.mybk.open").Permille);
         plan.SetWeight("sync.mybk.open", 0);
         var p = plan.Enter("mybk:6", "sync.mybk.api", 7, 13);
-        Assert.Equal(400, p.Permille);                          // 6/15
+        Assert.Equal(400, p.Permille);
         Assert.Equal(("sync.mybk.api", 7, 13), (p.Key, p.Count, p.Of));
-        Assert.Equal(866, plan.Enter("sync.mybk.registration").Permille);   // 13/15
+        Assert.Equal(866, plan.Enter("sync.mybk.registration").Permille);
     }
 
     [Fact]

@@ -1,6 +1,3 @@
-<!-- Đăng nhập HCMUT ngay trong cửa sổ chính (MainWindow phủ lên vùng nội dung, không mở cửa sổ riêng): tiêu đề, nút Hủy, trang SSO thật
-     của trường. Người dùng tự gõ mật khẩu trong trang; app không đọc mật khẩu. Trạng thái, lỗi, Thử lại: dải báo của MainWindow
-     (Presentation/InfoBar). Lượt đăng nhập: Web/LoginFlow.cs. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"

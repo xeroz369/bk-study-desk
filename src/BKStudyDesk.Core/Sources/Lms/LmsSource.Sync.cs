@@ -1,23 +1,14 @@
 using System.Text.Json.Nodes;
 using SoHocTap.Core;
-using SoHocTap.Data;
 using SoHocTap.Files;
 using static SoHocTap.Sources.Lms.LmsClient;
 
 namespace SoHocTap.Sources.Lms;
 
-// Một lượt đồng bộ LMS: lớp, lịch, quiz, thông báo, điểm, rồi tới tài liệu.
 public sealed partial class LmsSource
 {
-    // ------------------------------------------------------------------ sync
-
-    /// <summary>Sync và tải theo mục cùng ghi vào index file (lms-files.json) nên không được chạy song song.</summary>
     private static readonly SemaphoreSlim Gate = new(1, 1);
 
-    /// <summary>
-    /// Chỉ đọc tin nhắn riêng (sources.lms.messagesMinutes phút một lần, ngoài lượt đồng bộ LMS đầy đủ 3 giờ): 2 request, cộng 1 mỗi
-    /// hội thoại có tin mới. Lượt đầy đủ đang chạy thì bỏ qua (lượt đó cũng đọc tin nhắn). true nếu đã ghi file tin nhắn.
-    /// </summary>
     public static async Task<bool> SyncMessagesAsync(CancellationToken ct)
     {
         if (!HasToken || !await Gate.WaitAsync(0, ct)) return false;
@@ -26,7 +17,7 @@ public sealed partial class LmsSource
             var info = await CallAsync("core_webservice_get_site_info", [], ct);
             if (info["userid"]?.GetValue<long>() is not { } uid) return false;
             if (await OptionalAsync("tin nhắn LMS", () => CollectMessagesAsync(uid, LmsMessagesStore.Raw(), ct), ct) is not { } messages) return false;
-            if (!HasToken) return false;   // vừa đăng xuất trong lúc đọc: không ghi lại tin nhắn của tài khoản cũ
+            if (!HasToken) return false;
             LmsMessagesStore.Write(messages);
             await LmsImages.SaveAsync(LmsImages.HtmlOf(null, messages, null), ct);
             return true;
@@ -35,14 +26,6 @@ public sealed partial class LmsSource
         finally { Gate.Release(); }
     }
 
-    /// <summary>
-    /// A course was opened in the app (on-demand sync, 06/11/2026): check that one course the way the Moodle app does when a course is
-    /// opened. Skipped when it was checked less than sources.lms.courseFreshMinutes ago (20, Moodle's "often" cache tier), when the
-    /// full sync is running (it checks every course anyway) or without a token. One core_course_get_updates_since call, plus
-    /// core_course_get_contents only if something changed. true: the saved course structure changed, the page should reload.
-    /// Files are left to the full sync (a course with files to fetch keeps its old state so that sync still sees them).
-    /// </summary>
-    /// <summary>The course's last check (lms-courses.json "checked") is older than <paramref name="freshSeconds"/>, or it was never checked.</summary>
     public static bool CourseCheckDue(JsonObject state, long courseId, long now, long freshSeconds) =>
         now - (state[courseId.ToString(System.Globalization.CultureInfo.InvariantCulture)]?["checked"]?.GetValue<long>() ?? 0) >= freshSeconds;
 
@@ -68,14 +51,8 @@ public sealed partial class LmsSource
 
     private static int _lightNext;
 
-    /// <summary>
-    /// The next run is a light one (minimum freshness for reminders while the user is away, 06/11/2026): course list, deadlines and
-    /// quizzes only. No course checks, announcements, messages, pages, images or grades; those keep the saved copy. It does not move
-    /// "syncedAt" (the last full sync), it sets "lightAt".
-    /// </summary>
     public static void LightNext() => Interlocked.Exchange(ref _lightNext, 1);
 
-    /// <summary>The light run did not start (a sync was already running): the next ordinary run must stay a full one.</summary>
     public static void CancelLight() => Interlocked.Exchange(ref _lightNext, 0);
 
     public async Task SyncAsync(Action<string> log, bool force, CancellationToken ct)
@@ -86,13 +63,8 @@ public sealed partial class LmsSource
         finally { Gate.Release(); }
     }
 
-    // Kênh báo lỗi từng phần của lần đồng bộ đang chạy (các hàm Collect* là static, không nhận log).
     private static readonly AsyncLocal<Action<string>?> SyncLog = new();
 
-    /// <summary>
-    /// Một phần không đọc được: ghi log và báo lên giao diện, đồng bộ vẫn chạy tiếp. Riêng "nopermissions" (giảng viên không cho xem,
-    /// vd. sổ điểm) là bình thường, chỉ ghi log. Lỗi lạ (không phải lỗi mạng, lỗi LMS, file bận) ghi cả stack trace để sửa được.
-    /// </summary>
     private static void Warn(string what, Exception e)
     {
         if (e is LmsException { Code: "nopermissions" or "nopermission" }) { Log.Debug($"LMS {what}: {e.Message}"); return; }
@@ -101,24 +73,15 @@ public sealed partial class LmsSource
         SyncLog.Value?.Invoke(SyncSignal.Warn(what, e.Message));
     }
 
-    /// <summary>
-    /// Lỗi này chỉ hỏng một phần, bỏ qua được (ghi cảnh báo, chạy tiếp)? Không bỏ qua: hết phiên (cả lượt phải dừng để báo đăng nhập
-    /// lại), người dùng/app hủy, hết RAM. Timeout của HttpClient (TaskCanceledException khi ct chưa hủy) thì bỏ qua được.
-    /// </summary>
     private static bool Recoverable(Exception e, CancellationToken ct) =>
         e is not (SessionExpiredException or OutOfMemoryException) && !(e is OperationCanceledException && ct.IsCancellationRequested);
 
-    /// <summary>Đọc một phần của lượt đồng bộ; lỗi bỏ qua được thì báo cảnh báo và trả <paramref name="fallback"/>.</summary>
     private static async Task<T> PartAsync<T>(string what, Func<Task<T>> work, T fallback, CancellationToken ct)
     {
         try { return await work(); }
         catch (Exception e) when (Recoverable(e, ct)) { Warn(what, e); return fallback; }
     }
 
-    /// <summary>
-    /// Phần thêm không bắt buộc (tin nhắn, trang): như <see cref="PartAsync"/>, nhưng LMS báo không có quyền gọi API
-    /// (SessionExpiredException từ accessexception) cũng chỉ cảnh báo. Phiên hết thật thì các bước trước đã báo rồi.
-    /// </summary>
     private static async Task<JsonObject?> OptionalAsync(string what, Func<Task<JsonObject>> work, CancellationToken ct)
     {
         try { return await work(); }
@@ -126,7 +89,6 @@ public sealed partial class LmsSource
         catch (Exception e) when (Recoverable(e, ct)) { Warn(what, e); return null; }
     }
 
-    /// <summary>Bản đồng bộ (không async) của <see cref="PartAsync"/>, cho việc ghi file trên máy.</summary>
     private static bool Part(string what, Action work, CancellationToken ct)
     {
         try { work(); return true; }
@@ -136,11 +98,8 @@ public sealed partial class LmsSource
     private static async Task SyncCoreAsync(Action<string> log, bool force, CancellationToken ct, bool light = false)
     {
         SyncLog.Value = log;
-        // sources.lms.autoDownload = false thì chỉ đọc lịch, quiz, thông báo, cấu trúc khóa; tài liệu thì tải tay theo mục (DownloadSectionsAsync).
         var autoDownload = Config.Bool("sources.lms.autoDownload", false);
         var callsBefore = Calls;
-        // Tiến độ theo trọng số (xấp xỉ số request): kiểm tra 1 mỗi khóa, mỗi phần 1 mỗi lần gọi API, tải tệp theo dung lượng.
-        // Số khóa, số tệp chưa biết thì chưa tính được tổng: thanh chạy vô định tới khi có danh sách lớp.
         var plan = new SyncPlan()
             .Add("sync.lms.check", weight: null)
             .Add("sync.lms.groups")
@@ -162,31 +121,27 @@ public sealed partial class LmsSource
             .Where(c => c["fullname"]?.GetValue<string>() is { } n && Organizer.SubjectOf(n) is not null && !skip.Any(n.Contains))
             .Select(CourseMeta).ToList();
         var term = CurrentTerm(metas);
-        // Kho chung của môn (Organizer.SharedPart) không ghi học kỳ: tính là kỳ này khi môn đó (cùng mã) đang học, để đọc cùng các lớp kỳ này.
         metas = [.. metas.Select(m => SharedTerm(m, metas, term))];
         var state = ReadCourseState();
         var index = JsonStore.ReadObject(FilesIndex);
         var hashes = new Dictionary<string, Dictionary<string, string>>();
         var newFiles = new List<JsonObject>();
-        // Lớp có tài liệu cần xem/tải: tải sau khi đã lưu lịch, quiz, điểm. Fresh = lần đầu đọc lớp (file không tính là "mới").
         var pending = new List<(CourseInfo M, List<(JsonObject Sec, JsonObject Mod, JsonObject F)> Files, bool Fresh, string Key, JsonObject Done)>();
-        var changedModules = new HashSet<long>();   // module có update từ lần check trước (vd. diễn đàn có bài mới)
+        var changedModules = new HashSet<long>();
         int nNew = 0, nChanged = 0, nChecked = 0, nSkipped = 0;
         var pastDays = Config.Int("sources.lms.pastSyncDays", 7);
 
-        // Mặc định chỉ đọc lớp của học kỳ hiện tại (sources.lms.pastTerms = false): lớp kỳ trước không gọi API nào.
         var pastTerms = Config.Bool("sources.lms.pastTerms", false);
-        var toCheck = light ? [] : metas.Where(m => pastTerms || m.Term == term).OrderByDescending(m => m.Term).ToList();   // kỳ mới làm trước để bản mới giữ tên gốc
+        var toCheck = light ? [] : metas.Where(m => pastTerms || m.Term == term).OrderByDescending(m => m.Term).ToList();
         var current = metas.Where(m => m.Term == term).ToList();
         plan.SetWeight("sync.lms.check", Math.Max(1, toCheck.Count));
-        plan.SetWeight("sync.lms.news", Math.Max(1, current.Count));    // diễn đàn: khoảng một request mỗi lớp
-        plan.SetWeight("sync.lms.grades", Math.Max(1, current.Count(c => !Files.Organizer.IsShared(c.Part))));  // sổ điểm: một request mỗi lớp (trừ kho chung)
+        plan.SetWeight("sync.lms.news", Math.Max(1, current.Count));
+        plan.SetWeight("sync.lms.grades", Math.Max(1, current.Count(c => !Files.Organizer.IsShared(c.Part))));
         var nth = 0;
         foreach (var m in toCheck)
         {
             Report(plan.Advance(nth, nth + 1, toCheck.Count));
             nth++;
-            // Một lớp lỗi (khóa bị ẩn, LMS báo lỗi riêng lớp đó) không làm hỏng cả lượt: trạng thái lớp đó không đổi, lần sau đọc lại.
             var outcome = await PartAsync($"lớp {m.Subject}{(m.Part is null ? "" : $" ({m.Part})")}",
                 () => CheckCourseAsync(m, term, state, index, changedModules, force, autoDownload, pastDays, log, ct), (CourseCheck?)null, ct);
             switch (outcome)
@@ -200,9 +155,7 @@ public sealed partial class LmsSource
             if (outcome?.Pending is { } p) pending.Add(p);
         }
 
-        // Lịch, quiz, thông báo, điểm lưu trước rồi mới tải tài liệu: lần đầu đăng nhập có thể phải tải hàng trăm file (vài phút),
-        // không để các trang trống trong lúc đó. Tài liệu tải sau, giãn cách theo sources.lms.fileGapMs.
-        var prev = LmsStore.Latest();   // kể cả lượt trước không có gì mới (chưa ghi ra đĩa)
+        var prev = LmsStore.Latest();
         var recent = (prev["newFiles"] as JsonArray ?? []).OfType<JsonObject>()
             .Where(x => (x["seenAt"]?.GetValue<long>() ?? 0) > Now() - 14 * 86400).Select(x => x.DeepClone()).ToList();
         foreach (var x in newFiles) x["seenAt"] = Now();
@@ -213,7 +166,6 @@ public sealed partial class LmsSource
             ["user"] = info["fullname"]?.GetValue<string>(),
             ["term"] = term,
             ["courses"] = new JsonArray(metas.Select(m => (JsonNode)m.ToJson()).ToArray()),
-            // Phần chưa đọc tới (lượt bị dừng giữa chừng) thì giữ bản của lần trước.
             ["events"] = events ?? prev["events"]?.DeepClone() ?? new JsonArray(),
             ["quizzes"] = quizzes ?? prev["quizzes"]?.DeepClone() ?? new JsonArray(),
             ["newFiles"] = new JsonArray(newFiles.Cast<JsonNode>().Concat(recent.Select(x => x!.DeepClone())).Take(300).ToArray()),
@@ -225,10 +177,7 @@ public sealed partial class LmsSource
         };
         try
         {
-            // Mỗi bước lỗi thì giữ phần của lần trước (không xóa lịch, điểm đang có vì một API chập chờn).
             Report(plan.Enter("sync.lms.groups"));
-            // Nhóm của mình: lọc mốc và mục điểm của nhóm khác (lớp thí nghiệm dùng chung cho nhiều nhóm).
-            // Kho chung không chia nhóm, không có sổ điểm: bỏ khỏi hai bước gọi từng lớp này (đỡ request, không thêm dòng điểm rỗng).
             var classes = current.Where(c => !Files.Organizer.IsShared(c.Part)).ToList();
             var groups = await PartAsync("nhóm lớp LMS", () => MyGroupsAsync(classes, uid, ct), new Dictionary<long, HashSet<string>>(), ct);
             Report(plan.Enter("sync.lms.events"));
@@ -236,34 +185,30 @@ public sealed partial class LmsSource
             Report(plan.Enter("sync.lms.quizzes"));
             quizzes = await PartAsync("quiz LMS", () => CollectQuizzesAsync(current, prev["quizzes"] as JsonArray, prev["syncedAt"]?.GetValue<long>() ?? 0, log, ct),
                 prev["quizzes"]?.DeepClone() as JsonArray ?? [], ct);
-            if (light) goto Saved;   // reminders need only deadlines and quizzes
+            if (light) goto Saved;
             Report(plan.Enter("sync.lms.news"));
             announcements = await PartAsync("thông báo LMS", () => CollectAnnouncementsAsync(raw, current, uid, prev, changedModules, ct),
                 prev["announcements"]?.DeepClone() as JsonArray ?? [], ct);
             await PartAsync("file thông báo LMS", async () => { await SaveAnnouncementFilesAsync(announcements, ct); return true; }, false, ct);
             Report(plan.Enter("sync.lms.messages"));
-            // Tin nhắn riêng (data/lms-messages.json) và nội dung trang (data/lms-pages.json): phần thêm, lỗi thì giữ bản đã lưu.
-            // OptionalAsync: LMS chặn API (accessexception, LmsClient coi như hết phiên) thì chỉ cảnh báo, không dừng cả lượt đồng bộ.
             if (await OptionalAsync("tin nhắn LMS", () => CollectMessagesAsync(uid, LmsMessagesStore.Raw(), ct), ct) is { } messages)
                 Part("lưu tin nhắn LMS", () => LmsMessagesStore.Write(messages), ct);
             if (current.Count > 0 && await OptionalAsync("trang LMS", () => CollectPagesAsync(current, LmsPagesStore.Raw(), ct), ct) is { } pages)
                 Part("lưu trang LMS", () => LmsPagesStore.Write(pages), ct);
-            // Ảnh trong bài, trả lời, tin nhắn, trang: tải về để xem được khi LMS sập (LmsImages).
             await PartAsync("ảnh LMS", () => LmsImages.SaveAsync(LmsImages.HtmlOf(announcements, LmsMessagesStore.Raw(), LmsPagesStore.Raw()), ct), 0, ct);
             Report(plan.Enter("sync.lms.grades"));
             grades = await PartAsync("sổ điểm LMS", () => CollectGradesAsync(classes, uid, ct), prev["grades"]?.DeepClone() as JsonArray ?? [], ct);
-            Saved:;
+        Saved:;
         }
         catch (SessionExpiredException) when (events is not null)
         {
-            // Hết phiên giữa chừng: phần đã đọc vẫn lưu, giữ syncedAt của lần trước vì lượt này chưa xong; lỗi vẫn báo như thường.
             LmsStore.Write(Output(prev["syncedAt"]?.GetValue<long>() ?? 0));
             Log.Info("LMS: hết phiên giữa chừng, đã lưu phần đọc được");
             throw;
         }
         var output = Output(light ? prev["syncedAt"]?.GetValue<long>() ?? 0 : Now());
         LmsStore.Write(output);
-        log(SyncSignal.DataReady);   // giao diện đọc lại ngay: đã có lịch, quiz, điểm
+        log(SyncSignal.DataReady);
         if (light)
         {
             Log.Info($"Sync LMS (nhẹ, giữ dữ liệu cho nhắc hạn): {Calls - callsBefore} request");
@@ -273,7 +218,6 @@ public sealed partial class LmsSource
 
         var total = pending.Sum(p => p.Files.Count);
         if (total > 0) log($"Đang xem {total} tài liệu của {pending.Count} lớp...");
-        // Tải tệp chiếm nửa thanh, chia theo dung lượng LMS báo; có tệp không rõ dung lượng thì chia đều theo số tệp.
         static long Size(JsonObject f) => f["filesize"]?.GetValue<long>() ?? 0;
         var bySize = pending.SelectMany(p => p.Files).All(x => Size(x.F) > 0);
         double Weight(JsonObject f) => bySize ? Size(f) : 1;
@@ -287,18 +231,16 @@ public sealed partial class LmsSource
             {
                 Report(seen == 0 ? plan.Enter("sync.lms.files", count: 1, of: total, detail: p.M.Subject)
                                  : plan.Advance(doneWeight, seen + 1, total, p.M.Subject));
-                // File đang mở ở chương trình khác (PDF đang đọc), ổ đầy, mạng chập: bỏ file này, đồng bộ chạy tiếp, lần sau thử lại.
                 var got = await PartAsync($"tài liệu {f["filename"]}", async () => (Ok: true, File: await SyncFileAsync(p.M, sec, mod, f, index, hashes, log, ct)), (Ok: false, File: (JsonObject?)null), ct);
                 allOk &= got.Ok;
-                if (got.File is not null && !p.Fresh) newFiles.Add(got.File);    // lần đầu đọc lớp thì không tính là "mới"
+                if (got.File is not null && !p.Fresh) newFiles.Add(got.File);
                 if (got.File is not null) JsonStore.Write(FilesIndex, index);
                 doneWeight += Weight(f);
                 if (++seen % 20 == 0) log($"Tài liệu: {seen}/{total}");
             }
-            // Lớp có file chưa tải được thì không đánh dấu đã đồng bộ: lần sau còn thấy cập nhật mà tải lại.
             if (!allOk) continue;
             state[p.Key] = p.Done;
-            SaveCourseState(state);                                 // ghi ngay, lỡ tắt app giữa chừng thì lần sau làm tiếp
+            SaveCourseState(state);
         }
         JsonStore.Write(FilesIndex, index);
         Organizer.SaveHashCache();
@@ -315,8 +257,6 @@ public sealed partial class LmsSource
         Log.Info($"Sync LMS: {Calls - callsBefore} request, check {nChecked} lớp, {nChanged} lớp có đổi");
         Report(plan.Finish());
     }
-
-    // ------------------------------------------------------------------ lms-courses.json: dấu "checked" giữ trong RAM
 
     private static readonly object CourseGate = new();
     private static JsonObject? _courseStatePending;
@@ -335,7 +275,6 @@ public sealed partial class LmsSource
         }
     }
 
-    /// <summary>App thoát: ghi lms.json (lần kiểm tra cuối) và dấu "checked" của các lớp không đổi.</summary>
     public void Flush()
     {
         LmsStore.Flush();
@@ -352,17 +291,13 @@ public sealed partial class LmsSource
     private sealed record CourseCheck(CourseCheckKind Kind,
         (CourseInfo M, List<(JsonObject Sec, JsonObject Mod, JsonObject F)> Files, bool Fresh, string Key, JsonObject Done)? Pending = null);
 
-    /// <summary>
-    /// Kiểm một lớp: lớp mới (hoặc force) thì đọc hết nội dung; lớp đã biết thì hỏi core_course_get_updates_since, có đổi mới đọc lại.
-    /// Lưu cấu trúc khóa, ghi trạng thái lớp nếu không còn file phải tải; còn file thì trả về để tải sau.
-    /// </summary>
     private static async Task<CourseCheck?> CheckCourseAsync(CourseInfo m, string term, JsonObject state, JsonObject index, HashSet<long> changedModules,
         bool force, bool autoDownload, int pastDays, Action<string> log, CancellationToken ct)
     {
         var key = m.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
         var st = state[key] as JsonObject;
         var started = Now();
-        HashSet<long>? only = null;                             // null = mọi mục
+        HashSet<long>? only = null;
         CourseCheckKind kind;
         if (force || st is null)
         {
@@ -384,7 +319,6 @@ public sealed partial class LmsSource
                 .Select(i => i["id"]!.GetValue<long>()).ToHashSet();
             if (only.Count == 0)
             {
-                // Lớp không đổi: chỉ dấu "checked" mới, giữ trong RAM, ghi khi có thay đổi khác hoặc khi app thoát (Flush).
                 st["checked"] = started;
                 lock (CourseGate) _courseStatePending = state;
                 return new CourseCheck(CourseCheckKind.Unchanged);
@@ -395,7 +329,6 @@ public sealed partial class LmsSource
                        ?? throw new SyncException(SyncErrorKind.Data, "LMS trả nội dung khóa không đúng dạng.");
         Part($"cấu trúc khóa {m.Subject}", () => SaveStructure(m, contents, index), ct);
         var done = new JsonObject { ["synced"] = started, ["checked"] = started, ["term"] = m.Term };
-        // Video (bài giảng ghi lại, thường hàng trăm MB) không tự tải khi đồng bộ: xem trên LMS ở tab Video và liên kết, hay tích chọn trong cửa sổ Tải.
         var files = Downloadable(contents).Where(x => autoDownload && (only is null || only.Contains(x.Mod["id"]!.GetValue<long>()))
                                                       && KindOf(x.File["filename"]?.GetValue<string>()) != FileKind.Video).ToList();
         if (files.Count == 0)

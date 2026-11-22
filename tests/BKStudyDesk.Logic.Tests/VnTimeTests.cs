@@ -7,7 +7,6 @@ public class VnTimeTests
     [Fact]
     public void Wall_RoundTrip_IndependentOfMachineZone()
     {
-        // 07:00 ngày 05/10/2026 ở VN = 00:00 UTC.
         var sec = VnTime.FromWall(new DateTime(2026, 10, 5, 7, 0, 0));
         Assert.Equal(new DateTimeOffset(2026, 10, 5, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(), sec);
         Assert.Equal(new DateTime(2026, 10, 5, 7, 0, 0), VnTime.ToWall(sec));
@@ -25,7 +24,6 @@ public class VnTimeTests
     [Fact]
     public void ToWall_CrossesMidnight()
     {
-        // 18:30 UTC = 01:30 sáng hôm sau ở VN.
         var sec = new DateTimeOffset(2026, 12, 31, 18, 30, 0, TimeSpan.Zero).ToUnixTimeSeconds();
         Assert.Equal(new DateTime(2027, 1, 1, 1, 30, 0), VnTime.ToWall(sec));
     }
@@ -91,8 +89,6 @@ public class VnTimeTests
     [Fact]
     public void DayDiff_UsesVnMidnight_NotMachineZone()
     {
-        // Máy để UTC: 17:30 UTC ngày 04/10 đã là 00:30 sáng 05/10 ở VN. Buổi học 07:00 ngày 05/10 phải là "hôm nay",
-        // còn mốc 23:00 tối 04/10 (giờ VN) là hôm qua, dù trên đồng hồ UTC cả hai cùng ngày 04/10 hoặc 05/10.
         var now = new DateTimeOffset(2026, 10, 4, 17, 30, 0, TimeSpan.Zero).ToUnixTimeSeconds();
         Assert.Equal(0, VnTime.DayDiff(VnTime.FromWall(new DateTime(2026, 10, 5, 7, 0, 0)), now));
         Assert.Equal(-1, VnTime.DayDiff(VnTime.FromWall(new DateTime(2026, 10, 4, 23, 0, 0)), now));
@@ -100,7 +96,7 @@ public class VnTimeTests
     }
 
     [Theory]
-    [InlineData(2026, 10, 4, 2026, 9, 28)]   // Chủ nhật thuộc tuần bắt đầu Thứ hai trước đó
+    [InlineData(2026, 10, 4, 2026, 9, 28)]
     [InlineData(2026, 10, 5, 2026, 10, 5)]
     [InlineData(2026, 10, 7, 2026, 10, 5)]
     public void Monday_OfWeek(int y, int m, int d, int my, int mm, int md) =>

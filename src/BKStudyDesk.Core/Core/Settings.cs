@@ -2,19 +2,13 @@ using System.Text.Json.Nodes;
 
 namespace SoHocTap.Core;
 
-/// <summary>Nơi Settings đọc và ghi giá trị. App dùng Config; test dùng bản trong bộ nhớ để không đụng data thật.</summary>
 public interface ISettingsStore
 {
     JsonNode? Node(string dotted);
-    /// <summary>Giá trị mặc định trong DefaultConfig.json, không kèm phần người dùng chỉnh.</summary>
     JsonNode? DefaultValue(string dotted);
     void Write(string dotted, JsonNode? value);
 }
 
-/// <summary>
-/// Cấu hình có kiểu cho các khóa hay dùng, gom theo nhóm. Đọc sai kiểu hoặc số âm thì trả default trong DefaultConfig.json
-/// (số 0 vẫn hợp lệ, nghĩa là tắt). Số mặc định chỉ nằm ở DefaultConfig.json, không viết lại ở chỗ gọi.
-/// </summary>
 public static partial class Settings
 {
     private static ISettingsStore? _store;
@@ -27,7 +21,6 @@ public static partial class Settings
 
     private static partial ISettingsStore CreateDefaultStore();
 
-    /// <summary>Mọi khóa (dạng chấm) mà các nhóm bên dưới đọc.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
         "notify.hoursBefore", "notify.lastHours", "notify.urgentHours", "notify.soonHours", "notify.digestTimes",
@@ -40,7 +33,6 @@ public static partial class Settings
         "viewer.pdfApp", "folders.root",
     ];
 
-    // Số nguyên không âm (giờ, ngày, phút, MB). Sai kiểu hoặc âm thì lấy default.
     private static int GetInt(string key)
     {
         if (Store.Node(key) is JsonValue v && v.TryGetValue<int>(out var n) && n >= 0) return n;
@@ -65,16 +57,13 @@ public static partial class Settings
     private static void SetStr(string key, string value) => Store.Write(key, JsonValue.Create(value));
     private static void SetBool(string key, bool value) => Store.Write(key, JsonValue.Create(value));
 
-    /// <summary>Nhắc hạn nộp.</summary>
     public static class Notify
     {
         public static int FirstHours { get => GetInt("notify.hoursBefore"); set => SetInt("notify.hoursBefore", value); }
         public static int LastHours { get => GetInt("notify.lastHours"); set => SetInt("notify.lastHours", value); }
         public static int UrgentHours { get => GetInt("notify.urgentHours"); set => SetInt("notify.urgentHours", value); }
         public static int SoonHours { get => GetInt("notify.soonHours"); set => SetInt("notify.soonHours", value); }
-        /// <summary>Giờ gom nhắc, dạng "07:00, 12:00, 19:00" (NotifyDigest.Parse); rỗng là báo ngay từng bài.</summary>
         public static string DigestTimes { get => GetStr("notify.digestTimes"); set => SetStr("notify.digestTimes", value); }
-        /// <summary>Giờ hết "Tạm im tới sáng mai" (HH:mm, giờ VN).</summary>
         public static string Morning { get => GetStr("notify.morning"); set => SetStr("notify.morning", value); }
     }
 
@@ -93,26 +82,18 @@ public static partial class Settings
     public static class App
     {
         public static string Language { get => GetStr("app.language"); set => SetStr("app.language", value); }
-        /// <summary>Nút X thu app xuống khay (true) hay thoát hẳn.</summary>
         public static bool CloseToTray { get => GetBool("app.closeToTray"); set => SetBool("app.closeToTray", value); }
-        /// <summary>Mở trang LMS, MyBK bằng "app" (cửa sổ trong app, dùng phiên đăng nhập của app, mặc định) hay "browser" (trình duyệt của máy).</summary>
         public static string OpenSchoolIn { get => GetStr("app.openSchoolIn"); set => SetStr("app.openSchoolIn", value); }
-        /// <summary>Chế độ màu của bản đa nền tảng: "dark" (mặc định), "light" hay "system" (theo hệ điều hành). Bản 1.x không đọc.</summary>
         public static string Theme { get => GetStr("app.theme"); set => SetStr("app.theme", value); }
-        /// <summary>Màu nhấn của bản đa nền tảng: "#RRGGBB" hay "system" (màu nhấn của hệ điều hành); lựa chọn ở app.accentChoices.</summary>
         public static string Accent { get => GetStr("app.accent"); set => SetStr("app.accent", value); }
-        /// <summary>Màu nhấn trong config mặc định (DefaultConfig.json), dùng khi màu người dùng đặt sai dạng.</summary>
         public static string DefaultAccent => Store.DefaultValue("app.accent") is JsonValue v && v.TryGetValue<string>(out var s) ? s : "";
     }
 
     public static class Sso
     {
         public static int RememberDays { get => GetInt("sso.rememberDays"); set => SetInt("sso.rememberDays", value); }
-        /// <summary>Số dùng khi bật lại Ghi nhớ đăng nhập, Giữ phiên (giá trị trong DefaultConfig.json).</summary>
         public static int DefaultRememberDays => DefaultInt("sso.rememberDays");
-        /// <summary>Tự đăng nhập lại khi phiên SSO hết (tài khoản trong SsoCredentials). Mặc định tắt.</summary>
         public static bool AutoLogin { get => GetBool("sso.autoLogin"); set => SetBool("sso.autoLogin", value); }
-        /// <summary>Đã hỏi người dùng về tự đăng nhập lại chưa (thanh hỏi chỉ hiện một lần, kể cả người đang dùng bản cũ).</summary>
         public static bool AutoLoginAsked { get => GetBool("sso.autoLoginAsked"); set => SetBool("sso.autoLoginAsked", value); }
     }
 
@@ -120,9 +101,7 @@ public static partial class Settings
     {
         public static int LmsHours { get => GetInt("sources.lms.syncHours"); set => SetInt("sources.lms.syncHours", value); }
         public static int MybkHours { get => GetInt("sources.mybk.syncHours"); set => SetInt("sources.mybk.syncHours", value); }
-        /// <summary>Off: never visit MyBK (no MyBK sign-ins), keep LMS only; saved MyBK data stays readable.</summary>
         public static bool MybkEnabled { get => GetBool("sources.mybk.enabled"); set => SetBool("sources.mybk.enabled", value); }
-        /// <summary>Data reminders read is refreshed at least this often (days), even while the user is away (KeepFresh).</summary>
         public static int MinFreshDays { get => GetInt("app.minFreshDays"); set => SetInt("app.minFreshDays", value); }
         public static int MaxFileMB { get => GetInt("sources.lms.maxFileMB"); set => SetInt("sources.lms.maxFileMB", value); }
         public static bool AutoDownload { get => GetBool("sources.lms.autoDownload"); set => SetBool("sources.lms.autoDownload", value); }
@@ -131,18 +110,15 @@ public static partial class Settings
 
     public static class Lms
     {
-        /// <summary>Regex mã nhóm (lớp thí nghiệm) trong tên mốc, ví dụ L05. Rỗng thì không lọc và cột Nhóm để trống (cột vẫn hiện).</summary>
         public static string GroupPattern { get => GetStr("sources.lms.groupPattern"); set => SetStr("sources.lms.groupPattern", value); }
     }
 
     public static class Archives
     {
         public static int MaxMB { get => GetInt("archives.maxMB"); set => SetInt("archives.maxMB", value); }
-        /// <summary>Tự giải nén file nén tải về.</summary>
         public static bool Extract { get => GetBool("archives.extract"); set => SetBool("archives.extract", value); }
     }
 
-    /// <summary>Mở tài liệu: app PDF riêng (rỗng = app mặc định của Windows) và thư mục Study (rỗng = tự tìm).</summary>
     public static class OpenDocs
     {
         public static string PdfApp { get => GetStr("viewer.pdfApp"); set => SetStr("viewer.pdfApp", value); }

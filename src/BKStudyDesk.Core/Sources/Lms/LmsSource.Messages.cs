@@ -5,18 +5,10 @@ using static SoHocTap.Sources.Lms.LmsClient;
 
 namespace SoHocTap.Sources.Lms;
 
-// Tin nhắn riêng trên LMS (Messages của Moodle): chỉ đọc, không gửi, không đánh dấu đã đọc trên LMS.
 public sealed partial class LmsSource
 {
-    /// <summary>Số tin giữ mỗi hội thoại (mới nhất).</summary>
     public const int MessagesPerConversation = 300;
 
-    /// <summary>
-    /// Đọc danh sách hội thoại (1 request), rồi chỉ đọc lại tin của hội thoại có tin mới hơn bản đã lưu (1 request mỗi hội thoại).
-    /// Tin cũ giữ lại và gộp theo id, để LMS sập vẫn đọc được trong app. core_message_get_conversation_messages không đánh dấu
-    /// đã đọc (việc đó là hàm khác của Moodle), nên đồng bộ không làm mất chấm "chưa đọc" trên LMS.
-    /// Hội thoại với chính mình (type 3, ghi chú riêng) bỏ qua.
-    /// </summary>
     private static async Task<JsonObject> CollectMessagesAsync(long uid, JsonObject prev, CancellationToken ct)
     {
         var limit = Config.Int("sources.lms.conversations", 50);
@@ -31,7 +23,7 @@ public sealed partial class LmsSource
             if (c["type"]?.GetValue<int>() == 3) continue;
             if (c["id"]?.GetValue<long>() is not { } id) continue;
             returned.Add(id);
-            var members = Members(c["members"] as JsonArray, uid);
+            var members = Members(c["members"] as JsonArray);
             var latest = (c["messages"] as JsonArray ?? []).OfType<JsonObject>().Select(m => m["timecreated"]?.GetValue<long>() ?? 0).DefaultIfEmpty(0).Max();
             var before = old.GetValueOrDefault(id);
             var kept = (before?["messages"] as JsonArray ?? []).OfType<JsonObject>().ToList();
@@ -46,13 +38,12 @@ public sealed partial class LmsSource
             else
             {
                 asked++;
-                // Đọc từng trang 100 tin, mới trước, tới khi gặp tin đã lưu (hay hết, tối đa 3 trang): nghỉ lâu không bị hở giữa.
                 var raw = new List<JsonObject>();
                 for (var page = 0; page < 3; page++)
                 {
                     var got = await CallAsync("core_message_get_conversation_messages",
                         [Arg("currentuserid", uid), Arg("convid", id), Arg("limitfrom", page * 100), Arg("limitnum", 100), Arg("newest", 1)], ct);
-                    foreach (var m in Members(got["members"] as JsonArray, uid)) members.TryAdd(m.Key, m.Value);
+                    foreach (var m in Members(got["members"] as JsonArray)) members.TryAdd(m.Key, m.Value);
                     var batch = (got["messages"] as JsonArray ?? []).OfType<JsonObject>().ToList();
                     raw.AddRange(batch);
                     if (batch.Count < 100 || batch.Any(m => (m["timecreated"]?.GetValue<long>() ?? 0) <= lastKept)) break;
@@ -87,23 +78,20 @@ public sealed partial class LmsSource
                 ["messages"] = new JsonArray([.. messages]),
             });
         }
-        // Hội thoại cũ không nằm trong danh sách LMS trả lần này (quá giới hạn sources.lms.conversations): giữ bản đã lưu, không mất.
         foreach (var (id, c) in old)
             if (!returned.Contains(id)) output.Add(c.DeepClone());
         Log.Info($"Tin nhắn LMS: {output.Count} hội thoại; đọc lại {asked}, dùng bản đã lưu {reused}");
         return new JsonObject { ["syncedAt"] = Now(), ["conversations"] = output };
     }
 
-    private static Dictionary<long, string> Members(JsonArray? members, long uid) =>
+    private static Dictionary<long, string> Members(JsonArray? members) =>
         (members ?? []).OfType<JsonObject>().Where(m => m["id"] is not null)
             .GroupBy(m => m["id"]!.GetValue<long>())
             .ToDictionary(g => g.Key, g => WebUtility.HtmlDecode(g.First()["fullname"]?.GetValue<string>() ?? ""));
 }
 
-// Nội dung trang (mod_page) của các lớp kỳ này: một request cho mọi lớp, lưu HTML để đọc trong app khi LMS sập.
 public sealed partial class LmsSource
 {
-    /// <param name="prev">Bản đã lưu: gộp theo cmid (trang mới đè trang cũ), không xóa trang LMS lần này không trả về.</param>
     private static async Task<JsonObject> CollectPagesAsync(List<CourseInfo> current, JsonObject prev, CancellationToken ct)
     {
         var args = current.Select((c, i) => Arg($"courseids[{i}]", c.Id)).ToList();

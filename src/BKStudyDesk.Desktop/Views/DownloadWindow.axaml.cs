@@ -10,32 +10,26 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Tải tài liệu LMS của nhiều lớp một lượt (discussion #42), lưu vào thư mục từng môn như lúc đồng bộ (bỏ file trùng, bản cũ vào
-/// _Lưu trữ). Cây, đếm file mới, cảnh báo nằm ở Presentation/Download.cs; ở đây chỉ có việc của cửa sổ: đọc danh sách mục từng lớp
-/// (lần lượt, chỉ lớp được tích hay mở, đỡ gọi LMS), tải, báo tiến độ. Đóng cửa sổ thì dừng cả đọc lẫn tải.
-/// </summary>
 public partial class DownloadWindow : Window
 {
     private readonly IReadOnlyList<TermRow> _terms = [];
-    private readonly HashSet<FileKind> _kinds = [.. Enum.GetValues<FileKind>().Where(k => k != FileKind.Video)];   // video: tích mới tải
+    private readonly HashSet<FileKind> _kinds = [.. Enum.GetValues<FileKind>().Where(k => k != FileKind.Video)];
     private readonly CancellationTokenSource _life = new();
     private readonly Queue<CourseRow> _toRead = new();
     private int _readDone, _readTotal;
     private bool _reading;
     private CancellationTokenSource? _run;
-    private (int Files, long Bytes)? _confirmed;   // đã bấm Vẫn tải cho đúng lượt lớn này
-    private string? _outcome;                      // kết quả lượt tải vừa xong, giữ tới khi người dùng chọn lại
+    private (int Files, long Bytes)? _confirmed;
+    private string? _outcome;
 
     public DownloadWindow() => InitializeComponent();
 
-    /// <summary><paramref name="pick"/>: các lớp tích sẵn (nút Tải ở một môn); null: mọi lớp của học kỳ đang học.</summary>
-    /// <param name="examsOnly">Nút Tải đề cũ: chỉ tích sẵn mục chứa đề (DownloadPlan.IsExamSection), người dùng vẫn xem và đổi được trước khi tải.</param>
     internal DownloadWindow(IReadOnlyCollection<long>? pick, bool examsOnly = false) : this()
     {
         Sub.Text = L.F("download.saveToSubjects", Config.Str("folders.subjects"));
         Extract.IsChecked = SoHocTap.Core.Settings.Archives.Extract;
         Closing += (_, _) => _life.Cancel();
+        Closed += (_, _) => _life.Dispose();
         if (LmsStore.Read() is not { Courses.Count: > 0 } lms)
         {
             ListState.Text = L.T("download.noLms");
@@ -49,7 +43,7 @@ public partial class DownloadWindow : Window
             {
                 if (examsOnly) c.SectionFilter = DownloadPlan.IsExamSection;
                 c.Checked = true;
-                c.Expanded = pick is not null;   // từ một môn: mở sẵn để thấy các mục
+                c.Expanded = pick is not null;
                 t.Expanded = true;
             }
         Terms.ItemsSource = _terms;
@@ -59,12 +53,8 @@ public partial class DownloadWindow : Window
 
     private IEnumerable<CourseRow> Courses => _terms.SelectMany(t => t.Courses);
 
-    /// <summary>Tải xong (không tính bấm Dừng hay đóng cửa sổ): kết quả, và người dùng có đang nhìn cửa sổ này không.</summary>
     public event Action<string, bool>? Finished;
 
-    // ------------------------------------------------------------------ đọc danh sách mục
-
-    /// <summary>Đưa lớp vào hàng đọc (lớp đang đọc thì thôi). again: đọc lại lớp đã đọc (sau khi tải, để số file mới đúng với máy).</summary>
     private void Read(IEnumerable<CourseRow> rows, bool again = false)
     {
         foreach (var c in rows.Where(c => c.State is LoadState.Unread or LoadState.Failed || (again && c.State == LoadState.Ready)))
@@ -77,7 +67,6 @@ public partial class DownloadWindow : Window
         Update();
     }
 
-    /// <summary>Một lớp một lần (mỗi lớp một request core_course_get_contents), không dồn request lên LMS.</summary>
     private async Task ReadAllAsync()
     {
         _reading = true;
@@ -97,8 +86,6 @@ public partial class DownloadWindow : Window
         _readDone = _readTotal = 0;
         Update();
     }
-
-    // ------------------------------------------------------------------ chọn
 
     private static T? Row<T>(object? sender) where T : class => (sender as Control)?.DataContext as T;
 
@@ -130,14 +117,11 @@ public partial class DownloadWindow : Window
         Picked([]);
     }
 
-    /// <summary>Người dùng vừa đổi phần chọn: bỏ kết quả lượt trước, đọc lớp vừa tích mà chưa đọc.</summary>
     private void Picked(IEnumerable<CourseRow> read)
     {
         _outcome = null;
         Read(read);
     }
-
-    // ------------------------------------------------------------------ kế hoạch, trạng thái
 
     private sealed record Plan(IReadOnlyList<CourseRow> Courses, int Files, long Bytes, DownloadPlan.Verdict Verdict, long? Free);
 
@@ -151,14 +135,12 @@ public partial class DownloadWindow : Window
         return new(courses, pending.Count, bytes, verdict, free);
     }
 
-    /// <summary>Chỗ trống của ổ chứa thư mục môn học; không đo được (ổ mạng, chưa tạo thư mục) thì null, không chặn.</summary>
     private static long? FreeBytes()
     {
         try { return Path.GetPathRoot(Path.GetFullPath(Organizer.SubjectsRoot)) is { Length: > 0 } root ? new DriveInfo(root).AvailableFreeSpace : null; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { return null; }
     }
 
-    /// <summary>Vẽ lại dòng phụ của cây, nút, dải cảnh báo và dòng trạng thái theo phần đang chọn. Đang tải thì trạng thái do lượt tải ghi.</summary>
     private void Update()
     {
         foreach (var t in _terms)
@@ -189,13 +171,10 @@ public partial class DownloadWindow : Window
         NoticeText.Text = notice?.Text ?? "";
     }
 
-    // ------------------------------------------------------------------ tải
-
     private async void OnStart(object? sender, RoutedEventArgs e)
     {
         var plan = Current();
         if (plan.Verdict is DownloadPlan.Verdict.Nothing or DownloadPlan.Verdict.NoSpace || _run is not null) return;
-        // Lượt lớn: lần bấm đầu chỉ hiện cảnh báo, nút thành Vẫn tải; đổi phần chọn (số file, dung lượng khác) thì phải xác nhận lại.
         if (plan.Verdict == DownloadPlan.Verdict.Large && _confirmed != (plan.Files, plan.Bytes))
         {
             _confirmed = (plan.Files, plan.Bytes);
@@ -241,7 +220,7 @@ public partial class DownloadWindow : Window
             _run = null;
             _confirmed = null;
             Busy(false);
-            if (!_life.IsCancellationRequested) Read(plan.Courses, again: true);   // số file mới, "đã có" khớp lại với máy
+            if (!_life.IsCancellationRequested) Read(plan.Courses, again: true);
         }
     }
 

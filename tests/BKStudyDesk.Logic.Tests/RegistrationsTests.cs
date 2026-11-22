@@ -1,5 +1,3 @@
-using SoHocTap.Data;
-
 namespace SoHocTap.Tests;
 
 public class RegistrationsTests

@@ -3,7 +3,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Gói kỳ vọng sinh bằng parseMarkdown của markdown.ts (Node, 07/10/2026): md-expected/parse-<ca>.md và .json.
 public class MdParseTests
 {
     private static string Dir => Path.Combine(AppContext.BaseDirectory, "Practice", "md-expected");
@@ -31,7 +30,6 @@ public class MdParseTests
         Assert.True(JsonNode.DeepEquals(want["pack"], got), $"khác bản TS:\n{want["pack"]!.ToJsonString()}\n{got.ToJsonString()}");
     }
 
-    // Đề thật (hcmut-*) chỉ có ở bản private: kỳ vọng sinh ngoài repo, thư mục đặt qua BK_MD_EXPECTED (<tên>.md, <tên>.json).
     [Fact]
     public void Private_examples_match_typescript()
     {
@@ -58,7 +56,6 @@ public class MdParseTests
                 w.Write(string.Join("\n", "---", "mon: MT1009 X", "tac-gia: A", "---", "# C", "## B", "### Câu 1", "Hình ![a](img/1.png)", "= 2", "> g"));
             using (var s = zip.CreateEntry("goi/img/1.png").Open()) s.Write([1, 2, 3]);
         }
-        // Đường nhập của Soạn: đọc zip (có giới hạn) rồi đọc Markdown kèm ảnh.
         var (text, images) = Transfer.ReadFile("goi.zip", ms.ToArray())!.Value;
         var r = StudyMarkdown.Parse(text, images);
         Assert.DoesNotContain(r.Warnings, w => w.Message.Contains("img/1.png"));
@@ -94,7 +91,6 @@ public class MdParseTests
         Assert.Contains("[thiếu ảnh: hình]", q6.Prompt);
     }
 
-    // Mở rộng v1 (SPEC 2.6): dòng id ngay dưới ## và ###, dòng "Câu:" của đề.
     [Fact]
     public void Id_lines_and_exam_refs()
     {
@@ -144,7 +140,6 @@ public class MdWriteTests
         Assert.Equal(want["images"]!.AsObject().Select(kv => kv.Key), imgs.Keys);
     }
 
-    // Như markdown.test.ts: đọc, ghi, đọc lại giữ mọi câu (chạy trên mọi file ví dụ có mặt).
     [Theory]
     [InlineData("vi-du.md")]
     [InlineData("hcmut-ee1009-giua-ky.md")]
@@ -188,7 +183,6 @@ public class MdWriteTests
     }
 }
 
-// Chuỗi kỳ vọng sinh bằng chính markdown.ts (Node, 07/10/2026), lưu ở md-expected/.
 public class MdToHtmlTests
 {
     private static string Dir => Path.Combine(AppContext.BaseDirectory, "Practice", "md-expected");

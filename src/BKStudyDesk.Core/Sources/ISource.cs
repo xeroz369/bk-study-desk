@@ -2,57 +2,34 @@ using System.Text.Json.Nodes;
 
 namespace SoHocTap.Sources;
 
-/// <summary>
-/// Một nguồn dữ liệu của trường (LMS, MyBK). Nguồn nào cũng implement chung interface này để scheduler và Api xử lý giống nhau.
-/// </summary>
 public interface ISource
 {
     string Name { get; }
 
-    /// <summary>Status nhẹ (không gửi request): đã kết nối chưa, lần sync cuối, tên người dùng.</summary>
     SourceStatus Status();
 
-    /// <summary>Data đã normalize sẵn cho UI hiển thị (đọc từ file, không gửi request).</summary>
     JsonNode? Data();
 
-    /// <summary>Sync từ trường về. Chỉ lấy phần thay đổi (incremental), trừ khi <paramref name="force"/>.</summary>
     Task SyncAsync(Action<string> log, bool force, CancellationToken ct);
 
-    /// <summary>Chu kỳ tự động sync.</summary>
     TimeSpan Interval { get; }
 
-    /// <summary>Runs on the background scheduler. MyBK does not: it loads by section when a page is opened (on-demand sync, 06/11/2026).</summary>
     bool Scheduled => true;
 
-    /// <summary>App thoát: ghi phần chỉ giữ trong RAM (lần kiểm tra cuối của lượt không có gì mới).</summary>
     void Flush() { }
 }
 
 public sealed record SourceStatus(bool Connected, long? SyncedAt, string? User = null, string? Term = null);
 
-/// <summary>
-/// Những việc cần browser thật (session SSO, page có Bearer token). Shell implement bằng một WebView2 ẩn;
-/// Sources chỉ biết interface này nên không phụ thuộc WinForms.
-/// </summary>
 public interface IBrowserRunner
 {
-    /// <summary>
-    /// Chạy fetch() ngay trong page MyBK /app (dùng token #hid_Token của page). <paramref name="onEach"/> được gọi sau mỗi request
-    /// (tên request), để nguồn báo tiến độ theo từng API.
-    /// </summary>
     Task<IReadOnlyDictionary<string, FetchResult>> FetchAsync(IReadOnlyList<FetchRequest> requests, CancellationToken ct, Action<string>? onEach = null);
 
-    /// <summary>HTML của trang url (mở trong WebView ẩn). mustContain: chữ phải có trong trang mới coi là đã tới (trang trung gian thì mở lại).</summary>
     Task<string> PageAsync(string url, CancellationToken ct, string? mustContain = null);
 
-    /// <summary>
-    /// Bỏ trang /app đang giữ: lần fetch sau mở lại /app (token mới); phiên MyBK hết thì đi qua SSO, và chỉ khi SSO đòi mật khẩu mới
-    /// là hết phiên thật.
-    /// </summary>
     void Reenter() { }
 }
 
-/// <summary>Dòng log đặc biệt: nguồn đã lưu phần dữ liệu chính (đang làm tiếp phần chậm như tải tài liệu), giao diện nên đọc lại ngay.</summary>
 public static class SyncSignal
 {
     public const string DataReady = "\u0001data-ready";
@@ -60,13 +37,8 @@ public static class SyncSignal
     private const char StepMark = '\u0002';
     private const char WarnMark = '\u0003';
 
-    /// <summary>
-    /// Dòng log báo một phần không đọc được (vd. sổ điểm một môn, một API MyBK): đồng bộ vẫn chạy tiếp, nhưng phải hiện cho người dùng.
-    /// <paramref name="what"/> là tên phần dễ hiểu ("lịch LMS"), <paramref name="detail"/> là chữ kỹ thuật (hiện ở mục Chi tiết, ghi log).
-    /// </summary>
     public static string Warn(string what, string detail) => $"{WarnMark}{what}{DetailMark}{detail}";
 
-    /// <summary>Ngăn cách tên phần và chi tiết trong một mục lỗi.</summary>
     public const char DetailMark = '\u001f';
 
     public static bool TryParseWarn(string line, out string text)
@@ -75,11 +47,6 @@ public static class SyncSignal
         return text.Length > 0;
     }
 
-    /// <summary>
-    /// Dòng log báo tiến độ (câu đang làm, đếm, tên đi kèm, phần đã xong theo trọng số), hiện trên thanh trạng thái.
-    /// Nguồn dựng bằng <see cref="SyncPlan"/>. Người dùng thấy app đang làm gì, không phải chờ mà không biết.
-    /// Dạng: \u0002count/of/permille\u0002key[\u001fdetail] (permille -1 = chưa biết tổng).
-    /// </summary>
     public static string Progress(SyncProgress p) =>
         string.Create(System.Globalization.CultureInfo.InvariantCulture,
             $"{StepMark}{p.Count}/{p.Of}/{p.Permille ?? -1}{StepMark}{p.Key}{(p.Detail is { Length: > 0 } d ? DetailMark + d : "")}");
@@ -102,10 +69,8 @@ public static class SyncSignal
     }
 }
 
-/// <summary>Phiên đăng nhập trên server trường đã hết (gặp trang đăng nhập SSO). Khác lỗi mạng: cần người dùng đăng nhập lại.</summary>
 public sealed class SessionExpiredException(string message) : InvalidOperationException(message);
 
-/// <param name="Timeout">Chờ tối đa bao lâu; null là sources.mybk.timeoutSeconds. API phụ chờ ngắn hơn để một API treo không giữ cả lượt.</param>
 public sealed record FetchRequest(string Name, string Url, string Method = "GET", string? Body = null, TimeSpan? Timeout = null);
 
 public sealed record FetchResult(int Status, string Body, bool HasToken);

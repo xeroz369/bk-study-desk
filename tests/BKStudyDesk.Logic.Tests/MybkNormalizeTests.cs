@@ -3,7 +3,6 @@ using SoHocTap.Sources.Mybk;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Normalizer MyBK chạy trên fixture viết tay (Fixtures/mybk), không gọi MyBK thật.</summary>
 public class MybkNormalizeTests
 {
     private static JsonObject Fixture(string name) =>
@@ -27,8 +26,8 @@ public class MybkNormalizeTests
     public void Schedule_OrdersByDay_ParsesWeeks_ToleratesNullsAndJunk()
     {
         var s = MybkNormalize.Schedule(Study["schedule"] as JsonArray);
-        Assert.Equal(2, s.Count);                                   // dòng không phải object bị bỏ
-        Assert.Equal("MT0002", s[0]!["code"]!.ToString());          // thứ 2 trước thứ "4"
+        Assert.Equal(2, s.Count);
+        Assert.Equal("MT0002", s[0]!["code"]!.ToString());
         Assert.Equal("", s[0]!["teacher"]!.ToString());
         Assert.Null(s[0]!["room"]);
         Assert.Empty(s[0]!["weeks"]!.AsArray());
@@ -43,8 +42,8 @@ public class MybkNormalizeTests
         var e = MybkNormalize.Exams(Study["exams"]);
         Assert.Equal(2, e.Count);
         Assert.Equal("2026-10-15", e[0]!["date"]!.ToString());
-        Assert.Null(e[0]!["minutes"]);                               // "không rõ"
-        Assert.Equal(90, e[1]!["minutes"]!.GetValue<int>());         // "90"
+        Assert.Null(e[0]!["minutes"]);
+        Assert.Equal(90, e[1]!["minutes"]!.GetValue<int>());
         Assert.Equal("09g00", e[0]!["time"]!.ToString());
         Assert.Empty(MybkNormalize.Exams(null));
         Assert.Single(MybkNormalize.Exams(new JsonArray(new JsonObject { ["MAMONHOC"] = "X" })));
@@ -55,7 +54,7 @@ public class MybkNormalizeTests
     {
         var g = MybkNormalize.Grades(Study["gradesCourses"] as JsonArray, Special);
         Assert.Equal(3, g.Count);
-        Assert.Equal("20252", g[0]!["term"]!.ToString());            // mới nhất lên đầu
+        Assert.Equal("20252", g[0]!["term"]!.ToString());
         var normal = g.Single(x => x!["code"]!.ToString() == "MT0003")!;
         Assert.Equal(8.5, normal["score"]!.GetValue<double>());
         Assert.Null(normal["special"]);
@@ -64,11 +63,11 @@ public class MybkNormalizeTests
         var exempt = g.Single(x => x!["code"]!.ToString() == "MT0004")!;
         Assert.Null(exempt["score"]);
         Assert.Equal("MT", exempt["special"]!.ToString());
-        Assert.Equal(1, exempt["result"]!.GetValue<int>());          // "1" dạng chữ
+        Assert.Equal(1, exempt["result"]!.GetValue<int>());
         var odd = g.Single(x => x!["code"]!.ToString() == "MT0005")!;
-        Assert.Equal("mã 11", odd["special"]!.ToString());           // mã chưa có trong bảng: không đoán
+        Assert.Equal("mã 11", odd["special"]!.ToString());
         Assert.Equal(-1, odd["result"]!.GetValue<int>());
-        Assert.Equal("5", odd["note"]!.ToString());                  // ghi chú dạng số không làm throw
+        Assert.Equal("5", odd["note"]!.ToString());
     }
 
     [Fact]
@@ -93,8 +92,8 @@ public class MybkNormalizeTests
         Assert.True(blocks[0]!["required"]!.GetValue<bool>());
         Assert.True(blocks[1]!["complete"]!.GetValue<bool>());
         var courses = c["courses"]!.AsArray();
-        Assert.Equal(["MT0006", "MT0003", "MT0004"], courses.Select(x => x!["code"]!.ToString()));   // theo stt ("1" chữ vẫn đúng)
-        Assert.Null(courses[0]!["letter"]);                          // "--"
+        Assert.Equal(["MT0006", "MT0003", "MT0004"], courses.Select(x => x!["code"]!.ToString()));
+        Assert.Null(courses[0]!["letter"]);
         Assert.False(courses[0]!["attempted"]!.GetValue<bool>());
         Assert.Null(courses[2]!["score"]);
         Assert.Equal("MT", courses[2]!["special"]!.ToString());
@@ -104,20 +103,18 @@ public class MybkNormalizeTests
     [Fact]
     public void Curriculum_WithoutInfo_KeepsPreviousHeader()
     {
-        // API phần đầu (curriculumInfo) lỗi: danh sách môn vẫn cập nhật, tên chương trình, tín chỉ, điểm trung bình giữ của lần trước.
         var before = MybkNormalize.Curriculum(Study["curriculumInfo"] as JsonObject, Study["curriculum"] as JsonArray, Special);
         var c = MybkNormalize.Curriculum(null, Study["curriculum"] as JsonArray, Special, before);
         Assert.Equal(50, c["creditsDone"]!.GetValue<int>());
         Assert.Equal(7.3, c["gpa10"]!.GetValue<double>());
         Assert.Equal(before["program"]?.ToString(), c["program"]?.ToString());
         Assert.Equal(3, c["courses"]!.AsArray().Count);
-        Assert.Null(MybkNormalize.Curriculum(null, Study["curriculum"] as JsonArray, Special)["creditsNeed"]);   // chưa có lần trước
+        Assert.Null(MybkNormalize.Curriculum(null, Study["curriculum"] as JsonArray, Special)["creditsNeed"]);
     }
 
     [Fact]
     public void Curriculum_ready_only_when_MyBK_says_done()
     {
-        // Trang CTĐT của MyBK chỉ vẽ danh sách khi dòng đầu có msg "done" (tien-do-hoan-thanh-ctdt.js); thiếu msg thì vẫn nhận.
         Assert.True(MybkNormalize.CurriculumReady(JsonNode.Parse("""[{"msg":"done","mamonhoc":"MT1003"}]""") as JsonArray));
         Assert.True(MybkNormalize.CurriculumReady(JsonNode.Parse("""[{"mamonhoc":"MT1003"}]""") as JsonArray));
         Assert.False(MybkNormalize.CurriculumReady(JsonNode.Parse("""[{"msg":"processing"}]""") as JsonArray));
@@ -154,7 +151,7 @@ public class MybkNormalizeTests
         Assert.Empty(MybkNormalize.SocialWork(null)["activities"]!.AsArray());
 
         var f = MybkNormalize.Fees(Extra["fees"] as JsonArray);
-        Assert.Equal(["Học phí mẫu", "Đã đóng"], f.Select(x => x!["content"]!.ToString()));   // bỏ khoản đã hủy ("1" chữ), giữ khoản đã đóng
+        Assert.Equal(["Học phí mẫu", "Đã đóng"], f.Select(x => x!["content"]!.ToString()));
         Assert.Equal(0, f[1]!["remaining"]!.GetValue<long>());
     }
 
@@ -163,7 +160,7 @@ public class MybkNormalizeTests
     {
         var r = MybkNormalize.Registered(Extra["registered"] as JsonArray, "20261");
         var row = Assert.Single(r)!;
-        Assert.Equal("HK261_KQ", row["round"]!.ToString());           // semesterId "3" > 1
+        Assert.Equal("HK261_KQ", row["round"]!.ToString());
         Assert.Equal("L02", row["classGroup"]!.ToString());
         Assert.Equal("Thành công", row["result"]!.ToString());
         Assert.Empty(MybkNormalize.Registered(Extra["registered"] as JsonArray, "1"));
@@ -183,10 +180,9 @@ public class MybkNormalizeTests
     {
         var html = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "mybk", "registration.html"));
         var rounds = MybkNormalize.ParseRegistration(html);
-        Assert.Equal(2, rounds.Count);                                // dòng tiêu đề, ngày 31/02 và dòng ghi chú bị bỏ
+        Assert.Equal(2, rounds.Count);
         Assert.Equal("HK261_D1", rounds[0]!["code"]!.ToString());
         Assert.Equal("Đăng ký đợt 1 & điều chỉnh", rounds[0]!["name"]!.ToString());
-        // 08:00 giờ VN = 01:00 UTC, không phụ thuộc múi giờ máy chạy test.
         Assert.Equal(new DateTimeOffset(2026, 8, 1, 1, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(), rounds[0]!["start"]!.GetValue<long>());
         Assert.Equal(new DateTimeOffset(2026, 8, 22, 16, 59, 0, TimeSpan.Zero).ToUnixTimeSeconds(), rounds[1]!["end"]!.GetValue<long>());
     }

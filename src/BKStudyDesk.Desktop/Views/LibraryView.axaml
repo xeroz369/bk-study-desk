@@ -1,5 +1,3 @@
-<!-- Trang Thư viện (design-system/bk mục 4, cùng bố cục với Môn học): trái là mọi môn của thư viện (tìm, lọc khoa), phải là tài liệu của môn
-     đang chọn. Hẹp thì danh sách lên trên (LibraryView.OnSizeChanged). Môn nào, xếp, lọc: Presentation/LibraryPage.cs; bảng: LibraryTab.cs. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
@@ -16,7 +14,6 @@
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Danh sách môn của thư viện -->
             <Border x:Name="ListCard" Classes="card">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Margin="12" Spacing="8">
@@ -40,7 +37,6 @@
                 </DockPanel>
             </Border>
 
-            <!-- Tài liệu của môn đang chọn -->
             <Border x:Name="DetailCard" Classes="card" Grid.Column="2" IsVisible="False">
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Classes="card-head">

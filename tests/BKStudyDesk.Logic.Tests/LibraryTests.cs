@@ -6,10 +6,6 @@ using SoHocTap.Library;
 
 namespace SoHocTap.Tests;
 
-/// <summary>
-/// Thư viện /v1: đọc hợp đồng, ETag, cache khi mất mạng, ghép môn, tải file có kiểm sha256, mục đã gỡ, cài gói quiz.
-/// Fixture viết tay ở Fixtures/library (không lấy từ repo thư viện thật); "mạng" là HttpMessageHandler giả, không gọi ra ngoài.
-/// </summary>
 public sealed class LibraryTests : IDisposable
 {
     private static readonly string Fixtures = Path.Combine(AppContext.BaseDirectory, "Fixtures", "library");
@@ -43,8 +39,6 @@ public sealed class LibraryTests : IDisposable
 
     private static CourseRef Ref(string id) => Index().Courses!.Single(c => c.Id == id);
 
-    // ------------------------------------------------------------------ hợp đồng
-
     [Fact]
     public void ParsesIndex_IgnoresUnknownFields()
     {
@@ -70,7 +64,7 @@ public sealed class LibraryTests : IDisposable
         Assert.True(removed.Removed);
         Assert.Null(removed.Title);
         Assert.Empty(removed.Files!);
-        Assert.Equal("2026-09-20", removed.Updated);   // updated vắng thì lấy added
+        Assert.Equal("2026-09-20", removed.Updated);
         var link = mt.Items.Single(i => i.Id == "mit-ocw-1802");
         Assert.True(link.IsLink);
         Assert.Empty(link.Files!);
@@ -93,13 +87,12 @@ public sealed class LibraryTests : IDisposable
              "files":[{"name":"a.md","size":1,"sha256":"xyz","urls":["https://a/"]},{"name":"b.md","size":1,"sha256":"%%","urls":[]}]}]}
             """.Replace("%%", new string('a', 64), StringComparison.Ordinal));
         var item = Assert.Single(d.Items!);
-        Assert.Empty(item.Files!);   // sha sai mẫu, không có url: không tải được nên bỏ
+        Assert.Empty(item.Files!);
     }
 
     [Fact]
     public void ParsesBookRefAndMime()
     {
-        // Bk-lib PR 2: files[].mime luôn có; loại "book-ref" chỉ có book, không file, không url.
         var d = LibraryJson.ParseCourse("""
             {"schemaVersion":1,"id":"MT1005","items":[
              {"id":"sach-gt2","type":"book-ref","added":"2026-10-03","book":{"title":"Giải tích 2","authors":["A","",null],"year":2020,"publisher":"NXB ĐHQG","isbn":"978-604-0-00000-0"}},
@@ -154,8 +147,6 @@ public sealed class LibraryTests : IDisposable
     [InlineData("  ", null)]
     public void SafeFileName(string input, string? expected) => Assert.Equal(expected, LibraryClient.SafeFileName(input));
 
-    // ------------------------------------------------------------------ index, ETag, cache
-
     [Fact]
     public async Task Index_SecondFetchSendsETag_And304KeepsCache()
     {
@@ -187,7 +178,6 @@ public sealed class LibraryTests : IDisposable
         await c.GetIndexAsync(LibraryRefresh.IfDue, default);
         Assert.Equal(2, _server.Requests.Count);
 
-        // Mở tab: gọi lại, nhưng mở tab liên tục trong 10 phút thì không.
         _time.Advance(TimeSpan.FromMinutes(5));
         await c.GetIndexAsync(LibraryRefresh.Tab, default);
         Assert.Equal(2, _server.Requests.Count);
@@ -203,14 +193,14 @@ public sealed class LibraryTests : IDisposable
     {
         using (var c = Client()) Assert.Equal(LibraryOrigin.Network, (await c.GetIndexAsync(LibraryRefresh.Force, default)).Origin);
         _server.Offline = true;
-        using var again = Client();   // app mở lại khi mất mạng
+        using var again = Client();
         var r = await again.GetIndexAsync(LibraryRefresh.Force, default);
         Assert.Equal(LibraryOrigin.Cache, r.Origin);
         Assert.NotNull(r.Error);
         Assert.Equal(7, r.Value!.Courses!.Count);
 
         var detail = await again.GetCourseAsync(Ref("MT1005"), LibraryRefresh.Force, default);
-        Assert.Equal(LibraryOrigin.None, detail.Origin);   // chưa từng tải chi tiết: không có gì, nhưng không throw
+        Assert.Equal(LibraryOrigin.None, detail.Origin);
         Assert.Null(detail.Value);
     }
 
@@ -239,7 +229,7 @@ public sealed class LibraryTests : IDisposable
         var abs = await c.GetCourseAsync(Ref("MT1005") with { Detail = "https://evil.example/x.json" }, LibraryRefresh.Force, default);
         Assert.Null(abs.Value);
         Assert.Empty(_server.Requests);
-        var ok = await c.GetCourseAsync(Ref("MT1005") with { Detail = null }, LibraryRefresh.Force, default);   // mặc định courses/<id>.json
+        var ok = await c.GetCourseAsync(Ref("MT1005") with { Detail = null }, LibraryRefresh.Force, default);
         Assert.Equal(6, ok.Value!.Items!.Count);
     }
 
@@ -256,17 +246,15 @@ public sealed class LibraryTests : IDisposable
         Assert.Single(c.Records());
     }
 
-    // ------------------------------------------------------------------ ghép môn
-
     [Fact]
     public void Match_ByCode_Alias_NfcCaseInsensitive()
     {
         var lib = Index().Courses!;
         Assert.Equal("MT1005", Assert.Single(LibraryMatch.FindAll([LibraryMatch.LmsCode("MT1005_HK251_CC01")], lib)).Course.Id);
-        Assert.Equal("MT1005", Assert.Single(LibraryMatch.FindAll([" mt1004 "], lib)).Course.Id);   // mã cũ (alias)
+        Assert.Equal("MT1005", Assert.Single(LibraryMatch.FindAll([" mt1004 "], lib)).Course.Id);
         Assert.Equal("EE1009", Assert.Single(LibraryMatch.FindAll(["ee1009".Normalize(NormalizationForm.FormD)], lib)).Course.Id);
         Assert.Empty(LibraryMatch.FindAll(["CO1005", "", null], lib));
-        Assert.Empty(LibraryMatch.FindAll(["Giải tích 2"], lib));   // không khớp theo tên
+        Assert.Empty(LibraryMatch.FindAll(["Giải tích 2"], lib));
     }
 
     [Fact]
@@ -283,7 +271,6 @@ public sealed class LibraryTests : IDisposable
         var found = LibraryMatch.FindAll(["GE1007"], Index().Courses!);
         Assert.Equal(["GE1007", "GE2033"], found.Select(m => m.Course.Id));
         Assert.Equal("GE1007", found[1].ReplacementOf!.Id);
-        // Người dùng có cả mã mới: môn mới là khớp thẳng, không ghi "thay cho".
         var both = LibraryMatch.FindAll(["GE2033", "GE1007"], Index().Courses!);
         Assert.Equal("GE2033", both[0].Course.Id);
         Assert.All(both, m => Assert.Null(m.ReplacementOf));
@@ -306,15 +293,13 @@ public sealed class LibraryTests : IDisposable
         var map = LibraryMatch.MatchAll(
         [
             ("Giải tích 2", [LibraryMatch.LmsCode("MT1005_HK251")]),
-            ("Kỹ thuật số", ["EE1009"]),          // mã từ thời khóa biểu MyBK
+            ("Kỹ thuật số", ["EE1009"]),
             ("Môn lạ", ["XX9999"]),
         ], Index().Courses!);
         Assert.Equal(2, map.Count);
         Assert.Equal("EE1009", map["Kỹ thuật số"][0].Course.Id);
         Assert.True(map.ContainsKey("giải tích 2".Normalize(NormalizationForm.FormD)));
     }
-
-    // ------------------------------------------------------------------ tải file
 
     private static LibraryItem Item(string course, string id) => Course(course).Items!.Single(i => i.Id == id);
 
@@ -335,7 +320,7 @@ public sealed class LibraryTests : IDisposable
         var count = _server.Requests.Count;
         var again = await c.DownloadAsync(Ref("MT1005"), item, Target, default);
         Assert.True(again.Ok);
-        Assert.Equal(count, _server.Requests.Count);   // đúng nội dung rồi thì không tải lại
+        Assert.Equal(count, _server.Requests.Count);
     }
 
     [Fact]
@@ -359,7 +344,7 @@ public sealed class LibraryTests : IDisposable
         Assert.Empty(r.Paths);
         Assert.Empty(Directory.GetFiles(Target));
         Assert.Empty(c.Records());
-        Assert.Equal(2, _server.Requests.Count);   // đã thử cả hai url
+        Assert.Equal(2, _server.Requests.Count);
     }
 
     [Fact]
@@ -404,14 +389,13 @@ public sealed class LibraryTests : IDisposable
         var item = Item("MT1005", "tom-tat-chuong-1");
         var path = Assert.Single((await c.DownloadAsync(Ref("MT1005"), item, Target, default)).Paths);
 
-        // Thư viện ra bản mới (nội dung khác, updated mới hơn): bản trên máy là cũ.
         var text = "# Chương 1 (bản 2)\n";
         var bytes = Encoding.UTF8.GetBytes(text);
         _server.Override = p => p == "/files/MT1005/tom-tat-c1.md" ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) } : null;
         var v2 = item with { Updated = "2026-10-05", Files = [item.Files![0] with { Size = bytes.Length, Sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)) }] };
         Assert.Equal(ItemLocal.Outdated, c.LocalState("MT1005", v2));
         var r = await c.DownloadAsync(Ref("MT1005"), v2, Target, default);
-        Assert.Equal([path], r.Paths);   // thay đúng bản của app, không thêm "(bản ...)"
+        Assert.Equal([path], r.Paths);
         Assert.Equal(text, File.ReadAllText(path));
         Assert.Equal(ItemLocal.Downloaded, c.LocalState("MT1005", v2));
     }
@@ -430,8 +414,6 @@ public sealed class LibraryTests : IDisposable
         Assert.Equal(ItemLocal.Downloaded, c.LocalState("MT1005", newer));
     }
 
-    // ------------------------------------------------------------------ mục đã gỡ
-
     [Fact]
     public async Task Removed_DeletesOnlyAppCopy()
     {
@@ -441,7 +423,7 @@ public sealed class LibraryTests : IDisposable
         var b = Assert.Single((await c.DownloadAsync(mt, Item("MT1005", "bang-cong-thuc-gk"), Target, default)).Paths);
         var user = Path.Combine(Target, "cua-toi.md");
         File.WriteAllText(user, "file người dùng tự thêm");
-        File.AppendAllText(b, "\nngười dùng sửa thêm");   // đã sửa: không còn là bản cache của app
+        File.AppendAllText(b, "\nngười dùng sửa thêm");
 
         var detail = Course("MT1005");
         var gone = detail with
@@ -455,7 +437,7 @@ public sealed class LibraryTests : IDisposable
         Assert.False(File.Exists(a));
         Assert.True(File.Exists(b));
         Assert.True(File.Exists(user));
-        Assert.Empty(c.Records());   // cả hai mục bỏ khỏi manifest; file đã sửa giờ là của người dùng
+        Assert.Empty(c.Records());
         Assert.Empty(c.ApplyRemovals(gone));
     }
 
@@ -469,8 +451,6 @@ public sealed class LibraryTests : IDisposable
         Assert.Empty(_server.Requests);
     }
 
-    // ------------------------------------------------------------------ gói quiz
-
     [Fact]
     public async Task QuizPack_Json_InstallsThroughPackImport()
     {
@@ -479,7 +459,6 @@ public sealed class LibraryTests : IDisposable
         var fresh = QuizPackHandOff.Decide(path, _ => false);
         Assert.Equal(HandOffKind.Install, fresh.Kind);
         Assert.Equal("thu-vien-mt1005-tich-phan-kep", fresh.Pack!["id"]!.GetValue<string>());
-        // Đã cài bản cũ: cập nhật qua khung Luyện tập để giữ kết quả theo fingerprint.
         Assert.Equal(HandOffKind.PracticeImport, QuizPackHandOff.Decide(path, id => id == "thu-vien-mt1005-tich-phan-kep").Kind);
     }
 
@@ -517,15 +496,13 @@ public sealed class LibraryTests : IDisposable
         Assert.Equal(HandOffKind.Invalid, QuizPackHandOff.Decide(file, _ => false).Kind);
     }
 
-    // ------------------------------------------------------------------ lệnh chính theo loại file
-
     [Theory]
     [InlineData("a.pdf", null, LibraryFileKind.Pdf)]
     [InlineData("a.MD", null, LibraryFileKind.Markdown)]
     [InlineData("a.zip", null, LibraryFileKind.Zip)]
     [InlineData("a.json", null, LibraryFileKind.Json)]
     [InlineData("a.docx", null, LibraryFileKind.Other)]
-    [InlineData("a.bin", "application/pdf", LibraryFileKind.Pdf)]          // có mime thì theo mime
+    [InlineData("a.bin", "application/pdf", LibraryFileKind.Pdf)]
     [InlineData("a.md", "text/markdown; charset=utf-8", LibraryFileKind.Markdown)]
     [InlineData("a.pdf", "application/octet-stream", LibraryFileKind.Other)]
     public void FileKind_MimeThenExtension(string name, string? mime, LibraryFileKind kind) =>
@@ -537,7 +514,7 @@ public sealed class LibraryTests : IDisposable
         var d = LibraryJson.ParseCourse("{\"schemaVersion\":1,\"id\":\"MT1005\",\"items\":[{\"id\":\"a\",\"type\":\"summary\",\"files\":[{\"name\":\"x\",\"size\":1,\"sha256\":\""
                                         + new string('b', 64) + "\",\"urls\":[\"https://a/\"],\"mime\":\"application/pdf\"}]}]}");
         Assert.Equal(LibraryFileKind.Pdf, d.Items![0].Files![0].Kind);
-        Assert.Null(Item("MT1005", "tom-tat-chuong-1").Files![0].Mime);   // fixture chưa có mime: theo đuôi
+        Assert.Null(Item("MT1005", "tom-tat-chuong-1").Files![0].Mime);
     }
 
     [Fact]
@@ -545,23 +522,21 @@ public sealed class LibraryTests : IDisposable
     {
         LibraryAction Of(string course, string id, ItemLocal local = ItemLocal.None) => LibraryActions.Primary(Item(course, id), local);
         Assert.Equal(LibraryAction.OpenWeb, Of("MT1005", "mit-ocw-1802"));
-        Assert.Equal(LibraryAction.Install, Of("MT1005", "quiz-tich-phan-kep"));      // .json
-        Assert.Equal(LibraryAction.Install, Of("EE1009", "quiz-ban-do-k", ItemLocal.Downloaded));   // .md
-        Assert.Equal(LibraryAction.Open, Of("MT1005", "tom-tat-chuong-1"));            // Markdown: mở (chưa có thì tải rồi mở)
+        Assert.Equal(LibraryAction.Install, Of("MT1005", "quiz-tich-phan-kep"));
+        Assert.Equal(LibraryAction.Install, Of("EE1009", "quiz-ban-do-k", ItemLocal.Downloaded));
+        Assert.Equal(LibraryAction.Open, Of("MT1005", "tom-tat-chuong-1"));
         Assert.Equal(LibraryAction.Download, Of("MT1005", "tom-tat-chuong-1", ItemLocal.Outdated));
-        Assert.Equal(LibraryAction.Download, Of("EE1009", "danh-sach-video"));        // .txt: chỉ tải về
+        Assert.Equal(LibraryAction.Download, Of("EE1009", "danh-sach-video"));
         Assert.Equal(LibraryAction.Open, Of("EE1009", "danh-sach-video", ItemLocal.Downloaded));
         var pdf = Item("PH1007", "prelab-bai-5");
         pdf = pdf with { Files = [pdf.Files![0] with { Name = "prelab", Mime = "application/pdf" }] };
         Assert.Equal(LibraryAction.Open, LibraryActions.Primary(pdf, ItemLocal.None));
         var zipQuiz = Item("MT1005", "quiz-tich-phan-kep");
         zipQuiz = zipQuiz with { Files = [zipQuiz.Files![0] with { Name = "goi.pdf" }] };
-        Assert.Equal(LibraryAction.Open, LibraryActions.Primary(zipQuiz, ItemLocal.None));   // quiz-pack mà không phải .md/.zip/.json
+        Assert.Equal(LibraryAction.Open, LibraryActions.Primary(zipQuiz, ItemLocal.None));
         Assert.True(LibraryActions.OpensAfterDownload(Item("MT1005", "tom-tat-chuong-1")));
         Assert.False(LibraryActions.OpensAfterDownload(Item("EE1009", "danh-sach-video")));
     }
-
-    // ------------------------------------------------------------------ thư viện trên máy (dev) và dữ liệu thật (tùy chọn)
 
     [Fact]
     public async Task LocalFolderBase_ReadsWithoutNetwork()
@@ -574,10 +549,6 @@ public sealed class LibraryTests : IDisposable
         Assert.Empty(_server.Requests);
     }
 
-    /// <summary>
-    /// Đọc thư mục v1/ thật do repo thư viện sinh ra (chỉ đọc). Đặt biến môi trường BKSD_LIBRARY_V1 trỏ tới thư mục đó;
-    /// không có thì bỏ qua. Không ghi gì vào thư mục đó: cache và manifest nằm trong thư mục tạm của test.
-    /// </summary>
     [LibraryFolderFact]
     public async Task RealLibraryFolder_ParsesAndMatches()
     {
@@ -604,11 +575,8 @@ public sealed class LibraryTests : IDisposable
             Assert.Equal(n, LibraryMatch.FindAll(["GE4169"], index.Courses).Count);
     }
 
-    // ------------------------------------------------------------------ server giả
-
     private sealed record Seen(string Path, string? IfNoneMatch);
 
-    /// <summary>Phục vụ Fixtures/library: library.example/v1/* và /files/*, mirror.library.example/&lt;môn&gt;/&lt;file&gt;. Có ETag.</summary>
     private sealed class FakeServer(string root) : HttpMessageHandler
     {
         public List<Seen> Requests { get; } = [];
@@ -651,10 +619,6 @@ public sealed class LibraryTests : IDisposable
     }
 }
 
-/// <summary>
-/// Đọc thư viện thật qua mạng (chỉ GET, chạy tay): BKSD_LIBRARY_URL là địa chỉ gốc của web thư viện. Tải mọi mục có file của
-/// môn đầu tiên có file, kiểm sha256; link đầu hỏng thì phải tự thử link sau. Không đặt biến thì bỏ qua (CI không gọi mạng).
-/// </summary>
 public sealed class LiveLibraryTests : IDisposable
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "bksd-live-lib-" + Guid.NewGuid().ToString("N"));
@@ -697,7 +661,6 @@ public sealed class LiveLibraryFactAttribute : FactAttribute
     }
 }
 
-/// <summary>Test chỉ chạy khi biến môi trường BKSD_LIBRARY_V1 trỏ tới thư mục v1/ có index.json.</summary>
 public sealed class LibraryFolderFactAttribute : FactAttribute
 {
     public const string Variable = "BKSD_LIBRARY_V1";

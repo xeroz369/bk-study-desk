@@ -4,10 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>
-/// Câu trả lời như trong <c>ket-qua.json</c> và bài thi: số (chỉ số phương án, single), mảng số (multi) hoặc chuỗi gõ vào (numeric, short).
-/// JSON giữ đúng ba dạng đó để 1.x và bản native đọc chung.
-/// </summary>
 [JsonConverter(typeof(AnswerConverter))]
 public readonly record struct Answer
 {
@@ -20,7 +16,6 @@ public readonly record struct Answer
     public static Answer Of(string s) => new() { Text = s };
     public static Answer Many(params int[] i) => new() { Indices = i };
 
-    /// <summary>Bỏ trống: null, mảng rỗng, chuỗi trắng. Số 0 không phải bỏ trống.</summary>
     public static bool IsBlankValue(Answer? a) =>
         a is not { } v
         || (v.Number is null && v.Indices is null && v.Text is null)
@@ -38,7 +33,7 @@ public sealed class AnswerConverter : JsonConverter<Answer>
 {
     public override Answer Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => reader.TokenType switch
     {
-        JsonTokenType.Null => default,   // bỏ trống
+        JsonTokenType.Null => default,
         JsonTokenType.Number => Answer.Of(reader.GetDouble()),
         JsonTokenType.String => Answer.Of(reader.GetString()!),
         JsonTokenType.StartArray => Answer.Many(JsonSerializer.Deserialize(ref reader, CoreJson.Default.DoubleArray)!.Select(x => (int)x).ToArray()),

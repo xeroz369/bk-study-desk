@@ -7,18 +7,12 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>Trang chính Luyện tập. Chỉ nối model vào XAML và báo lên PracticeHost khi bấm; dữ liệu do PracticeHome dựng.</summary>
 public partial class PracticeHomeView : UserControl
 {
     public PracticeHomeView() => InitializeComponent();
 
-    /// <summary>
-    /// Người dùng chọn một việc: due, review, next, flagged, lesson:id, random:courseId, mix:courseId, author, retry,
-    /// quiz:lessonId (quiz LMS), pack:file (gói: mở tab Môn học), remove:file (gỡ gói).
-    /// </summary>
     public event Action<string>? Go;
 
-    // Gỡ gói: bấm lần đầu đổi chữ nút, bấm lần nữa trong vài giây mới gỡ (như Nộp bài của thi thử).
     private Button? _armed;
     private readonly DispatcherTimer _disarm = new() { Interval = TimeSpan.FromSeconds(4) };
 
@@ -48,19 +42,16 @@ public partial class PracticeHomeView : UserControl
         ResultsGrid.IsVisible = m.Results.Count > 0;
         ResultsEmpty.IsVisible = m.Results.Count == 0;
         UpdateArchiveEmpty();
-        // Hai cột khi đủ chỗ cho cả hai mức tối thiểu, không thì thẻ Thi thử xuống dưới (như trang Hôm nay).
         TodayColumns.SizeChanged += (_, _) => Layout(TodayColumns.Bounds.Width);
         _disarm.Tick += (_, _) => Disarm();
     }
 
-    /// <summary>Nằm trong tab Luyện tập của thẻ môn: bỏ tiêu đề trang (thẻ môn đã có tên), lề trong như các tab khác.</summary>
     public void SetEmbedded(bool on)
     {
         _embedded = on;
         HeaderBar.IsVisible = !on;
         RootPanel.Margin = on ? new Avalonia.Thickness(16, 12) : default;
         RootPanel.Spacing = on ? 12 : 24;
-        // Only the course list of this subject: move it out of the tab strip (and back for the global page).
         if (on && CoursesTab.Content is Control panel) { CoursesTab.Content = null; EmbeddedSlot.Content = panel; }
         else if (!on && EmbeddedSlot.Content is Control back) { EmbeddedSlot.Content = null; CoursesTab.Content = back; }
         Tabs.IsVisible = !on;
@@ -72,7 +63,6 @@ public partial class PracticeHomeView : UserControl
 
     private bool _embedded;
 
-    /// <summary>Lọc danh sách môn (tab Luyện tập trong thẻ môn: chỉ môn đó).</summary>
     public void SetCourseFilter(string text) => CourseFilter.Text = text;
 
     public void SelectTab(int i) => Tabs.SelectedIndex = Math.Clamp(i, 0, Tabs.ItemCount - 1);
@@ -117,9 +107,7 @@ public partial class PracticeHomeView : UserControl
     private void OnRandomExam(object? sender, RoutedEventArgs e) => Go?.Invoke("random:" + TagOf(sender));
     private void OnMix(object? sender, RoutedEventArgs e) => Go?.Invoke("mix:" + TagOf(sender));
 
-    // ------------------------------------------------------------------ thu gọn từng môn (tab Môn học)
-
-    private const string CollapsedKey = "practice.collapsed";   // mã các môn người dùng đã thu gọn, giữ qua lần mở sau
+    private const string CollapsedKey = "practice.collapsed";
     private IReadOnlyList<PracticeCourseRow> _courses = [];
 
     private bool Filtering => !string.IsNullOrWhiteSpace(CourseFilter.Text);
@@ -138,20 +126,15 @@ public partial class PracticeHomeView : UserControl
     private void OnExpandAll(object? sender, RoutedEventArgs e) => SetAll(true);
     private void OnCollapseAll(object? sender, RoutedEventArgs e) => SetAll(false);
 
-    /// <summary>Mở hay thu gọn mọi môn đang hiện; như người dùng bấm từng thẻ nên được nhớ (OnCourseToggle).</summary>
     private void SetAll(bool expanded)
     {
         foreach (var x in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(CourseList).OfType<Expander>()) x.IsExpanded = expanded;
     }
 
-    /// <summary>
-    /// Đặt lại trạng thái đã lưu rồi mới lắng nghe: chỉ thao tác của người dùng sau khi thẻ đã hiện mới ghi config. Gắn qua XAML thì Fluent
-    /// có lúc báo Expanded/Collapsed ngay lúc dựng thẻ, và một lần thử đã tự ghi một môn là thu gọn dù không ai bấm (11/10/2026).
-    /// </summary>
     private void OnCourseLoaded(object? sender, RoutedEventArgs e)
     {
         if (sender is not Expander x || x.Tag is not string id) return;
-        x.IsExpanded = Filtering || !SoHocTap.Core.Config.List(CollapsedKey).Contains(id);   // đang lọc: mở môn khớp để thấy bài, không ghi đè lựa chọn đã lưu
+        x.IsExpanded = Filtering || !SoHocTap.Core.Config.List(CollapsedKey).Contains(id);
         x.Expanded += OnCourseToggle;
         x.Collapsed += OnCourseToggle;
         x.Unloaded += (_, _) => { x.Expanded -= OnCourseToggle; x.Collapsed -= OnCourseToggle; };
@@ -163,7 +146,7 @@ public partial class PracticeHomeView : UserControl
         var now = SoHocTap.Core.Config.List(CollapsedKey);
         var ids = now.Where(c => c != id).ToList();
         if (!x.IsExpanded) ids.Add(id);
-        if (ids.Count == now.Count && ids.All(now.Contains)) return;   // không đổi: khỏi ghi
+        if (ids.Count == now.Count && ids.All(now.Contains)) return;
         SoHocTap.Core.Config.Set(CollapsedKey, new System.Text.Json.Nodes.JsonArray([.. ids.Select(c => (System.Text.Json.Nodes.JsonNode?)c)]));
     }
 
@@ -176,14 +159,10 @@ public partial class PracticeHomeView : UserControl
         else SelectTab(1);
     }
 
-    // ------------------------------------------------------------------ kho quiz LMS
-
-    /// <summary>Người dùng đổi công tắc tự lưu (true, false) hay bấm Lưu ngay (null). Host gọi API rồi báo lại qua <see cref="ArchiveSays"/>.</summary>
     public event Action<bool?>? ArchiveRequested;
 
     private bool _loadingPref;
 
-    /// <summary>Giá trị công tắc tự lưu đọc từ app; null là chưa đọc được (giữ bật như bản Svelte).</summary>
     public void SetAutoSave(bool? on)
     {
         _loadingPref = true;
@@ -193,7 +172,6 @@ public partial class PracticeHomeView : UserControl
         UpdateArchiveEmpty();
     }
 
-    /// <summary>Câu báo trên thẻ kho quiz (đã bật, đang đồng bộ, lỗi).</summary>
     public void ArchiveSays(string text)
     {
         ArchiveNote.Text = text;

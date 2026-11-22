@@ -8,7 +8,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>Trang MyBK: nối MybkPresenter vào các tab. Bảng có nhóm (điểm theo kỳ, chương trình theo khối, giảng viên) dùng nhóm của DataGrid.</summary>
 public partial class MybkView : UserControl, IFillPage, ITabbedPage
 {
     private readonly MybkData? _m;
@@ -17,10 +16,6 @@ public partial class MybkView : UserControl, IFillPage, ITabbedPage
 
     public int Tab { get => Tabs.SelectedIndex; set => Tabs.SelectedIndex = Math.Clamp(value, 0, Tabs.ItemCount - 1); }
 
-    /// <summary>
-    /// Tab Tính thử GPA: mỗi môn đang học chưa có điểm một dòng (tên, tín chỉ, ô điểm dự kiến), kết quả GPA học kỳ và tích lũy cập nhật
-    /// ngay khi sửa. Không lưu, không gửi đi đâu.
-    /// </summary>
     private void ShowGpaPlanner()
     {
         GpaPanel.Children.Clear();
@@ -80,7 +75,7 @@ public partial class MybkView : UserControl, IFillPage, ITabbedPage
         GradesSearch.IsVisible = _grades.Count > 0;
         ShowGrades();
         ProgramFilter.ItemsSource = MybkPresenter.Filters;
-        ProgramFilter.SelectedIndex = 0;   // OnProgramFilter dựng bảng chương trình
+        ProgramFilter.SelectedIndex = 0;
         ProgramNote.Text = MybkPresenter.ProgramNote(_m);
         Tables.Show(Registered, RegisteredEmpty, MybkPresenter.Registered(_m), Empty("grades.regEmpty"));
         Tables.Show(Teachers, TeachersEmpty, Tables.Grouped(MybkPresenter.Teachers(_m), nameof(TeacherRow.Teacher)), Empty("grades.teachersEmpty"));
@@ -94,7 +89,6 @@ public partial class MybkView : UserControl, IFillPage, ITabbedPage
     private IReadOnlyList<MybkGradeRow> _grades = [];
     private string _gradesEmpty = "";
 
-    // Ô tìm Bảng điểm (MybkPresenter.SearchGrades): lọc trên danh sách đã dựng, nhóm theo học kỳ như cũ.
     private void ShowGrades()
     {
         var q = GradesSearch.Text ?? "";

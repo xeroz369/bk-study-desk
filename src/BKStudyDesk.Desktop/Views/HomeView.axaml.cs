@@ -6,9 +6,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Chỉ nối HomeModel vào XAML, đặt câu trống, đổi một cột hay hai cột theo độ rộng, mở link. Lọc, sắp, chữ trong dòng: HomePresenter.
-/// </summary>
 public partial class HomeView : UserControl
 {
     public HomeView() => InitializeComponent();
@@ -16,7 +13,6 @@ public partial class HomeView : UserControl
     private readonly Action _login = () => { };
     private readonly Action<string> _openInbox = _ => { };
     private IReadOnlyList<TodoItem> _todo = [];
-    // Nhóm việc (khảo sát của nhiều môn...) người dùng đã bấm xổ ra; giữ qua lần dựng lại trang sau đồng bộ.
     private static readonly HashSet<string> Expanded = [];
 
     private Action? _review;
@@ -37,7 +33,7 @@ public partial class HomeView : UserControl
         var none = !m.HasLms && !m.HasMybk;
         Intro.IsVisible = none;
         Columns.IsVisible = !none;
-        TodoMeta.Text = L.F("home.todoMeta", m.Todo.Count(t => !t.Done), HomePresenter.TodoDays);   // việc đã xong vẫn hiện nhưng không đếm
+        TodoMeta.Text = L.F("home.todoMeta", m.Todo.Count(t => !t.Done), HomePresenter.TodoDays);
         Empty(TodoEmpty, m.Todo.Count, m.HasLms ? L.F("home.todoEmpty", HomePresenter.TodoDays) : L.T("home.noLms"));
         Empty(UpcomingEmpty, m.Upcoming.Count, m.HasMybk ? L.F("home.upcomingEmpty", HomePresenter.ExamDays) : L.T("home.noMybk"));
         Empty(RegEmpty, m.Registrations.Count, m.HasMybk ? L.T("home.regEmpty") : L.T("home.noMybk"));
@@ -49,7 +45,6 @@ public partial class HomeView : UserControl
         box.IsVisible = count == 0;
     }
 
-    /// <summary>Hai cột khi đủ chỗ cho mức tối thiểu của cả hai (MainMinWidth, SideMinWidth trong Tokens.axaml); không thì cột phải xuống dưới.</summary>
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
@@ -66,13 +61,6 @@ public partial class HomeView : UserControl
 
     private void OnLogin(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _login();
 
-    /// <summary>
-    /// Bấm một dòng có link: trang trường mở trong cửa sổ app (dùng chung phiên đăng nhập), trang khác bằng trình duyệt.
-    /// Đợt đăng ký môn mở trang Đăng ký môn học của MyBK (danh sách các đợt; MyBK không có link riêng cho từng đợt).
-    /// </summary>
-    /// <summary>
-    /// Thẻ Mới trong hộp thư: giải mã, đọc tin nhắn (DPAPI) ở luồng nền rồi mới điền, không làm chậm lúc mở app (khoảng 130 ms, đo 01/11/2026).
-    /// </summary>
     private async Task FillInboxAsync(AppState state)
     {
         var news = state.Lms?.Announcements ?? [];
@@ -92,7 +80,6 @@ public partial class HomeView : UserControl
 
     private async void OnRowTapped(object? sender, TappedEventArgs e)
     {
-        // Dòng gom nhiều môn (khảo sát...): bấm để xổ ra hay thu lại.
         if ((sender as Control)?.DataContext is TodoItem { Group: true } g)
         {
             if (!Expanded.Remove(g.Id)) Expanded.Add(g.Id);

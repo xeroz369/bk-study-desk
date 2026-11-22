@@ -1,6 +1,3 @@
-<!-- Trang Lịch (design-system/bk mục 4, Bảng): ba tab, mỗi tab một bảng (kiểu bảng chung ở Tokens.axaml): Sắp tới (công tắc hiện buổi
-     học, việc đã làm), Thời khóa biểu (tuần trước, tuần này, tuần sau), Lịch thi. Nút Thêm sự kiện, Xuất lịch ở đầu trang.
-     Dòng nào hiện, thứ tự: BKStudyDesk.Core/Presentation/Calendar.cs, Week.cs. Chữ: lang/*.json qua {l:T}. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:p="clr-namespace:SoHocTap.Presentation;assembly=BKStudyDesk.Core"
@@ -10,7 +7,6 @@
     <DockPanel>
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-                <!-- Icons with tooltips (user, 06/11/2026). Both exports share one menu: .ics file, or BKalendar for Google Calendar. -->
                 <Button Classes="icon" ToolTip.Tip="{l:T events.addTip}" AutomationProperties.Name="{l:T events.titleNew}" Click="OnAddEvent">
                     <PathIcon Data="{StaticResource IconPlus}" />
                 </Button>
@@ -65,7 +61,6 @@
                             <Button x:Name="ThisWeek" Content="{l:T calendar.thisWeek}" Click="OnThisWeek" />
                             <Button Content="{l:T calendar.nextWeek}" Click="OnNextWeek" />
                             <TextBlock x:Name="WeekText" Classes="card-title" Margin="8,0,16,0" VerticalAlignment="Center" />
-                            <!-- Kiểu xem: lưới tuần (như Google Calendar, mặc định) hay danh sách; nhớ ở app.calendarView như 1.x -->
                             <ComboBox x:Name="ViewBox" MinWidth="150" SelectionChanged="OnView" />
                         </WrapPanel>
                         <TextBlock x:Name="DimNote" DockPanel.Dock="Top" Classes="meta" Margin="16,0,16,8" Text="{l:T calendar.dimNote}" />

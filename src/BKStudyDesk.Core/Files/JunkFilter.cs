@@ -1,11 +1,5 @@
 namespace SoHocTap.Files;
 
-/// <summary>
-/// File và thư mục rác hay ẩn trong thư mục môn: không đếm, không hiện ở "Mới cập nhật", không hash, không đi vào khi quét.
-/// Một chỗ dùng chung cho Organizer.HashesIn, Documents.ListSubjects, SubjectFiles, ListDir.
-/// - Thư mục: bắt đầu bằng '.' (KiCad .history, .git), db (Quartus), __pycache__, node_modules.
-/// - File: ~$* (Office đang mở), .$*, *.tmp, *.bkp, *.part (đang tải dở), desktop.ini, Thumbs.db.
-/// </summary>
 public static class JunkFilter
 {
     private static readonly HashSet<string> Dirs = new(StringComparer.OrdinalIgnoreCase) { "db", "__pycache__", "node_modules" };
@@ -18,10 +12,6 @@ public static class JunkFilter
         name.StartsWith("~$", StringComparison.Ordinal) || name.StartsWith(".$", StringComparison.Ordinal) || Names.Contains(name)
         || Extensions.Any(e => name.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>
-    /// Mọi file không phải rác dưới <paramref name="root"/>: không đi vào thư mục rác (cây .git có hàng nghìn file), bỏ symlink/junction
-    /// (có thể trỏ ra ngoài thư mục môn hoặc tạo vòng lặp), bỏ thư mục không có quyền đọc.
-    /// </summary>
     public static IEnumerable<FileInfo> Files(string root, CancellationToken ct = default)
     {
         if (!Directory.Exists(root)) yield break;
@@ -43,7 +33,6 @@ public static class JunkFilter
         }
     }
 
-    /// <summary>Mọi thư mục không phải rác dưới <paramref name="root"/> (không tính root), không đi vào thư mục rác.</summary>
     public static IEnumerable<DirectoryInfo> Directories(string root, CancellationToken ct = default)
     {
         if (!Directory.Exists(root)) yield break;

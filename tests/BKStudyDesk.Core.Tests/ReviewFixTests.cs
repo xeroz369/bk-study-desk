@@ -4,7 +4,6 @@ using SoHocTap.Sources.Lms;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Các lỗi tìm được khi rà tính năng tin nhắn, đọc offline (31/10/2026).</summary>
 public class ReviewFixTests
 {
     [Fact]

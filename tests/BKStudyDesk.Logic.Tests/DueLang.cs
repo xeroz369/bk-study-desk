@@ -1,6 +1,5 @@
 namespace SoHocTap.Ui;
 
-/// <summary>Lang.cs đọc Config nên không link được vào test: bản giả này trả "key|đối số" để kiểm key và số mà Due chọn.</summary>
 internal static class L
 {
     public static string T(string key) => key;

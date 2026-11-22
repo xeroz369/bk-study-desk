@@ -1,5 +1,3 @@
-<!-- Trang Môn học (design-system/bk mục 4): trái là danh sách môn có ô lọc, phải là thẻ chi tiết môn với các tab, mỗi tab một bảng.
-     Hẹp thì danh sách lên trên (SubjectsView.OnSizeChanged). Môn nào hiện, dòng phụ, điểm, mốc: BKStudyDesk.Core/Presentation/Subjects.cs. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
@@ -16,14 +14,11 @@
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Danh sách môn -->
             <Border x:Name="ListCard" Classes="card">
                 <DockPanel>
                     <TextBox x:Name="Filter" DockPanel.Dock="Top" Margin="12" PlaceholderText="{l:T subjects.filter.tip}" TextChanged="OnFilter" />
-                    <!-- Chọn kỳ (SubjectsPresenter.TermOptions): mặc định kỳ đang học; Tất cả học kỳ thì danh sách có dòng nhóm theo kỳ. Đang gõ lọc thì tìm mọi kỳ. -->
                     <ComboBox x:Name="TermFilter" DockPanel.Dock="Top" Margin="12,0,12,12" HorizontalAlignment="Stretch" SelectionChanged="OnTermFilter" />
                     <TextBlock x:Name="ListEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
-                    <!-- Môn nhóm theo học kỳ (SubjectsPresenter.Grouped): dòng nhóm là SubjectTermHeader, không chọn được (OnSubjectContainer). -->
                     <ListBox x:Name="Subjects" SelectionChanged="OnPick" Background="Transparent">
                         <ListBox.DataTemplates>
                             <DataTemplate DataType="p:SubjectTermHeader">
@@ -42,7 +37,6 @@
                 </DockPanel>
             </Border>
 
-            <!-- Chi tiết môn -->
             <Border x:Name="DetailCard" Classes="card" Grid.Column="2">
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Classes="card-head">
@@ -51,7 +45,6 @@
                                 <Button x:Name="LmsButton" Classes="icon" ToolTip.Tip="{l:T subjects.openLms}" AutomationProperties.Name="{l:T subjects.openLms}" Click="OnOpenLms">
                                     <PathIcon Data="{StaticResource IconOpenNew}" />
                                 </Button>
-                                <!-- Việc ít dùng (tải tài liệu, tải đề cũ, Thư viện, tải nhiều môn) gom vào menu Thêm (SubjectsView.BuildMore). -->
                                 <Button x:Name="MoreButton" Classes="icon" ToolTip.Tip="{l:T subjects.more}" AutomationProperties.Name="{l:T subjects.more}" IsVisible="False">
                                     <PathIcon Data="{StaticResource IconMore}" />
                                 </Button>
@@ -64,13 +57,11 @@
                     </Border>
                     <TextBlock x:Name="DetailEmpty" DockPanel.Dock="Top" Classes="empty" IsVisible="False" />
                     <TabControl x:Name="Tabs" SelectionChanged="OnTab" Padding="0">
-                        <!-- Tổng quan (tab mặc định): hạn gần nhất, thông báo mới nhất, điểm tổng; dựng trong code (ShowOverview). -->
                         <TabItem x:Name="OverviewTab" Header="{l:T subjects.tabOverview}">
                             <ScrollViewer><StackPanel x:Name="OverviewPanel" Margin="16" Spacing="16" /></ScrollViewer>
                         </TabItem>
                         <TabItem x:Name="FilesTab" Header="{l:T subjects.tabFiles}">
                             <DockPanel>
-                                <!-- Thanh công cụ (FileFilter): ô tìm trong mọi file của môn, nút lọc loại, xem tất cả file (mới nhất trước) hay theo thư mục. -->
                                 <StackPanel DockPanel.Dock="Top" Margin="16,10,16,6" Spacing="8">
                                     <DockPanel>
                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" Margin="12,0,0,0">
@@ -95,7 +86,6 @@
                                         <Button x:Name="UpButton" DockPanel.Dock="Left" Classes="icon" ToolTip.Tip="{l:T subjects.back.tip}" AutomationProperties.Name="{l:T subjects.back}" Click="OnUp" Margin="0,0,8,0">
                                             <PathIcon Data="{StaticResource IconBack}" />
                                         </Button>
-                                        <!-- Đường dẫn từ thư mục môn: mỗi cấp trên là link bấm để lên thẳng cấp đó (như thanh địa chỉ của File Explorer). -->
                                         <WrapPanel x:Name="PathBar" VerticalAlignment="Center" />
                                     </DockPanel>
                                 </StackPanel>
@@ -165,10 +155,8 @@
                                 </DataGrid>
                             </DockPanel>
                         </TabItem>
-                        <!-- Video bài giảng, link ngoài, trang, công cụ ngoài trên LMS (SubjectsPresenter.Media); bấm đúp mở trên LMS hay trình duyệt. -->
                         <TabItem x:Name="MediaTab" Header="{l:T subjects.tabMedia}">
                             <DockPanel>
-                                <!-- Lọc theo loại; bảng nhóm theo phần và chương (MediaRow.Group); mở là đánh dấu đã xem. -->
                                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="16,8">
                                     <ComboBox x:Name="MediaKindFilter" MinWidth="160" SelectionChanged="OnMediaKind" />
                                     <Button x:Name="ReadPastButton" Content="{l:T subjects.readPast}" ToolTip.Tip="{l:T subjects.readPastTip}" Click="OnReadPast" IsVisible="False" />
@@ -186,7 +174,6 @@
                                 </DataGrid>
                             </DockPanel>
                         </TabItem>
-                        <!-- Luyện tập của môn: trang Luyện tập (một bản dùng chung) lọc sẵn theo môn, MainWindow cấp qua practice. -->
                         <TabItem x:Name="PracticeTab" Header="{l:T subjects.tabPractice}">
                             <ContentControl x:Name="PracticeSlot" />
                         </TabItem>

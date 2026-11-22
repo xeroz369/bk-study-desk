@@ -3,7 +3,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Mốc mở của LMS (AppState.Opening): không phải hạn nộp, nên không hiện "quá hạn" khi đã qua giờ mở.</summary>
 public class OpeningTests
 {
     private const long Open = 1_793_120_400, Close = 1_793_725_200;

@@ -1,5 +1,3 @@
-<!-- Thêm, sửa sự kiện tự thêm (bản 1.x: Ui/EventWindow): ô nhập nhanh điền dần các ô bên dưới; kiểm và báo lỗi từng ô (QuickEntry.Validate).
-     Chỉ lưu trên máy (CustomEventsData). Chữ: lang/*.json. -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"

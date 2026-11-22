@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace BKStudyDesk.Math.Tests;
 
-// Lấy công thức trong \( \), \[ \], $$ $$ từ file nội dung (như tools-dev texscan). File .json nhân đôi dấu \ nên đổi lại trước.
 internal static partial class Corpus
 {
     [GeneratedRegex(@"\\\(([\s\S]+?)\\\)|\\\[([\s\S]+?)\\\]|\$\$([\s\S]+?)\$\$")]
@@ -31,7 +30,6 @@ internal static partial class Corpus
         return list;
     }
 
-    // Thư mục repo: đi ngược từ thư mục test tới khi thấy studypack/.
     public static string RepoRoot()
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)

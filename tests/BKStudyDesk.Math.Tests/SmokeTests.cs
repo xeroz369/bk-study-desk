@@ -1,5 +1,3 @@
-using Avalonia.Controls;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using AvaloniaMath.Controls;
@@ -16,7 +14,6 @@ public class SmokeTests
         Assert.True(box.TotalHeight > 0);
     }
 
-    // CSharpMath trên Avalonia 12.1.3 dựng được bố cục nhưng không vẽ glyph nào: test này bắt đúng lỗi đó.
     [AvaloniaFact]
     public void Glyph_run_uses_font()
     {

@@ -5,16 +5,11 @@ using SoHocTap.Web;
 
 namespace BKStudyDesk.Desktop.Platform;
 
-/// <summary>
-/// Mở app cùng hệ điều hành (chạy ở khay, --tray). Nội dung mục: AutostartFiles (lõi, có test). Mỗi hệ điều hành một chỗ:
-/// Windows HKCU\...\Run (cùng tên mục với 1.x nên lên bản đa nền tảng không thành hai mục), macOS ~/Library/LaunchAgents, Linux ~/.config/autostart.
-/// </summary>
 internal static class Autostart
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string AppleLabel = "vn.edu.hcmut.bkstudydesk";
 
-    /// <summary>Đường dẫn để mở lại app: AppImage thì file .AppImage (APPIMAGE), còn lại là file chạy hiện tại.</summary>
     private static string Exe => Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } appImage ? appImage : Paths.LongPath(Environment.ProcessPath ?? "");
 
     private static string LinuxFile => Path.Combine(Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") is { Length: > 0 } x ? x
@@ -22,7 +17,6 @@ internal static class Autostart
 
     private static string AppleFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "LaunchAgents", AppleLabel + ".plist");
 
-    /// <summary>App vừa được hệ điều hành mở lúc đăng nhập: chạy ở khay.</summary>
     public static bool LaunchedAtLogin => Environment.GetCommandLineArgs().Contains(AutostartFiles.TrayArg)
 #if WINDOWS
         || (AppPackage.IsPackaged && Windows.StoreStartup.LaunchedAtLogin)   // bản Store: StartupTask, không có --tray
@@ -49,7 +43,6 @@ internal static class Autostart
         }
     }
 
-    /// <summary>Bật, tắt; trả trạng thái thật sau khi đổi.</summary>
     public static bool Set(bool on)
     {
 #if WINDOWS

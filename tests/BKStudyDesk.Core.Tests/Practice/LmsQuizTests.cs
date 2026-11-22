@@ -3,8 +3,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Trang xem lại mẫu tự soạn theo HTML của Moodle 4 (không dùng dữ liệu LMS thật). Kỳ vọng sinh bằng lmsquiz.ts chạy trong
-// jsdom (Node, 07/10/2026): lms-expected/*-expected.json.
 public class LmsQuizTests
 {
     private static string Dir => Path.Combine(AppContext.BaseDirectory, "Practice", "lms-expected");
@@ -56,7 +54,6 @@ public class LmsQuizTests
     {
         var (packs, info) = LmsQuiz.QuizPacks(SavedQuiz.ListFromJson(File.ReadAllText(Path.Combine(Dir, "saved.json"))), DateTimeOffset.FromUnixTimeSeconds(1760000000), Hcm);
         Assert.Equal("quiz-lms-mt1005", Assert.Single(packs).Id);
-        // Tên chương là dữ liệu (khớp với chương ghi lại câu còn nhớ), giống bản TS, không dịch theo ngôn ngữ giao diện.
         Assert.Equal(("Quiz LMS đã lưu", LmsQuiz.UnitTitle), (LmsQuiz.UnitTitle, packs[0].Units[0].Title));
         Assert.All(packs[0].Units[0].Lessons, l => Assert.Matches("^[a-z0-9][a-z0-9-]{1,63}$", l.Id));
         Assert.True(PackValidator.Validate(JsonNode.Parse(packs[0].ToJson())).Ok);

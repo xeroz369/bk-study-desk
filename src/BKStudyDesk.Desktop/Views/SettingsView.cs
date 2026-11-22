@@ -7,12 +7,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views;
 
-/// <summary>
-/// Trang Cài đặt: vẽ SettingsCatalog (BKStudyDesk.Core/Presentation/SettingsCatalog.cs) thành các thẻ bằng control có sẵn: ToggleSwitch,
-/// TextBox (số, chữ; lưu khi rời ô hay Enter, sai thì báo và giữ giá trị cũ), ComboBox, Button. Trái là danh sách mục (mục Nâng cao
-/// xếp sau dòng Nâng cao), phải chỉ hiện thẻ của mục đang chọn, không phải cuộn cả trang dài. Gõ vào ô tìm thì hiện mọi thẻ có dòng khớp.
-/// Thêm, bớt mục cài đặt thì sửa SettingsCatalog, không sửa file này.
-/// </summary>
 public sealed class SettingsView : UserControl, IFillPage
 {
     public SettingsView() { }
@@ -24,7 +18,6 @@ public sealed class SettingsView : UserControl, IFillPage
         var cards = new StackPanel { Spacing = 24 };
         foreach (var g in ordered) cards.Children.Add(Card(g));
 
-        // Danh sách mục bên trái: dòng "Nâng cao" chỉ là tiêu đề, không chọn được.
         var items = new List<ListBoxItem>();
         foreach (var g in ordered)
         {
@@ -60,14 +53,12 @@ public sealed class SettingsView : UserControl, IFillPage
     private readonly ListBox _nav = new();
     private readonly TextBox _search = new() { PlaceholderText = L.T("set.search"), Margin = new Thickness(0, 0, 0, 8) };
 
-    /// <summary>Chọn mục đầu tiên thỏa điều kiện ở danh sách bên trái (bỏ ô tìm).</summary>
     private void Pick(Func<SettingGroup, bool> which)
     {
         _search.Text = "";
         _nav.SelectedItem = (_nav.ItemsSource as IEnumerable<ListBoxItem>)?.FirstOrDefault(i => i.Tag is SettingGroup g && which(g));
     }
 
-    // Không tìm: chỉ hiện thẻ của mục đang chọn. Đang tìm (SettingsCatalog.Matches): mọi thẻ có dòng khớp, ẩn dòng không khớp.
     private readonly List<(SettingGroup Group, Border Card, List<(SettingItem Item, Border Row)> Rows)> _cards = [];
     private readonly TextBlock _noMatch = new() { Text = L.T("set.searchNone"), Classes = { "meta" }, IsVisible = false };
 
@@ -85,12 +76,10 @@ public sealed class SettingsView : UserControl, IFillPage
         _noMatch.IsVisible = searching && !any;
     }
 
-    private Action? _openCredential;   // mở form tài khoản của mục CredentialItem (dải báo mời bật tự đăng nhập lại)
+    private Action? _openCredential;
 
-    /// <summary>Mở mục Nâng cao đầu tiên (tham số --tab=1 khi chụp kiểm tra).</summary>
     public void ExpandAdvanced() => Pick(g => g.Advanced);
 
-    /// <summary>Mở sẵn form tự đăng nhập lại (nút Bật trên dải báo): chọn mục có dòng đó rồi mở form; máy không hỗ trợ thì không có gì.</summary>
     public void OpenAutoLogin()
     {
         Pick(g => g.Items.Any(i => i is CredentialItem));
@@ -110,7 +99,6 @@ public sealed class SettingsView : UserControl, IFillPage
         return card;
     }
 
-    /// <summary>Một dòng: trái là tên và ghi chú (ghi chú cũng là chỗ báo lỗi, báo kết quả), phải là control.</summary>
     private Border Row(SettingItem item)
     {
         var note = new TextBlock { Text = item.Note ?? "", Classes = { "sub" }, TextWrapping = Avalonia.Media.TextWrapping.Wrap, TextTrimming = Avalonia.Media.TextTrimming.None, IsVisible = item.Note is { Length: > 0 } };
@@ -142,7 +130,7 @@ public sealed class SettingsView : UserControl, IFillPage
             ActionItem a => Action(a, Say),
             CheckItem c => Check(c, Say),
             InfoItem i => new TextBlock { Text = i.Value, Classes = { "meta" } },
-            CredentialItem c => new Button(),   // dựng ở Credential: nút và form đi cùng nhau
+            CredentialItem c => new Button(),
             _ => new TextBlock(),
         };
         right.VerticalAlignment = VerticalAlignment.Center;
@@ -154,15 +142,11 @@ public sealed class SettingsView : UserControl, IFillPage
         return new Border { Classes = { "row" }, Child = grid };
     }
 
-    /// <summary>
-    /// Mục tự đăng nhập lại: nút Bật mở form ngay dưới dòng (tên đăng nhập, mật khẩu, Lưu và bật, Hủy); đang bật thì nút Tắt (xóa
-    /// tài khoản). Ô mật khẩu luôn được xóa sau khi bấm Lưu, kể cả khi lưu lỗi.
-    /// </summary>
     private StackPanel Credential(CredentialItem c, Button toggle, Grid row, Action<string?, bool> say)
     {
         var user = new TextBox { PlaceholderText = L.T("autoLogin.user") };
         var password = new TextBox { PlaceholderText = L.T("autoLogin.password"), PasswordChar = '●', Classes = { "revealPasswordButton" } };
-        var save = new Button { Content = L.T("autoLogin.save"), Classes = { "accent" } };   // không IsDefault: Enter ở ô khác của trang không bấm nút này
+        var save = new Button { Content = L.T("autoLogin.save"), Classes = { "accent" } };
         var cancel = new Button { Content = L.T("events.cancel") };
         var form = new StackPanel
         {
@@ -207,7 +191,6 @@ public sealed class SettingsView : UserControl, IFillPage
         return s;
     }
 
-    /// <summary>Ô chữ lưu khi rời ô hay Enter; <paramref name="save"/> trả chữ chuẩn để hiện lại, null là sai (giữ chữ đang gõ để sửa).</summary>
     private static TextBox Box(string value, double width, Func<string, string?> save)
     {
         var box = new TextBox { Text = value, Width = width };
@@ -232,7 +215,6 @@ public sealed class SettingsView : UserControl, IFillPage
         return box;
     }
 
-    /// <summary>Check button; the accent confirm button appears only when the check found work, and hides after it runs.</summary>
     private static StackPanel Check(CheckItem c, Action<string?, bool> say)
     {
         var check = new Button { Content = c.Button };

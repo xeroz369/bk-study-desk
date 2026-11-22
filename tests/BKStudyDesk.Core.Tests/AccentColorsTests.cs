@@ -2,12 +2,11 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Màu thanh trên cùng suy ra từ màu nhấn: chữ trắng luôn đạt tương phản tối thiểu.</summary>
 public class AccentColorsTests
 {
     [Theory]
     [InlineData("#0388B4")]
-    [InlineData("#FFD700")]   // vàng sáng: phải làm tối nhiều
+    [InlineData("#FFD700")]
     [InlineData("#1A7F37")]
     public void Bar_MeetsContrast(string hex)
     {
@@ -33,7 +32,7 @@ public class AccentColorsTests
     {
         var bk = AccentColors.Parse("#0388B4")!.Value;
         var white = AccentColors.Parse("#FFFFFF")!.Value;
-        Assert.Equal("#E6F3F8", AccentColors.Hex(AccentColors.Mix(bk, white, AccentColors.DateBoxTintLight)));   // ô ngày cũ của bản xanh BK
+        Assert.Equal("#E6F3F8", AccentColors.Hex(AccentColors.Mix(bk, white, AccentColors.DateBoxTintLight)));
         Assert.Equal("#FFFFFF", AccentColors.Hex(AccentColors.Mix(bk, white, 0)));
         Assert.Equal("#0388B4", AccentColors.Hex(AccentColors.Mix(bk, white, 1)));
     }

@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup Condition="!$(MSBuildProjectDirectory.Contains('ThirdParty'))">
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="!$(MSBuildProjectDirectory.Contains('ThirdParty')) And !$(MSBuildProjectDirectory.Contains('tests'))">
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+  </PropertyGroup>
+</Project>

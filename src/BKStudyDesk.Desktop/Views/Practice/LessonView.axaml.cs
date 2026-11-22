@@ -7,7 +7,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Desktop.Views.Practice;
 
-/// <summary>Bài học: các mục kiến thức (đã lọc HTML) vẽ bằng ContentRenderer, nguồn, nút làm câu hỏi, bài trước và bài sau.</summary>
 public partial class LessonView : UserControl
 {
     public LessonView() => InitializeComponent();
@@ -15,14 +14,12 @@ public partial class LessonView : UserControl
     public event Action? BackRequested;
     public event Action? QuestionsRequested;
 
-    /// <summary>Mở bài khác (bài trước, bài sau).</summary>
     public event Action<string>? LessonRequested;
 
     private readonly PracticeService _service = null!;
     private readonly Entry _entry = null!;
     private readonly (Entry? Prev, Entry? Next) _near;
 
-    /// <param name="lesson">Null khi bài có trong mục lục mà chưa soạn.</param>
     internal LessonView(PracticeService service, Entry entry, Lesson? lesson) : this()
     {
         _service = service;
@@ -32,7 +29,6 @@ public partial class LessonView : UserControl
         var sources = lesson?.Sources ?? entry.Sources ?? [];
         foreach (var s in sources)
         {
-            // Nội dung là TextBlock, không phải chuỗi: chuỗi trong Button thành AccessText, dấu _ của tên file (So_new) bị coi là phím tắt.
             var text = s.Pages is { Length: > 0 } p ? L.F("practice.lessonPage.sourcePages", s.File, p) : L.F("practice.lessonPage.source", s.File);
             var b = new Button { Content = new TextBlock { Text = text }, Tag = s };
             b.Click += OnSource;
@@ -61,8 +57,6 @@ public partial class LessonView : UserControl
         DetachedFromVisualTree += (_, _) => { if (_scroll != null) _scroll.ScrollChanged -= OnScrolled; };
     }
 
-    // Chỗ đọc (PracticeProgress.Scroll) theo tỉ lệ của ScrollViewer trang chứa bài: mở lại bài thì cuộn về đó, cuộn thì ghi lại.
-    // Cuộn sau lượt layout (Background) vì lúc Loaded chiều dài bài chưa đo xong.
     private ScrollViewer? _scroll;
 
     private void FollowScroll()

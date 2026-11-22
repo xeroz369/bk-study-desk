@@ -1,9 +1,7 @@
 namespace SoHocTap.Files;
 
-/// <summary>Thao tác file dùng chung, không phụ thuộc config (test được với thư mục tạm).</summary>
 public static class FileOps
 {
-    /// <summary>Đường dẫn chưa có ai dùng: trùng tên thì thêm " (bản dd-MM-yyyy)", rồi " (bản dd-MM-yyyy 2)"...</summary>
     public static string UniquePath(string dest)
     {
         if (!File.Exists(dest) && !Directory.Exists(dest)) return dest;

@@ -2,18 +2,11 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>
-/// Sổ nội dung (port <c>registry.svelte.ts</c>, phần không đụng file, mạng): môn, chương, bài, đề, gói luyện tập.
-/// Nạp file (bài <c>.md</c>, gói đã cài, quiz LMS đã lưu) là việc của đợt 3; ở đây chỉ ghép và tra cứu.
-/// </summary>
-/// <param name="sanitize">Lọc HTML của gói trước khi hiển thị (gói có thể đến từ người khác). Mặc định giữ nguyên; app truyền bộ lọc thật.</param>
-/// <param name="clock">Đồng hồ (id đề ngẫu nhiên); test truyền đồng hồ cố định.</param>
 public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimeProvider? clock = null)
 {
     private readonly Func<string, string> _sanitize = sanitize ?? (s => s);
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
 
-    // Chữ của câu Đúng, Sai: là dữ liệu (nằm trong fingerprint), không đổi theo ngôn ngữ giao diện.
     private static readonly string[] TrueFalse = ["Đúng", "Sai"];
 
     public Manifest Manifest { get; set; } = new();
@@ -21,7 +14,6 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
     public Dictionary<string, Page> Pages { get; } = [];
     public Dictionary<string, Exam> Exams { get; } = [];
 
-    /// <summary>Môn đang soạn mà chưa có bài: chỉ trang Soạn dùng, không hiện môn rỗng ở Luyện tập.</summary>
     public List<Course> Drafts { get; } = [];
 
     public void AddPage(Page p) => Pages[p.Id] = p;
@@ -39,7 +31,6 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
         Lessons[lesson.Id] = lesson;
     }
 
-    /// <summary>Đề thi: QuestionIds tham chiếu câu trong bài học, Questions là câu riêng của đề.</summary>
     public void AddExam(Exam exam)
     {
         var qs = exam.Questions ?? [];
@@ -55,7 +46,6 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
 
     private static bool SameCode(Course c, string code) => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Môn theo mã; chưa có thì tạo môn nháp (id mon-mã, trùng cách AddPack đặt id).</summary>
     public Course EnsureCourse(string code, string name)
     {
         var have = Manifest.Courses.FirstOrDefault(c => SameCode(c, code)) ?? Drafts.FirstOrDefault(c => SameCode(c, code));
@@ -67,7 +57,6 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
 
     public Course? Course(string id) => Manifest.Courses.FirstOrDefault(c => c.Id == id) ?? Drafts.FirstOrDefault(c => c.Id == id);
 
-    /// <summary>Danh sách phẳng các bài theo thứ tự manifest.</summary>
     public List<Entry> Entries(string? courseId = null) =>
         Manifest.Courses.Where(c => courseId is null || c.Id == courseId)
             .SelectMany(c => c.Units.SelectMany(u => u.Lessons.Select(e => new Entry(e.Id, e.Title, e.File, e.Sources, c.Id, c.Name, u.Title))))
@@ -84,22 +73,14 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
     public List<Question> ExamQuestions(Exam exam) =>
         [.. (exam.QuestionIds ?? []).Select(Question).OfType<Question>(), .. exam.Questions ?? []];
 
-    /// <summary>Tổng số câu trong các bài của môn (không tính câu riêng của đề).</summary>
     public int CourseQuestionCount(Course c) =>
         c.Units.Sum(u => u.Lessons.Sum(e => Lessons.TryGetValue(e.Id, out var l) ? l.Questions?.Count ?? 0 : 0));
 
-    /// <summary>Câu trong bài của môn theo [chương][bài] (đầu vào của đề ngẫu nhiên và luyện trộn).</summary>
     public List<List<List<Question>>> UnitQuestions(Course c) =>
         c.Units.Select(u => u.Lessons.Select(e => Lessons.TryGetValue(e.Id, out var l) ? l.Questions ?? [] : []).ToList()).ToList();
 
-    /// <summary>Một luật duy nhất cho thẻ tổng quan, menu môn và nút ở trang môn.</summary>
     public bool CanRandomExam(Course c) => ExamPick.EnoughForRandomExam(CourseQuestionCount(c), c.Blueprint != null);
 
-    /// <summary>
-    /// Đề ngẫu nhiên theo kiểu đề thật (course.blueprint: số câu mỗi chương, số phút, cách tính điểm). Câu rút theo
-    /// <see cref="ExamPick.PickRandomExam"/>: nhóm đi cùng nhau, đề giữ thứ tự gốc. Ít câu hơn đề thật thì vẫn thang 10,
-    /// giữ tỉ lệ điểm đúng, sai và co thời gian theo số câu.
-    /// </summary>
     public Exam? RandomExam(string courseId, Func<Question, double>? rank = null, Func<double>? random = null)
     {
         if (Course(courseId) is not { } c) return null;
@@ -114,7 +95,6 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
             Id = $"ngau-nhien-{c.Id}-{_clock.GetUtcNow().ToUnixTimeMilliseconds()}",
             CourseId = c.Id,
             Title = L.F("practice.randomExamTitle", c.Name),
-            // Math.round của JS: làm tròn nửa lên.
             Minutes = Math.Max(5, Math.Floor(bp.Minutes * n / Math.Max(pick.Total, 1) + 0.5)),
             Scoring = new Scoring(n, right, baseScoring.Wrong / baseScoring.Right * right),
             Shuffle = new ShuffleSetting(false, true),
@@ -124,11 +104,6 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
         return exam;
     }
 
-    /// <summary>
-    /// Ghép một gói vào sổ: môn cùng mã thì thêm chương vào môn đó, chưa có thì tạo môn mới. Chương, bài định vị bằng tên
-    /// (đã chuẩn hóa): trùng tên thì thêm kiến thức và câu vào chỗ đó, câu trùng fingerprint chỉ giữ một. Id bài, câu, đề
-    /// gắn tiền tố id gói để không đụng nội dung khác và kết quả cũ.
-    /// </summary>
     public void AddPack(StudyPack p)
     {
         var authors = string.Join(", ", p.Authors.Select(a => a.Name));
@@ -194,13 +169,8 @@ public sealed class StudyRegistry(Func<string, string>? sanitize = null, TimePro
         }
     }
 
-    /// <summary>
-    /// Câu trong gói thành câu của sổ (đã lọc HTML). Đúng, Sai thành trắc nghiệm hai phương án để dùng chung giao diện.
-    /// Dùng chung cho nạp gói và fingerprint lúc cập nhật gói, để hai bên luôn khớp.
-    /// </summary>
     public Question PackQuestion(PackQuestion q, string id, string packId) => FromPack(q, id, packId, _sanitize);
 
-    /// <summary>Như <see cref="PackQuestion"/> nhưng chọn được bộ lọc (nội dung có sẵn tính fingerprint trên HTML chưa lọc, như bản TS).</summary>
     public static Question FromPack(PackQuestion q, string id, string? packId, Func<string, string> sanitize)
     {
         var item = new Question

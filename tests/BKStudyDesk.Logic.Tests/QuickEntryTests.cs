@@ -1,9 +1,7 @@
 using System.Text.Json;
-using SoHocTap.Data;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Nhập nhanh "Nội dung - Ngày - giờ - địa điểm" (issue #22).</summary>
 public class QuickEntryTests
 {
     private static readonly DateTime Today = new(2026, 10, 3);
@@ -19,7 +17,7 @@ public class QuickEntryTests
         Assert.Equal(new DateTime(2026, 10, 12), r.Date);
         Assert.Equal(7 * 60, r.Start);
         Assert.Equal(8 * 60 + 50, r.End);
-        Assert.Equal("H1-201", r.Location);              // "-" không có dấu cách không phải phân cách
+        Assert.Equal("H1-201", r.Location);
         Assert.Equal(CustomEvents.KindMakeup, r.Kind);
     }
 
@@ -43,22 +41,21 @@ public class QuickEntryTests
     [Fact]
     public void Makeup_DecomposedUnicode()
     {
-        // Gõ bằng một số bộ gõ ra Unicode tổ hợp (NFD): vẫn nhận ra "học bù".
         var nfd = "Học bù GT2 - 12/10 - 7h".Normalize(System.Text.NormalizationForm.FormD);
         Assert.Equal(CustomEvents.KindMakeup, P(nfd).Kind);
     }
 
     [Theory]
     [InlineData("12/10", 2026, 10, 12)]
-    [InlineData("3/10", 2026, 10, 3)]          // hôm nay vẫn tính là sắp tới
-    [InlineData("02/10", 2027, 10, 2)]         // đã qua trong năm nay: sang năm
+    [InlineData("3/10", 2026, 10, 3)]
+    [InlineData("02/10", 2027, 10, 2)]
     [InlineData("1/1", 2027, 1, 1)]
     [InlineData("12/10/2026", 2026, 10, 12)]
-    [InlineData("12/10/2025", 2025, 10, 12)]   // có năm thì giữ nguyên, kể cả đã qua
+    [InlineData("12/10/2025", 2025, 10, 12)]
     [InlineData("2026-10-12", 2026, 10, 12)]
     [InlineData("2026-1-5", 2026, 1, 5)]
     [InlineData("ngày 12/10", 2026, 10, 12)]
-    [InlineData("29/02", 2028, 2, 29)]         // năm nhuận gần nhất
+    [InlineData("29/02", 2028, 2, 29)]
     public void Dates(string text, int y, int m, int d) => Assert.Equal(new DateTime(y, m, d), QuickEntry.ParseDate(text, Today));
 
     [Theory]

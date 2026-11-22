@@ -6,7 +6,6 @@ using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using BKStudyDesk.Desktop;
-using SoHocTap.Core;
 using SoHocTap.Data;
 using SoHocTap.Ui;
 
@@ -14,15 +13,12 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Ui.Tests;
 
-// Chạy app thật (App.axaml: Fluent, DataGrid, Tokens) trong headless để các style "card", "title"... có thật như khi chạy.
 public static class UiApp
 {
     public static AppBuilder BuildAvaloniaApp() =>
         AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }
 
-// Thư mục data của test: Paths dò ngược từ thư mục exe tới thư mục đầu tiên có data\, và ở kho này sẽ rơi vào data\ thật của người dùng.
-// Tạo data\ ngay cạnh exe test trước khi ai đụng tới Paths, để mọi đọc, ghi của test nằm trong thư mục build.
 internal static class Isolation
 {
     [ModuleInitializer]
@@ -67,7 +63,6 @@ internal static class Sample
 
 internal static class Ui
 {
-    /// <summary>Đặt control vào cửa sổ, hiện, chạy hết việc đang chờ (dựng, đo, vẽ).</summary>
     public static Window Show(Control content, double width = 1100, double height = 700)
     {
         var w = new Window { Width = width, Height = height, Content = content };

@@ -102,10 +102,8 @@ public class QuizSessionTests
         var q1 = s.Shown[0];
         var order = s.Order(q1)!;
         Assert.Equal([0, 1, 2, 3], order.Order());
-        // Đáp án gốc là phương án 1; hiện ở vị trí order.IndexOf(1).
         Assert.Equal("ABCD"[Array.IndexOf(order, 1)].ToString(), s.RightText(q1));
         Assert.True(s.Answer(q1, Answer.Index(1)));
-        // Cùng seed thì cùng thứ tự (trang vẽ lại không nhảy).
         Assert.Equal(order, new QuizSession(p, RunMode.Lesson, qs, new ShufflePrefs(true, true), seed: 42).Order(q1));
     }
 

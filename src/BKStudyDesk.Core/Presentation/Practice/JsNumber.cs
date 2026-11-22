@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace SoHocTap.Presentation.Practice;
 
-/// <summary>
-/// <c>String(number)</c> của JavaScript (ECMAScript Number::toString): fingerprint câu numeric và chữ đáp án ghép số vào chuỗi,
-/// phải ra đúng như bản TS. Chữ số lấy từ "R" của .NET (ngắn nhất mà đọc lại vẫn đúng), chỉ đổi cách đặt dấu chấm và số mũ.
-/// </summary>
 public static class JsNumber
 {
     public static string Format(double d)
@@ -28,7 +24,6 @@ public static class JsNumber
         return sign + body;
     }
 
-    // Chữ số có nghĩa và n: giá trị = 0.digits x 10^n (số chữ số đứng trước dấu chấm khi viết thường).
     private static (string Digits, int N) Decompose(string r)
     {
         int exp = 0;

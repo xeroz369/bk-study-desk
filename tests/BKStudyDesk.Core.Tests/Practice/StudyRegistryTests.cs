@@ -2,7 +2,6 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-/// <summary>Đồng hồ cố định cho test (TimeProvider của .NET, không cần package).</summary>
 internal sealed class FixedClock(DateTimeOffset now, TimeZoneInfo? zone = null) : TimeProvider
 {
     public DateTimeOffset Now { get; set; } = now;
@@ -76,7 +75,6 @@ public class StudyRegistryTests
         var qs = lesson.Questions!;
         Assert.Equal(["goi-a.bai-1.q1", "goi-a.bai-1.q2", "goi-a.bai-1.so", "goi-a.bai-1.q4", "goi-a.bai-1.q5"], qs.Select(q => q.Id));
         Assert.All(qs, q => Assert.Equal("goi-a", q.PackId));
-        // Đúng, Sai thành trắc nghiệm hai phương án (chữ cố định: là dữ liệu, nằm trong fingerprint).
         Assert.Equal(["Đúng", "Sai"], qs[1].Options);
         Assert.Equal(1, qs[1].Answer);
         Assert.Equal((1.5, 0.01, "m", -1), (qs[2].Value!.Value, qs[2].Tolerance!.Value, qs[2].Unit, qs[2].Answer));
@@ -93,7 +91,6 @@ public class StudyRegistryTests
     public void AddPack_merges_same_question_once()
     {
         var reg = WithCourse(1);
-        // Gói cùng mã môn, chương và bài trùng tên (khác hoa thường, khoảng trắng), có lại "Câu 1" và một câu mới.
         var json = PackJson.Replace("\"Chương 1\"", "\"  chương   1 \"").Replace("\"Bài một\"", "\"BÀI 1\"").Replace("\"Câu một\", \"options\": [\"a\", \"b\", \"c\"], \"answer\": 1", "\"Câu 1\", \"options\": [\"a\", \"b\"], \"answer\": 0");
         reg.AddPack(StudyPack.Parse(json)!);
         var c = Assert.Single(reg.Manifest.Courses);

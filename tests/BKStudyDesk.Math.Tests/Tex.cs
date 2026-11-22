@@ -8,7 +8,6 @@ using Avalonia.Media.Imaging;
 
 namespace BKStudyDesk.Math.Tests;
 
-// Lối tắt cho test: parse, dựng box, gom lỗi thành một dòng.
 internal static class Tex
 {
     public const double Scale = 20;
@@ -24,10 +23,8 @@ internal static class Tex
 
     public static double Height(string tex, TexStyle style = TexStyle.Display) => Layout(tex, style).TotalHeight;
 
-    // 1 em của font toán (quad), cùng đơn vị với kích thước box.
     public static double Em => Env().MathFont.GetQuad(Env().MathFont.GetMuFontId(), TexStyle.Display);
 
-    // Dựng box rồi vẽ thật: lỗi thiếu glyph chỉ ném ra lúc Render, không phải lúc parse.
     public static void Draw(string tex)
     {
         var box = Layout(tex);

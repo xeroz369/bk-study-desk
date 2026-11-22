@@ -4,10 +4,6 @@ using SoHocTap.Presentation.Practice.Pages;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-/// <summary>
-/// Port của transfer.ts. Không so bằng cách chạy bản TS (transfer.ts đọc sổ qua registry.svelte.ts dùng rune của Svelte, không chạy
-/// được bằng Node thuần): test viết theo hành vi của bản TS, từng nhánh một.
-/// </summary>
 public class TransferTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 7, 3, 0, 0, TimeSpan.Zero);
@@ -52,7 +48,7 @@ public class TransferTests
         Assert.Equal("Phương trình phi tuyến", Transfer.ScopeLabel(At(study, 1, "ppt-03")));
         Assert.Equal("Chương 2", Transfer.ScopeLabel(At(study, 1)));
         Assert.Equal("Phương pháp tính", Transfer.ScopeLabel(At(study)));
-        Assert.Null(Transfer.LessonOf(At(study, 0, "ppt-03")));   // bài không thuộc chương này
+        Assert.Null(Transfer.LessonOf(At(study, 0, "ppt-03")));
     }
 
     [Fact]
@@ -258,7 +254,6 @@ public class TransferTests
         study.AddPack(pack);
         var t = T(study);
         var next = StudyPack.Parse(Json)!;
-        // Bản mới: câu a dời sang bài l3 (id đổi, fingerprint giữ), câu b sửa đề (fingerprint đổi, id giữ).
         next.Units[0].Lessons[0].Id = "l3";
         next.Units[1].Lessons[0].Questions![0].Prompt = "b sửa?";
         next.Exams = null;

@@ -4,7 +4,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Nhãn mốc LMS: nhãn hạn nộp do app ghi vào dữ liệu thì dịch theo ngôn ngữ; nhãn của LMS giữ nguyên.</summary>
 public class LmsLabelTests
 {
     private static LmsEvent E(string kind, string label) => new("e1", 1, "Giải tích 2", "Bài 1", kind, 0, label, null);
@@ -14,7 +13,7 @@ public class LmsLabelTests
     {
         var shown = AppState.LmsLabel(E("assign", LmsSource.DueLabel));
         Assert.Equal(L.T("timeline.dueLabel"), shown);
-        Assert.NotEqual("timeline.dueLabel", shown);   // key có trong lang, không hiện tên key
+        Assert.NotEqual("timeline.dueLabel", shown);
     }
 
     [Fact]

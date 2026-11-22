@@ -1,8 +1,3 @@
-// Study Markdown: format to write and share packs by hand or with AI (spec: studypack/SPEC.md).
-//   # chương · ## bài · ### câu · - [x] phương án · = đáp án · > lời giải · ![](img/a.webp) ảnh
-// parseMarkdown: .md (+ images from the zip) -> StudyPack, errors carry line numbers.
-// writeMarkdown: StudyPack -> .md + image files (data URIs pulled out into img/).
-// Pure TS, no DOM: the CLI (studypack/validate.ts) uses it too.
 
 import { PACK_FORMAT, validatePack, type PackIssue, type PackLesson, type PackQuestion, type StudyPack } from './pack.ts';
 
@@ -18,7 +13,6 @@ export interface MdResult {
 
 const EXAM_UNIT = /^(đề thi thử|de thi thu|exams?)$/i;
 const KEEP_ORDER = /^(giữ thứ tự|giu thu tu|keep order)$/i;
-/** "nhóm: f1" trong dòng ###: các câu cùng nhóm trong bài dùng chung đề, luôn đi cùng nhau. */
 const GROUP = /^(?:nhóm|nhom|group)\s*:\s*(.+)$/i;
 
 const slug = (s: string, fallback: string) => {
@@ -34,17 +28,11 @@ const slug = (s: string, fallback: string) => {
 };
 const yes = (v?: string) => !!v && /^(co|có|yes|true|1|bật|bat)$/i.test(v.trim());
 
-// ------------------------------------------------------------------ Markdown -> HTML (small subset)
 
-/**
- * Render the Markdown subset used in packs. TeX (\( \), \[ \], $$ $$) and raw HTML pass through untouched;
- * images resolve through `img` (path -> data URI). The app still sanitizes the result before showing it.
- */
 export function mdToHtml(md: string, img: (src: string) => string = (s) => s): string {
 	const keep: string[] = [];
 	const hold = (s: string) => `\u0000${keep.push(s) - 1}\u0000`;
 	let t = md.replace(/\r/g, '');
-	// Protect math and inline code first so * _ | inside them are not touched.
 	t = t.replace(/\\\[[\s\S]*?\\\]|\$\$[\s\S]*?\$\$|\\\([\s\S]*?\\\)|`[^`\n]+`/g, (m) =>
 		hold(m.startsWith('`') ? `<code>${escapeHtml(m.slice(1, -1))}</code>` : m),
 	);
@@ -62,7 +50,6 @@ export function mdToHtml(md: string, img: (src: string) => string = (s) => s): s
 			i++;
 			continue;
 		}
-		// Table: header row + |---| row.
 		if (/^\s*\|.*\|\s*$/.test(line) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] ?? '')) {
 			const row = (r: string) =>
 				r
@@ -79,7 +66,6 @@ export function mdToHtml(md: string, img: (src: string) => string = (s) => s): s
 			);
 			continue;
 		}
-		// Lists.
 		const ul = /^\s*[-*]\s+(?!\[[ xX]\])/,
 			ol = /^\s*\d+[.)]\s+/;
 		if (ul.test(line) || ol.test(line)) {
@@ -89,7 +75,6 @@ export function mdToHtml(md: string, img: (src: string) => string = (s) => s): s
 			out.push(`<${ordered ? 'ol' : 'ul'}>${items.map((x) => `<li>${x}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`);
 			continue;
 		}
-		// Raw HTML block or display math stays as its own block.
 		if (/^\s*<(div|table|ul|ol|p|pre|blockquote)\b/i.test(line) || /^\s*\u0000\d+\u0000\s*$/.test(line)) {
 			const block: string[] = [];
 			while (i < lines.length && lines[i].trim()) block.push(lines[i++]);
@@ -108,19 +93,13 @@ export function mdToHtml(md: string, img: (src: string) => string = (s) => s): s
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escapeAttr = (s: string) => escapeHtml(s).replace(/"/g, '&quot;');
 
-// ------------------------------------------------------------------ parse
 
-/**
- * Parse a Study Markdown file. `images` maps paths in the zip (img/a.webp) to data URIs;
- * a missing image is a warning (text still imports).
- */
 export function parseMarkdown(text: string, images: Record<string, string> = {}): MdResult {
 	const errors: MdIssue[] = [];
 	const warnings: MdIssue[] = [];
 	const lines = text.replace(/^﻿/, '').replace(/\r/g, '').split('\n');
 	let n = 0;
 
-	// Front matter.
 	const meta: Record<string, string> = {};
 	if (lines[0]?.trim() === '---') {
 		for (n = 1; n < lines.length && lines[n].trim() !== '---'; n++) {
@@ -139,7 +118,6 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 		missingImg.add(key);
 		return '';
 	};
-	// A missing image is a warning: the text still imports, the image spot says so.
 	const html = (md: string) =>
 		mdToHtml(md, img).replace(/<img src="" alt="([^"]*)">/g, (_m, alt) => `<i>[thiếu ảnh${alt ? ': ' + alt : ''}]</i>`);
 
@@ -180,7 +158,6 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 		exams: [],
 	};
 
-	// Body: walk headings. Lines are kept with their number for error messages.
 	type Block = { level: number; title: string; line: number; body: { text: string; line: number }[] };
 	const blocks: Block[] = [];
 	let cur: Block | null = null;
@@ -227,7 +204,6 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 			lessonIds.add(id);
 			lesson = { id, title: b.title, questions: [] };
 			unit.lessons.push(lesson);
-			// Lesson notes: text under ## until the first ###, split by #### headings.
 			const sections: { title?: string; body: string }[] = [];
 			let sec: { title?: string; lines: string[] } = { lines: [] };
 			for (const x of b.body) {
@@ -267,11 +243,9 @@ export function parseMarkdown(text: string, images: Record<string, string> = {})
 	if (!pack.settings!.shuffleQuestions && !pack.settings!.shuffleOptions) delete pack.settings;
 	for (const k of missingImg) warnings.push({ line: lineOfText(lines, k), message: `thiếu ảnh ${k} (gửi kèm trong tệp .zip)` });
 
-	// Deeper checks from the shared validator, mapped back to line numbers when possible.
 	if (pack.course.code) {
 		const r = validatePack(pack);
 		const map = (i: PackIssue): MdIssue => ({ line: lineFor(pack, i.path), message: i.message });
-		// Skip what the Markdown parser already reported in plainer words (authors, empty solution).
 		errors.push(...r.errors.filter((e) => !e.path.startsWith('authors') && !e.path.endsWith('.solution')).map(map));
 		warnings.push(...r.warnings.filter((w) => !/^(license|verified)$/.test(w.path)).map(map));
 	}
@@ -295,7 +269,6 @@ function num(s?: string): number | undefined {
 	return Number.isFinite(v) ? v : undefined;
 }
 
-/** One ### block: prompt lines, then - [x] options or one = answer line, then > solution. */
 function parseQuestion(
 	b: { title: string; line: number; body: { text: string; line: number }[] },
 	html: (md: string) => string,
@@ -320,7 +293,7 @@ function parseQuestion(
 			answer = { text: x.text.replace(/^\s*=\s?/, '').trim(), line: x.line };
 		else if (/^\s*>/.test(x.text)) solution.push(x.text.replace(/^\s*>\s?/, ''));
 		else if (!options.length && !answer && !solution.length) prompt.push(x.text);
-		else if (x.text.trim() && !solution.length) prompt.push(x.text); // text after options: keep with prompt rather than lose it
+		else if (x.text.trim() && !solution.length) prompt.push(x.text);
 	}
 	const base = {
 		...(tag ? { tag } : {}),
@@ -371,17 +344,15 @@ function parseQuestion(
 	};
 }
 
-// ------------------------------------------------------------------ write
 
-/** HTML (from the app) -> readable Markdown. Simple tags become Markdown, the rest stays as inline HTML. */
 function htmlToMd(h: string, take: (dataUri: string, alt: string) => string): string {
 	return h
 		.replace(
 			/<img\b[^>]*?src="(data:image\/[^"]+)"[^>]*?(?:alt="([^"]*)")?[^>]*>/gi,
 			(_m, src, alt) => `![${alt ?? ''}](${take(src, alt ?? '')})`,
 		)
-		.replace(/<div class="math">\s*([\s\S]*?)\s*<\/div>/gi, '\n\n$1\n\n') // display math on its own line
-		.replace(/(<div class="(?:warn|keys|tip|note)">[\s\S]*?<\/div>)/gi, '\n\n$1\n\n') // callouts stay as HTML blocks
+		.replace(/<div class="math">\s*([\s\S]*?)\s*<\/div>/gi, '\n\n$1\n\n')
+		.replace(/(<div class="(?:warn|keys|tip|note)">[\s\S]*?<\/div>)/gi, '\n\n$1\n\n')
 		.replace(/<p>([\s\S]*?)<\/p>/gi, '\n\n$1\n\n')
 		.replace(/<\/?(b|strong)>/gi, '**')
 		.replace(/<\/?(i|em)>/gi, '*')
@@ -391,7 +362,6 @@ function htmlToMd(h: string, take: (dataUri: string, alt: string) => string): st
 		.trim();
 }
 
-/** Pack -> .md text + images (path -> data URI). Images are named img/1.webp, img/2.png… in order. */
 export function writeMarkdown(p: StudyPack): { md: string; images: Record<string, string> } {
 	const images: Record<string, string> = {};
 	const seen = new Map<string, string>();
@@ -405,7 +375,7 @@ export function writeMarkdown(p: StudyPack): { md: string; images: Record<string
 		return path;
 	};
 	const md = (h: string) => htmlToMd(h, take);
-	const one = (h: string) => md(h).replace(/\s*\n\s*/g, ' '); // options must stay on one line
+	const one = (h: string) => md(h).replace(/\s*\n\s*/g, ' ');
 	const out: string[] = [
 		'---',
 		`id: ${p.id}`,
@@ -453,7 +423,6 @@ export function writeMarkdown(p: StudyPack): { md: string; images: Record<string
 		}
 	}
 	if (p.exams?.length) {
-		// Markdown exams are self-contained: questions referenced from lessons are copied in.
 		const byRef = new Map<string, PackQuestion>(
 			p.units.flatMap((u) =>
 				u.lessons.flatMap((l) =>

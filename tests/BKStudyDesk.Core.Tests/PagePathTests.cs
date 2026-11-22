@@ -2,7 +2,6 @@ using SoHocTap.Web;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>SchoolUrls.PagePath: trang đăng ký môn có ";jsessionid=..." vẫn là cùng trang (lỗi đợt đăng ký môn 28/10/2026).</summary>
 public class PagePathTests
 {
     [Theory]

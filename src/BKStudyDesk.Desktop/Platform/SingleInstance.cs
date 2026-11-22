@@ -5,22 +5,14 @@ using SoHocTap.Shell;
 
 namespace BKStudyDesk.Desktop.Platform;
 
-/// <summary>
-/// Chỉ cho chạy một bản (như 1.x, Program.cs): khóa là Mutex có tên InstanceLock.Current (mỗi người dùng một bản; bản demo, bản thử đặt BKSD_INSTANCE thì chạy
-/// song song được). Bản thứ hai gọi vào named pipe của bản đang chạy để nó hiện cửa sổ (kể cả khi đang nằm dưới khay) rồi thoát.
-/// Named pipe thay cho EventWaitHandle có tên của 1.x vì macOS, Linux không có EventWaitHandle có tên; CurrentUserOnly: tài khoản khác
-/// trên máy không gọi được.
-/// </summary>
 internal static class SingleInstance
 {
     private const string RestartArg = "--restart";
     private static string PipeName => InstanceLock.Current + ".show";
 
-    /// <summary>Giữ khóa chạy một bản; null khi đã có bản khác đang chạy (bản này báo cho nó rồi nên thoát).</summary>
     public static Mutex? Acquire(string[] args)
     {
         var mutex = new Mutex(initiallyOwned: true, InstanceLock.Current, out var first);
-        // Khởi động lại (đổi ngôn ngữ): bản cũ đang thoát, đợi nó nhả khóa tối đa 5 giây.
         if (!first && args.Contains(RestartArg))
         {
             try { first = mutex.WaitOne(TimeSpan.FromSeconds(5)); }
@@ -36,14 +28,12 @@ internal static class SingleInstance
     {
         try
         {
-            // Kết nối là tín hiệu, không cần gửi gì: bản đang chạy hiện cửa sổ ngay khi có kết nối.
             using var pipe = new NamedPipeClientStream(".", PipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly);
             pipe.Connect(TimeSpan.FromSeconds(2));
         }
         catch (Exception e) when (e is TimeoutException or IOException or UnauthorizedAccessException) { Log.Warn($"Không gọi được bản đang chạy: {e.Message}"); }
     }
 
-    /// <summary>Bản đang chạy: gọi <paramref name="show"/> (từ thread nền) mỗi khi có bản thứ hai được mở.</summary>
     public static void Listen(Action show) => _ = Task.Run(async () =>
     {
         while (true)
@@ -62,7 +52,6 @@ internal static class SingleInstance
         }
     });
 
-    /// <summary>Mở bản mới với --restart (bản mới đợi bản này nhả khóa); true khi đã mở, bản này cần thoát.</summary>
     public static bool StartRestart()
     {
         if (Environment.ProcessPath is not { } exe) return false;

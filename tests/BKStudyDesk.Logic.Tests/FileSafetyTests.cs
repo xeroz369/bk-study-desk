@@ -5,7 +5,6 @@ using SoHocTap.Files;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Một thư mục tạm đóng vai thư mục Study (folders.root) cho test file; tự xóa khi xong.</summary>
 internal sealed class TempStudy : IDisposable
 {
     public string Root { get; } = Path.Combine(Path.GetTempPath(), "bk-test-" + Guid.NewGuid().ToString("N"));
@@ -14,7 +13,6 @@ internal sealed class TempStudy : IDisposable
 
     public TempStudy() => Directory.CreateDirectory(Subjects);
 
-    /// <summary>Tạo file (kèm thư mục cha) dưới thư mục Môn học, trả đường dẫn đầy đủ.</summary>
     public string Put(string relative, string content)
     {
         var path = Path.Combine(Subjects, relative);
@@ -23,7 +21,6 @@ internal sealed class TempStudy : IDisposable
         return path;
     }
 
-    /// <summary>File vừa "tải về" nằm ở thư mục tạm của app (ngoài thư mục môn).</summary>
     public string Download(string content)
     {
         var path = Path.Combine(Root, "data", "tmp", Guid.NewGuid().ToString("N"));
@@ -43,7 +40,6 @@ internal sealed class TempStudy : IDisposable
     }
 }
 
-/// <summary>Đặt file LMS không bao giờ đụng file của người dùng (LmsPlacement), trên thư mục tạm.</summary>
 public class LmsPlacementTests
 {
     private static Dictionary<string, string> Hashes(string subjectDir) =>
@@ -56,34 +52,31 @@ public class LmsPlacementTests
         var user = t.Put(Path.Combine("Giải tích 2", "BKeL", "GK251.pdf"), "đề của tôi");
         var dest = Path.Combine(t.Subjects, "Giải tích 2", TempStudy.LmsSub, "Chương 1", "GK251.pdf");
 
-        // Lần 1: LMS có đúng file người dùng đã có.
         var tmp1 = t.Download("đề của tôi");
         var hashes = Hashes(Path.Combine(t.Subjects, "Giải tích 2"));
         var p1 = LmsPlacement.Decide(null, hashes.GetValueOrDefault(TempStudy.Sha(tmp1)), dest, t.Subjects, TempStudy.LmsSub, File.Exists);
         Assert.Equal(PlacementKind.Duplicate, p1.Kind);
         Assert.Null(LmsPlacement.Apply(tmp1, p1, t.Archive));
         var (path1, dedup1) = LmsPlacement.IndexFields(p1, null, null, t.Subjects, TempStudy.LmsSub);
-        Assert.Null(path1);                 // không ghi file của người dùng vào "path"
+        Assert.Null(path1);
         Assert.Equal(user, dedup1);
         Assert.False(File.Exists(tmp1));
 
-        // Lần 2: giảng viên sửa file trên LMS.
         var tmp2 = t.Download("đề đã sửa");
         hashes = Hashes(Path.Combine(t.Subjects, "Giải tích 2"));
         var p2 = LmsPlacement.Decide(path1, hashes.GetValueOrDefault(TempStudy.Sha(tmp2)), dest, t.Subjects, TempStudy.LmsSub, File.Exists);
         Assert.Equal(PlacementKind.New, p2.Kind);
         var final = LmsPlacement.Apply(tmp2, p2, t.Archive);
 
-        Assert.Equal("đề của tôi", File.ReadAllText(user));    // file người dùng còn nguyên chỗ, nguyên nội dung
+        Assert.Equal("đề của tôi", File.ReadAllText(user));
         Assert.Equal(dest, final);
-        Assert.Equal("đề đã sửa", File.ReadAllText(dest));      // bản mới nằm trong Tài liệu LMS
+        Assert.Equal("đề đã sửa", File.ReadAllText(dest));
         Assert.False(Directory.Exists(Path.Combine(t.Root, "_Lưu trữ")));
     }
 
     [Fact]
     public void OldIndexPointingAtUserFileIsNotTreatedAsOldVersion()
     {
-        // lms-files.json của bản trước 1.1.8 có thể ghi "path" là file của người dùng.
         using var t = new TempStudy();
         var user = t.Put(Path.Combine("Kỹ thuật số", "OnGK", "C1.pdf"), "ghi chú của tôi");
         var dest = Path.Combine(t.Subjects, "Kỹ thuật số", TempStudy.LmsSub, "Chương 1", "C1.pdf");
@@ -125,7 +118,6 @@ public class LmsPlacementTests
     [Fact]
     public void SameContentAsAnotherLmsFileIsOnlyDedup()
     {
-        // Hai url cùng nội dung: url sau không được nhận file của url trước là của mình (kẻo lần sửa sau cất nhầm file đó).
         using var t = new TempStudy();
         var other = t.Put(Path.Combine("Giải tích 2", TempStudy.LmsSub, "A.pdf"), "x");
         var p = new Placement(PlacementKind.Duplicate, other);
@@ -161,7 +153,6 @@ public class LmsPlacementTests
     }
 }
 
-/// <summary>Bộ lọc rác dùng chung: đếm môn, Mới cập nhật, hash, duyệt thư mục đều bỏ qua, trên cây tạm.</summary>
 public class JunkFilterTests
 {
     private static TempStudy Tree()
@@ -242,9 +233,9 @@ public class JunkFilterTests
         using var t = Tree();
         var d = DocumentScan.ListDir(Path.Combine(t.Subjects, "Kỹ thuật số"), f => f);
         var dirs = (d["dirs"] as JsonArray)!.OfType<JsonObject>().ToDictionary(x => x["name"]!.GetValue<string>(), x => x["count"]!.GetValue<int>());
-        Assert.Equal(0, dirs["Quartus"]);    // chỉ có db\
-        Assert.Equal(2, dirs["Lab1"]);       // bao-cao.pdf, mach.kicad_pcb
-        Assert.Empty((d["files"] as JsonArray)!);   // desktop.ini bị ẩn
+        Assert.Equal(0, dirs["Quartus"]);
+        Assert.Equal(2, dirs["Lab1"]);
+        Assert.Empty((d["files"] as JsonArray)!);
         var lab = DocumentScan.ListDir(Path.Combine(t.Subjects, "Kỹ thuật số", "Lab1"), f => f);
         Assert.DoesNotContain(".history", (lab["dirs"] as JsonArray)!.Select(x => x!["name"]!.GetValue<string>()));
         Assert.Equal(2, (lab["files"] as JsonArray)!.Count);
@@ -255,12 +246,10 @@ public class JunkFilterTests
     {
         using var t = Tree();
         var subject = Path.Combine(t.Subjects, "Kỹ thuật số");
-        // NTFS cập nhật mtime thư mục hơi trễ sau khi vừa tạo file (đo được lệch 1 ms): chờ dấu ổn định rồi mới so.
         var before = Settled(subject);
         t.Put("Kỹ thuật số/Lab1/.history/.git/objects/cd", "rác mới");
         t.Put("Kỹ thuật số/Quartus/db/mach2.qdb", "rác mới");
         Assert.Equal(before, Settled(subject));
-        // Thêm file thật thì dấu đổi (cache phải quét lại).
         t.Put("Kỹ thuật số/Lab1/bao-cao-2.pdf", "3");
         Assert.NotEqual(before, Settled(subject));
     }
@@ -279,7 +268,6 @@ public class JunkFilterTests
     }
 }
 
-/// <summary>So tên môn chịu được NFD và bỏ dấu.</summary>
 public class NameMatchTests
 {
     private static readonly string Nfc = "Giải tích 2";

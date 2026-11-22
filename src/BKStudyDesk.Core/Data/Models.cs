@@ -6,30 +6,18 @@ using System.Text.Json.Serialization;
 
 namespace SoHocTap.Data;
 
-// Dữ liệu đã normalize mà Sources ghi ra data/lms.json, data/mybk.json (UI chỉ đọc lại để hiển thị, không gửi request).
-// Tên field theo JSON (camelCase). Field nào lúc là số lúc là chữ thì để JsonNode. Đọc bằng DataJson (chịu lỗi): số dạng chữ,
-// số thực ở chỗ số nguyên, null ở chỗ số đều đọc được, không làm hỏng cả file. Các record này trước nằm ở Ui/Models.cs
-// (namespace SoHocTap.Ui); Ui/Models.cs có global using nên code cũ vẫn build.
-
 public sealed record LmsCourse(long Id, string Name, string Subject, string Code, string? Part, string Term, string Teacher, string Url, string Folder);
-/// <summary>Done: bài tập đã nộp (Moodle không còn mốc trên lịch hành động), không đếm và không nhắc.</summary>
 public sealed record LmsEvent(string Id, long Course, string Subject, string Name, string Kind, long Time, string Label, string? Url, string? Phase = null, bool Done = false, string? State = null,
-    string? Intro = null);   // Intro: đề bài (HTML của LMS), đọc offline trong app
+    string? Intro = null);
 public sealed record LmsAttempt(long Id, long Finished, double? Grade);
 public sealed record LmsQuiz(long Id, long Course, string Subject, string Name, long? Open, long? Close, List<LmsAttempt> Attempts, string Url);
 public sealed record LmsNewFile(string Name, string Path, string Subject, long At, bool? Updated);
-/// <summary>Message: nội dung bài (HTML của LMS), Attachments: file đính kèm (link LMS, mở cần mạng). Đọc offline trong app.
-/// Event: "component/eventtype" của thông báo LMS (vd. "mod_assign/assign_notification"), null với bài diễn đàn.</summary>
 public sealed record LmsAnnouncement(string Id, string Kind, string Subject, string Forum, string Title, string? Author, long Time, string? Url,
     string? Message = null, List<LmsLink>? Attachments = null, List<LmsPost>? Posts = null, string? Event = null);
-/// <summary>Path: bản đã tải về thư mục học (đường dẫn tương đối), mở được khi LMS sập.</summary>
 public sealed record LmsLink(string? Name, string? Url, string? Path = null);
-/// <summary>Một trả lời trong chuỗi bài diễn đàn.</summary>
 public sealed record LmsPost(string? Author, long Time, string? Message, List<LmsLink>? Attachments);
 public sealed record LmsGradeItem(string Name, string? Kind, double? Grade, string? Text, double? Max, string? Percent, string? Feedback);
-/// <summary>Một tin nhắn riêng trên LMS. Text: HTML của LMS. Mine: tin mình gửi.</summary>
 public sealed record LmsMessage(long Id, long From, string? FromName, bool? Mine, string Text, long Time);
-/// <summary>Một hội thoại tin nhắn riêng (data/lms-messages.json). Members: tên người kia (hay các thành viên nhóm), không kể mình.</summary>
 public sealed record LmsConversation(long Id, string Name, bool? Group, List<string> Members, int Unread, long LastTime, string? Url, List<LmsMessage> Messages);
 public sealed record LmsMessages(long SyncedAt, List<LmsConversation> Conversations)
 {
@@ -43,7 +31,6 @@ public sealed record LmsGradeBook(long Course, string Subject, string? Part, Lis
 public sealed record LmsData(long SyncedAt, string? User, string Term, List<LmsCourse> Courses, List<LmsEvent> Events, List<LmsQuiz> Quizzes,
     List<LmsNewFile>? NewFiles, List<LmsAnnouncement>? Announcements, List<LmsGradeBook>? Grades)
 {
-    /// <summary>Danh sách thiếu (file cũ, field bị null) thành danh sách rỗng, bỏ phần tử null: UI không phải kiểm null từng chỗ.</summary>
     public LmsData Normalize() => this with
     {
         Term = Term ?? "",
@@ -65,14 +52,13 @@ public sealed record MybkBlock(string Id, string Name, string Group, bool Requir
 public sealed record MybkCurriculumCourse(string Block, string Code, string Name, double? Credits, double? Score, string? Letter, string? Special,
     int Result, bool Attempted, string? Equiv);
 public sealed record MybkCurriculum(string? Program, string? Faculty, string? Year, double? CreditsDone, double? CreditsNeed, JsonNode? Gpa10, JsonNode? Gpa4,
-    string? Updated, List<MybkBlock> Blocks, List<MybkCurriculumCourse> Courses, string? Missing = null);   // Missing: MyBK báo chưa có CTĐT
+    string? Updated, List<MybkBlock> Blocks, List<MybkCurriculumCourse> Courses, string? Missing = null);
 public sealed record MybkRegistration(string Code, string Name, long Start, long End);
 public sealed record MybkComponentItem(string Code, string Name, double? Weight, double? Score, string? Special);
 public sealed record MybkComponents(long TermId, long CourseId, string? Status, List<MybkComponentItem> Items);
 public sealed record MybkDecision(string? Type, string? Term, string? Reason, string? Status, string? Date);
 public sealed record MybkActivity(string Name, string? Date, double Days, bool? Confirmed, bool? Canceled)
 {
-    /// <summary>Ngày kiểu Việt Nam (MyBK trả yyyy-MM-dd), số ngày dùng dấu phẩy: giống các bảng khác trong app.</summary>
     public string DateText => DateTime.TryParseExact(Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)
         ? d.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) : Date ?? "";
     public string DaysText => Days.ToString("0.##", CultureInfo.CurrentCulture);
@@ -105,10 +91,6 @@ public sealed record MybkData(long SyncedAt, MybkStudent Student, MybkTerm Term,
     };
 }
 
-/// <summary>
-/// Đọc lms.json, mybk.json chịu lỗi. MyBK trả số lúc là số lúc là chữ, có trường null, số thực ở chỗ số nguyên; bản cũ của app
-/// cũng có thể ghi thiếu trường. Đọc được thì đọc, giá trị lạ thành mặc định (0, null); chỉ JSON hỏng thật mới là lỗi.
-/// </summary>
 public static class DataJson
 {
     public static readonly JsonSerializerOptions Options = new()
@@ -125,10 +107,6 @@ public static class DataJson
         },
     };
 
-    /// <summary>
-    /// Parse <paramref name="json"/>; JSON hỏng hay sai kiểu ở cấp cấu trúc (mảng thay cho object…) thì ném
-    /// <see cref="DataReadException"/> kèm JsonException.Path để biết hỏng ở đâu.
-    /// </summary>
     public static T? Parse<T>(string json) where T : class
     {
         try { return Js.Deserialize<T>(json, Options); }
@@ -138,9 +116,6 @@ public static class DataJson
 
     internal static List<T> Clean<T>(List<T>? list) where T : class => list is null ? [] : [.. list.Where(x => x is not null)];
 
-    // ------------------------------------------------------------------ converter chịu lỗi
-
-    /// <summary>Số ở token hiện tại: số, chữ chứa số ("4.5", "  7 "), true/false; còn lại (null, chữ lạ, object) là null.</summary>
     private static double? Number(ref Utf8JsonReader r)
     {
         switch (r.TokenType)
@@ -155,7 +130,6 @@ public static class DataJson
         }
     }
 
-    /// <summary>Số nguyên: đọc thẳng Int64 khi được (id lớn hơn 2^53 không mất chính xác), số thực thì làm tròn.</summary>
     private static long? Integer(ref Utf8JsonReader r)
     {
         if (r.TokenType == JsonTokenType.Number && r.TryGetInt64(out var l)) return l;
@@ -171,7 +145,6 @@ public static class DataJson
         _ => Number(ref r) is { } d ? d != 0 : null,
     };
 
-    /// <summary>Field kiểu string mà nhận được cả số (MyBK trả về lẫn lộn); object/mảng thì bỏ qua.</summary>
     private sealed class LenientString : JsonConverter<string>
     {
         public override string? Read(ref Utf8JsonReader r, Type t, JsonSerializerOptions o)
@@ -191,7 +164,6 @@ public static class DataJson
         public override void Write(Utf8JsonWriter w, string v, JsonSerializerOptions o) => w.WriteStringValue(v);
     }
 
-    // Kiểu không null nhận null hay giá trị lạ thì về 0/false (HandleNull để serializer gọi converter cả khi gặp null).
     private sealed class LenientInt : JsonConverter<int>
     {
         public override bool HandleNull => true;

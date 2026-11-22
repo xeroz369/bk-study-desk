@@ -35,7 +35,6 @@ public class ContentRendererTests
     {
         var view = Assert.IsType<MathView>(Assert.Single(Blocks(@"<div class=""math"">\[x=1\]</div>")));
         Assert.Equal(("x=1", true), (view.Tex, view.Display));
-        // Phương án chỉ có một công thức \( \): giữ cỡ trong dòng.
         Assert.False(Assert.IsType<MathView>(Assert.Single(Blocks(@"<div class=""math"">\(r&lt;38\)</div>"))).Display);
         Assert.Equal("r<38", ((MathView)Blocks(@"<div class=""math"">\(r&lt;38\)</div>")[0]).Tex);
     }
@@ -76,7 +75,6 @@ public class ContentRendererTests
         var img = Assert.IsType<Image>(Assert.Single(t.Inlines!.OfType<InlineUIContainer>()).Child);
         Assert.NotNull(img.Source);
         Assert.Equal(20, img.MaxWidth);
-        // Ảnh hỏng thì bỏ, không ném lỗi.
         Assert.Empty(Assert.IsType<TextBlock>(Assert.Single(Blocks("<p>x<img src=\"data:image/png;base64,@@\"></p>"))).Inlines!.OfType<InlineUIContainer>());
     }
 

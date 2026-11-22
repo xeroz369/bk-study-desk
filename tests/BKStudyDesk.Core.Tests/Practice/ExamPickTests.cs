@@ -2,10 +2,8 @@ using SoHocTap.Presentation.Practice;
 
 namespace BKStudyDesk.Core.Tests.Practice;
 
-// Port từ khung Svelte của bản 1.x, src/ui/src/lib/study/exam.test.ts và interleave.test.ts.
 internal static class Fake
 {
-    /// <summary>Câu giả: id "u.l.q", fp duy nhất trừ khi truyền fp.</summary>
     public static Question Q(string id, string? group = null, string? fp = null) => new()
     {
         Id = id,
@@ -140,7 +138,6 @@ public class ExamPickTests
         Assert.Equal([["0.0.1", "0.0.3"], ["0.0.2"]], ExamPick.Blocks(qs).Select(Fake.Ids));
     }
 
-    // Cùng seed thì cùng đề như bản TS (chạy exam.ts, interleave.ts bằng Node lúc viết test, 07/10/2026).
     [Fact]
     public void Same_seed_same_result_as_typescript()
     {

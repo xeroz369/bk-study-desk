@@ -4,7 +4,6 @@ using SoHocTap.Ui;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Downloads organizer: plan reads only, move runs on the checked list, per-file errors do not stop the rest.</summary>
 public sealed class OrganizeDownloadsTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "bksd-dl-" + Guid.NewGuid().ToString("N"));
@@ -37,17 +36,17 @@ public sealed class OrganizeDownloadsTests : IDisposable
     [Fact]
     public void Plan_matches_name_code_and_folder_and_skips_other_files()
     {
-        Put("Giai tich 2 de thi.pdf");          // name without accents
-        Put("MT1005_bai tap.docx");             // code
-        Put("Giải tích 2 setup.exe");           // extension not allowed
-        Put("Ghi chu.pdf");                     // no match
+        Put("Giai tich 2 de thi.pdf");
+        Put("MT1005_bai tap.docx");
+        Put("Giải tích 2 setup.exe");
+        Put("Ghi chu.pdf");
         Put(Path.Combine("Giải tích 2 tài liệu", "a.pdf"));
         Put(Path.Combine("Giải tích 2 tài liệu", "con", "b.docx"));
         var plan = Plan();
         Assert.Equal(4, plan.Count);
         Assert.All(plan, m => Assert.Equal("Giải tích 2", m.Subject));
         Assert.Contains(plan, m => m.Dest == Path.Combine(Subjects, "Giải tích 2", "Tải ngoài", "Giải tích 2 tài liệu", "con", "b.docx"));
-        Assert.True(File.Exists(Path.Combine(Downloads, "Giai tich 2 de thi.pdf")));   // plan moves nothing
+        Assert.True(File.Exists(Path.Combine(Downloads, "Giai tich 2 de thi.pdf")));
     }
 
     [Fact]
@@ -87,12 +86,11 @@ public sealed class OrganizeDownloadsTests : IDisposable
         Put(Path.Combine("Giải tích 2 tài liệu", "b.pdf"));
         Put("Giai tich 2 c.pdf");
         var plan = Plan();
-        // Simulate a locked file: only Windows blocks moving an open file, Linux and macOS do not.
         var r = Organizer.MoveDownloads(plan, Downloads, m => m.Source == a ? throw new IOException("file đang mở") : Move(m));
         Assert.Equal(2, r.Moved);
         var failed = Assert.Single(r.Failed);
         Assert.Equal(Path.Combine("Giải tích 2 tài liệu", "a.pdf"), failed.File);
-        Assert.True(Directory.Exists(Path.Combine(Downloads, "Giải tích 2 tài liệu")));   // not empty, kept
+        Assert.True(Directory.Exists(Path.Combine(Downloads, "Giải tích 2 tài liệu")));
         var (text, error) = SettingsCatalog.OrganizeResult(r);
         Assert.True(error);
         Assert.Contains(L.F("organize.failed", 1), text);
@@ -109,7 +107,7 @@ public sealed class OrganizeDownloadsTests : IDisposable
         var r = Organizer.MoveDownloads(plan, Downloads, m =>
         {
             if (!m.Source.Contains("dup")) return Move(m);
-            File.Delete(m.Source);   // stands in for the duplicates archive
+            File.Delete(m.Source);
             return false;
         });
         Assert.Equal(1, r.Moved);

@@ -10,18 +10,10 @@ namespace SoHocTap.Presentation.Practice;
 
 public enum QuizFormat { StudyPack, Markdown, MoodleXml, Gift, Aiken }
 
-/// <summary>Kết quả đổi một file quiz: các bài (theo category) và ghi chú những gì bị bỏ.</summary>
 public sealed record Converted(List<PackLesson> Lessons, List<string> Notes);
 
-/// <summary>
-/// Đổi qua lại giữa gói luyện tập và định dạng quiz của Moodle (port <c>formats.ts</c>; BK-LMS chạy Moodle):
-/// Aiken (một đáp án, dễ soạn nhất), GIFT (dạng chữ, đủ loại), Moodle XML (ngân hàng câu hỏi, có ảnh và category).
-/// Loại chưa hỗ trợ (ghép cặp, tự luận, cloze, kéo thả) bị bỏ và ghi vào Notes, không lặng lẽ.
-/// </summary>
 public static partial class QuizFormats
 {
-    // ------------------------------------------------------------------ nhận dạng
-
     [GeneratedRegex(@"^```\w*\s*|\s*```$")] private static partial Regex Fence();
     [GeneratedRegex(@"""format""\s*:\s*""studypack/")] private static partial Regex StudyPackFormat();
     [GeneratedRegex(@"<quiz[\s>]", RegexOptions.IgnoreCase)] private static partial Regex QuizTag();
@@ -47,7 +39,6 @@ public static partial class QuizFormats
         var t = Fence().Replace(Text.TrimJs(raw.Replace("\r", "")), "");
         if (t.StartsWith('{') && StudyPackFormat().IsMatch(t)) return QuizFormat.StudyPack;
         if (QuizTag().IsMatch(t)) return QuizFormat.MoodleXml;
-        // Study Markdown trước GIFT: ngoặc nhọn của TeX (\frac{a}{b}) trông giống khối đáp án GIFT.
         if (FrontMatter().IsMatch(t.Split('\n')[0]) || (H3().IsMatch(t) && AnswerShape().IsMatch(t))) return QuizFormat.Markdown;
         if (AikenAnswer().IsMatch(t) && !GiftLike().IsMatch(t)) return QuizFormat.Aiken;
         if (Braces().IsMatch(t) && GiftAnswer().IsMatch(t)) return QuizFormat.Gift;
@@ -59,13 +50,11 @@ public static partial class QuizFormats
 
     [GeneratedRegex(@"\n{2,}")] private static partial Regex ParaBreak();
 
-    /// <summary>Chữ thường (Aiken, GIFT) thành đoạn HTML, giữ TeX nguyên.</summary>
     private static string Para(string s) =>
         string.Concat(ParaBreak().Split(Text.TrimJs(s)).Select(p => $"<p>{Esc(p).Replace("\n", "<br>")}</p>"));
 
     private static string Head(string s, int n) => s.Length > n ? s[..n] : s;
 
-    // Number(x) và parseFloat(x) của JS.
     private static double JsNumber(string s)
     {
         var t = Text.TrimJs(s);
@@ -77,8 +66,6 @@ public static partial class QuizFormats
 
     private static double ParseFloat(string? s) =>
         s != null && FloatPrefix().Match(s) is { Success: true } m ? double.Parse(m.Value, NumberStyles.Float, CultureInfo.InvariantCulture) : double.NaN;
-
-    // ------------------------------------------------------------------ Aiken
 
     [GeneratedRegex(@"^\s*([A-H])[.)]\s+(.*)$")] private static partial Regex AikenOption();
     [GeneratedRegex(@"^\s*ANSWER\s*:\s*([A-H])\s*$", RegexOptions.IgnoreCase)] private static partial Regex AikenAnswerLine();
@@ -116,8 +103,6 @@ public static partial class QuizFormats
         return new Converted([new PackLesson { Id = "aiken", Title = L.T("fmt.aikenLesson"), Questions = questions }], notes);
     }
 
-    // ------------------------------------------------------------------ GIFT
-
     [GeneratedRegex(@"\\([~=#{}:\\])")] private static partial Regex GiftEscaped();
     [GeneratedRegex(@"\n\s*\n")] private static partial Regex BlankLine();
     [GeneratedRegex(@"^\s*//")] private static partial Regex Comment();
@@ -136,7 +121,6 @@ public static partial class QuizFormats
 
     private static string UnescapeGift(string s) => GiftEscaped().Replace(s, "$1").Replace("\\n", "\n");
 
-    /// <summary>Tách theo ký tự đặc biệt chưa escape (\~ \= giữ nguyên trong mảnh).</summary>
     private static List<string> SplitUnescaped(string s, Func<char, bool> at)
     {
         var output = new List<string>();
@@ -170,7 +154,6 @@ public static partial class QuizFormats
         {
             var block = Text.TrimJs(string.Join("\n", rawBlock.Split('\n').Where(l => !Comment().IsMatch(l))));
             if (block.Length == 0) continue;
-            // $CATEGORY có thể nằm sát câu đầu (không có dòng trống): lấy ra rồi đọc phần còn lại.
             if (Category().Match(block) is { Success: true } cat)
             {
                 category = cat.Groups[1].Value.Split('/').Where(x => x.Length > 0 && x != "$course$" && x != "top").LastOrDefault() ?? category;
@@ -187,7 +170,6 @@ public static partial class QuizFormats
             }
             var isHtml = HtmlFlag().IsMatch(body);
             body = FormatFlag().Replace(body, "", 1);
-            // Khối đáp án {...} đầu tiên chưa escape.
             int open = -1, close = -1;
             for (var i = 0; i < body.Length; i++)
             {
@@ -239,7 +221,6 @@ public static partial class QuizFormats
             }
             if (inner.StartsWith('#'))
             {
-                // {#3.14:0.01}, {#1..2}, {#=3.14:0.01 =%50%3.1:0.1}: lấy đáp án đầu (đủ điểm), bỏ feedback và trọng số.
                 var first = SplitUnescaped(inner[1..], c => c == '=').Select(x => Text.TrimJs(x.StartsWith('=') ? x[1..] : x)).FirstOrDefault(x => x.Length > 0) ?? "";
                 first = Text.TrimJs(Weight().Replace(NumFeedback().Replace(first, "", 1), "", 1));
                 var range = Range().Match(first);
@@ -294,7 +275,6 @@ public static partial class QuizFormats
 
     private static string GiftEsc(string s) => Regex.Replace(s, @"([~=#{}:\\])", @"\$1").Replace("\n", " ");
 
-    // +x.toFixed(5) của JS.
     private static string Fixed5(double v) => SoHocTap.Presentation.Practice.JsNumber.Format(Math.Round(v, 5, MidpointRounding.AwayFromZero));
 
     public static string ToGift(StudyPack p)
@@ -334,15 +314,12 @@ public static partial class QuizFormats
         return string.Join("\n", output);
     }
 
-    // ------------------------------------------------------------------ Moodle XML
-
     [GeneratedRegex(@"<[a-z]", RegexOptions.IgnoreCase)] private static partial Regex AnyTagStart();
     [GeneratedRegex(@"\s+")] private static partial Regex Ws();
     [GeneratedRegex(@"^<p>(.*)</p>$", RegexOptions.Singleline)] private static partial Regex OnePara();
     [GeneratedRegex(@"</?p>")] private static partial Regex PTag();
     [GeneratedRegex(@"true|đúng", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex TrueWord();
 
-    /// <summary>encodeURIComponent của JS (Uri.EscapeDataString escape thêm ! ' ( ) *).</summary>
     private static string EncodeUriComponent(string s)
     {
         var sb = new StringBuilder();
@@ -355,7 +332,6 @@ public static partial class QuizFormats
         return sb.ToString();
     }
 
-    /// <summary>Ảnh trong Moodle XML: &lt;file name="a.png" encoding="base64"&gt; + src="@@PLUGINFILE@@/a.png" thành data URI.</summary>
     private static string WithFiles(XElement? el)
     {
         if (el is null) return "";
@@ -486,7 +462,6 @@ public static partial class QuizFormats
 
     [GeneratedRegex(@"src=""data:image/(png|jpeg|gif|webp);base64,([^""]+)""")] private static partial Regex DataSrc();
 
-    /// <summary>Ảnh data URI thành &lt;file&gt; + @@PLUGINFILE@@ (ngân hàng câu hỏi Moodle không nhận data URI).</summary>
     private static string MoodleText(string tag, string html, ref int n)
     {
         var files = new List<string>();
@@ -521,7 +496,6 @@ public static partial class QuizFormats
                         var right = t == "multi" ? q.Answers ?? [] : [q.AnswerNumber is { } a ? (int)a : -1];
                         var opts = q.Options ?? [];
                         var wrongN = opts.Count - right.Length;
-                        // Nhiều đáp án: đúng chia đều 100%, sai trừ đều 100% (chọn bừa hết thì 0 điểm), như cách Moodle chấm.
                         var ans = new StringBuilder();
                         for (var j = 0; j < opts.Count; j++)
                         {

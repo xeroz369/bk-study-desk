@@ -23,7 +23,6 @@ public class QuickSearchTests
     [Fact]
     public void Prefix_beats_word_start_beats_contains_and_folds_diacritics()
     {
-        // "tich": "Tích phân kép" (đầu tên), "Giải tích 2" (đầu một chữ), bài có dòng phụ "Giải tích 2"; "Phương pháp tính" không khớp.
         Assert.Equal(["lesson:gt2-07", "subject:Giải tích 2", "lesson:gt2-03"], QuickSearch.Match(All, "tich").Select(i => i.Target));
         Assert.Equal(["page:2"], QuickSearch.Match(All, "LICH").Select(i => i.Target));
     }
@@ -31,7 +30,6 @@ public class QuickSearchTests
     [Fact]
     public void Sub_text_matches_last()
     {
-        // "giai tich" khớp tên môn trước, rồi tới hai bài có dòng phụ "Giải tích 2".
         Assert.Equal(["subject:Giải tích 2", "lesson:gt2-07", "lesson:gt2-03"], QuickSearch.Match(All, "giai tich").Select(i => i.Target));
     }
 

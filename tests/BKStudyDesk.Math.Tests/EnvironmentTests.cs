@@ -63,7 +63,6 @@ public class EnvironmentTests
     public void Vertical_rule_takes_space_and_is_drawn()
     {
         Assert.True(Tex.Width(@"\begin{array}{c|c} 1 & 2 \end{array}") > Tex.Width(@"\begin{array}{cc} 1 & 2 \end{array}"));
-        // Cột pixel tối chạy dọc gần hết chiều cao bảng: đó là vạch |.
         var px = Frames.Pixels(new AvaloniaMath.Controls.FormulaBlock
         {
             Formula = @"\begin{array}{c|c} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{array}",

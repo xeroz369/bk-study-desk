@@ -5,7 +5,6 @@ namespace SoHocTap.Tests;
 public class DueTests
 {
     private const long H = 3600;
-    // Mốc cố định 2026-10-05 00:00 giờ VN = 2026-10-04 17:00 UTC, để "hôm nay" và "ngày mai" không phụ thuộc giờ chạy test.
     private const long Midnight = 1791133200;
 
     [Fact]
@@ -29,7 +28,6 @@ public class DueTests
     public void SoonHidden_WhenUrgentNotBelowSoon(int urgent, int soon, bool hidden)
     {
         Assert.Equal(hidden, Due.SoonHidden(urgent, soon));
-        // Đúng như Due.Of: mốc vàng ẩn thì không giờ nào cho ra Soon.
         if (hidden) Assert.DoesNotContain(Enumerable.Range(0, 48).Select(h => Due.Of(h * H + 1, 0, false, urgent, soon)), u => u == Urgency.Soon);
     }
 

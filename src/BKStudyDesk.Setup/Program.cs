@@ -9,17 +9,11 @@ using Microsoft.Win32;
 
 namespace BKStudyDesk.Setup;
 
-/// <summary>
-/// Bộ cài tiếng Việt: chọn thư mục cài (mặc định %LOCALAPPDATA%\BKStudyDesk), rồi chạy Setup.exe của Velopack (nhúng trong exe này)
-/// với --silent --installto. Không cần quyền admin; dữ liệu app luôn ở %LOCALAPPDATA%\BKStudyDesk.Data dù cài ở đâu.
-/// Dòng lệnh (cho test, cài hàng loạt): BKStudyDesk-Setup.exe --silent [--installto &lt;thư mục&gt;].
-/// </summary>
 internal static class Program
 {
     [STAThread]
     private static int Main(string[] args)
     {
-        // Cùng một exe làm bộ gỡ (Uninstall.exe trong thư mục cài), xem Uninstaller.
         if (args.Contains("--uninstall", StringComparer.OrdinalIgnoreCase)) return Uninstaller.Run(args);
         var i = Array.FindIndex(args, a => a.Equals("--installto", StringComparison.OrdinalIgnoreCase));
         var dir = i >= 0 && i + 1 < args.Length ? args[i + 1] : Installer.DefaultDir;
@@ -27,21 +21,18 @@ internal static class Program
             return Installer.RunAsync(dir).GetAwaiter().GetResult() is null ? 0 : 1;
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new SetupForm(dir));   // --installto không kèm --silent: điền sẵn thư mục trong cửa sổ
+        Application.Run(new SetupForm(dir));
         return 0;
     }
 }
 
 internal static class Installer
 {
-    /// <summary>Phiên bản của gói nhúng (build-all.ps1 truyền -p:Version), vd. "1.0.6".</summary>
     public static string Version => (FileVersionInfo.GetVersionInfo(Application.ExecutablePath).ProductVersion ?? "").Split('+')[0];
 
-    /// <summary>Pack id của gói nhúng (build-all.ps1 truyền -p:PackId, mặc định BKStudyDesk).</summary>
     public static string PackId => typeof(Installer).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
         .Cast<System.Reflection.AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "PackId")?.Value ?? InstallTarget.AppFolder;
 
-    /// <summary>Pack id của bản đã cài trong thư mục (thẻ &lt;id&gt; trong current\sq.version).</summary>
     public static string? InstalledPackId(string dir)
     {
         try
@@ -58,24 +49,20 @@ internal static class Installer
 
     public static string DefaultDir => Existing() ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), InstallTarget.AppFolder);
 
-    /// <summary>Thư mục của bản đã cài (khóa gỡ cài đặt Velopack ghi trong HKCU), để cài lại đúng chỗ.</summary>
     public static string? Existing()
     {
         using var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + PackId);
         return k?.GetValue("InstallLocation") is string s && s.Length > 0 ? s : null;
     }
 
-    /// <summary>Thư mục cài thật của lần cài gần nhất (sau khi thêm thư mục con BKStudyDesk).</summary>
     public static string? Installed { get; private set; }
 
-    /// <summary>Mở app vừa cài (Setup.exe chạy --silent không tự mở).</summary>
     public static void OpenApp()
     {
         var exe = Installed is null ? null : Path.Combine(Installed, "current", "BKStudyDesk.exe");
         if (exe is not null && File.Exists(exe)) Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe) });
     }
 
-    /// <summary>Chạy Setup.exe nhúng sẵn. Trả null nếu xong, không thì lý do lỗi.</summary>
     public static async Task<string?> RunAsync(string dir)
     {
         var (target, error) = Target(dir);
@@ -107,7 +94,7 @@ internal static class Installer
             await Task.Run(p.WaitForExit);
             if (p.ExitCode != 0) return $"Cài đặt không thành công (mã lỗi {p.ExitCode}).";
             Installed = target;
-            try { Uninstaller.Register(target, PackId); }   // bộ gỡ tiếng Việt thay trình gỡ mặc định
+            try { Uninstaller.Register(target, PackId); }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
             return null;
         }
@@ -116,10 +103,8 @@ internal static class Installer
             try { Directory.Delete(tmp, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
     }
-
 }
 
-/// <summary>Đổi kích thước viết theo 96 DPI sang pixel thật của màn hình (DPI đọc qua Graphics, xem UninstallForm.Px).</summary>
 internal static class Dpi
 {
     public static int Px(Control c, int v)
@@ -129,10 +114,6 @@ internal static class Dpi
     }
 }
 
-/// <summary>
-/// Màu của bộ cài theo chế độ sáng, tối của Windows (WinForms trên .NET Framework không tự theo; đọc AppsUseLightTheme của tài khoản).
-/// Nút chính màu xanh BK như màu nhấn mặc định của app (DefaultConfig app.accent).
-/// </summary>
 internal sealed class Palette
 {
     public bool Dark { get; }
@@ -143,7 +124,6 @@ internal sealed class Palette
     public Color Danger => Dark ? Color.FromArgb(0xFF, 0x6B, 0x7A) : Color.FromArgb(0xC4, 0x31, 0x4B);
     public Color Accent => Color.FromArgb(0x02, 0x77, 0x9E);
 
-    /// <param name="forced">"dark" hay "light" (cờ --theme= khi chụp kiểm tra); null là theo Windows.</param>
     public Palette(string? forced)
     {
         if (forced is "dark" or "light") { Dark = forced == "dark"; return; }
@@ -154,7 +134,6 @@ internal sealed class Palette
     [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
 
-    /// <summary>Thanh tiêu đề tối (DWMWA_USE_IMMERSIVE_DARK_MODE = 20, Windows 10 2004 trở lên; bản cũ hơn bỏ qua, vẫn chạy).</summary>
     public void TitleBar(Form f)
     {
         var on = Dark ? 1 : 0;
@@ -162,10 +141,6 @@ internal sealed class Palette
     }
 }
 
-/// <summary>
-/// Cửa sổ cài đặt, mặc định một chạm: bấm Cài đặt là cài vào thư mục mặc định (hay thư mục của bản đã cài), xong thì mở app và tự đóng.
-/// Muốn cài chỗ khác thì bấm Đổi thư mục (hộp chọn thư mục của Windows), không cần dòng lệnh. Đang cài thì thanh tiến độ ngay trong cửa sổ.
-/// </summary>
 internal sealed class SetupForm : Form
 {
     private readonly Palette _c = new(Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--theme=", StringComparison.Ordinal))?.Substring(8));
@@ -188,7 +163,7 @@ internal sealed class SetupForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        AutoScaleDimensions = new SizeF(96f, 96f);   // kích thước trong code tính theo 96 DPI, WinForms tự nhân theo màn hình
+        AutoScaleDimensions = new SizeF(96f, 96f);
         AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         KeyDown += (_, e) => { if (e.KeyCode == Keys.Escape && _ok.Enabled) Close(); };
@@ -213,13 +188,13 @@ internal sealed class SetupForm : Form
         _ok.ForeColor = Color.White;
         _ok.Font = new Font("Segoe UI Semibold", 11f);
         _ok.FlatAppearance.BorderSize = 0;
-        _ok.FlatAppearance.BorderColor = _c.Accent;   // nút mặc định (AcceptButton) vẫn vẽ viền 1 px màu chữ nếu không đặt
+        _ok.FlatAppearance.BorderColor = _c.Accent;
         _ok.Margin = new Padding(0, 0, 0, Dpi.Px(this, 10));
 
         _where.ForeColor = _change.ForeColor = _c.Sub;
         _where.MaximumSize = new Size(width - Dpi.Px(this, 110), 0);
         _change.LinkColor = _change.ActiveLinkColor = _change.VisitedLinkColor = _c.Link;
-        _change.Margin = new Padding(Dpi.Px(this, 8), _where.Margin.Top, 0, 0);   // cùng dòng chữ với "Cài vào"
+        _change.Margin = new Padding(Dpi.Px(this, 8), _where.Margin.Top, 0, 0);
         var whereRow = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = Padding.Empty };
         whereRow.Controls.AddRange([_where, _change]);
 
@@ -268,7 +243,6 @@ internal sealed class SetupForm : Form
             _ok.Enabled = _change.Enabled = true;
             return;
         }
-        // Cài xong: mở app rồi đóng bộ cài, khỏi bấm thêm (lối tắt có ở Desktop và Start menu).
         Installer.OpenApp();
         Close();
     }

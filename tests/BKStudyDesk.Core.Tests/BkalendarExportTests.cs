@@ -4,7 +4,6 @@ using SoHocTap.Presentation;
 
 namespace BKStudyDesk.Core.Tests;
 
-/// <summary>Bảng thời khóa biểu dán vào BKalendar: đúng khuôn parser student_2024 của bkalendar/core.</summary>
 public class BkalendarExportTests
 {
     private static MybkClass C(string code, int day, int[] weeks, string start = "7:00", string end = "8:50", int lesson = 2, int lessons = 2) =>
@@ -25,10 +24,10 @@ public class BkalendarExportTests
         Assert.All(rows, r => Assert.Equal(12, r.Split('\t').Length));
         var first = rows[0].Split('\t');
         Assert.Equal(["2", "2 - 3", "7:00 - 8:50"], first[6..9]);
-        Assert.Equal("35|--|37|38|", first[11]);   // ô đầu là tuần đầu học kỳ (35)
+        Assert.Equal("35|--|37|38|", first[11]);
         var sunday = rows[1].Split('\t');
         Assert.Equal("CN", sunday[6]);
-        Assert.Equal("--|--|--|--|39|--|41|", sunday[11]);   // cùng mốc tuần 35
+        Assert.Equal("--|--|--|--|39|--|41|", sunday[11]);
     }
 
     [Fact]
@@ -36,7 +35,7 @@ public class BkalendarExportTests
     {
         var text = BkalendarExport.Text(Data(C("A", 3, [52, 53, 1, 2])))!;
         var weeks = text.Split('\n')[2].Split('\t')[11];
-        Assert.Equal("52|53|01|02|", weeks);   // 2026 có 53 tuần ISO
+        Assert.Equal("52|53|01|02|", weeks);
     }
 
     [Fact]
@@ -50,7 +49,6 @@ public class BkalendarExportTests
     [Fact]
     public void Bad_time_is_left_out_not_breaking_the_paste()
     {
-        // BKalendar throws on a time it cannot split, which drops the whole paste: the class is left out instead.
         var text = BkalendarExport.Text(Data(C("OK", 2, [35]), C("BAD", 3, [35], "", ""), C("BACK", 4, [35], "9:00", "8:00")))!;
         var rows = text.Split('\n', StringSplitOptions.RemoveEmptyEntries)[2..];
         Assert.Equal("OK", Assert.Single(rows).Split('\t')[1]);

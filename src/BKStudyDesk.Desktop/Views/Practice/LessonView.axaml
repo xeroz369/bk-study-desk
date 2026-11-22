@@ -1,10 +1,7 @@
-<!-- Bài học: đầu trang (tên bài, môn và chương, trạng thái), nguồn mở được đúng trang, mỗi mục kiến thức (####) một thẻ,
-     nút làm câu hỏi của bài, bài trước và bài sau. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"
              x:Class="BKStudyDesk.Desktop.Views.Practice.LessonView">
-    <!-- Cột đọc tối đa ReadingMaxWidth, căn giữa vùng trang (màn hình rộng thì cột không dạt về trái, ảnh người dùng 11/10/2026). -->
     <Grid MaxWidth="{StaticResource ReadingMaxWidth}">
     <StackPanel Spacing="16">
         <DockPanel>

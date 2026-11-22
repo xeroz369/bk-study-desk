@@ -1,5 +1,3 @@
-<!-- Thi thử (spec mục 6): đồng hồ, lưới số câu, nộp bài (bấm hai lần), xem lại từng câu sau khi nộp.
-     Hai cột như trang Hôm nay: câu đang xem, lưới số câu; hẹp thì lưới xuống dưới. Logic ở Core ExamSession. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:BKStudyDesk.Desktop.Lang"

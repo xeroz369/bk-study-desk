@@ -2,7 +2,6 @@ using SoHocTap.Ui;
 
 namespace SoHocTap.Tests;
 
-/// <summary>Phông, cỡ chữ trong config (app.font): giá trị lạ không làm hỏng giao diện, cỡ chữ chỉ lấy trong danh sách cho chọn.</summary>
 public class FontChoiceTests
 {
     private static readonly HashSet<string> Machine = new(["Segoe UI", "Arial", "Times New Roman"], StringComparer.OrdinalIgnoreCase);
@@ -25,19 +24,19 @@ public class FontChoiceTests
     }
 
     [Theory]
-    [InlineData("Không có phông này")]   // gỡ phông, hay config chép từ máy khác
+    [InlineData("Không có phông này")]
     [InlineData("")]
     [InlineData("   ")]
     public void UnknownFamilyFallsBackToDefault(string family)
     {
         var c = FontChoice.Parse(family, 14, Installed);
         Assert.Equal("", c.Family);
-        Assert.Equal(14, c.Size);   // cỡ chữ vẫn giữ, chỉ phông về mặc định
+        Assert.Equal(14, c.Size);
     }
 
     [Theory]
-    [InlineData("Arial, Segoe UI")]          // danh sách dự phòng của WPF, không phải một phông
-    [InlineData("Arial\"; color: red")]      // chen CSS sang khung Luyện tập
+    [InlineData("Arial, Segoe UI")]
+    [InlineData("Arial\"; color: red")]
     [InlineData("Ari'al")]
     [InlineData("A;B")]
     [InlineData("A\nB")]
@@ -51,10 +50,10 @@ public class FontChoiceTests
     [InlineData(13, 13)]
     [InlineData(14, 14)]
     [InlineData(18, 18)]
-    [InlineData(15, 14)]     // cách đều 14 và 16: lấy cỡ đứng trước trong danh sách
+    [InlineData(15, 14)]
     [InlineData(15.5, 16)]
-    [InlineData(1, 13)]      // nhỏ quá: kẹp về cỡ nhỏ nhất cho chọn
-    [InlineData(72, 18)]     // lớn quá: kẹp về cỡ lớn nhất
+    [InlineData(1, 13)]
+    [InlineData(72, 18)]
     public void SizeSnapsToAllowedList(double raw, double expected)
     {
         Assert.Equal(expected, FontChoice.NormalizeSize(raw));
@@ -77,15 +76,14 @@ public class FontChoiceTests
         var c = new FontChoice("", 18);
         var scale = c.Scale(12);
         Assert.Equal(1.5, scale);
-        Assert.Equal(30, FontChoice.Scaled(20, scale));     // tiêu đề trang 20 thành 30, không ép về 18
-        Assert.Equal(16.5, FontChoice.Scaled(11, scale));   // làm tròn nửa px
+        Assert.Equal(30, FontChoice.Scaled(20, scale));
+        Assert.Equal(16.5, FontChoice.Scaled(11, scale));
         Assert.Equal(20, FontChoice.Scaled(20, 1));
     }
 
     [Fact]
     public void WebScaleNeverShrinks()
     {
-        // Windows đặt cỡ mặc định 15, người dùng chọn 13: phần WPF nhỏ lại, khung Luyện tập giữ gốc 16px (chữ nhỏ nhất 12px).
         var c = new FontChoice("", 13);
         Assert.True(c.Scale(15) < 1);
         Assert.Equal(1, c.WebScale(15));
